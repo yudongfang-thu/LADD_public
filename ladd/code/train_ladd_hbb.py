@@ -1,0 +1,251 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import sys
+from pathlib import Path
+
+from train_cli_overrides import add_common_detector_train_overrides, collect_common_detector_train_overrides
+from train_path_checks import require_existing_file
+
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+YOLO_ROOT = REPO_ROOT / "yolo"
+SRC_ROOT = REPO_ROOT / "src"
+for root in (YOLO_ROOT, SRC_ROOT):
+    if str(root) not in sys.path:
+        sys.path.insert(0, str(root))
+
+from teacher_student_decomposition_kd_hbb import (  # noqa: E402
+    ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer,
+)
+from ultralytics import YOLO  # noqa: E402
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Manual single-phase LADD trainer for HBB/detect OGSOD.")
+    parser.add_argument("--phase", choices=("a1", "a2", "b", "c", "b1", "b2"), required=True)
+    parser.add_argument("--model", required=True, help="Student model weights or YAML.")
+    parser.add_argument("--data", type=Path, required=True, help="Student SAR dataset YAML.")
+    parser.add_argument("--teacher-data", type=Path, required=True, help="RGB teacher dataset YAML.")
+    parser.add_argument("--teacher-weights", required=True, help="Frozen RGB teacher checkpoint.")
+    parser.add_argument("--imgsz", type=int, default=512)
+    parser.add_argument("--epochs", type=int, default=50)
+    parser.add_argument("--batch", type=int, default=32)
+    parser.add_argument("--workers", type=int, default=8)
+    parser.add_argument("--device", default="0")
+    parser.add_argument("--cache", default=False)
+    parser.add_argument("--patience", type=int, default=100)
+    parser.add_argument("--fraction", type=float, default=1.0)
+    parser.add_argument("--project", type=Path, default=REPO_ROOT / "runs_public" / "ogsod" / "hbb" / "ladd")
+    parser.add_argument("--name", default="ogsod_hbb_ladd_phase")
+    parser.add_argument("--exist-ok", action="store_true")
+    parser.add_argument("--validate-before-train", action="store_true")
+
+    parser.add_argument("--phase-detect-mode", choices=("auto", "raw", "fused", "mimic", "recon"), default="raw")
+    parser.add_argument("--det-loss-scale", type=float, default=None)
+    parser.add_argument("--phase-min-epochs", type=int, default=None)
+    parser.add_argument("--phase-stop-metric", choices=("default", "map", "a1_loss", "a1_task_reach"), default="default")
+    parser.add_argument("--reach-target-mode", choices=("detach", "coupled"), default="detach")
+    parser.add_argument("--kd-target-mode", choices=("detach", "coupled"), default="detach")
+    parser.add_argument("--strict-batch-size", action="store_true")
+
+    parser.add_argument("--lambda-rec", type=float, default=0.1)
+    parser.add_argument("--lambda-sep", type=float, default=0.05)
+    parser.add_argument("--lambda-taskL", type=float, default=1.0)
+    parser.add_argument("--task-loss-fg-only", action="store_true")
+    parser.add_argument("--alpha-kd", type=float, default=1.0)
+    parser.add_argument("--alpha-s-rec", type=float, default=0.1)
+    parser.add_argument("--alpha-sep", type=float, default=0.05)
+    parser.add_argument("--lambda-reach", type=float, default=1.0)
+    parser.add_argument("--lambda-match-inner", type=float, default=1.0)
+    parser.add_argument("--lambda-rank-inner", type=float, default=1.0)
+    parser.add_argument("--delta", type=float, default=0.2)
+    parser.add_argument("--reach-rank-mode", choices=("softplus", "hinge"), default="softplus")
+    parser.add_argument("--reach-input-mode", choices=("adapter", "raw"), default="adapter")
+    parser.add_argument("--rank-d-neg-cap", type=float, default=4.0)
+    parser.add_argument("--lambda-anti-collapse", type=float, default=0.0)
+    parser.add_argument("--anti-collapse-floor", type=float, default=0.0)
+    parser.add_argument("--use-fg-mask-for-reach", action="store_true")
+    parser.add_argument("--use-fg-mask-for-rec", action="store_true")
+    parser.add_argument("--use-mask", action="store_true")
+
+    parser.add_argument("--student-detect-mode", choices=("fused", "mimic", "raw", "recon"), default="raw")
+    parser.add_argument("--student-branch-mode", choices=("split", "raw", "single_proj", "residual"), default="split")
+    parser.add_argument("--student-z-bottleneck-ratio", type=float, default=0.25)
+    parser.add_argument("--teacher-feature-mode", choices=("decomposed", "raw", "projected_raw"), default="decomposed")
+    parser.add_argument("--teacher-branch-mode", choices=("decomposed", "residual"), default="decomposed")
+    parser.add_argument("--teacher-z-bottleneck-ratio", type=float, default=0.25)
+    parser.add_argument("--kd-mechanism", choices=("mse", "contrastive", "hybrid"), default="mse")
+    parser.add_argument("--contrastive-temperature", type=float, default=0.20)
+
+    parser.add_argument("--kd-weight-mode", choices=("none", "teacher_task_conf", "reachability_gap"), default="none")
+    parser.add_argument("--kd-weight-power", type=float, default=1.0)
+    parser.add_argument("--kd-aggregation-mode", choices=("token", "score_weighted", "topk"), default="token")
+    parser.add_argument("--kd-topk-ratio", type=float, default=0.5)
+    parser.add_argument("--kd-calibration-mode", choices=("none", "affine", "norm_affine"), default="none")
+
+    parser.add_argument("--residual-aux-mode", choices=("none", "fg", "energy", "object_energy"), default="energy")
+    parser.add_argument("--lambda-residual-aux", type=float, default=0.25)
+    parser.add_argument("--energy-bg-weight", type=float, default=1.0)
+    parser.add_argument("--energy-margin", type=float, default=0.2)
+    parser.add_argument("--teacher-private-aux-mode", choices=("none", "energy", "object_energy"), default="energy")
+    parser.add_argument("--lambda-teacher-private-aux", type=float, default=0.25)
+    parser.add_argument("--teacher-private-bg-weight", type=float, default=1.0)
+    parser.add_argument("--teacher-private-margin", type=float, default=0.2)
+    parser.add_argument("--unlearnable-hidden-ratio", type=float, default=1.0)
+    parser.add_argument("--instance-energy-radius", type=int, default=1)
+
+    parser.add_argument("--mask-train-mode", choices=("none", "mask_only", "joint"), default="none")
+    parser.add_argument("--mask-target-mode", choices=("none", "teacher_conf", "reach_gap"), default="none")
+    parser.add_argument("--lambda-mask-target", type=float, default=0.0)
+    parser.add_argument("--lambda-mask-sparse", type=float, default=0.0)
+    parser.add_argument("--lambda-mask-smooth", type=float, default=0.0)
+    parser.add_argument("--teacher-target-mode", choices=("static", "ema"), default="static")
+    parser.add_argument("--teacher-ema-momentum", type=float, default=0.99)
+
+    parser.add_argument(
+        "--comparison-kd-profile",
+        choices=("none", "fgd", "mgd", "ld", "crosskd", "c2kd", "mmanet"),
+        default="none",
+        help=(
+            "Portable comparison KD profile for OGSOD HBB. "
+            "fgd/mgd/ld/crosskd are generic detector KD transfers; "
+            "c2kd/mmanet are cross-modal/incomplete-modality transfers."
+        ),
+    )
+    parser.add_argument("--profile-kd-weight", type=float, default=1.0)
+    parser.add_argument(
+        "--profile-kd-replace-base",
+        action="store_true",
+        help="Use the selected comparison profile instead of the base feature-KD term inside kd_loss.",
+    )
+    parser.add_argument("--fgd-bg-weight", type=float, default=0.25)
+    parser.add_argument("--fgd-relation-weight", type=float, default=0.1)
+    parser.add_argument("--mgd-mask-ratio", type=float, default=0.5)
+    parser.add_argument("--crosskd-temperature", type=float, default=2.0)
+    parser.add_argument("--crosskd-pred-weight", type=float, default=1.0)
+    parser.add_argument("--crosskd-feat-weight", type=float, default=0.25)
+    parser.add_argument("--crosskd-teacher-conf-threshold", type=float, default=0.25)
+    parser.add_argument("--c2kd-selection-threshold", type=float, default=0.25)
+    parser.add_argument("--c2kd-teacher-conf-threshold", type=float, default=0.3)
+    parser.add_argument("--mmanet-relation-margin", type=float, default=0.2)
+    parser.add_argument("--mmanet-max-tokens", type=int, default=512)
+
+    parser.add_argument("--c-weak-nrrl-scale", type=float, default=0.0)
+    parser.add_argument("--c-weak-nrrl-detach-student", action="store_true")
+    parser.add_argument("--reach-c-mode", choices=("none", "rank", "weight"), default="none")
+    parser.add_argument("--lambda-reach-c", type=float, default=0.0)
+    parser.add_argument("--b-reset-student-from-scratch", action="store_true")
+    parser.add_argument("--force-student-rec", action="store_true")
+
+    add_common_detector_train_overrides(parser)
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+    teacher_weights = require_existing_file(args.teacher_weights, "--teacher-weights")
+    model = YOLO(args.model)
+    phase_detect_mode = None if args.phase_detect_mode == "auto" else args.phase_detect_mode
+    train_kwargs = dict(
+        trainer=ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer,
+        phase=args.phase,
+        phase_detect_mode=phase_detect_mode,
+        det_loss_scale=args.det_loss_scale,
+        phase_min_epochs=args.phase_min_epochs,
+        phase_stop_metric=args.phase_stop_metric,
+        strict_batch_size=args.strict_batch_size,
+        data=str(args.data.resolve()),
+        teacher_data=str(args.teacher_data.resolve()),
+        teacher_weights=teacher_weights,
+        imgsz=args.imgsz,
+        epochs=args.epochs,
+        batch=args.batch,
+        workers=args.workers,
+        device=args.device,
+        cache=args.cache,
+        patience=args.patience,
+        fraction=args.fraction,
+        project=str(args.project.resolve()),
+        name=args.name,
+        exist_ok=args.exist_ok,
+        validate_before_train=args.validate_before_train,
+        lambda_rec=args.lambda_rec,
+        lambda_sep=args.lambda_sep,
+        lambda_taskL=args.lambda_taskL,
+        task_loss_fg_only=args.task_loss_fg_only,
+        alpha_kd=args.alpha_kd,
+        alpha_s_rec=args.alpha_s_rec,
+        alpha_sep=args.alpha_sep,
+        lambda_reach=args.lambda_reach,
+        lambda_match_inner=args.lambda_match_inner,
+        lambda_rank_inner=args.lambda_rank_inner,
+        delta=args.delta,
+        use_soft_rank=(args.reach_rank_mode == "softplus"),
+        rank_d_neg_cap=args.rank_d_neg_cap,
+        lambda_anti_collapse=args.lambda_anti_collapse,
+        anti_collapse_floor=args.anti_collapse_floor,
+        reach_input_mode=args.reach_input_mode,
+        use_fg_mask_for_reach=args.use_fg_mask_for_reach,
+        use_fg_mask_for_rec=args.use_fg_mask_for_rec,
+        reach_target_mode=args.reach_target_mode,
+        kd_target_mode=args.kd_target_mode,
+        use_mask=args.use_mask,
+        student_detect_mode=args.student_detect_mode,
+        student_branch_mode=args.student_branch_mode,
+        student_z_bottleneck_ratio=args.student_z_bottleneck_ratio,
+        teacher_feature_mode=args.teacher_feature_mode,
+        teacher_branch_mode=args.teacher_branch_mode,
+        teacher_z_bottleneck_ratio=args.teacher_z_bottleneck_ratio,
+        kd_mechanism=args.kd_mechanism,
+        contrastive_temperature=args.contrastive_temperature,
+        kd_weight_mode=args.kd_weight_mode,
+        kd_weight_power=args.kd_weight_power,
+        kd_aggregation_mode=args.kd_aggregation_mode,
+        kd_topk_ratio=args.kd_topk_ratio,
+        kd_calibration_mode=args.kd_calibration_mode,
+        residual_aux_mode=args.residual_aux_mode,
+        lambda_residual_aux=args.lambda_residual_aux,
+        energy_bg_weight=args.energy_bg_weight,
+        energy_margin=args.energy_margin,
+        teacher_private_aux_mode=args.teacher_private_aux_mode,
+        lambda_teacher_private_aux=args.lambda_teacher_private_aux,
+        teacher_private_bg_weight=args.teacher_private_bg_weight,
+        teacher_private_margin=args.teacher_private_margin,
+        unlearnable_hidden_ratio=args.unlearnable_hidden_ratio,
+        instance_energy_radius=args.instance_energy_radius,
+        mask_train_mode=args.mask_train_mode,
+        mask_target_mode=args.mask_target_mode,
+        lambda_mask_target=args.lambda_mask_target,
+        lambda_mask_sparse=args.lambda_mask_sparse,
+        lambda_mask_smooth=args.lambda_mask_smooth,
+        teacher_target_mode=args.teacher_target_mode,
+        teacher_ema_momentum=args.teacher_ema_momentum,
+        comparison_kd_profile=args.comparison_kd_profile,
+        profile_kd_weight=args.profile_kd_weight,
+        profile_kd_replace_base=int(bool(args.profile_kd_replace_base)),
+        fgd_bg_weight=args.fgd_bg_weight,
+        fgd_relation_weight=args.fgd_relation_weight,
+        mgd_mask_ratio=args.mgd_mask_ratio,
+        crosskd_temperature=args.crosskd_temperature,
+        crosskd_pred_weight=args.crosskd_pred_weight,
+        crosskd_feat_weight=args.crosskd_feat_weight,
+        crosskd_teacher_conf_threshold=args.crosskd_teacher_conf_threshold,
+        c2kd_selection_threshold=args.c2kd_selection_threshold,
+        c2kd_teacher_conf_threshold=args.c2kd_teacher_conf_threshold,
+        mmanet_relation_margin=args.mmanet_relation_margin,
+        mmanet_max_tokens=args.mmanet_max_tokens,
+        c_weak_nrrl_scale=args.c_weak_nrrl_scale,
+        c_weak_nrrl_detach_student=args.c_weak_nrrl_detach_student,
+        reach_c_mode=args.reach_c_mode,
+        lambda_reach_c=args.lambda_reach_c,
+        b_reset_student_from_scratch=args.b_reset_student_from_scratch,
+        force_student_rec=int(bool(args.force_student_rec)),
+    )
+    train_kwargs.update(collect_common_detector_train_overrides(args))
+    model.train(**train_kwargs)
+
+
+if __name__ == "__main__":
+    main()
