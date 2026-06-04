@@ -1,0 +1,8 @@
+train: /home/xmu/djd/ladd/data/OGSOD-1.0/rgb/images/train
+val: /home/xmu/djd/ladd/data/OGSOD-1.0/rgb/images/test
+test: /home/xmu/djd/ladd/data/OGSOD-1.0/rgb/images/test
+nc: 3
+names:
+  0: bridge
+  1: harbor
+  2: storage_tank

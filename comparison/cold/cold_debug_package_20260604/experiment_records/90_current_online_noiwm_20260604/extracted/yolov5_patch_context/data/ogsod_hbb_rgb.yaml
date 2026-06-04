@@ -1,0 +1,8 @@
+train: /mnt/dataY/ydf/projects/LADD_ref/data/ogsod_public_prepared/hbb/rgb/images/train
+val: /mnt/dataY/ydf/projects/LADD_ref/data/ogsod_public_prepared/hbb/rgb/images/test
+test: /mnt/dataY/ydf/projects/LADD_ref/data/ogsod_public_prepared/hbb/rgb/images/test
+nc: 3
+names:
+  0: bridge
+  1: harbor
+  2: storage_tank

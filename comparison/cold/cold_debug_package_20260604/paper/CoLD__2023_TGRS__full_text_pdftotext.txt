@@ -1,0 +1,1455 @@
+IEEE TRANSACTIONS ON GEOSCIENCE AND REMOTE SENSING, VOL. 61, 2023
+
+5211314
+
+Category-Oriented Localization Distillation for SAR
+Object Detection and a Unified Benchmark
+Chao Wang , Rui Ruan , Zhicheng Zhao , Chenglong Li , and Jin Tang
+
+Abstract— Despite much research progress in synthetic
+aperture radar (SAR) object detection, the performance of SAR
+object detection has encountered a bottleneck limited by the
+imaging mechanism of SAR. In this work, we investigate how to
+perform robust SAR object detection by distilling the category
+knowledge from optical images in the training stage. To this end,
+we propose a novel knowledge distillation (KD) method called
+category-oriented localization distillation (CoLD), which employs
+the optical object detection network as the teacher to guide the
+SAR object detection network. To introduce the category prior
+knowledge of the teacher network in the localization knowledge
+transferring, a category-oriented partition module (CPM) is
+designed in CoLD to decouple candidate bounding boxes into
+target and nontarget ones according to the category information
+in optical images. Through box decoupling, the accuracy and
+efficiency of SAR object detection can be significantly improved.
+Moreover, an intersection over union (IoU)-based weighting
+module (IWM) is introduced in CoLD to guide the student
+network focusing more on high-quality candidate boxes by
+adaptively changing the weight of each candidate bounding box
+based on the corresponding IoU score in the teacher network.
+In addition, a unified benchmark dataset is created for the
+evaluation of optical information-guided SAR object detection,
+which consists of 14 665 optical and SAR image pairs in the
+training set and 3666 SAR images in the testing set. Extensive
+experiments on the dataset demonstrate the effectiveness of our
+CoLD against state-of-the-art methods. The dataset is available
+at: https://github.com/mmic-lcl/Datasets-and-benchmark-code.
+Manuscript received 8 January 2023; revised 16 April 2023 and 30 May
+2023; accepted 23 June 2023. Date of publication 30 June 2023; date of
+current version 13 July 2023. This work was supported in part by the Joint
+Funds of the National Natural Science Foundation of China under Grant
+U20B2068, in part by the National Natural Science Foundation of China
+under Grant 62076003, in part by the Natural Science Foundation of Anhui
+Province under Grant 2208085J18 and Grant 2208085QF192, in part by the
+Natural Science Foundation of Anhui Higher Education Institution under
+Grant 2022AH040014, and in part by the University Synergy Innovation
+Program of Anhui Province under Grant GXXT-2022-033. (Corresponding
+authors: Chenglong Li; Rui Ruan.)
+Chao Wang and Jin Tang are with the Anhui Provincial Key
+Laboratory of Multimodal Cognitive Computation, School of Computer
+Science and Technology, Anhui University, Hefei 230601, China (e-mail:
+e21201065@stu.ahu.edu.cn; tangjin@ahu.edu.cn).
+Rui Ruan is with the Anhui Provincial Key Laboratory of Multimodal
+Cognitive Computation, School of Internet, Anhui University, Hefei 230601,
+China (e-mail: ruanrui@ahu.edu.cn).
+Zhicheng Zhao is with the Information Materials and Intelligent Sensing
+Laboratory of Anhui Province, Anhui Provincial Key Laboratory of
+Multimodal Cognitive Computation, School of Artificial Intelligence, Anhui
+University, Hefei 230601, China, and also with the 38th Research Institute,
+China Electronics Technology Group Corporation, Hefei 230088, China
+(e-mail: zhaozhicheng@ahu.edu.cn).
+Chenglong Li is with the Information Materials and Intelligent Sensing
+Laboratory of Anhui Province, Anhui Provincial Key Laboratory of
+Multimodal Cognitive Computation, School of Artificial Intelligence, Anhui
+University, Hefei 230601, China (e-mail: lcl1314@foxmail.com).
+Digital Object Identifier 10.1109/TGRS.2023.3291356
+
+Index Terms— Knowledge distillation (KD), multimodal
+remote sensing datasets, object detection, synthetic aperture
+radar (SAR).
+
+I. I NTRODUCTION
+
+S
+
+YNTHETIC aperture radar (SAR) offers persistency
+and endurability in challenging environments, which are
+widely used in military reconnaissance, exploration and guidance [1], [2], such as recognizing significant objects including
+bridges, harbors and oil tanks. The imaging mechanisms of
+SAR sensors and optical sensors are fundamentally different.
+SAR generates images by actively illuminating the ground
+objects with radio waves and receiving the backscattering
+energy formed by each independent scattering unit of the
+corresponding object. Thus, SAR images can provide more
+valuable information than optical images when cloud cover
+obstructs objects. But, the pixel value in the SAR image
+represents how much radar energy is reflected by the sensor,
+which results in the boundaries of ground objects having poor
+continuity and integrity. Taking the oil tank in Fig. 1 as an
+example, a severe substantial scattering interference exists
+between the object and its background, which is difficult to
+distinguish even for experts. Therefore, SAR object detection
+still continues to encounter substantial obstacles.
+In recent years, SAR object detection methods [3], [4] have
+significantly improved performance through convolutional
+neural networks (CNNs) to extract more discriminative
+features and richer semantic information from SAR images.
+Despite the excellent performance of CNNs in computer
+vision tasks, their ability to model relationships between
+samples is limited, and they cannot effectively extract and
+represent sequential properties of spectral features. Therefore,
+Hong et al. propose a new minibatch graph convolutional
+networks (miniGCN) [5] and a new backbone network
+structure (SpectralFormer) [6], to improve the model’s
+performance. The miniGCN can be trained in small batches
+and attempts to find better and more robust local optima.
+SpectralFormer reduces the loss of valuable information during
+hierarchical propagation to better represent the sequential
+properties of spectral features. In particular, ORSIm [7]
+and UIU-Net [8] integrate multichannel feature extraction,
+fast image pyramid matching and enhancement strategies,
+and learn the features that effectively enhance global and
+local contrast information. For SAR images, Du et al. [9]
+embed a multiscale feature attention module (MFAM) in
+the network to achieve a better detection performance in
+
+1558-0644 © 2023 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.
+See https://www.ieee.org/publications/rights/index.html for more information.
+Authorized licensed use limited to: Tsinghua University. Downloaded on March 24,2026 at 08:12:24 UTC from IEEE Xplore. Restrictions apply.
+
+5211314
+
+IEEE TRANSACTIONS ON GEOSCIENCE AND REMOTE SENSING, VOL. 61, 2023
+
+Fig. 1. Visualization results of the same regions in optical and SAR image
+pairs. There are correlation and complementary information between SAR and
+optical images. The methods based on multimodal feature fusion require pairs
+of images in both the training and inference stages, which greatly limits the
+application scene. Our proposed CoLD employs the optical object detection
+network as the teacher to guide the SAR object detection network. In this
+way, the knowledge of the optical object detection network is well transferred
+and only the SAR images are required in the inference stage. It is obvious that
+the proposed CoLD can extract more discriminative features for the objects
+in red dashed boxes with guidance of optical images.
+
+SAR images under complex scenes. Cui et al. [10] densely
+connect the convolutional block attention module (CBAM)
+to each concatenated feature map to obtain rich features
+containing resolution and semantic information for multiscale
+ship detection. However, due to the limitations of the SAR
+imaging mechanism, the performance of SAR object detection
+meets a bottleneck. As shown in the first row of Fig. 1, the
+object detection methods have the difficulty in extracting more
+discriminative features from the SAR image, which leads to
+unsatisfactory detection results. With the rapid development
+of satellite technology, images of the same area captured by
+different types of satellites are available. Hou and Zheng [11]
+start to generate corresponding optical images by generative
+adversarial networks and then use optical images of the same
+region to compensate for the shortcomings of SAR object
+detection methods. These methods require paired data for
+inference, however paired data are difficult to obtain at the
+same time in real-world scenarios.
+Cross-modal knowledge distillation (KD) is an effective
+solution, which requires only SAR images in the inference
+stage. Wang et al. [12] extract features directly from the
+different modalities for distillation, where features extracted
+from the teacher network are used to supervise the student
+network. Since there is a big gap between optical images
+and SAR images, Zhang et al. [13] extract knowledge of
+the optical branch by aligning the activation distributions of
+the two modalities. Zheng et al. [14] propose a localization
+distillation method to transfer location knowledge. However,
+the coupled Kullback–Leibler (KL) limits the efficiency
+of transferring candidate bounding boxes and categories.
+Although Zhao et al. [15] decouple KL into two parts
+to efficiently transfer location knowledge, it entails a
+
+high-computational cost. Cross-modal KD of optical and SAR
+images is a very promising task.
+However, due to sensor limitations, it is difficult to acquire
+simultaneous optical and SAR data in realistic scenarios.
+In particular, there is a lack of high-quality and wellannotated public datasets. To this end, we aim to achieve
+robust SAR object detection by extracting category knowledge
+from optical images and build a unified benchmark dataset
+for the evaluation of optical information-guided SAR object
+detection. To effectively leverage the category prior knowledge
+in optical images, we propose a category-oriented localization
+distillation (CoLD) method, which improves the performance
+of SAR object detection by distilling the category knowledge
+from optical images. In specific, we design a categoryoriented partition module (CPM) that separates candidate
+bounding boxes into target and nontarget ones using optical
+image category information. CPM can generate candidate
+bounding boxes with rich category knowledge while reducing
+the expensive computational costs of transferring localization
+knowledge. Considering that the quality of candidate bounding
+boxes is greatly different, we propose an intersection over
+union (IoU)-based weighting module (IWM) that adaptively
+guides the student network to focus on high-quality candidate
+boxes by the corresponding IoU scores in the teacher network.
+Our dataset, called optical image guided SAR image object
+detection (OGSOD-1.0), is a dataset for optical imageguided SAR image multiobject detection, where the training
+set consists of 14 665 optical and SAR image pairs and
+the testing set consists of 3666 SAR images. Extensive
+experiments on the dataset OGSOD-1.0 show that our method
+can effectively improve the performance of SAR detectors
+with CoLD.
+In summary, the contributions of this article can be
+summarized as follows.
+1) We propose a novel cross-modal localization distillation
+method called CoLD, which mines and leverages
+category prior knowledge to empower the student
+network only in the training stage. In the inference stage,
+we only use SAR images, this manner greatly extends
+the application scenario.
+2) To embed category prior information efficiently,
+we design a CPM to obtain informative localization
+knowledge. The module can reduce the expensive
+computational costs of transferring localization knowledge while introducing category prior knowledge.
+Furthermore, to improve the efficiency of localization
+distillation, we design an IWM. This module can
+guide the network to focus on high-quality localization
+knowledge in an adaptive manner.
+3) To the best of our knowledge, the OGSOD-1.0 is
+the first multicategory and well-annotated SAR-Optical
+benchmark dataset for optical image-guided SAR image
+in multiobject detection tasks.
+4) Extensive experiments on our proposed dataset are
+carried out to demonstrate the effectiveness of the
+proposed CoLD. Compared with existing cross-modal
+and SAR object detection methods, the results show
+that our method can effectively exploit the knowledge
+
+Authorized licensed use limited to: Tsinghua University. Downloaded on March 24,2026 at 08:12:24 UTC from IEEE Xplore. Restrictions apply.
+
+WANG et al.: CoLD FOR SAR OBJECT DETECTION AND A UNIFIED BENCHMARK
+
+in optical images to improve the performance of SAR
+object detection.
+II. R ELATED W ORK
+In this section, we review the recent progress of SAR object
+detection methods, multimodal object detection methods, and
+cross-modal KD methods.
+A. SAR Object Detection Methods
+Traditional method constant false alarm rate (CFAR) [16]
+relies mainly on hand-crafted features based on object
+structure and scattering. CFAR method works well in simple
+situations. However, when the practical scenarios are more
+complex, it will be difficult to select a helpful model for clutter
+statistical distribution. Once the clutter statistical distribution [17] model is not appropriate, performance will degrade.
+Zhang and Liu [18] use enhanced directional smoothing (EDS)
+to remove speckle noise from SAR images to improve detection performance. Traditional SAR object detection methods
+often rely on handcrafted features, and the implementation
+process is complex. It is difficult to achieve good detection
+results in complex scenes, and its generalization ability
+is poor.
+With the rapid advancement of deep learning theory,
+CNNs have been successfully applied to image classification
+and object detection. Deep feature descriptors obtained
+by CNN have gradually replaced traditional handcrafted
+descriptors. Numerous researchers [19], [20] advance many
+object detectors using the CNN framework. The raw images
+could be tested as inputs to generate desired prediction
+results as long as the network is trained with enough images
+and labels. When the scene becomes more complex, objects
+in SAR images are disturbed by noise and clutter in the
+background. It becomes more difficult to locate and classify.
+To solve this problem, Wu et al. [21] map the features of the
+image to the interaction space to learn the relationship between
+the ship and the background.
+These methods mainly extract the texture and structural
+features, but the weak representation of this information in
+SAR images makes SAR object detection methods hit a
+bottleneck.
+B. Multimodal Object Detection Methods
+In recent years, with the rapid development of satellite
+technology, there exists complementarity among the information obtained by different satellites in the same area.
+Therefore, Hong et al. propose a shared and specific feature
+learning (S2FL) [22] model and a general multimodal deep
+learning (MDL) [23] framework. S2FL can decompose the
+heterogeneous data sources of remote sensing data into
+multishared and multispecific components, thereby enabling
+more effective fusion of multimodal information. Domain
+adaptation-based multi-source change detection network
+(DA-MSCDNet) [24] employs feature-level transformation
+to align inconsistent deep feature spaces in heterogeneous
+data to enhance the interaction between optical and SAR
+
+5211314
+
+image features. Gao et al. [25] construct a plug-and-play
+interactive attention sum-max fusion module (IASM) to
+interact with features from multimodal images. However, there
+are significant gaps between SAR and optical images, and
+it is very difficult to achieve strict feature alignment due to
+the imaging mechanism. Hence, Shi et al. [26] propose an
+unsupervised domain adaptation (UDA) framework based on
+progressive transfer for SAR ship detection by transferring
+knowledge from the optical domain to the SAR domain.
+These methods usually require pairs of SAR-Optical data for
+inference, which are difficult to obtain simultaneously in realworld scenarios.
+C. Cross-Modal Knowledge Distillation Methods
+Early KD [27] is used for image classification and
+produces impressive results. Chen et al. [28] create a fastto-execute student model to mimic a large teacher network.
+For object detection, knowledge transfer is more challenging
+than classification tasks. Early method [29] uses the features
+of the objects and their context as the distillation objective.
+Guo et al. [30] achieves better distillation performance by
+adjusting the weights of different locations of the feature
+maps. The work of [31] shows that the original Logit-based
+model is less efficient for object detection with low efficiency
+because it can only transfer some information associated
+with classification while ignoring other information associated with localization. Hence, Zheng et al. [14] introduce a
+localization distillation method, and proposes to separately
+transfer classification and localization knowledge based on
+localization regions accordingly, thereby improving distillation
+performance greatly. However, these methods usually focus
+on single-modality data and cannot adapt well to cross-modal
+object detection.
+Recently, KD has been used for cross-modal learning. The
+aim of cross-modal KD is to transfer knowledge between
+different modalities. This approach relies more on paired data
+and extracts features from the same location directly from
+different data for distillation, where the features extracted
+by the teacher network are used to supervise the student
+network. This distillation method works well for a variety
+of cross-modal tasks, such as between optical and SAR
+images object detection [32], depth and RGB images object
+detection [33]. State-of-the-art distillation methods are mainly
+based on distilling deep features from intermediate layers,
+but the significance of logit distillation is greatly overlooked.
+Meanwhile, as the semantic knowledge and the localization
+are mixed on the feature maps, it is hard to tell whether
+it is beneficial to the performance to transfer the hybrid
+knowledge for each location. Our task is to use optical
+images to complement SAR images for object detection,
+thus logit mimicking-based distillation is more effective.
+Zheng et al. [14] prove that logit mimicking can be better than
+feature imitation. Zhao et al. [15] reformulate the classical
+KD loss into two parts, target class KD (TCKD) and nontarget
+class KD (NCKD), and reveal that the coupled formulation
+of KD limits the effectiveness and flexibility of knowledge
+transfer.
+
+Authorized licensed use limited to: Tsinghua University. Downloaded on March 24,2026 at 08:12:24 UTC from IEEE Xplore. Restrictions apply.
+
+5211314
+
+IEEE TRANSACTIONS ON GEOSCIENCE AND REMOTE SENSING, VOL. 61, 2023
+
+Fig. 2. Overall framework of our CoLD, where TCB denotes target category bounding boxes and NCB denotes nontarget category bounding boxes. A prior
+knowledge of the optical images is introduced using a specially designed CPM, and candidate bounding boxes with rich knowledge are obtained. An IWM
+then adaptively focuses on high-quality candidate bounding boxes in the teacher network based on the corresponding IoU score. Finally, only SAR images
+are input for inference. (a) CPM. (b) IWM.
+
+III. P ROPOSED M ETHOD
+The overall framework of CoLD is discussed in
+Section III-A. The proposed CPM and IWM are discussed
+in Sections III-B and III-C, respectively. The loss function of
+CoLD is discussed in Section III-D.
+A. Overall Framework
+Optical images are rich in category prior knowledge and
+it is critical to make full use of this knowledge to aid SAR
+object detection. Considering the great progress made by
+YOLOv5 [34] in the field of image object detection, we select
+the model as our baseline. Based on YOLOv5, we propose a
+novel CoLD to efficiently leverage different knowledge from
+optical images for SAR image object detection. CoLD uses
+optical images to train the teacher network and SAR images
+to train the student network, and only use SAR images to
+inference. As shown in Fig. 2, our CoLD mainly contains two
+parts: CPM and IWM.
+First, to introduce the category prior knowledge of the
+teacher network in the localization knowledge transfer,
+we design the CPM. As shown in Fig. 2(a), the CPM is the
+core component of our CoLD. The CPM divides candidate
+bounding boxes into target and nontarget categories based on
+the optical image category. We then utilize the probability
+distribution representation of the bounding box to indicate the
+object’s location. Second, to help the student network focus
+on high-quality bounding boxes, an IWM is designed that
+adaptively modifies the weight of each candidate bounding box
+depending on the matching IoU score in the teacher network.
+The structure of the IWM is shown in Fig. 2(b).
+
+B. Category-Oriented Partition Module
+Existing localization distillation methods mostly use KLDivergence loss, which generates coupled bounding boxes.
+However, coupled bounding boxes can severely suppress
+knowledge transfer among nontarget boxes. Decoupling the
+bounding boxes directly can lead to expensive computational
+costs and make KD much less effective. And these methods
+do not make full use of category prior knowledge in optical
+images, limiting the performance of object detection.
+To embed category prior information and reduce the
+computational costs of transferring localization knowledge,
+we design a CPM module. The CPM generates decoupled
+bounding box distributions by classifying bounding boxes into
+target bounding boxes and nontarget bounding boxes based
+on the category of the optical image. To make effective use
+of logit mimicking for KD, we convert the bounding box
+into a probability distribution [35] to better describe object
+localization information. As shown in Fig. 2(a), the CPM not
+only efficiently introduces prior knowledge of the category
+in the optical image but also improves the computational
+efficiency of transferring localization knowledge. The CPM
+will be discussed in detail in Sections III-B1 and III-B2.
+1) Probability Distribution of the Bounding boxes: In
+conventional representations, there are three kinds of bounding
+boxes: [x, y, w, h], [xmin , ymin , xmax , ymax ], and [t, b, l, r ].
+They employ the Dirac delta distribution solely for groundtruth (GT) locations, which cannot account for the ambiguity
+in bounding boxes. We represent the bounding box with
+a probability distribution that appropriately captures the
+uncertainty in its location. Assume y ∈ B is an edge of a
+bounding box. The detection model may provide us with the
+
+Authorized licensed use limited to: Tsinghua University. Downloaded on March 24,2026 at 08:12:24 UTC from IEEE Xplore. Restrictions apply.
+
+WANG et al.: CoLD FOR SAR OBJECT DETECTION AND A UNIFIED BENCHMARK
+
+expected value yb
+Z yn
+yb =
+
+x p(x)d x
+
+(1)
+
+y0
+
+where x is the regression coordinate and p(x) is the
+corresponding probability. Given the range of the label y
+with minimum y0 and maximum yn (y0 ⩽ b
+y ⩽ yn , n ∈ N ),
+by quantizing the continuous regression range [y0 , yn ]
+into the uniform discretized variable [y0 , y1 , . . . , yn ] with
+nP subintervals. Given the discrete distribution property
+n
+y can be
+i=0 p(yi ) = 1, the estimated regression value b
+represented as
+yb =
+
+n
+X
+
+p(yi )yi .
+
+As reflected by (8), the KD loss is reformulated into
+a weighted sum of two terms. KL(b T ∥b S ) represents the
+similarity between the teacher’s and the student’s binary
+probabilities of the bounding box for the target. Thus,
+we name it target probability distribution (TPD). Meanwhile,
+KL( p̂ T ∥ p̂ S ) represents the similarity between the teacher’s and
+the student’s probabilities among bounding boxes for nontarget. We name it nontarget probability distribution (NPD).
+Obviously, TPD can significantly affect NPD because of the
+presence of (1 − pt ). To transfer the localization knowledge
+and solve the bounding boxes coupling, we introduce a
+hyperparameter α to replace (1 − pt ). We can obtain the
+following calculation:
+
+(2)
+
+i=0
+
+Lkd =
+
+Thus, p(x) can be easily implemented through a Softmax
+layer consisting of n + 1 units.
+2) Decoupled Bounding Boxes: The probability distribution
+consisting of all predicted values is p = [ p(y0 ), p(y1 ),
+. . . , p(yt ), . . . , p(yn )]. We can obtain the following equation:
+p(yt )
+pt = Pn
+p(y j )
+Pnj=0
+i=0,i̸=t p(yi )
+p\t = Pn
+j=0 p(y j )
+
+5211314
+
+(3)
+(4)
+
+where pt represents target probability and p\t represents
+all the other nontarget probability. Meanwhile, we declare
+p̂i to independently model probabilities among nontarget
+p̂ = [ p0 , . . . , pt−1 , pt+1 , . . . , pn ]. Each element is calculated
+as follows:
+p(yi )
+p̂i = Pn
+.
+(5)
+j=0, j̸=t p(y j )
+The traditional KD method uses KL-Divergence as the loss
+function that can be written as
+
+KD = KL p T ∥ p S
+ T
+ T
+N
+X
+p
+pt
+T
+T
++
+pi log iS
+(6)
+= pt log
+ptS
+pi
+i=0,i̸=t
+where T is the teacher and S is the student. Comparing (3)
+with (4), we can find pi = p̂i p\t , so we can rewrite (6) as
+follows:
+!
+ T
+N
+T T
+X
+p̂
+p
+p
+i
+\t
+KD = ptT log tS +
+p\tT p̂iT log
+pt
+p̂iS p\tS
+i=0,i̸=t
+!
+ T
+p\tT
+p
+= ptT log tS + p\tT log
+pt
+p\tS
+|
+{z
+}
+KL(b T ∥b S )
+ T
+N
+N
+X
+X
+p̂
+p̂iT = 1. (7)
++ p\tT
+p̂iT log iS ,
+p̂
+i
+i=0,i̸=t
+i=0,i̸=t
+|
+{z
+}
+KL( p̂ tT ∥ p̂ tS )
+Special, pt + p\t = 1. Equation (7) can be rewritten as
+
+
+
+KD = KL b T ∥b S + 1 − ptT KL p̂t T ∥ p̂t S .
+(8)
+
+N
+X
+
+KL p T ∥ p S
+
+
+
+t=0
+
+=
+
+N
+X
+
+
+
+
+KL b T ∥b S + αKL p̂ tT ∥ p̂ tS
+
+(9)
+
+t=0
+
+where Lkd denotes the KD loss after decoupling.
+Compared to KD, this strategy clearly requires N times
+more computation. The greater N (in experiments, N is
+often set to 1000), the more calculations. The above method
+(166.76 h) takes about four times longer to train than KD
+(42.12 h) and LD (41.50 h), which significantly increases
+training time and weakening the benefit of logit distillation.
+To solve this problem, we propose a method to partition the
+bounding boxes according to the category prior knowledge
+of the teacher network. As shown in Fig. 2(a), we employ
+the one-hot method to convert classification predictions into
+hard labels in the classification branch of the model. The
+regression branch is then guided by this hard label to split
+the bounding boxes. Finally, we use Softmax(·, τ ) to
+convert the bounding boxes into a probability distribution.
+The probability distribution may provide more valuable
+information when τ > 1. Thus, (9) can be rewritten as follows:
+
+Lkd = KL m T ∥m S
+c
+X
+
+
+
+=
+KL m tT ∥m tS + αKL m̂ t T ∥m̂ t S
+(10)
+t=0
+
+where c indicates the number of categories, m t denotes the set
+of all probability distributions belonging to the tth category,
+and m̂ t denotes the set of all probability distributions with
+category t removed.
+C. IoU-Based Weighting Module
+Since the resolution and imaging mechanism of the two
+modalities is different, the candidate bounding boxes of the
+teacher network are also not accurate. Existing methods tend
+to learn all candidate bounding boxes equally, which results
+in the inference of student networks being affected by lowquality candidate boxes.
+To help the student network focus on high-quality candidate
+bounding boxes, an IWM is designed that adaptively modifies
+the weight of each candidate bounding box depending on the
+matching IoU score in the teacher network. The IWM gives
+
+Authorized licensed use limited to: Tsinghua University. Downloaded on March 24,2026 at 08:12:24 UTC from IEEE Xplore. Restrictions apply.
+
+5211314
+
+IEEE TRANSACTIONS ON GEOSCIENCE AND REMOTE SENSING, VOL. 61, 2023
+
+Fig. 3. Visualization of optical and SAR image pairs in OGSOD-1.0, where bridges, harbors, and oil tanks are indicated by green, blue, and yellow boxes,
+respectively. Despite using static objects for annotation, images from various time periods still include missing objects (e.g., the green dashed box in the SAR
+image), revealing our dataset is more challenging.
+
+higher weights to high-quality candidate bounding boxes. The
+IWM improves the efficiency of localization distillation by
+effectively focusing on high-quality candidate bounding boxes,
+thus robustly improving the performance of student networks.
+As shown in Fig. 2(b), we first calculate the IoU [36] scores
+for the different network layer candidate bounding boxes in the
+teacher network. The IoU score ai of layer i (three network
+layers of YOLOv5 inference, 1 ⩽ i ⩽ 3) is calculated as
+follows:
+
+ai = IoU BiT , B G
+(11)
+where BiT indicates the bounding boxes of layer i of the
+teacher network output, B G indicates GT boxes. Then, the
+IoU score ai is used as the weight of the current candidate
+bounding box to focus on high-quality bounding boxes. The
+final distillation loss is as follows:
+Lkd =
+
+3
+X
+
+ai L kd BiT ∥BiS
+
+
+
+(12)
+
+i=1
+
+where BiT and BiS denote the candidate bounding boxes for
+the teacher and the student network outputs, respectively.
+D. Loss Function
+The inputs of CoLD are optical images and SAR
+images. The optical images are first fed into the teacher
+network and the different category prior knowledge is
+extracted and fed into the CPM. Then, the SAR images are fed
+into the student network. After processing by the CPM, the
+student network generates candidate bounding boxes with rich
+
+knowledge. Finally, the IWM applies an adaptive focusing on
+high-quality knowledge. The entire network is trained using
+online KD (OKD) and the teacher network guides the student
+network as they train. The teacher loss is calculated as follows:
+
+
+LT (21 ) = Lcls C T ∥C G + Lreg B T ∥B G
+
+(13)
+
+where 21 denotes the parameter set of the teacher network,
+C T denotes categories of the teacher network output, and C G
+denotes the corresponding GT. The student loss is calculated
+as follows:
+
+
+
+L S (22 ) = Lcls C T ∥C G + Lreg B T ∥B G + Lkd B T ∥B S
+(14)
+where 22 denotes the parameter set of the student network.
+Here we use complete intersection over union (CIoU) [36]
+since it gives higher priority to the locations closer to the
+object’s center. Rather than simply discarding low-quality
+bounding boxes, the IWM dynamically adjusts the contribution
+of bounding boxes through weighting. Because the missing
+teacher knowledge is not representative of the true distribution
+of the data, which is detrimental to the performance of the
+detector.
+IV. DATASET
+In this section, we will introduce our OGSOD-1.0 dataset
+including existing datasets, dataset construction, and dataset
+challenges.
+
+Authorized licensed use limited to: Tsinghua University. Downloaded on March 24,2026 at 08:12:24 UTC from IEEE Xplore. Restrictions apply.
+
+WANG et al.: CoLD FOR SAR OBJECT DETECTION AND A UNIFIED BENCHMARK
+
+5211314
+
+and SAR image pairs and a test set of 3666 SAR-only
+images, containing over 48 000 instance annotations in total.
+The distributions of instance scales in the OGSOD-1.0 dataset
+are shown in Fig. 4, which shows that although there are
+multiscale objects, most of them are concentrated at smaller
+scales. This indicates that our dataset OGSOD-1.0 has a
+significant challenge.
+C. Dataset Challenges
+
+Fig. 4.
+Statistical distribution of object sizes in OGSOD-1.0. Bridges,
+harbors, and oil tanks are shown in red, blue, and yellow, respectively. LWR
+indicates length-to-width ratio of the object’s bounding box.
+
+A. Existing Datasets
+Zhang et al. [13] construct an oil tank detection dataset
+for the study of optical image-guided SAR image object
+detection. While this dataset contains 3401 pairs of fullpolarized SAR images and corresponding optical images.
+Only 820 pairs of images containing oil tanks are selected
+for labeling. Furthermore, only 18 000+ tank instances are
+labeled. Therefore, we propose a new dataset for optical
+image-guided SAR image object detection tasks.
+B. Dataset Construction
+The SAR images in OGSOD-1.0 are collected from the
+Chinese GaoFen-3 satellite in C-band, Vertical-Vertical (VV)
+and Vertical-Horizontal (VH) polarization modes. These SAR
+images are provided by the 38th Research Institute, China
+Electronics Technology Group Corporation, and the resolution
+of SAR images is 3 m. The optical images are provided by
+Google Earth, and the resolution is 10 m.
+For the training set, aligning moving objects in the images
+is an obstacle due to temporal phase inconsistencies, and this
+can significantly affect the performance of object detection.
+Therefore, we obtain the optical images of the corresponding
+locations on Google Earth with a time difference of less than
+one month according to the latitude, longitude and imaging
+time provided by the SAR images. We map the optical and
+SAR images to the same spatial resolution using the ENVI
+software and then align them. Then, we crop the image pairs
+into 256 × 256 pixel slices. To mitigate the effects of moving
+objects, we annotate static objects, such as bridges, harbors
+and oil tanks. In addition, to increase the diversity of the
+training set, we obtain Michael Schmitt’s consent to extend
+our dataset by selecting an additional 3000 sample pairs from
+the SEN1-2 [37] dataset. Therefore, the training set contains
+14 665 optical and SAR image pairs. Examples of image pairs
+are shown in Fig. 3, these objects are well-identified and
+informative in the optical image, whereas they are difficult
+for a nonexpert to identify in the SAR image.
+To simulate the scenario of lacking simultaneous phase
+data during inference, we construct a test set with 3666 SAR
+images, with the size of 256 × 256 pixel slices. Therefore,
+the OGSOD-1.0 consists of a training set of 14 665 optical
+
+Although the OGSOD-1.0 dataset is manually aligned and
+screened, there are still many challenges. In summary, the
+difficulties in OGSOD-1.0 are mainly divided into three
+aspects.
+1) Due to the different imaging times and imaging
+resolutions of satellites, some spatial transformations
+must be performed during alignment. This can lose some
+of the original information of the data and interfere with
+the extraction of object features. Besides, the presence
+of moving objects can exacerbate this situation.
+2) SAR images have more noise than optical images
+due to the satellite’s different incident angles, imaging
+mechanisms and environmental factors. While using
+optical images to guide SAR image detection often
+introduces clutter noise information to interfere with
+object detection.
+3) The large variation in scale of objects in the dataset
+which contains many small objects. Especially the
+similarity of the background to the objects increases the
+challenge of object detection.
+In addition, we select images with strong background
+noise interference to artificially increase the challenges of our
+dataset.
+V. E XPERIMENTS AND D ISCUSSION
+In this section, the proposed CoLD and other state-of-the-art
+methods are comprehensively evaluated on the OGSOD-1.0
+dataset. First, the implementation details of the CoLD are
+described in Section V-A, and the evaluation metrics are
+described in Section V-B. Then, the effectiveness of our
+CoLD is investigated in Section V-C, ablation experiments
+and visualizations are reported in Section V-D. Finally,
+we compare advanced oriented object detection methods
+in Section V-E.
+A. Implementation Details
+Our method is trained on a platform with an NVIDIA
+RTX 3090 GPU, and the implementation is based on the public
+platform PyTorch [47]. In our proposed CoLD, we generally
+set the batch size to 64, the image size to 256 × 256 and
+the epoch to 400. YOLOv5 is modified to be a two-branch
+cross-modal teacher–student network while ensuring the same
+data enhancement for both optical and SAR images. For the
+teacher network input branch, we consistently use optical
+images. In the training stage, we use optical and SAR images
+to train the optical branch and the SAR branch separately,
+while in the inference stage only the SAR images are input
+for inference. To be consistent with the baseline and other
+SAR object detection methods, we set input image size as
+256 × 256.
+
+Authorized licensed use limited to: Tsinghua University. Downloaded on March 24,2026 at 08:12:24 UTC from IEEE Xplore. Restrictions apply.
+
+5211314
+
+IEEE TRANSACTIONS ON GEOSCIENCE AND REMOTE SENSING, VOL. 61, 2023
+
+TABLE I
+C OMPARISON W ITH THE S TATE - OF - THE -A RT O BJECT D ETECTION M ETHODS ON O UR P ROPOSED OGSOD-1.0 DATASET W ITH SAR I MAGES . C AND S
+D ENOTE C ROSS -M ODAL M ETHODS AND S INGLE -M ODAL M ETHODS , R ESPECTIVELY. HBB D ENOTES H ORIZONTAL B OUNDING B OX
+
+We use a stochastic gradient descent (SGD) optimizer
+with an initial learning rate of 10−2 , a momentum of 0.937,
+and a weight decay of 5 × 10−4 . Then the entire network
+is trained in an end-to-end manner. For data enhancement,
+we have used Mosaic [48] and Mixup [49]. To ensure
+fairness, we set uniform settings for training and inference
+of other hyperparameters, such as temperature τ = 20 in
+SoftMax(·, τ ), α = 2.
+B. Evaluation Metrics
+All models are evaluated with two object detection metrics:
+mean average precision (AP) and AP50
+n
+n Z
+1X
+1X 1
+AP =
+APi =
+Pi (r )dr
+(15)
+n i=0
+n i=0 0
+Z 1
+APi =
+Pi (r )dr
+0
+Z 1
+=
+Precision d(Recall)
+0
+
+
+Z 1
+TP
+TP
+=
+d
+.
+(16)
+TP + FN
+0 TP + FP
+When IoU value between a predicted box and the GT
+meets the predefined threshold, this box is represented as true
+positive (TP). Otherwise, this box is considered as a false
+positive (FP). False negative (FN) means there is a true target,
+but the detector does not find it. Equation (16) indicates that
+AP is the integral of the precision-recall curve (PRC) for each
+category. AP50 computes the mean of all the AP values for all
+categories at IoU = 0.50 in (15). Similarly, AP is the primary
+challenge metric, which can be formulated as the mean at IoU
+= 0.50 : 0.05 : 0.95.
+C. Quantitative and Qualitative Evaluation
+To verify the effectiveness of our CoLD, we conduct
+optical image-guided SAR image object detection experiments
+
+on our proposed OGSOD-1.0 dataset. We report the results
+with nine state-of-the-art SAR object detection methods
+and four cross-modal KD methods, including anchor-based
+models YOLOv3 [39], YOLOv5 [34] and YOLOv7 [45],
+anchor-free models Sparse R-CNN [43], RetinaNet [38],
+adaptive training sample selection (ATSS) [41], representative points (RepPoints) [40], Generalized Focal [42] and
+Object_Box [44], and cross-modal KD methods KD [27],
+decoupled knowledge distillation (DKD) [15], LD [14], and
+general instance (GI) Imitation [46].
+As shown in Table I, our method CoLD achieves an
+improvement of 10.4% and 0.8% with optical image guidance
+compared to SAR object detection methods and cross-modal
+KD methods. Different SAR models vary considerably in
+terms of performance, mainly because some methods are
+not applicable to SAR images. YOLOv5 performs well on
+evaluation metrics among the SAR models due to better
+generalization capabilities of YOLOv5, especially for small
+objects. Among the cross-modal KD methods, KD and DKD
+transfer only class knowledge from optical images, resulting
+in poor accuracy. Localization knowledge is particularly
+important in object detection. Compared to KD and DKD,
+LD and GI Imitation transfer object localization knowledge
+in optical images with better results. LD transfers localization
+knowledge through the probability distribution of the bounding
+box and GI Imitation transfers localization knowledge by
+minimizing the feature similarity of the region of interest.
+By introducing category prior knowledge from optical images
+and leveraging the localization knowledge of the teacher
+network, our CoLD achieves the best performance.
+Our model not only achieves good performance on the
+evaluation metrics AP but also gains significant improvements
+in perceptual quality. As shown in Fig. 5, our CoLD can
+obtain more guidance information from different knowledge
+in the optical images, and reduce missed and our model
+achieves good performance detection rates. Especially for
+small objects, our method achieves a huge improvement in
+
+Authorized licensed use limited to: Tsinghua University. Downloaded on March 24,2026 at 08:12:24 UTC from IEEE Xplore. Restrictions apply.
+
+WANG et al.: CoLD FOR SAR OBJECT DETECTION AND A UNIFIED BENCHMARK
+
+5211314
+
+Fig. 5. Cross-modal KD strategies are visually compared. KD and DKD do not employ localization information, which leads to occasionally missed
+detections, while LD improves the results somewhat but falls short of GI Imitation. Our method is more accurate and has fewer missed detections according
+to the inference result. The red and purple boxes indicate false positive and false negative, respectively.
+TABLE II
+T RAINING R ESULTS FOR M IXED DATA , U SING O NLY SAR I MAGES IN THE
+I NFERENCE S TAGE . M IX O PTICAL -SAR R EPRESENTS A M IXTURE OF
+O PTICAL I MAGES AND SAR I MAGES
+
+SAR images. Even with a large amount of clutter noise in
+the SAR images, our model performs well when guided by
+the optical images. By contrast, there are missed detections
+for KD, DKD, and LD, and error detections for KD, DKD,
+LD, and GI Imitation. The major reason for the low accuracy
+of KD and DKD is the localization knowledge in the optical
+image that is ignored and LD fails to consider the coupling of
+bounding boxes. These methods make insufficient use of the
+optical image guidance information, which makes them detect
+unsatisfactory objects. The visualization results illustrate that
+CoLD can obtain more guidance information from the optical
+images and therefore can better detect objects.
+To further confirm the efficacy of our strategy, as shown
+in Fig. 6, we visualize the learning attention map using
+GradCAM. YOLOv5 does not focus effectively on smaller
+bridges and oil tanks, as seen by the visualization results.
+While DKD focuses on the targets more thoroughly, it also
+focuses on a great quantity of background noise. Compared
+with other methods, our CoLD improves object focus and
+reduces background noise, outperforming the feature-based
+method of GI Imitation.
+Compared with cross-modal KD methods, the number of
+parameters of our proposed method is comparable. As shown
+
+in Fig. 7(b), for the training time, KD, DKD, and LD use less
+time but achieve less accuracy, while GI Imitation achieves
+good accuracy with a high training cost. CoLD increases
+a little of training time but achieves the highest accuracy.
+Given the huge improvement in accuracy, the increase in
+the number of parameters and training time is acceptable.
+Our CoLD makes a great trade-off between consumption and
+performance.
+To verify the generality of our method, we have
+implemented our method on Object_Box [44]. As shown in
+Fig. 7(c), our method is effective in improving the performance
+of the student model. In particular, in a multimodal method,
+we must assess if the CoLD’s efficacy is brought about by
+training with mixed data. As shown in Table II, training
+with mixed data does not increase the accuracy of detection.
+It validates that the improvement is not derived from training
+with mixed data but from our method’s efficacy.
+D. Ablation Experiments
+1) Effectiveness of TCLD and NCLD: To validate the
+capability of our designed CPM to mine guidance information,
+we divide all bounding boxes into two parts, each called
+target category localization distillation (TCLD) and nontarget
+category localization distillation (NCLD). As shown in
+Table III, TCLD gets an improvement of 3.9% (from 46.3%
+to 50.2%) in AP, and NCLD gets an improvement of
+10.0% (from 46.3% to 56.3%) in AP. Intuitively, TCLD
+concentrates on the knowledge related to the target category
+since the corresponding loss function considers only binary
+probabilities. Conversely, NCLD focuses on the knowledge
+among nontarget categories. We notice that singly applying
+
+Authorized licensed use limited to: Tsinghua University. Downloaded on March 24,2026 at 08:12:24 UTC from IEEE Xplore. Restrictions apply.
+
+5211314
+
+IEEE TRANSACTIONS ON GEOSCIENCE AND REMOTE SENSING, VOL. 61, 2023
+
+Fig. 6. Visualization of the learning attention map using GradCAM. The results show that our method allows for a better focus on the position of the object
+and has very little background noise. The SAR object detection method cannot effectively focus on the location of the oil tanks without the guidance of
+optical images. Cross-modal methods do not take full advantage of the information in optical images, resulting in the introduction of more background noise.
+
+Fig. 7. (a) Performance comparison of using different IoUs (e.g., IoU, CIoU, DIoU, or GIoU) in IWM. (b) Training time (h) versus accuracy (AP50 ) on
+OGSOD-1.0. The figure shows the accuracy and training time for each method. (c) Performance of CoLD in different methods. The results show that our
+method is strongly generalizable. (d) Performance comparison between online and offline distillation. The results show that online distillation allows the
+network to converge faster and gives lower loss values.
+
+TCLD could be less helpful for the student. However,
+the distillation performance of NCLD is comparable and
+even better than the LD. According to (8), TCLD transfers
+knowledge via the binary classification task, which could be
+related to the difficulty of the sample. For instance, a training
+sample with pt = 0.95 could be easier for the student to learn
+compared with another one with pt = 0.63. Therefore, we use
+α to replace 1 − pt , giving a 10.4% (from 46.3% to 56.7%)
+improvement to the model.
+2) Effectiveness of IWM, OKD, and CPM: To research the
+performance differences of different IoU in IWM modules,
+we use different IoU methods [e.g., CIoU, distance intersection
+over union (DIoU), or generalized intersection over union
+(GIoU)] to weight the distillation loss. The results are shown
+in Fig. 7(a). Compared to the baseline, our proposed IWM
+achieves the highest improvement with the introduction of
+CIoU. This result proves that there is low-quality knowledge
+in the teacher network. Therefore, we need to use a strategy
+to focus on high-quality knowledge.
+
+TABLE III
+A BLATION E XPERIMENTS W ITH TCLD AND NCLD. TCLD I NDICATES
+TARGET C ATEGORY L OCATION D ISTILLATION , AND NCLD I NDICATES
+N ONTARGET C ATEGORY L OCATION D ISTILLATION . T HE A BLATION
+R ESULTS (HBB) S UGGEST T HAT TCLD K NOWLEDGE C OULD
+N OT BE AS I MPORTANT AS K NOWLEDGE A MONG NCLD
+
+To further improve the efficiency of the teacher network
+in transferring knowledge, we analyze OKD in depth. The
+experimental results are shown in Fig. 7(d), student models
+can converge faster in classification and regression. Offline KD
+entails using a pretrained teacher network to transfer learned
+knowledge to the student network. However, this method
+
+Authorized licensed use limited to: Tsinghua University. Downloaded on March 24,2026 at 08:12:24 UTC from IEEE Xplore. Restrictions apply.
+
+WANG et al.: CoLD FOR SAR OBJECT DETECTION AND A UNIFIED BENCHMARK
+
+5211314
+
+TABLE IV
+
+TABLE VI
+
+A BLATION E XPERIMENTS OF OKD, CPM, AND IWM ON THE
+OGSOD-1.0 (HBB). OKD I NDICATES O NLINE KD. CPM AND IWM
+D ENOTE C ATEGORY-O RIENTED PARTITION M ODULE AND
+I O U-BASED W EIGHTING M ODULE , R ESPECTIVELY
+
+E XPERIMENTAL R ESULTS OF O PTICAL I MAGES AND SAR I MAGES OF
+C O LD U NDER D IFFERENT C ONDITIONS ON O UR P ROPOSED OSPRC
+DATASET. SAR-VV AND SAR-VH A RE T WO D IFFERENT P OLAR IZATION M ODES OF SAR I MAGING . OPT-10 M AND OPT-20 M
+R EPRESENT O PTICAL I MAGES W ITH D IFFERENT S PATIAL
+R ESOLUTIONS , W HILE OPT-C LOUD R EPRESENTS AN
+O PTICAL I MAGE W ITH C LOUD O CCLUSION
+
+TABLE V
+E XPERIMENTAL R ESULTS OF D IFFERENT C OMBINATIONS OF KD
+M ETHODS (HBB). A LTHOUGH O UR M ETHOD C O LD O NLY D ISTILLS
+K NOWLEDGE T HROUGH THE R EGRESSION B RANCH , I T C AN
+E FFECTIVELY I NTRODUCE C ATEGORY P RIOR K NOWLEDGE
+
+ignores disparities in learning ability between the teacher
+and student network. The student network is unaware of the
+teacher network’s learning method and direction. In contrast,
+in the online distillation method, the student network can learn
+about the learning process of the teacher network and increase
+network performance by learning from the teacher’s learning
+abilities.
+To illustrate the complementarity and effectiveness of the
+three modules, we introduce different combinations of CPM,
+IWM, and OKD for guidance. As shown in Table IV, CPM
+gets an improvement of 3.4% (from 46.3% to 49.7%) in
+AP, and OKD gets an improvement of 5.6% (from 46.3%
+to 51.9%) in AP. IWM is dependent on the output of CPM
+and therefore cannot be used on its own. This approach
+(CPM + IWM) fully transfers knowledge from the optical
+image and gets better performance. When using all three
+modules for guidance at the same time, our proposed CoLD
+gets an improvement of 10.4% (from 46.3% to 56.7%) in AP.
+The results of ablation experiments validate the effectiveness
+of three different modules from optical images and the
+capability of our proposed CoLD to fully exploit guidance
+information. Our CoLD achieves better results by integrating
+complementary information from optical images.
+Our CoLD is the first attempt to adopt logit mimicking to
+distill localization knowledge for optical images. We combine
+the probability distribution representation for bounding boxes
+and the KL-Divergence loss and demonstrate that such a
+simple logit mimicking technique performs well in improving
+the distillation performance of object detectors. From Table V,
+CoLD gets an improvement of 10.4% in AP. KD and DKD
+
+are distilled in the classification branch. LD and CoLD are
+distilled in the regression branch, and the other methods are
+distilled in both branches. To efficiently transfer information
+from optical images, it is best to transfer knowledge from both
+the classification branch and the regression branch (e.g., LD +
+DKD). To demonstrate that CoLD can transfer classification
+and localization knowledge using only regression branches,
+we do four additional sets of experiments (LD + KD, LD +
+DKD, CoLD + KD, and CoLD + DKD). LD + KD achieves
+an AP of 55.8% and LD + DKD achieves an AP of 56.2%,
+which both get significant improvements compared to LD
+(51.9%). However, compared to CoLD (56.7%), CoLD + KD
+decreases the AP by 0.7% (from 56.7% to 56.0%) suggesting
+that CoLD already achieves optimal performance and that
+introducing KD affects performance instead. CoLD + DKD
+(56.6%) achieves comparable performance to CoLD, which
+also indicates that CoLD has already introduced optimal
+classification knowledge.
+3) Effects of Different Parameters on Optical and SAR
+Images: To evaluate the effect of different parameter images
+on the performance of the method, we construct a small dataset
+called optical and SAR images paired dataset with influencing
+factors such as polarization modes, resolution, and cloud
+occlusion (OSPRC): it consists of images from Sentinel-1 and
+Sentinel-2. The SAR images have two different polarization
+modes and the optical images include 10-m resolution, 20-m
+resolution, and cloud-occluded images. The dataset is divided
+into five sets of images, each containing 3300 images of size
+256 × 256 pixels, and divided into a training set and a test set
+in a ratio of 8:2. As shown in Table VI, the results show that
+
+Authorized licensed use limited to: Tsinghua University. Downloaded on March 24,2026 at 08:12:24 UTC from IEEE Xplore. Restrictions apply.
+
+5211314
+
+IEEE TRANSACTIONS ON GEOSCIENCE AND REMOTE SENSING, VOL. 61, 2023
+
+TABLE VII
+C OMPARISON W ITH S TATE - OF - THE -A RT O RIENTED O BJECT D ETECTION M ETHODS ON O UR P ROPOSED OGSOD-1.0 DATASET W ITH SAR I MAGES .
+C AND S D ENOTE C ROSS -M ODAL M ETHODS AND S INGLE -M ODAL M ETHODS , R ESPECTIVELY. OBB D ENOTES O RIENTED B OUNDING B OX
+
+the influence of different polarization modes is small, while
+the influence of resolution and cloud cover is greater.
+In optical image-guided SAR image object detection tasks,
+different resolutions of optical images can improve the
+performance of the SAR detector. As shown in Table VI,
+OPT-10m image and OPT-20m image-guided SAR image
+object detection increase the AP50 by 4.7% and 2.6%,
+respectively. Interestingly, despite the low-quality of OPT-20m
+(AP50 41%), it can still significantly improve the performance
+of SAR-VV object detection. The results of our analysis found
+that 1532 of the 1891 objects in the SAR-VV predictions
+and 1653 objects in the OPT-20m predictions intersect. This
+means that OPT-20m still provides an additional 121 highquality knowledge for SAR-VV. In contrast, the intersection
+of SAR-VV and OPT-Cloud (1306) has 1301, indicating that
+the additional high-quality knowledge provided to SAR-VV by
+OPT-Cloud is almost negligible. The results show that CoLD
+can effectively mine high-quality knowledge in optical images.
+It is worth noting that as OPT-Cloud contains a lot of
+low-quality information, it can reduce the performance of the
+student model. Our proposed IWM module can suppress these
+low-quality information. As shown in Table VI, the OPTCloud-guided SAR-VV decreases the AP50 by 7.9% (from
+59.4% to 51.5%) without the IWM module. After adding
+IWM, OPT-Cloud-guided SAR-VV decreases the AP50 only
+0.9% (from 59.4% to 58.5%). The results show that IWM can
+effectively suppress low-quality information.
+To verify the effectiveness of CoLD in SAR image-guided
+optical image object detection tasks, we add the experiment
+of SAR image-guided optical image. As shown in Table VI,
+SAR-VV-guided OPT-20m increases the AP50 by 15.7% (from
+51.9% to 67.6%) and SAR-VV-guided OPT-Cloud increases
+the AP50 by 4.5% (from 41.0% to 45.5%). The results show
+that CoLD is equally effective in SAR-guided optical image
+object detection tasks.
+E. Oriented Object Detection
+In the field of remote sensing, rotated labels can better
+describe some objects with relatively large aspect ratios
+in images. Therefore, we provide rotated box labels for
+the dataset OGSOD-1.0 and compare it with some stateof-the-art methods for oriented object detection. As shown
+
+in Table VII, our method CoLD performs well under the
+OGSOD-1.0 (SAR) metric with excellent detection accuracy
+of 68.0% AP50 and 35.9% AP. Compared to YOLOv5 OBB
+(baseline), our method does not bring a large computational
+burden, while providing excellent computational efficiency and
+real-time performance. In contrast, Rotated RepPoints [40]
+and Rotated fully convolutional one-stage object detection
+(FCOS) [50] perform well in terms of AP, but they have
+lower frames/s (FPS) and slower-computational-speed. Singleshot alignment network (S2A-Net) [51] and shape-adaptive
+selection and measurement (SASM) [53] perform well in
+terms of both AP and FPS, but have a higher computational
+burden. Oriented R-CNN [52] performs well in terms of AP50
+and AP, but has a high-computational burden and requires
+high hardware devices. Kalman filtering intersection over
+union (KFIoU) [54] is a novel method to computing IoU
+that can handle rotated objects better, but performs poorly in
+AP and FPS. Rotated real-time models for object detection
+(RTMDet) [55] uses cross stage partial ResNeXt (CSPNeXt),
+suggesting the next dimension (ResNeXt) as the backbone
+network, similar to our method, but with a high-computational
+burden. In summary, our method CoLD has some advantages
+in terms of performance and computational efficiency, and it
+can also provide better detection accuracy.
+VI. C ONCLUSION
+In this article, we construct a new benchmark dataset
+OGSOD-1.0 for optical image-guided SAR image object
+detection tasks. This is the first optical image-guided SAR
+image dataset for multiobject detection. On our proposed
+OGSOD-1.0, we perform extensive experimental analysis of
+some SAR object detection and cross-modal KD methods.
+In particular, a novel CoLD method has been designed
+to progressively transfer object-level knowledge in optical
+images. The experimental results demonstrate the effectiveness
+of the proposed CoLD.
+In future work, we will investigate strategies to further
+improve the CoLD architecture by utilizing more advanced
+techniques, e.g., orientation-sensitive heatmap, making it
+more applicable to oriented object detection tasks. Moreover,
+we will further extend the dataset OGSOD-1.0 with the
+
+Authorized licensed use limited to: Tsinghua University. Downloaded on March 24,2026 at 08:12:24 UTC from IEEE Xplore. Restrictions apply.
+
+WANG et al.: CoLD FOR SAR OBJECT DETECTION AND A UNIFIED BENCHMARK
+
+addition of more scenarios and environmental factors to inspire
+further research on this topic.
+R EFERENCES
+[1] L. Wang, X. Bai, C. Gong, and F. Zhou, “Hybrid inference network
+for few-shot SAR automatic target recognition,” IEEE Trans. Geosci.
+Remote Sens., vol. 59, no. 11, pp. 9257–9269, Nov. 2021.
+[2] C. Cao, Z. Cao, and Z. Cui, “LDGAN: A synthetic aperture radar
+image generation method for automatic target recognition,” IEEE Trans.
+Geosci. Remote Sens., vol. 58, no. 5, pp. 3495–3508, May 2020.
+[3] X. Yang, X. Zhang, N. Wang, and X. Gao, “A robust one-stage
+detector for multiscale ship detection with complex background in
+massive SAR images,” IEEE Trans. Geosci. Remote Sens., vol. 60, 2022,
+Art. no. 5217712.
+[4] C. He, M. Tu, D. Xiong, F. Tu, and M. Liao, “A component-based multilayer parallel network for airplane detection in SAR imagery,” Remote
+Sens., vol. 10, no. 7, p. 1016, Jun. 2018.
+[5] D. Hong, L. Gao, J. Yao, B. Zhang, A. Plaza, and J. Chanussot, “Graph
+convolutional networks for hyperspectral image classification,” IEEE
+Trans. Geosci. Remote Sens., vol. 59, no. 7, pp. 5966–5978, Jul. 2021.
+[6] D. Hong et al., “SpectralFormer: Rethinking hyperspectral image
+classification with transformers,” IEEE Trans. Geosci. Remote Sens.,
+vol. 60, 2022, Art. no. 5518615.
+[7] X. Wu, D. Hong, J. Tian, J. Chanussot, W. Li, and R. Tao, “ORSIm
+detector: A novel object detection framework in optical remote sensing
+imagery using spatial-frequency channel features,” IEEE Trans. Geosci.
+Remote Sens., vol. 57, no. 7, pp. 5146–5158, Jul. 2019.
+[8] X. Wu, D. Hong, and J. Chanussot, “UIU-Net: U-Net in U-Net for
+infrared small object detection,” IEEE Trans. Image Process., vol. 32,
+pp. 364–376, 2023.
+[9] Y. Du, L. Du, and L. Li, “An SAR target detector based on gradient
+harmonized mechanism and attention mechanism,” IEEE Geosci. Remote
+Sens. Lett., vol. 19, pp. 1–5, 2022.
+[10] Z. Cui, Q. Li, Z. Cao, and N. Liu, “Dense attention pyramid networks for
+multi-scale ship detection in SAR images,” IEEE Trans. Geosci. Remote
+Sens., vol. 57, no. 11, pp. 8983–8997, Nov. 2019.
+[11] Y. Hou and L. Zheng, “Visualizing adapted knowledge in domain
+transfer,” in Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit.
+(CVPR), Jun. 2021, pp. 13824–13833.
+[12] L. Wang, Y. Chae, S.-H. Yoon, T.-K. Kim, and K.-J. Yoon,
+“EvDistill: Asynchronous events to end-task learning via bidirectional
+reconstruction-guided cross-modal knowledge distillation,” in Proc.
+IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR), Jun. 2021,
+pp. 608–619.
+[13] R. Zhang et al., “Optical-enhanced oil tank detection in high-resolution
+SAR images,” IEEE Trans. Geosci. Remote Sens., vol. 60, 2022,
+Art. no. 5237112.
+[14] Z. Zheng et al., “Localization distillation for dense object detection,”
+in Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR),
+Jun. 2022, pp. 9407–9416.
+[15] B. Zhao, Q. Cui, R. Song, Y. Qiu, and J. Liang, “Decoupled knowledge
+distillation,” in Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit.
+(CVPR), Jun. 2022, pp. 11953–11962.
+[16] L. M. Novak, M. C. Burl, and W. W. Irving, “Optimal polarimetric
+processing for enhanced target detection,” IEEE Trans. Aerosp. Electron.
+Syst., vol. 29, no. 1, pp. 234–244, Jan. 1993.
+[17] L. Li, L. Du, and Z. Wang, “Target detection based on dual-domain
+sparse reconstruction saliency in SAR images,” IEEE J. Sel. Topics Appl.
+Earth Observ. Remote Sens., vol. 11, no. 11, pp. 4230–4243, Nov. 2018.
+[18] L. Zhang and C. Liu, “A novel saliency-driven oil tank detection method
+for synthetic aperture radar images,” in Proc. IEEE Int. Conf. Acoust.,
+Speech Signal Process. (ICASSP), May 2020, pp. 2608–2612.
+[19] R. Min, H. Lan, Z. Cao, and Z. Cui, “A gradually distilled CNN for
+SAR target recognition,” IEEE Access, vol. 7, pp. 42190–42200, 2019.
+[20] Y.-L. Chang, A. Anagaw, L. Chang, Y. Wang, C.-Y. Hsiao, and
+W.-H. Lee, “Ship detection based on YOLOv2 for SAR imagery,”
+Remote Sens., vol. 11, no. 7, p. 786, Apr. 2019.
+[21] Z. Wu, B. Hou, B. Ren, Z. Ren, S. Wang, and L. Jiao, “A deep
+detection network based on interaction of instance segmentation and
+object detection for SAR images,” Remote Sens., vol. 13, no. 13, p. 2582,
+Jul. 2021.
+
+5211314
+
+[22] D. Hong, J. Hu, J. Yao, J. Chanussot, and X. X. Zhu, “Multimodal
+remote sensing benchmark datasets for land cover classification with
+a shared and specific feature learning model,” ISPRS J. Photogramm.
+Remote Sens., vol. 178, pp. 68–80, Aug. 2021.
+[23] D. Hong et al., “More diverse means better: Multimodal deep learning
+meets remote-sensing imagery classification,” IEEE Trans. Geosci.
+Remote Sens., vol. 59, no. 5, pp. 4340–4354, May 2021.
+[24] C. Zhang et al., “A domain adaptation neural network for change
+detection with heterogeneous optical and SAR remote sensing images,”
+Int. J. Appl. Earth Observ. Geoinf., vol. 109, May 2022, Art. no. 102769.
+[25] Q. Gao, Z. Feng, S. Yang, Z. Chang, and R. Wang, “Multi-path
+interactive network for aircraft identification with optical and SAR
+images,” Remote Sens., vol. 14, no. 16, p. 3922, Aug. 2022.
+[26] Y. Shi, L. Du, Y. Guo, and Y. Du, “Unsupervised domain adaptation
+based on progressive transfer for ship detection: From optical to
+SAR images,” IEEE Trans. Geosci. Remote Sens., vol. 60, 2022,
+Art. no. 5230317.
+[27] J. Bae, D. Yeo, J. Yim, N. Kim, C. Pyo, and J. Kim, “Densely distilled
+flow-based knowledge transfer in teacher–student framework for image
+classification,” IEEE Trans. Image Process., vol. 29, pp. 5698–5710,
+2020.
+[28] W.-C. Chen, C.-C. Chang, and C.-R. Lee, “Knowledge distillation
+with feature maps for image classification,” in Proc. 14th Asian
+Conf. Comput. Vis. (ACCV). Perth, Australia: Springer, Dec. 2018,
+pp. 200–215.
+[29] Q. Li, S. Jin, and J. Yan, “Mimicking very efficient network for object
+detection,” in Proc. IEEE Conf. Comput. Vis. Pattern Recognit. (CVPR),
+Jul. 2017, pp. 6356–6364.
+[30] J. Guo et al., “Distilling object detectors via decoupled features,” in Proc.
+IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR), Jun. 2021,
+pp. 2154–2164.
+[31] L. Zhang and K. Ma, “Improve object detection with feature-based
+knowledge distillation: Towards accurate and efficient detectors,” in
+Proc. Int. Conf. Learn. Represent., 2021, pp. 1–14.
+[32] J. Kang et al., “DisOptNet: Distilling semantic knowledge from optical
+images for weather-independent building segmentation,” IEEE Trans.
+Geosci. Remote Sens., vol. 60, 2022, Art. no. 4706315.
+[33] L. Zhao, X. Peng, Y. Chen, M. Kapadia, and D. N. Metaxas, “Knowledge
+as priors: Cross-modal knowledge generalization for datasets without
+superior knowledge,” in Proc. IEEE/CVF Conf. Comput. Vis. Pattern
+Recognit. (CVPR), Jun. 2020, pp. 6528–6537.
+[34] G. Jocher et al., “Ultralytics/YOLOv5: V5.0—YOLOv5-P6 1280
+models, AWS, supervise.ly and YouTube integrations,” Zenodo, 2021.
+[35] X. Li et al., “Generalized focal loss: Learning qualified and distributed
+bounding boxes for dense object detection,” in Proc. Adv. Neural Inf.
+Process. Syst., vol. 33, 2020, pp. 21002–21012.
+[36] Z. Zheng, P. Wang, W. Liu, J. Li, R. Ye, and D. Ren, “Distance-IoU
+loss: Faster and better learning for bounding box regression,” in Proc.
+AAAI Conf. Artif. Intell., vol. 34, 2020, pp. 12993–13000.
+[37] M. Schmitt, L. H. Hughes, and X. X. Zhu, “The SEN1–2 dataset for
+deep learning in SAR-optical data fusion,” 2018, arXiv:1807.01569.
+[38] T. Lin, P. Goyal, R. Girshick, K. He, and P. Dollár, “Focal loss for
+dense object detection,” in Proc. IEEE Int. Conf. Comput. Vis. (ICCV),
+Oct. 2017, pp. 2980–2988.
+[39] J. Redmon and A. Farhadi, “YOLOv3: An incremental improvement,”
+2018, arXiv:1804.02767.
+[40] Z. Yang, S. Liu, H. Hu, L. Wang, and S. Lin, “RepPoints: Point
+set representation for object detection,” in Proc. IEEE/CVF Int. Conf.
+Comput. Vis. (ICCV), Oct. 2019, pp. 9657–9666.
+[41] S. Zhang, C. Chi, Y. Yao, Z. Lei, and S. Z. Li, “Bridging the gap between
+anchor-based and anchor-free detection via adaptive training sample
+selection,” in Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit.
+(CVPR), Jun. 2020, pp. 9759–9768.
+[42] Y. He, C. Zhu, J. Wang, M. Savvides, and X. Zhang, “Bounding
+box regression with uncertainty for accurate object detection,” in Proc.
+IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR), Jun. 2019,
+pp. 2888–2897.
+[43] P. Sun et al., “Sparse R-CNN: End-to-end object detection with learnable
+proposals,” in Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit.
+(CVPR), Jun. 2021, pp. 14454–14463.
+[44] M. Zand, A. Etemad, and M. Greenspan, “ObjectBox: From centers to
+boxes for anchor-free object detection,” 2022, arXiv:2207.06985.
+[45] C.-Y. Wang, A. Bochkovskiy, and H.-Y. M. Liao, “YOLOv7: Trainable
+bag-of-freebies sets new state-of-the-art for real-time object detectors,”
+2022, arXiv:2207.02696.
+
+Authorized licensed use limited to: Tsinghua University. Downloaded on March 24,2026 at 08:12:24 UTC from IEEE Xplore. Restrictions apply.
+
+5211314
+
+IEEE TRANSACTIONS ON GEOSCIENCE AND REMOTE SENSING, VOL. 61, 2023
+
+[46] X. Dai et al., “General instance distillation for object detection,” in Proc.
+IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR), Jun. 2021,
+pp. 7842–7851.
+[47] A. Paszke et al., “PyTorch: An imperative style, high-performance deep
+learning library,” in Proc. Adv. neural Inf. Process. Syst., vol. 32, 2019,
+pp. 1–12.
+[48] A. Bochkovskiy, C.-Y. Wang, and H.-Y. M. Liao, “YOLOv4: Optimal
+speed and accuracy of object detection,” 2020, arXiv:2004.10934.
+[49] H. Zhang, M. Cisse, Y. N. Dauphin, and D. Lopez-Paz, “mixup: Beyond
+empirical risk minimization,” 2017, arXiv:1710.09412.
+[50] Z. Tian, C. Shen, H. Chen, and T. He, “FCOS: Fully convolutional
+one-stage object detection,” in Proc. IEEE/CVF Int. Conf. Comput. Vis.
+(ICCV), Oct. 2019, pp. 9627–9636.
+[51] J. Han, J. Ding, J. Li, and G.-S. Xia, “Align deep features for oriented
+object detection,” IEEE Trans. Geosci. Remote Sens., vol. 60, 2022,
+Art. no. 5602511.
+[52] X. Xie, G. Cheng, J. Wang, X. Yao, and J. Han, “Oriented R-CNN for
+object detection,” in Proc. IEEE/CVF Int. Conf. Comput. Vis. (ICCV),
+Oct. 2021, pp. 3520–3529.
+[53] L. Hou, K. Lu, J. Xue, and Y. Li, “Shape-adaptive selection and
+measurement for oriented object detection,” in Proc. AAAI Conf. Artif.
+Intell., vol. 36, 2022, pp. 923–932.
+[54] X. Yang et al., “The KFIoU loss for rotated object detection,” 2022,
+arXiv:2201.12558.
+[55] C. Lyu et al., “RTMDet: An empirical study of designing real-time object
+detectors,” 2022, arXiv:2212.07784.
+
+Chao Wang received the B.E. degree in network
+engineering from West Anhui University, Lu’an,
+China, in 2021. He is currently pursuing the M.S.
+degree in computer science and technology with
+Anhui University, Hefei, China.
+His research interests include knowledge distillation and SAR object detection.
+
+Rui Ruan received the bachelor’s and master’s
+degrees from the School of Computer Science and
+Technology, Anhui University, Hefei, China, in
+2013 and 2016, respectively.
+She is currently a Lecturer with the School of
+Internet, Anhui University. Her research interests
+include deep learning-based object detection, image
+enhancement, and remote sensing image analysis.
+
+Zhicheng Zhao received the B.E. degree from
+the National Pilot School of Software, Yunnan
+University, Kunming, China, in 2016, and the Ph.D.
+degree from the Computer Network Information
+Center, Chinese Academy of Sciences, Beijing,
+China, in 2021.
+He is currently a Lecturer with the Information
+Materials and Intelligent Sensing Laboratory of
+Anhui Province, Anhui Provincial Key Laboratory
+of Multimodal Cognitive Computation, School of
+Artificial Intelligence, Anhui University, Hefei,
+China. He also serves as a Postdoctoral Researcher with 38th Research
+Institute, China Electronics Technology Group Corporation, Hefei. His
+research interests include computer vision and deep learning.
+
+Chenglong Li received the M.S. and Ph.D.
+degrees from the School of Computer Science and
+Technology, Anhui University, Hefei, China, in
+2013 and 2016, respectively.
+From 2014 to 2015, he was a Visiting Student
+with the School of Artificial Intelligence, Sun
+Yat-sen University, Guangzhou, China. He was a
+Post-Doctoral Research Fellow with the Center for
+Research on Intelligent Perception and Computing
+(CRIPAC), National Laboratory of Pattern Recognition (NLPR), Institute of Automation, Chinese
+Academy of Sciences (CASIA), Beijing, China. He is currently a Professor
+and a Ph.D. Supervisor with the School of Artificial Intelligence, Anhui
+University. His research interests include computer vision and deep learning.
+
+Jin Tang received the B.E. degree in automation
+and the Ph.D. degree in computer science from
+Anhui University, Hefei, China, in 1999 and 2007,
+respectively.
+He is currently a Professor with the School
+of Computer Science and Technology, Anhui
+University. His research interests include computer
+vision, pattern recognition, machine learning, and
+deep learning.
+
+Authorized licensed use limited to: Tsinghua University. Downloaded on March 24,2026 at 08:12:24 UTC from IEEE Xplore. Restrictions apply.
+
+
