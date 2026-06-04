@@ -49,6 +49,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--reach-target-mode", choices=("detach", "coupled"), default="detach")
     parser.add_argument("--kd-target-mode", choices=("detach", "coupled"), default="detach")
     parser.add_argument("--strict-batch-size", action="store_true")
+    parser.add_argument(
+        "--freeze-bn-stats",
+        action="store_true",
+        help="Keep BatchNorm layers in eval mode during training so running_mean/running_var are not updated.",
+    )
 
     parser.add_argument("--lambda-rec", type=float, default=0.1)
     parser.add_argument("--lambda-sep", type=float, default=0.05)
@@ -106,12 +111,13 @@ def parse_args() -> argparse.Namespace:
 
     parser.add_argument(
         "--comparison-kd-profile",
-        choices=("none", "fgd", "mgd", "ld", "crosskd", "c2kd", "mmanet"),
+        choices=("none", "fgd", "mgd", "ld", "crosskd", "c2kd", "mmanet", "hallucidet"),
         default="none",
         help=(
             "Portable comparison KD profile for OGSOD HBB. "
             "fgd/mgd/ld/crosskd are generic detector KD transfers; "
-            "c2kd/mmanet are cross-modal/incomplete-modality transfers."
+            "c2kd/mmanet are cross-modal/incomplete-modality transfers; "
+            "hallucidet is a task-driven privileged-modality hallucination transfer."
         ),
     )
     parser.add_argument("--profile-kd-weight", type=float, default=1.0)
@@ -131,6 +137,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--c2kd-teacher-conf-threshold", type=float, default=0.3)
     parser.add_argument("--mmanet-relation-margin", type=float, default=0.2)
     parser.add_argument("--mmanet-max-tokens", type=int, default=512)
+    parser.add_argument("--hallucidet-bg-weight", type=float, default=0.05)
+    parser.add_argument("--hallucidet-response-weight", type=float, default=0.5)
+    parser.add_argument("--hallucidet-margin-weight", type=float, default=0.1)
+    parser.add_argument("--hallucidet-margin", type=float, default=0.2)
 
     parser.add_argument("--c-weak-nrrl-scale", type=float, default=0.0)
     parser.add_argument("--c-weak-nrrl-detach-student", action="store_true")
@@ -156,6 +166,7 @@ def main() -> None:
         phase_min_epochs=args.phase_min_epochs,
         phase_stop_metric=args.phase_stop_metric,
         strict_batch_size=args.strict_batch_size,
+        freeze_bn_stats=args.freeze_bn_stats,
         data=str(args.data.resolve()),
         teacher_data=str(args.teacher_data.resolve()),
         teacher_weights=teacher_weights,
@@ -236,6 +247,10 @@ def main() -> None:
         c2kd_teacher_conf_threshold=args.c2kd_teacher_conf_threshold,
         mmanet_relation_margin=args.mmanet_relation_margin,
         mmanet_max_tokens=args.mmanet_max_tokens,
+        hallucidet_bg_weight=args.hallucidet_bg_weight,
+        hallucidet_response_weight=args.hallucidet_response_weight,
+        hallucidet_margin_weight=args.hallucidet_margin_weight,
+        hallucidet_margin=args.hallucidet_margin,
         c_weak_nrrl_scale=args.c_weak_nrrl_scale,
         c_weak_nrrl_detach_student=args.c_weak_nrrl_detach_student,
         reach_c_mode=args.reach_c_mode,

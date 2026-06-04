@@ -13,6 +13,11 @@ def _flatten_feat(x: torch.Tensor) -> torch.Tensor:
     return x.permute(0, 2, 3, 1).reshape(x.shape[0], -1, x.shape[1])
 
 
+def _standardize_map(x: torch.Tensor, eps: float = 1e-6) -> torch.Tensor:
+    dims = tuple(range(1, x.ndim))
+    return (x - x.mean(dim=dims, keepdim=True)) / x.std(dim=dims, keepdim=True, unbiased=False).clamp_min(eps)
+
+
 def _unwrap_teacher_preds(outputs: Any) -> dict[str, torch.Tensor]:
     if isinstance(outputs, tuple):
         if len(outputs) >= 2 and isinstance(outputs[1], dict):
@@ -221,6 +226,10 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         c2kd_teacher_conf_threshold: float = 0.3,
         mmanet_relation_margin: float = 0.2,
         mmanet_max_tokens: int = 512,
+        hallucidet_bg_weight: float = 0.05,
+        hallucidet_response_weight: float = 0.5,
+        hallucidet_margin_weight: float = 0.1,
+        hallucidet_margin: float = 0.2,
     ):
         super().__init__(model)
         self.lambda_recon_task = float(lambda_recon_task)
@@ -270,6 +279,10 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         self.c2kd_teacher_conf_threshold = float(c2kd_teacher_conf_threshold)
         self.mmanet_relation_margin = float(mmanet_relation_margin)
         self.mmanet_max_tokens = max(int(mmanet_max_tokens), 16)
+        self.hallucidet_bg_weight = max(float(hallucidet_bg_weight), 0.0)
+        self.hallucidet_response_weight = max(float(hallucidet_response_weight), 0.0)
+        self.hallucidet_margin_weight = max(float(hallucidet_margin_weight), 0.0)
+        self.hallucidet_margin = float(hallucidet_margin)
         self.student_model = model
         self.teacher_model = teacher_model
         self.lambda_rec = lambda_rec
@@ -424,10 +437,10 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
 
     @staticmethod
     def _validate_comparison_kd_profile(mode: str) -> str:
-        if mode not in {"none", "fgd", "mgd", "ld", "crosskd", "c2kd", "mmanet"}:
+        if mode not in {"none", "fgd", "mgd", "ld", "crosskd", "c2kd", "mmanet", "hallucidet"}:
             raise ValueError(
                 "comparison_kd_profile must be one of "
-                "{'none', 'fgd', 'mgd', 'ld', 'crosskd', 'c2kd', 'mmanet'}, got "
+                "{'none', 'fgd', 'mgd', 'ld', 'crosskd', 'c2kd', 'mmanet', 'hallucidet'}, got "
                 f"{mode!r}."
             )
         return mode
@@ -1095,6 +1108,69 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
             margin_loss = F.relu(self.mmanet_relation_margin - same_mean + diff_mean)
         return relation_loss + margin_loss
 
+    def _hallucidet_style_loss(
+        self,
+        student_map: torch.Tensor,
+        teacher_map: torch.Tensor,
+        fg_mask: torch.Tensor,
+        student_scores: torch.Tensor | None,
+        teacher_scores: torch.Tensor | None,
+    ) -> torch.Tensor:
+        """HalluciDet-style task-driven privileged-modality hallucination.
+
+        The official HalluciDet trains a hallucination pathway from the
+        deployment modality to an RGB-detector-friendly representation, guided
+        by detection utility instead of pixel reconstruction. This portable
+        YOLO profile keeps that principle without importing the Faster R-CNN
+        codebase: the SAR student backbone acts as the hallucination pathway,
+        and its object-centric features and response map are aligned to the
+        frozen RGB teacher while background reconstruction remains weak.
+        """
+        bsz, channels, height, width = student_map.shape
+        student_flat = student_map.permute(0, 2, 3, 1).reshape(bsz, -1, channels)
+        teacher_flat = teacher_map.detach().permute(0, 2, 3, 1).reshape(bsz, -1, channels)
+        fg = fg_mask.reshape(bsz, -1).bool()
+
+        student_norm = F.normalize(student_flat, dim=-1, eps=1e-6)
+        teacher_norm = F.normalize(teacher_flat, dim=-1, eps=1e-6)
+        token_loss = (student_norm - teacher_norm).pow(2).mean(dim=-1)
+        weights = torch.full_like(token_loss, self.hallucidet_bg_weight)
+
+        if (
+            teacher_scores is not None
+            and teacher_scores.shape[:2] == token_loss.shape
+            and teacher_scores.numel() > 0
+        ):
+            teacher_conf = teacher_scores.detach().sigmoid().amax(dim=-1)
+            conf_weights = teacher_conf / teacher_conf.amax(dim=1, keepdim=True).clamp_min(1e-6)
+            weights = torch.maximum(weights, conf_weights)
+        weights = torch.where(fg, torch.ones_like(weights), weights)
+        feature_loss = (token_loss * weights).sum() / weights.sum().clamp_min(1e-6)
+
+        response_loss = student_map.new_zeros(())
+        if self.hallucidet_response_weight > 0:
+            student_energy = student_map.pow(2).mean(dim=1)
+            teacher_energy = teacher_map.detach().pow(2).mean(dim=1)
+            student_energy = _standardize_map(student_energy)
+            teacher_energy = _standardize_map(teacher_energy)
+            response_weights = weights.reshape(bsz, height, width)
+            response_loss = (
+                (student_energy - teacher_energy).pow(2) * response_weights
+            ).sum() / response_weights.sum().clamp_min(1e-6)
+
+        margin_loss = student_map.new_zeros(())
+        if self.hallucidet_margin_weight > 0 and fg.any() and (~fg).any():
+            student_energy = student_map.pow(2).mean(dim=1).reshape(bsz, -1)
+            fg_energy = student_energy[fg].mean()
+            bg_energy = student_energy[~fg].mean()
+            margin_loss = F.relu(self.hallucidet_margin - fg_energy + bg_energy)
+
+        return (
+            feature_loss
+            + self.hallucidet_response_weight * response_loss
+            + self.hallucidet_margin_weight * margin_loss
+        )
+
     def _compute_profile_kd_loss(
         self,
         student_map: torch.Tensor,
@@ -1114,6 +1190,8 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
             return self._ld_style_loss(student_scores, teacher_scores)
         if self.comparison_kd_profile == "crosskd":
             return self._crosskd_style_loss(student_map, teacher_map, fg_mask, student_scores, teacher_scores)
+        if self.comparison_kd_profile == "hallucidet":
+            return self._hallucidet_style_loss(student_map, teacher_map, fg_mask, student_scores, teacher_scores)
 
         fg = fg_mask.reshape(student_map.shape[0], -1).bool()
         if not fg.any():

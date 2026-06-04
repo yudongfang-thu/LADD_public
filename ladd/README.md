@@ -16,6 +16,7 @@ cap2：移除 reach rank loss 中反平行方向的奖励，修正几何目标�
 
 - `code/train_ladd_hbb.py` — 训练入口（也支持对比方法）
 - `code/src/teacher_student_decomposition_kd_hbb/` — HBB 实现（model/loss/trainer）
+- `code/README.md` — 当前代码快照说明
 - `scripts/launch_formal_ladd_job.sh` — 标准启动脚本
 
 依赖 `shared/teacher_student_decomposition_kd/` 基础框架和 `shared/yolo/` vendored YOLO。
@@ -23,6 +24,8 @@ cap2：移除 reach rank loss 中反平行方向的奖励，修正几何目标�
 ## 结果
 
 详见 `results/LADD_RESULTS_CN.md`
+
+崩溃与修复细节见 `LADD_COLLAPSE_DEBUG_CN.md` 和 `diagnostics/b_collapse/LADD_CRASH_EVIDENCE_20260604_CN.md`。
 
 | Model | seed0 | seed42 | vs baseline |
 |---|---|---:|---:|

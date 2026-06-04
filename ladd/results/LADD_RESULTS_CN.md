@@ -1,42 +1,40 @@
 # LADD 主线结果
 
-最后更新：2026-06-03 23:50 CST
+最后更新：2026-06-04 08:55 CST
 
-配置：`A1=10 -> A2=50 -> B=800, cap2 reach-rank, A2/B MuSGD lr=0.001 no warmup`
-
-服务器：90 (8x RTX 3090) + 4090D。
+配置：`A1=10 -> A2=50 -> B=800, cap2 reach-rank, A2/B MuSGD lr=0.001 no warmup`。服务器：90 (8x RTX 3090) + 4090D + 4090。4090D 于 2026-06-04 08:55 现场复连失败，因此运行中行使用此前已记录的 2026-06-04 08:33 状态。
 
 ## YOLO11n cap2
 
-| seed/run | 服务器 | epoch | current AP | best AP | vs SAR baseline | 状态 |
+| seed/run | 服务器 | epoch | current AP50-95 | best AP50-95 | vs SAR baseline | 状态 |
 |---|---|---:|---:|---:|---:|---|
 | seed0 `a2mu1e3` | 90 | 800 | 0.57504 | 0.57662@725 | +0.02008 | 完成，正向 |
 | seed42 `a2mu1e3` | 90 | 800 | 0.57293 | 0.57420@735 | +0.01626 | 完成，正向 |
 | seed123 `bstable1e3` | 90 | 800 | 0.52875 | 0.56161@165 | +0.00033 | 完整跑完但后期退化 |
-| seed0 BN-freeze | 90 | 37 | 0.53266 | 0.53487@34 | -0.02167 | 运行中，诊断 |
-| seed123 BN-freeze | 90 | 38 | 0.54597 | 0.55198@37 | -0.00930 | 运行中，诊断 |
-| seed0 r2 | 4090D | 346 | 0.00000 | 0.54925@227 | -0.00729 | 已停，塌缩 |
-| seed123 r2 | 4090D | 88 | 0.00006 | 0.54864@2 | -0.01264 | 已停，塌缩 |
-| seed42 r2 | 4090D | 385 | 0.56909 | 0.57041@361 | +0.01247 | 运行中，未塌 |
+| seed0 BN-freeze | 90 | 37 | 0.53266 | 0.53487@34 | -0.02167 | 诊断 run，早期 |
+| seed123 BN-freeze | 90 | 38 | 0.54597 | 0.55198@37 | -0.00930 | 诊断 run，早期 |
+| seed0 r2 | 4090D | 346 | 0.00000 | 0.54925@227 | -0.00729 | 已停，BN 污染塌缩 |
+| seed123 r2 | 4090D | 88 | 0.00006 | 0.54864@2 | -0.01264 | 已停，BN 污染塌缩 |
+| seed42 r2 | 4090D | 659 | 约 0.565 | 约 0.570 | +0.01 左右 | 运行中，未塌，预计 2026-06-04 午后完成 |
 
 ## YOLO11n original (no cap2)
 
-| seed | best AP | 备注 |
+| seed | best AP50-95 | 备注 |
 |---|---:|---|
 | 0 | 0.57821 | no-cap2/original rank loss，对照用；cap2 价值主要在几何约束和反坍缩，不是单纯追求更高 AP |
 
 ## YOLO11s cap2
 
-| seed/run | 服务器 | epoch | current AP | best AP | 状态 |
+| seed/run | 服务器 | epoch | current AP50-95 | best AP50-95 | 状态 |
 |---|---|---:|---:|---:|---|
 | seed0 `a2mu1e3` | 90 | 608 | 0.63527 | 0.63551@605 | 正向，仍在跑 |
-| seed0 r2 | 4090D | 223 | 0.59936 | 0.59936@223 | 偏低，需排查协议/机器差异 |
-| seed42 r2 | 4090D | 206 | 0.58888 | 0.58888@206 | 偏低，仍早期 |
-| seed123 r2 | 4090D | 206 | 0.59663 | 0.59663@206 | 偏低，仍早期 |
+| seed0 r2 | 4090D | 509 | 约 0.614 | 约 0.614 | 运行中，仍低于 90 |
+| seed42 r2 | 4090D | 493 | 约 0.594 | 约 0.594 | 运行中，仍低于 90 |
+| seed123 r2 | 4090D | 492 | 约 0.606 | 约 0.606 | 运行中，仍低于 90 |
 
 ## YOLO11m cap2
 
-| seed/run | 服务器 | epoch | current AP | best AP | 状态 |
+| seed/run | 服务器 | epoch | current AP50-95 | best AP50-95 | 状态 |
 |---|---|---:|---:|---:|---|
 | seed0 `a2mu1e3` | 90 | 121 | 0.52361 | 0.59796@1 | 异常，暂不纳入主表 |
 
@@ -44,7 +42,7 @@
 
 - 11n cap2 seed0/42 已经形成正向证据，分别约 +2.0 和 +1.6 AP。
 - seed123 的温和 B 设置可以跑满，但后期退化明显，不能作为强证据。
-- 4090D 上 seed0/123 坏 run 指向 BN running stats 污染，当前用 BN-freeze 版本继续诊断。
+- 4090D 上 seed0/123 坏 run 指向 BN running stats 污染；BN-freeze 是当前诊断方向，但早期 AP 低，不能先验认为已解决。
 - 90 上 YOLO11s seed0 已有正向收益；4090D 上 YOLO11s 多 run 偏低，需要外部老师帮助复核协议差异。
 
-详细崩溃时间线见 [`../LADD_COLLAPSE_DEBUG_CN.md`](../LADD_COLLAPSE_DEBUG_CN.md)。
+详细崩溃时间线见 [`../LADD_COLLAPSE_DEBUG_CN.md`](../LADD_COLLAPSE_DEBUG_CN.md)，更细证据链见 [`../diagnostics/b_collapse/LADD_CRASH_EVIDENCE_20260604_CN.md`](../diagnostics/b_collapse/LADD_CRASH_EVIDENCE_20260604_CN.md)。

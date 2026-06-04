@@ -1,6 +1,6 @@
 # Baseline 与 LADD 主方法状态
 
-最后更新：2026-06-03 23:21 CST
+最后更新：2026-06-04 08:55 CST
 
 用途：给导师快速查看当前 formal no-mosaic baseline、LADD 主方法和可启动条件。对比方法来源与 DOI 见 [`COMPARISON_METHODS_RECORD_CN.md`](docs/experiments/COMPARISON_METHODS_RECORD_CN.md)。
 
@@ -24,7 +24,8 @@ RGB teacher uses same capacity and same seed when available
 | 服务器 | 路径 | 当前作用 |
 |---|---|---|
 | 90 | `/mnt/dataY/ydf/projects/LADD_og` | baseline 主参考；非 CoLD 对比和部分 LADD 见缝插针 |
-| 4090D | `/root/autodl-tmp/LADD` | 当前跑 YOLO11n/s LADD 与 FGD seed42 |
+| 4090D | `/root/autodl-tmp/LADD` | 当前跑 YOLO11n/s LADD 与 FGD seed42；2026-06-04 08:55 现场复连失败，运行中行采用 08:33 已记录状态 |
+| 4090 | 已部署 LADD 环境 | 当前跑 FGD/CrossKD-style 非 CoLD 对比 |
 | 117 | 暂停 | 文件 IO/网络过慢，暂不作为非 CoLD 主力 |
 
 ## 2. Baseline 最新结果
@@ -77,21 +78,21 @@ A2/B 使用 MuSGD lr0=0.001 no warmup
 |---|---:|---|---:|---:|---:|---:|---|
 | YOLO11n cap2 | 0 | 90 `a2mu1e3` | 800 | 0.57504 | 0.57662@725 | +0.02008 | 完成，可作为主表有效点 |
 | YOLO11n cap2 | 42 | 90 `a2mu1e3` | 800 | 0.57293 | 0.57420@735 | +0.01626 | 完成，可作为主表有效点 |
-| YOLO11n cap2 | 42 | 4090D r2 | 377 | 0.56882 | 0.57041@361 | +0.01247 | 正在跑，用于跨机器/新代码 sanity |
+| YOLO11n cap2 | 42 | 4090D r2 | 659 | 约 0.565 | 约 0.570 | +0.01 左右 | 正在跑，用于跨机器/新代码 sanity |
 | YOLO11n cap2 | 123 | 90 `bstable1e3` | 800 | 0.52875 | 0.56161@165 | +0.00033 | 后期退化明显，不作为强证据 |
 | YOLO11n cap2 | 0 | 90 BN-freeze | 28 | 0.52649 | 0.52834@26 | -0.02820 | 正在诊断 BN 塌缩修复 |
 | YOLO11n cap2 | 123 | 90 BN-freeze | 29 | 0.54111 | 0.54677@25 | -0.01451 | 正在诊断 BN 塌缩修复 |
 | YOLO11s cap2 | 0 | 90 `a2mu1e3` | 608 | 0.63527 | 0.63551@605 | +0.00654 | 正在跑，已有正向收益 |
-| YOLO11s cap2 | 0 | 4090D r2 | 223 | 0.59936 | 0.59936@223 | -0.02961 | 正在跑，需复核与 90 版本差异 |
-| YOLO11s cap2 | 42 | 4090D r2 | 206 | 0.58888 | 0.58888@206 | -0.03991 | 正在跑，早期/偏低 |
-| YOLO11s cap2 | 123 | 4090D r2 | 206 | 0.59663 | 0.59663@206 | -0.02694 | 正在跑，早期/偏低 |
+| YOLO11s cap2 | 0 | 4090D r2 | 509 | 约 0.614 | 约 0.614 | -0.015 左右 | 正在跑，仍低于 90 |
+| YOLO11s cap2 | 42 | 4090D r2 | 493 | 约 0.594 | 约 0.594 | -0.035 左右 | 正在跑，仍低于 90 |
+| YOLO11s cap2 | 123 | 4090D r2 | 492 | 约 0.606 | 约 0.606 | -0.018 左右 | 正在跑，仍低于 90 |
 | YOLO11m cap2 | 0 | 90 `a2mu1e3` | 121 | 0.52361 | 0.59796@1 | -0.05784 | 当前异常，暂不纳入主表 |
 
 ## 5. 当前判断
 
 YOLO11n 是目前最稳的主线证据：seed0 和 seed42 已经完成且分别提升约 +2.0 和 +1.6 个 AP，说明 LADD 在蒸馏空间最大的 n 容量上确实有效。seed123 的 B 阶段存在塌缩/后期退化问题，已经定位到 BN running stats 污染，并启动 `FREEZE_BN_STATS=1` 修正版；该修正版仍在早期，暂不能判断最终收益。
 
-YOLO11s 的 baseline 三 seed 已齐。90 上 seed0 的 LADD 已经跑到 epoch 608，best 0.63551，相对 SAR baseline 0.62897 有 +0.00654，方向是正的；4090D 上 s 三 seed 当前偏低，需要继续跑和复核协议/实现差异。
+YOLO11s 的 baseline 三 seed 已齐。90 上 seed0 的 LADD 已经跑到 epoch 608，best 0.63551，相对 SAR baseline 0.62897 有 +0.00654，方向是正的；4090D 上 s 三 seed 当前仍偏低，需要继续跑和复核协议/实现差异。
 
 YOLO11m/l seed0 baseline 已齐，但 m 的 LADD 当前异常，l 尚未启动。下一阶段应优先保持 n/s 主线和非 CoLD 对比方法跑完 seed0，再补 n 三 seed闭环，最后扩展到 m/l。
 
@@ -103,3 +104,5 @@ YOLO11m/l seed0 baseline 已齐，但 m 的 LADD 当前异常，l 尚未启动�
 2. YOLO11s LADD 至少 seed0 跑完，并确认 4090D/90 协议差异。
 3. FGD、CrossKD-style、LD、HalluciDet-style 四个非 CoLD 对比方法至少在 YOLO11n seed0 完整闭环；其中 s seed0 作为第二容量优先补。
 4. CoLD 保持独立复现线，避免拖慢非 CoLD 主队列。
+
+更细的 LADD 崩溃证据见 [`../../ladd/diagnostics/b_collapse/LADD_CRASH_EVIDENCE_20260604_CN.md`](../../ladd/diagnostics/b_collapse/LADD_CRASH_EVIDENCE_20260604_CN.md)，非 CoLD 对比方法代码映射见 [`../../comparison/METHOD_CODE_MAP_CN.md`](../../comparison/METHOD_CODE_MAP_CN.md)。

@@ -147,6 +147,10 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(DetectionTrainer):
             "c2kd_teacher_conf_threshold": float(overrides.pop("c2kd_teacher_conf_threshold", 0.3)),
             "mmanet_relation_margin": float(overrides.pop("mmanet_relation_margin", 0.2)),
             "mmanet_max_tokens": int(overrides.pop("mmanet_max_tokens", 512)),
+            "hallucidet_bg_weight": float(overrides.pop("hallucidet_bg_weight", 0.05)),
+            "hallucidet_response_weight": float(overrides.pop("hallucidet_response_weight", 0.5)),
+            "hallucidet_margin_weight": float(overrides.pop("hallucidet_margin_weight", 0.1)),
+            "hallucidet_margin": float(overrides.pop("hallucidet_margin", 0.2)),
         }
         self.tskd_cfg = {
             "teacher_data": overrides.pop("teacher_data", None),
@@ -167,6 +171,7 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(DetectionTrainer):
         }
         self.diagnostic_cfg = {
             "validate_before_train": bool(overrides.pop("validate_before_train", False)),
+            "freeze_bn_stats": bool(overrides.pop("freeze_bn_stats", False)),
         }
         if self.tskd_cfg["teacher_data"] is None:
             raise ValueError("HBB LADD trainer requires 'teacher_data'.")
@@ -423,6 +428,10 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(DetectionTrainer):
             c2kd_teacher_conf_threshold=self.dkd_cfg["c2kd_teacher_conf_threshold"],
             mmanet_relation_margin=self.dkd_cfg["mmanet_relation_margin"],
             mmanet_max_tokens=self.dkd_cfg["mmanet_max_tokens"],
+            hallucidet_bg_weight=self.dkd_cfg["hallucidet_bg_weight"],
+            hallucidet_response_weight=self.dkd_cfg["hallucidet_response_weight"],
+            hallucidet_margin_weight=self.dkd_cfg["hallucidet_margin_weight"],
+            hallucidet_margin=self.dkd_cfg["hallucidet_margin"],
         )
 
     @staticmethod
@@ -896,6 +905,8 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
         )
         self._maybe_reset_student_from_scratch_for_phase_b()
         self._apply_manual_phase(announce=True)
+        if self.diagnostic_cfg.get("freeze_bn_stats", False) and RANK in {-1, 0}:
+            LOGGER.info("freeze_bn_stats=True: BatchNorm running_mean/running_var updates are disabled during training.")
         self._run_initial_validation_snapshot()
 
     def validate(self):
@@ -932,3 +943,7 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             train_residual_aux = self.explore_cfg["student_branch_mode"] == "split" and self.nrrl_cfg["residual_aux_mode"] == "fg"
             model.student_r_aux_decoder.train(train_residual_aux)
             model.student_r_fg_heads.train(train_residual_aux)
+        if self.diagnostic_cfg.get("freeze_bn_stats", False):
+            for module in model.modules():
+                if isinstance(module, (torch.nn.BatchNorm1d, torch.nn.BatchNorm2d, torch.nn.BatchNorm3d)):
+                    module.eval()
