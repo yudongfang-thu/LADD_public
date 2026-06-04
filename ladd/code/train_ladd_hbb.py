@@ -111,12 +111,12 @@ def parse_args() -> argparse.Namespace:
 
     parser.add_argument(
         "--comparison-kd-profile",
-        choices=("none", "fgd", "mgd", "ld", "crosskd", "c2kd", "mmanet", "hallucidet"),
+        choices=("none", "fgd", "mgd", "ld", "crosskd", "cclkd", "c2kd", "mmanet", "hallucidet"),
         default="none",
         help=(
             "Portable comparison KD profile for OGSOD HBB. "
             "fgd/mgd/ld/crosskd are generic detector KD transfers; "
-            "c2kd/mmanet are cross-modal/incomplete-modality transfers; "
+            "cclkd/c2kd/mmanet are cross-modal/incomplete-modality transfers; "
             "hallucidet is a task-driven privileged-modality hallucination transfer."
         ),
     )
@@ -133,6 +133,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--crosskd-pred-weight", type=float, default=1.0)
     parser.add_argument("--crosskd-feat-weight", type=float, default=0.25)
     parser.add_argument("--crosskd-teacher-conf-threshold", type=float, default=0.25)
+    parser.add_argument("--cclkd-base-temperature", type=float, default=2.0)
+    parser.add_argument("--cclkd-contrastive-temperature", type=float, default=0.1)
+    parser.add_argument("--cclkd-feat-weight", type=float, default=1.0)
+    parser.add_argument("--cclkd-contrast-weight", type=float, default=0.5)
+    parser.add_argument("--cclkd-bg-weight", type=float, default=0.1)
+    parser.add_argument("--cclkd-min-confidence", type=float, default=0.1)
     parser.add_argument("--c2kd-selection-threshold", type=float, default=0.25)
     parser.add_argument("--c2kd-teacher-conf-threshold", type=float, default=0.3)
     parser.add_argument("--mmanet-relation-margin", type=float, default=0.2)
@@ -243,6 +249,12 @@ def main() -> None:
         crosskd_pred_weight=args.crosskd_pred_weight,
         crosskd_feat_weight=args.crosskd_feat_weight,
         crosskd_teacher_conf_threshold=args.crosskd_teacher_conf_threshold,
+        cclkd_base_temperature=args.cclkd_base_temperature,
+        cclkd_contrastive_temperature=args.cclkd_contrastive_temperature,
+        cclkd_feat_weight=args.cclkd_feat_weight,
+        cclkd_contrast_weight=args.cclkd_contrast_weight,
+        cclkd_bg_weight=args.cclkd_bg_weight,
+        cclkd_min_confidence=args.cclkd_min_confidence,
         c2kd_selection_threshold=args.c2kd_selection_threshold,
         c2kd_teacher_conf_threshold=args.c2kd_teacher_conf_threshold,
         mmanet_relation_margin=args.mmanet_relation_margin,

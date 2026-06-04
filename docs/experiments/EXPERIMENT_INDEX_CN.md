@@ -10,13 +10,13 @@
 |---|---|
 | 给导师看的 baseline + LADD 最新台账 | [BASELINE_LADD_STATUS_CN.md](BASELINE_LADD_STATUS_CN.md) |
 | 给导师看的对比方法来源、简介和 DOI | [COMPARISON_METHODS_RECORD_CN.md](COMPARISON_METHODS_RECORD_CN.md) |
+| 对比方法代码复核 | [../../comparison/IMPLEMENTATION_REVIEW_CN.md](../../comparison/IMPLEMENTATION_REVIEW_CN.md) |
 | Baseline 训练规范与当前状态 | [BASELINE_STANDARD_CN.md](BASELINE_STANDARD_CN.md) |
 | LADD 主线规范与状态 | [LADD_MAINLINE_STANDARD_CN.md](LADD_MAINLINE_STANDARD_CN.md) |
 | 对比实验计划与实现 | [COMPARISON_EXPERIMENTS_CN.md](COMPARISON_EXPERIMENTS_CN.md) |
 | 消融实验计划 | [ABLATION_PLAN_CN.md](ABLATION_PLAN_CN.md) |
-| CoLD 复现总结 | [../cold_repro/COLD_REPRO_FINAL_CN.md](../cold_repro/COLD_REPRO_FINAL_CN.md) |
+| 淘汰方法与无效结果归档 | [../../comparison/archive/excluded_methods/README.md](../../comparison/archive/excluded_methods/README.md) |
 | LADD 方法概述 | [../method/METHOD_OVERVIEW_CN.md](../method/METHOD_OVERVIEW_CN.md) |
-| 对比方法调研 | [../literature/COMPARISON_METHOD_SURVEY_20260528_CN.md](../literature/COMPARISON_METHOD_SURVEY_20260528_CN.md) |
 
 ## 当前正式主线
 
@@ -35,14 +35,14 @@
 | 线 | 服务器 | 状态 |
 |---|---|---|
 | LADD 主线 | 90 + 4090D | YOLO11n seed0/42 已有正向完成点；seed0/123 BN-freeze 修正版在 90 诊断；YOLO11s 多 run 运行中 |
-| 非 CoLD 对比 | 90 + 4090D | FGD/CrossKD-style n seed0 已完成；LD/HalluciDet-style n/s seed0 运行中；FGD n seed42 运行中 |
-| CoLD 复现 | 90 | 独立慢跑/诊断线，不占非 CoLD 主队列 |
+| 受控对比 | 待重新部署 | FGD/LD 已修复，CCLKD-style 已接入，HalluciDet-style 保留；先 smoke 后重跑 |
+| CoLD/CrossKD 归档 | `comparison/archive/excluded_methods/` | 纯历史证据，不再运行 |
 | 消融实验 | — | 未开始 |
 
 ## 服务器
 
 | 服务器 | 用途 |
 |---|---|
-| 90 (8x3090) | baseline 主参考，LADD 诊断，非 CoLD 对比，CoLD 独立复现 |
+| 90 (8x3090) | baseline 主参考、LADD 诊断与受控对比 |
 | 4090D | 当前接管 LADD/FGD 并行实验 |
-| 117 (RTX 5880 Ada) | 因 IO/网络过慢，暂不作为非 CoLD 主力 |
+| 117 (RTX 5880 Ada) | 因 IO/网络过慢，暂不作为当前受控实验主力 |

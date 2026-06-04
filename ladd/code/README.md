@@ -8,15 +8,15 @@
 
 | 文件 | 作用 |
 |---|---|
-| `train_ladd_hbb.py` | LADD 与非 CoLD 对比方法的统一入口 |
-| `src/teacher_student_decomposition_kd_hbb/loss.py` | LADD loss、cap2 reach-rank、FGD/CrossKD/LD/HalluciDet profiles |
+| `train_ladd_hbb.py` | LADD 与受控对比方法的统一入口 |
+| `src/teacher_student_decomposition_kd_hbb/loss.py` | LADD loss、cap2 reach-rank、FGD/LD/CCLKD/HalluciDet profiles 与历史审计 profiles |
 | `src/teacher_student_decomposition_kd_hbb/trainer.py` | A/B 阶段训练逻辑、BN-freeze |
 
 已包含的稳定性相关开关：
 
 ```text
 --freeze-bn-stats
---comparison-kd-profile {none,fgd,mgd,ld,crosskd,c2kd,mmanet,hallucidet}
+--comparison-kd-profile {none,fgd,mgd,ld,crosskd,cclkd,c2kd,mmanet,hallucidet}
 ```
 
 此前此目录比 `code_versions/current_hbb/` 旧，会缺少 HalluciDet-style 和 BN-freeze。2026-06-04 已同步修正。

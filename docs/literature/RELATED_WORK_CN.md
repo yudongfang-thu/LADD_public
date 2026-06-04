@@ -23,7 +23,7 @@
 | # | 文献 | 场景 | 为什么必读 |
 |---|---|---|---|
 | [1] | [**M4-SAR** (arXiv 2025→2026)](https://arxiv.org/abs/2505.10931) | 光学-SAR benchmark | 公开基准,**必引 + 必跑**。`112,174` 配对,`~1M` 实例。代码 [wchao0601/m4-sar](https://github.com/wchao0601/m4-sar) |
-| [2] | [**CoLD** (TGRS 2023)](https://openreview.net/forum?id=rlD7aV7UFD) | Category-oriented localization distillation | 最强 optical-guided SAR KD,**必进主对比表**。我们已复现(`0.43980 clean / 0.53442 online` on Sixiang) |
+| [2] | [**CoLD** (TGRS 2023)](https://openreview.net/forum?id=rlD7aV7UFD) | Category-oriented localization distillation | 历史 optical-guided SAR KD anchor；因协议和复现问题已降级归档，不进入当前受控主表 |
 | [3] | [**Cross-modal Gaussian Localization Distillation** (ICASSP 2025)](https://dblp.org/rec/conf/icassp/WangLFY25) | Localization 优先的光学→SAR KD | 比 CoLD 更新,若能复现可进主表 |
 | [4] | [**DisCoM-KD** (BMVC 2024)](https://arxiv.org/abs/2408.07080) | Disentanglement + adversarial CMKD | 我们 shared/private 建模最近的机制级先例 |
 

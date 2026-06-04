@@ -1,0 +1,96 @@
+YOLOv5 🚀 v5.0-0-gf5b8f7d torch 2.7.0+cu118 CUDA:0 (NVIDIA RTX 5880 Ada Generation, 48647.125MB)
+
+Overriding model.yaml nc=80 with nc=3
+
+                 from  n    params  module                                  arguments                     
+  0                -1  1      8800  models.common.Focus                     [3, 80, 3]                    
+  1                -1  1    115520  models.common.Conv                      [80, 160, 3, 2]               
+  2                -1  1    309120  models.common.C3                        [160, 160, 4]                 
+  3                -1  1    461440  models.common.Conv                      [160, 320, 3, 2]              
+  4                -1  1   3285760  models.common.C3                        [320, 320, 12]                
+  5                -1  1   1844480  models.common.Conv                      [320, 640, 3, 2]              
+  6                -1  1  13125120  models.common.C3                        [640, 640, 12]                
+  7                -1  1   7375360  models.common.Conv                      [640, 1280, 3, 2]             
+  8                -1  1   4099840  models.common.SPP                       [1280, 1280, [5, 9, 13]]      
+  9                -1  1  19676160  models.common.C3                        [1280, 1280, 4, False]        
+ 10                -1  1    820480  models.common.Conv                      [1280, 640, 1, 1]             
+ 11                -1  1         0  torch.nn.modules.upsampling.Upsample    [None, 2, 'nearest']          
+ 12           [-1, 6]  1         0  models.common.Concat                    [1]                           
+ 13                -1  1   5332480  models.common.C3                        [1280, 640, 4, False]         
+ 14                -1  1    205440  models.common.Conv                      [640, 320, 1, 1]              
+ 15                -1  1         0  torch.nn.modules.upsampling.Upsample    [None, 2, 'nearest']          
+ 16           [-1, 4]  1         0  models.common.Concat                    [1]                           
+ 17                -1  1   1335040  models.common.C3                        [640, 320, 4, False]          
+ 18                -1  1    922240  models.common.Conv                      [320, 320, 3, 2]              
+ 19          [-1, 14]  1         0  models.common.Concat                    [1]                           
+ 20                -1  1   4922880  models.common.C3                        [640, 640, 4, False]          
+ 21                -1  1   3687680  models.common.Conv                      [640, 640, 3, 2]              
+ 22          [-1, 10]  1         0  models.common.Concat                    [1]                           
+ 23                -1  1  19676160  models.common.C3                        [1280, 1280, 4, False]        
+ 24      [17, 20, 23]  1     53832  models.yolo.Detect                      [3, [[10, 13, 16, 30, 33, 23], [30, 61, 62, 45, 59, 119], [116, 90, 156, 198, 373, 326]], [320, 640, 1280]]
+/home/xmu/miniconda3/envs/cold/lib/python3.12/site-packages/torch/functional.py:554: UserWarning: torch.meshgrid: in an upcoming release, it will be required to pass the indexing argument. (Triggered internally at /pytorch/aten/src/ATen/native/TensorShape.cpp:4314.)
+  return _VF.meshgrid(tensors, **kwargs)  # type: ignore[attr-defined]
+Model Summary: 607 layers, 87257832 parameters, 87257832 gradients, 217.8 GFLOPS
+
+Transferred 786/794 items from yolov5x.pt
+Overriding model.yaml nc=80 with nc=3
+
+                 from  n    params  module                                  arguments                     
+  0                -1  1      8800  models.common.Focus                     [3, 80, 3]                    
+  1                -1  1    115520  models.common.Conv                      [80, 160, 3, 2]               
+  2                -1  1    309120  models.common.C3                        [160, 160, 4]                 
+  3                -1  1    461440  models.common.Conv                      [160, 320, 3, 2]              
+  4                -1  1   3285760  models.common.C3                        [320, 320, 12]                
+  5                -1  1   1844480  models.common.Conv                      [320, 640, 3, 2]              
+  6                -1  1  13125120  models.common.C3                        [640, 640, 12]                
+  7                -1  1   7375360  models.common.Conv                      [640, 1280, 3, 2]             
+  8                -1  1   4099840  models.common.SPP                       [1280, 1280, [5, 9, 13]]      
+  9                -1  1  19676160  models.common.C3                        [1280, 1280, 4, False]        
+ 10                -1  1    820480  models.common.Conv                      [1280, 640, 1, 1]             
+ 11                -1  1         0  torch.nn.modules.upsampling.Upsample    [None, 2, 'nearest']          
+ 12           [-1, 6]  1         0  models.common.Concat                    [1]                           
+ 13                -1  1   5332480  models.common.C3                        [1280, 640, 4, False]         
+ 14                -1  1    205440  models.common.Conv                      [640, 320, 1, 1]              
+ 15                -1  1         0  torch.nn.modules.upsampling.Upsample    [None, 2, 'nearest']          
+ 16           [-1, 4]  1         0  models.common.Concat                    [1]                           
+ 17                -1  1   1335040  models.common.C3                        [640, 320, 4, False]          
+ 18                -1  1    922240  models.common.Conv                      [320, 320, 3, 2]              
+ 19          [-1, 14]  1         0  models.common.Concat                    [1]                           
+ 20                -1  1   4922880  models.common.C3                        [640, 640, 4, False]          
+ 21                -1  1   3687680  models.common.Conv                      [640, 640, 3, 2]              
+ 22          [-1, 10]  1         0  models.common.Concat                    [1]                           
+ 23                -1  1  19676160  models.common.C3                        [1280, 1280, 4, False]        
+ 24      [17, 20, 23]  1     53832  models.yolo.Detect                      [3, [[10, 13, 16, 30, 33, 23], [30, 61, 62, 45, 59, 119], [116, 90, 156, 198, 373, 326]], [320, 640, 1280]]
+Model Summary: 607 layers, 87257832 parameters, 87257832 gradients, 217.8 GFLOPS
+
+Transferred 792/794 items from /home/xmu/djd/ladd/cold_anchor/runs/ogsod_rgb_teacher/cold_anchor_rgb_yolov5x_v5p0_coco_coco_mixup010_e100_b64_5880ada_20260602_102140/weights/best.pt
+Freezing teacher because teacher_det_weight=0.0
+[34m[1mtrain: [0mScanning '/home/xmu/djd/ladd/data/OGSOD-1.0/sar/labels/train.cache' images and labels... 14664 found, 0 missing, 0 empty, 0 corrupted: 100%|██████████| 14664/14664 [00:00<?, ?it/s][34m[1mtrain: [0mScanning '/home/xmu/djd/ladd/data/OGSOD-1.0/sar/labels/train.cache' images and labels... 14664 found, 0 missing, 0 empty, 0 corrupted: 100%|██████████| 14664/14664 [00:00<?, ?it/s]
+[34m[1mval: [0mScanning '/home/xmu/djd/ladd/data/OGSOD-1.0/sar/labels/test.cache' images and labels... 3667 found, 0 missing, 0 empty, 0 corrupted: 100%|██████████| 3667/3667 [00:00<?, ?it/s][34m[1mval: [0mScanning '/home/xmu/djd/ladd/data/OGSOD-1.0/sar/labels/test.cache' images and labels... 3667 found, 0 missing, 0 empty, 0 corrupted: 100%|██████████| 3667/3667 [00:00<?, ?it/s]
+/home/xmu/djd/ladd/cold_anchor/train_cold_v5p0_hbb.py:692: FutureWarning: `torch.cuda.amp.GradScaler(args...)` is deprecated. Please use `torch.amp.GradScaler('cuda', args...)` instead.
+  scaler = amp.GradScaler(enabled=cuda)
+Image sizes 256 train, 256 test; physical batch=64 effective batch=64; nb=230
+Starting native YOLOv5-v5.0 CoLD-style online training for 50 epochs
+
+[34m[1mautoanchor: [0mAnalyzing anchors... anchors/target = 2.93, Best Possible Recall (BPR) = 0.9881
+  0%|          | 0/230 [00:00<?, ?it/s][ WARN:0@247.741] global grfmt_tiff.cpp:122 TIFF_Warning TIFFReadDirectory: Unknown field with tag 34264 (0x85d8) encountered
+[ WARN:0@252.041] global grfmt_tiff.cpp:122 TIFF_Warning TIFFReadDirectory: Unknown field with tag 34264 (0x85d8) encountered
+[ WARN:0@260.743] global grfmt_tiff.cpp:122 TIFF_Warning TIFFReadDirectory: Unknown field with tag 34264 (0x85d8) encountered
+[ WARN:0@261.740] global grfmt_tiff.cpp:122 TIFF_Warning TIFFReadDirectory: Unknown field with tag 34264 (0x85d8) encountered
+/home/xmu/djd/ladd/cold_anchor/train_cold_v5p0_hbb.py:733: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with amp.autocast(enabled=cuda):
+[ WARN:0@283.143] global grfmt_tiff.cpp:122 TIFF_Warning TIFFReadDirectory: Unknown field with tag 34264 (0x85d8) encountered
+  0%|          | 0/230 [00:36<?, ?it/s]
+Traceback (most recent call last):
+  File "/home/xmu/djd/ladd/cold_anchor/train_cold_v5p0_hbb.py", line 862, in <module>
+    main()
+  File "/home/xmu/djd/ladd/cold_anchor/train_cold_v5p0_hbb.py", line 748, in main
+    cls_cold, loc_cold, teacher_iou, cold_stats = cold_candidate_cpm_iwm_loss(
+                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xmu/djd/ladd/cold_anchor/train_cold_v5p0_hbb.py", line 331, in cold_candidate_cpm_iwm_loss
+    teacher_box = _decode_yolov5_layer(tp, compute_loss.anchors[layer_idx])
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xmu/djd/ladd/cold_anchor/train_cold_v5p0_hbb.py", line 277, in _decode_yolov5_layer
+    bs, na, ny, nx, _ = pred.shape
+    ^^^^^^^^^^^^^^^^^
+ValueError: not enough values to unpack (expected 5, got 3)

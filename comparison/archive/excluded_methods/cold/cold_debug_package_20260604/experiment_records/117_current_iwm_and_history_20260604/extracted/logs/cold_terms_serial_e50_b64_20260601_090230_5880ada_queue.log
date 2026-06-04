@@ -1,0 +1,5 @@
+[2026-06-01_09:02:30] START term=ncld run=cold_v5p0_terms_ncld_t20_l1_topk1000_noiwm_e50_b64_20260601_090230_5880ada
+[2026-06-01_16:32:56] DONE term=ncld run=cold_v5p0_terms_ncld_t20_l1_topk1000_noiwm_e50_b64_20260601_090230_5880ada
+[2026-06-01_16:32:56] START term=tcld run=cold_v5p0_terms_tcld_t20_l1_topk1000_noiwm_e50_b64_20260601_090230_5880ada
+[2026-06-01_23:53:01] DONE term=tcld run=cold_v5p0_terms_tcld_t20_l1_topk1000_noiwm_e50_b64_20260601_090230_5880ada
+[2026-06-01_23:53:01] START term=both run=cold_v5p0_terms_both_t20_l1_topk1000_noiwm_e50_b64_20260601_090230_5880ada

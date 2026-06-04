@@ -1,0 +1,2 @@
+[2026-06-02_17:31:36] START term=ncld run=cold_v5p0_offline_rgbteacher_e100_ncld_t20_l1_topk1000_noiwm_e50_b64_offline_rgbteacher_e100_fixevalout_20260602_173136_5880ada
+teacher_weights=/home/xmu/djd/ladd/cold_anchor/runs/ogsod_rgb_teacher/cold_anchor_rgb_yolov5x_v5p0_coco_coco_mixup010_e100_b64_5880ada_20260602_102140/weights/best.pt

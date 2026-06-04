@@ -19,3 +19,7 @@ key
 *.engine
 id_rsa*
 id_ed25519*
+
+# Keep intentionally published historical evidence under the comparison archive.
+!comparison/archive/
+!comparison/archive/**

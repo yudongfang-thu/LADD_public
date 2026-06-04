@@ -18,8 +18,8 @@ LADD (Learnability-Aware Decomposition Distillation) — RGB-guided SAR object d
 | `ladd/diagnostics/` | Collapse debugging images and notes |
 | `baseline/code/` | Single-modality baseline trainer |
 | `baseline/scripts/` | Baseline launch and run scripts |
-| `comparison/code/` | Launch scripts for FGD/CrossKD/LD/HalluciDet comparison jobs |
-| `comparison/cold/code_current/` | CoLD YOLOv5 v5.0 HBB reproduction code |
+| `comparison/code/` | Formal launch scripts for FGD/LD/CCLKD/HalluciDet comparison jobs |
+| `comparison/archive/excluded_methods/` | Downgraded CoLD/CrossKD material and invalid pre-fix FGD/LD results; audit only |
 | `docs/` | Method overview, experiment plans/status, literature survey |
 | `server_logs/` | Compressed server-side training logs |
 | `shared/configs/datasets_public/` | OGSOD-1.0 dataset YAMLs (SAR/RGB detect) |
@@ -85,7 +85,7 @@ bash ladd/scripts/launch_formal_ladd_job.sh cap2 n 0 <gpu_id>
 bash comparison/code/launch_formal_from_yolo_kd_job.sh fgd n 0 <gpu_id>
 ```
 
-Supports: `fgd`, `mgd`, `ld`, `crosskd`, `c2kd`, `mmanet`, `hallucidet`.
+Formal launchers support: `fgd`, `ld`, `cclkd`, `hallucidet`.
 
 ### Formal protocol parameters (OGSOD-1.0 HBB)
 
@@ -128,14 +128,13 @@ Four files follow the standard pattern:
 
 ### Comparison methods (`comparison/code/`)
 
-Launch scripts that invoke the LADD trainer with `--comparison-kd-profile` set to `fgd`, `crosskd`, `ld`, `hallucidet`, etc. The trainer replaces the base KD term with the selected method's loss.
+Launch scripts that invoke the LADD trainer with `--comparison-kd-profile` set to one of the four controlled methods. Formal launchers reject archived profiles.
 
-### CoLD reproduction (`comparison/cold/code_current/`)
+### Excluded-method archive (`comparison/archive/excluded_methods/`)
 
-YOLOv5 v5.0-based CoLD reproduction — separate from the YOLO11-based main code. Uses its own train scripts, queue systems, and tmux launchers.
+CoLD, CrossKD, and invalid pre-fix FGD/LD results are retained only for audit. Do not launch experiments from this directory or use its results in the corrected main table.
 
 ## Known issues (current debugging focus)
 
 1. **B-stage collapse**: LADD B phase shows late-training degradation on some seeds/machines — likely BN running stats pollution. Fix attempt: `FREEZE_BN_STATS=1`.
 2. **4090D vs 90 divergence**: YOLO11s LADD results significantly lower on 4090D than on server 90 — protocol/implementation divergence under investigation.
-3. **CoLD reproduction**: CPM shows partial positive evidence; TCLD/NCLD trends and runtime don't match the CoLD paper.

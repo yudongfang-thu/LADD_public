@@ -4,7 +4,7 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  scripts/ogsod_public/formal_nomosaic_20260528/launch_formal_from_yolo_kd_job.sh <fgd|mgd|ld|crosskd|c2kd|mmanet|hallucidet> <n|s|m|l|x> <seed> <gpu_id>
+  comparison/code/launch_formal_from_yolo_kd_job.sh <fgd|ld|cclkd|hallucidet> <n|s|m|l|x> <seed> <gpu_id>
 
 Runs a from-YOLO-pretrain KD comparison under the formal OGSOD HBB protocol:
   student init = yolo11<size>.pt
@@ -31,7 +31,11 @@ SEED="${3:-}"
 GPU_ID="${4:-}"
 
 case "$METHOD" in
-  fgd|mgd|ld|crosskd|c2kd|mmanet|hallucidet) ;;
+  fgd|ld|cclkd|hallucidet) ;;
+  crosskd|mgd|c2kd|mmanet)
+    echo "Method '$METHOD' is retained for code audit only and is excluded from formal controlled runs." >&2
+    exit 2
+    ;;
   *) usage >&2; exit 1 ;;
 esac
 if [[ ! "$SIZE" =~ ^(n|s|m|l|x)$ ]]; then
@@ -49,7 +53,7 @@ case "$SIZE" in
   x) BATCH_SIZE=16 ;;
 esac
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT_DIR"
 if [[ -d /root/miniconda3/bin ]]; then
   export PATH="/root/miniconda3/bin:${PATH}"
@@ -153,6 +157,16 @@ case "$METHOD" in
     ;;
   ld)
     cmd+=("CROSSKD_TEMPERATURE=${CROSSKD_TEMPERATURE:-2.0}")
+    ;;
+  cclkd)
+    cmd+=(
+      "CCLKD_BASE_TEMPERATURE=${CCLKD_BASE_TEMPERATURE:-2.0}"
+      "CCLKD_CONTRASTIVE_TEMPERATURE=${CCLKD_CONTRASTIVE_TEMPERATURE:-0.1}"
+      "CCLKD_FEAT_WEIGHT=${CCLKD_FEAT_WEIGHT:-1.0}"
+      "CCLKD_CONTRAST_WEIGHT=${CCLKD_CONTRAST_WEIGHT:-0.5}"
+      "CCLKD_BG_WEIGHT=${CCLKD_BG_WEIGHT:-0.1}"
+      "CCLKD_MIN_CONFIDENCE=${CCLKD_MIN_CONFIDENCE:-0.1}"
+    )
     ;;
   crosskd)
     cmd+=(

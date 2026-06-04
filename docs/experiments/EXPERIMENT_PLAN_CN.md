@@ -1,6 +1,13 @@
 # LADD 实验计划
 
-最后更新：2026-06-03
+最后更新：2026-06-04
+
+> 2026-06-04 对比方法决策更新：controlled main table 改为
+> `FGD / LD / CCLKD-style / HalluciDet-style`。CrossKD 已停止并淘汰；CoLD
+> 已降级归档。FGD/LD 修复前结果作废。当前权威说明见
+> [`COMPARISON_EXPERIMENTS_CN.md`](COMPARISON_EXPERIMENTS_CN.md) 和
+> [`../../comparison/IMPLEMENTATION_REVIEW_CN.md`](../../comparison/IMPLEMENTATION_REVIEW_CN.md)；
+> 本文后续旧对比矩阵仅保留为历史计划记录。
 
 ## 1. Baseline
 
@@ -10,7 +17,7 @@
 
 执行策略更新：
 
-- 117 暂停作为非 CoLD 主力：该机文件 IO/网络过慢，先不继续消耗调度精力。
+- 117 暂停作为当前受控实验主力：该机文件 IO/网络过慢，先不继续消耗调度精力。
 - 90 和 4090D 各准备一套代码树；哪个有空余 GPU 就优先塞正式比较实验。90 当前已同步 HalluciDet-style/LD 代码并启动可跑项；4090D 作为候选执行机，待 SSH/文件传输入口恢复后同步同一套代码。
 - 正式比较实验从 `yolo11*.pt` 初始权重启动，不从 SAR baseline `best.pt` 继续训练；训练长度不作为对比指标，统一按 formal no-mosaic 协议训练到收敛。
 - 若使用跨机器结果，论文中需要标注 machine/checkpoint provenance，并保留同 seed/同 epoch 的 sanity comparison。
@@ -67,7 +74,7 @@ RGB baseline:
 |---|---|---|
 | YOLO11m seed42/123 SAR+RGB baseline | m 多 seed 验证 | P1 |
 | YOLO11l seed42/123 SAR+RGB baseline | l 多 seed 验证 | P2 |
-| 4090D HBB LADD 代码树同步 | 4090D 空闲时无法接管非 CoLD 实验 | P0 |
+| 4090D HBB LADD 代码树同步 | 4090D 空闲时无法接管当前受控实验 | P0 |
 
 90 路径：`/mnt/dataY/ydf/projects/LADD_og`。4090D 路径：`/root/autodl-tmp/LADD`。4090D 当前 SSH 短命令偶尔可用，但访问 `/root/autodl-tmp`、`nvidia-smi` 或上传小文件会被入口断开；恢复后优先同步 `src/teacher_student_decomposition_kd_hbb/`、`tools/train_ladd_hbb.py`、`scripts/ogsod_public/formal_nomosaic_20260528/`、`configs/` 和 `yolo/ultralytics/` 本地 patch。
 
@@ -76,7 +83,7 @@ RGB baseline:
 | 优先级 | 实验 | 目的 |
 |---|---:|---|
 | P0 | 同步完整 HBB LADD 代码到 4090D | 让 4090D 空闲时能接管主实验/消融/对比 |
-| P0 | 90 上继续塞可跑的非 CoLD 对比 | 避免 GPU 空闲，先保证 n/s seed0 跑通 |
+| P0 | 90 上继续塞可跑的当前受控对比 | 避免 GPU 空闲，先保证 n/s seed0 跑通 |
 | P1 | YOLO11m SAR/RGB seed42,123 | m 多 seed 验证 |
 | P1 | YOLO11l seed0 SAR/RGB 可用性复核 | l 实验可在 90/4090D 启动 |
 | P2 | YOLO11l SAR/RGB seed42,123 | l 多 seed 验证 |
@@ -169,104 +176,32 @@ B_WARMUP_BIAS_LR=0.001
 
 目标：与同类方法在同协议下公平对比。参见 [COMPARISON_EXPERIMENTS_CN.md](COMPARISON_EXPERIMENTS_CN.md)。
 
-### 4.1 已完成
+### 4.1 当前主表矩阵
 
-| 方法 | Model | best AP | vs baseline |
-|---|---|---|---|
-| FGD | YOLO11n | 0.55867 | -0.00049 |
-| CrossKD-style | YOLO11n | 0.55764 | -0.00152 |
-
-4090D 已完成结果已拉回本地：
-
-- 摘要：`comparison/fgd/results/4090d_formal_kd_20260602/SUMMARY_CN.md`
-- 归档根目录：`comparison/fgd/results/4090d_formal_kd_20260602/root/autodl-tmp/LADD`
-- 范围：YOLO11n/s SAR/RGB baseline、YOLO11n FGD、YOLO11n CrossKD-style 的 `results.csv`、`best.pt`、`last.pt`、日志和环境元数据；未拉取数据集、cache、图片和 optimizer 中间 checkpoint。
-
-### 4.2 新主表矩阵
-
-对比实验共保留 5 个方法：
-
-| 类别 | 方法 | 服务器 | seed 策略 | 当前状态 |
-|---|---|---|---|---|
-| 通用 KD #1 | FGD | 90/4090D | 3 seed | YOLO11n seed0 已完成；YOLO11n seed42 已在 4090D 启动正式 from-yolo-pretrain |
-| 通用 KD #2 | CrossKD-style | 90/4090D | 3 seed | YOLO11n seed0 已完成，正式 from-yolo-pretrain 结果可用 |
-| 通用 KD #3 | LD | 90/4090D | 3 seed | HBB `ld` profile 已实现；90 上 n/s seed0 from-yolo-pretrain 正在跑 |
-| 跨模态 #1 | CoLD | 90 | 尽力对齐原文 | 主表保留；接受慢跑和复现偏差诊断 |
-| 跨模态 #2 | HalluciDet-style | 90/4090D | 3 seed | HBB `hallucidet` profile 已实现；90 上 n/s seed0 from-yolo-pretrain 正在跑 |
-
-非 CoLD 的四个方法（FGD、CrossKD-style、LD、HalluciDet-style）统一按 from-yolo-pretrain 正式协议运行，90/4090D 哪台有空就用哪台。容量优先级：先 YOLO11n 三 seed闭环，同时保证 YOLO11s seed0 跑通；再按 baseline 完整度扩展到 s/m/l。最终主表以 n/s/m/l 为目标容量轴。
-
-### 4.3 当前条件：可做与需补
-
-| 容量 | baseline 条件 | 90/4090D 非 CoLD 对比可做项 | 需补 |
-|---|---|---|---|
-| YOLO11n | SAR/RGB 0/42/123 已齐 | FGD/CrossKD-style seed0 已完成；FGD seed42 已在 4090D 跑；LD/HalluciDet-style seed0 正在 90 跑；其余 seed 可排队 | 继续补三 seed |
-| YOLO11s | SAR/RGB 0/42/123 已齐 | LD/HalluciDet-style seed0 正在 90 跑；FGD/CrossKD-style 可排队 | 继续补 seed0 和三 seed |
-| YOLO11m | seed0 SAR/RGB 已完成 | seed0 FGD/CrossKD-style/LD/HalluciDet-style 可排队 | 补 SAR/RGB seed42,123 |
-| YOLO11l | seed0 baseline 已完成 | seed0 可作为后续容量点 | 补 SAR/RGB seed42,123 |
-| CoLD | 不依赖 baseline 矩阵 | 不放非 CoLD 主队列 | 90 上尽力对齐原文复现 |
-
-### 4.4 第二个跨模态方法筛选结论
-
-筛选硬条件：
-
-- 必须有当前可访问的公开代码仓库，不能是 redacted、404、仅口头声称开源。
-- 尽量是 object detection，或者至少检测适配成本可控。
-- 推理阶段必须能保持 SAR-only；若方法要求 RGB+SAR/thermal 双模态输入推理，则不适合作为我们的主表核心对比。
-- 机制需要能解释为跨模态知识迁移，而不是只做普通 feature/logit KD。
-
-候选判断：
-
-| 方法 | 代码状态 | 任务/机制 | 当前判断 |
-|---|---|---|---|
-| CoLD | 论文无可靠代码，已按原文复现诊断 | OGSOD optical->SAR detection，类别定位蒸馏 | 必须保留，作为同任务 anchor |
-| HalluciDet | GitHub 可访问：`heitorrapela/HalluciDet` | WACV 2024，训练期 RGB privileged information，测试期 IR-only detection | 推荐作为第二个跨模态主表候选；实现时标为 `HalluciDet-style` |
-| PFGF | GitHub 可访问：`liting1018/PFGF` | CVPR 2025 thermal detection，pseudo visible feature / fine-grained fusion | 很新且强，但更像 pseudo-visible/translation pipeline，不是严格 KD，工程较重 |
-| TIRDet | GitHub 可访问：`zeyuwang-zju/TIRDet` | ACM MM 2023 thermal detection，T2V translation + cross-modality aggregation | 可作为轻量备选；机制比 HalluciDet 更偏翻译/聚合 |
-| ModTr | GitHub 可访问：`heitorrapela/ModTr` | ECCV 2024 IR->RGB modality translator for detection | 开源且较简单，但不是 KD，适合作为附录/备选诊断 |
-| AMFD | GitHub 可访问：`bigD233/AMFD` | adaptive multimodal fusion distillation | 虽然是真蒸馏，但原实现推理依赖 RGB+IR 六通道双模态输入，不满足 SAR-only 主表约束 |
-| DecomKD | 论文声称开源，但 `lyf0801/DecomKD` 当前不可访问 | RGB-T teacher -> thermal-only student，机制非常贴近 | 暂不进入主表；不能把不可复现方法作为核心候选 |
-| Thermal OD via Cross-Modal KD from RGB | 页面代码仍为 redacted | RGB teacher -> thermal detector | 暂不进入主表；可复现性不满足要求 |
-| C2KD / MMANet-style | 有思想或代码，但非 detection-ready / 非跨模态检测主任务 | modality gap / incomplete modality | 不作为第二个跨模态主表核心，可保留为实现灵感 |
-
-当前推荐主表结构：
-
-| 类别 | 主方法 | 备注 |
+| 类别 | 方法 | 当前状态 |
 |---|---|---|
-| 通用 KD #1 | FGD | 已完成 YOLO11n seed0，需在 90/4090D 补三 seed |
-| 通用 KD #2 | CrossKD-style | 已完成 YOLO11n seed0，需在 90/4090D 补三 seed |
-| 通用 KD #3 | LD | 经典 logit KD，HBB profile 已实现，90 上 n/s seed0 正式 run 运行中 |
-| 跨模态 #1 | CoLD | 同任务，必须保留 |
-| 跨模态 #2 | HalluciDet-style | 开源、检测任务、SAR-only 推理可成立；HBB profile 已实现，90 上 n/s seed0 正式 run 运行中 |
+| 通用 KD | FGD-style | 修正版已实现；旧结果归档，待 smoke/重跑 |
+| 通用 KD | LD | 真正 DFL localization KD 已实现；旧 soft-logit 结果归档，待 smoke/重跑 |
+| 跨模态 KD | CCLKD-style | portable profile 已实现，待 smoke |
+| 跨模态 KD | HalluciDet-style | 已实现；候选运行需跑满 |
 
-HalluciDet-style 迁移建议：
+容量优先级：先 YOLO11n 三 seed闭环，同时保证 YOLO11s seed0 跑通；再扩展到
+s/m/l。CrossKD、CoLD 与无效旧结果统一归档到
+[`../../comparison/archive/excluded_methods/`](../../comparison/archive/excluded_methods/)。
 
-- 不直接声称复现官方 HalluciDet；在文中和代码中称为 `HalluciDet-style privileged modality hallucination`。
-- 训练阶段使用 paired RGB/SAR：RGB teacher 或 RGB feature extractor 提供 privileged supervision，SAR student 学检测，同时用辅助分支/投影头对齐 RGB 中间特征。
-- 推理阶段只输入 SAR，teacher 和 RGB 输入全部移除；若辅助分支仅用于训练，可不改变 YOLO11 SAR detector 的推理结构。
-- 优先完成 YOLO11n 三 seed controlled comparison；当前先保证 YOLO11n/YOLO11s seed0 正式 run 跑通，若训练稳定，再随 baseline 补齐扩展到 s/m/l。
+### 4.2 当前条件：可做与需补
 
----
+| 容量 | baseline 条件 | 可做项 | 需补 |
+|---|---|---|---|
+| YOLO11n | SAR/RGB 0/42/123 已齐 | 四方法 smoke 与正式三 seed | 先验证修正版 loss/显存 |
+| YOLO11s | SAR/RGB 0/42/123 已齐 | 四方法 seed0，稳定后补三 seed | 先完成 seed0 |
+| YOLO11m | seed0 SAR/RGB 已完成 | 四方法 seed0 可排队 | 补 SAR/RGB seed42/123 |
+| YOLO11l | seed0 baseline 已完成 | seed0 可作为后续容量点 | 补 SAR/RGB seed42/123 |
 
-## 5. CoLD 复现（单列）
+## 5. 降级归档
 
-复现难度大，独立追踪。详见 [../cold_repro/COLD_REPRO_FINAL_CN.md](../cold_repro/COLD_REPRO_FINAL_CN.md)。
-
-### 5.1 当前状态
-
-- YOLOv5x candidate CPM 在线 NCLD 50ep：相对 baseline +30%，方向对但趋势与论文相反
-- 117 上 YOLOv5x RGB teacher e100 已完成，AP50-95 约 0.44790
-- 最新 offline CoLD run 有 34 epoch results，但 detached log 显示 `Terminated`，117 当前无训练进程
-- 离线 frozen teacher 无效
-- 速度瓶颈：candidate 模式 Python 循环 ~2 s/it
-
-### 5.2 待完成
-
-| 优先级 | 实验 | 说明 |
-|---|---:|---|
-| P1 | 迁移到 90 服务器跑 400ep | CPU-bound 任务，不占用 117/5880 Ada |
-| P2 | YOLOv5x → YOLO11 移植 | 对齐 formal no-mosaic 协议 |
-| P2 | 解决 candidate 速度问题 | 向量化或切 matched 模式 |
+CoLD、CrossKD、修复前 FGD 与旧 soft-logit LD 均不再独立追踪或继续运行。
+完整材料见 [`../../comparison/archive/excluded_methods/`](../../comparison/archive/excluded_methods/)。
 
 ---
 
@@ -274,8 +209,8 @@ HalluciDet-style 迁移建议：
 
 ```
 Phase 0 (当前): 90 已同步 HBB LADD 代码；4090D 待 SSH/上传入口恢复后同步同一套代码
-Phase 1:        90/4090D 跑 11n/11s LADD 与非 CoLD 对比 seed0；90 慢跑 CoLD
-Phase 2:        11n seed0 跑通后补三 seed；空闲 GPU 优先塞 FGD/CrossKD-style/LD/HalluciDet-style
+Phase 1:        四个受控对比方法完成 smoke；LADD 保持运行
+Phase 2:        11n seed0 跑通后补三 seed；空闲 GPU 优先塞 FGD/LD/CCLKD-style/HalluciDet-style
 Phase 3:        补齐 m/l baseline 与迁移；扩展 LADD/对比到 n/s/m/l
 Phase 4:        根据结果决定是否补 YOLO11x 或 PFGF/TIRDet-style 附录
 ```

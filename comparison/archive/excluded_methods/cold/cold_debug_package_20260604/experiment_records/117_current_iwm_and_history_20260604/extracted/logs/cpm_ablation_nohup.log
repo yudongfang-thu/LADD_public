@@ -1,0 +1,7 @@
+[2026-05-31_21:31:27] ===== CPM ablation queue: baseline -> tcld -> ncld -> both =====
+Server: lab-p3-station, GPU: NVIDIA RTX 5880 Ada Generation
+Python: /home/xmu/miniconda3/bin/python3
+[2026-05-31_21:31:27] START term=baseline run=cold_v5p0_cpm_ablation_baseline_nocold_e50_b64
+Traceback (most recent call last):
+  File "<stdin>", line 3, in <module>
+ModuleNotFoundError: No module named 'yaml'

@@ -1,11 +1,22 @@
 # LD
 
-Localization Distillation, 经典检测 KD baseline。
+Localization Distillation，CVPR 2022 / TPAMI 2023，经典检测 KD baseline。
 
 ## 方法
 
-将 teacher bbox regression 转为 probability distribution，student 在定位空间做 KL 蒸馏。最基础的检测 KD 方法。
+当前修正版直接蒸馏 YOLO11 检测头的 DFL regression logits：
+
+```text
+student/teacher boxes: [B, N, 4 * reg_max]
+foreground assigned anchors -> reshape [-1, 4, reg_max] -> temperature KL
+```
+
+2026-06-04 以前的 `_ld_style_loss()` 实际蒸馏分类 logits，属于 soft-logit KD，
+不是 LD。旧实验结果全部作废，必须使用修正版重跑。
 
 ## 结果
 
-进行中。YOLO11n seed0 800ep。
+修正版尚需 smoke，之后重跑 YOLO11n/s。
+
+旧 soft-logit 结果已归档到
+[`../archive/excluded_methods/legacy_results/ld_softlogit_pre_20260604/`](../archive/excluded_methods/legacy_results/ld_softlogit_pre_20260604/)。

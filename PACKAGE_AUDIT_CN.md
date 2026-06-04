@@ -13,9 +13,8 @@
 | LADD 当前代码 | 当前 HBB LADD trainer/loss/model/train script/run scripts | `ladd/code_versions/current_hbb/` |
 | LADD 结果 | 90 与 4090D 的 LADD 结果 CSV、args、训练图片、压缩训练日志 | `ladd/results/90_formal_nomosaic_20260528/`, `ladd/results/4090d_formal_nomosaic_20260528/`, `server_logs/` |
 | LADD 诊断图 | A2 稳定性修复、B 入口 KD 冲击、loss 诊断图 | `ladd/diagnostics/` |
-| 非 CoLD 对比 | FGD/CrossKD-style 完成结果，LD/HalluciDet-style 当前结果 | `comparison/fgd/`, `comparison/crosskd/`, `comparison/ld/`, `comparison/hallucidet/` |
-| CoLD 代码 | 当前 CoLD YOLOv5 v5.0 HBB 复现代码和队列脚本 | `comparison/cold/code_current/` |
-| CoLD 服务器记录 | 90 最新 CoLD 迁移记录、5090D baseline 快照、旧 4090D/5880 Ada 诊断 | `comparison/cold/remote_records/`, `comparison/cold/v*_*/` |
+| 受控对比 | FGD/LD 修正版、CCLKD-style/HalluciDet-style 与实现复核 | `comparison/IMPLEMENTATION_REVIEW_CN.md`, `comparison/{fgd,ld,cclkd,hallucidet}/` |
+| 降级归档 | CoLD、CrossKD、修复前 FGD/LD 结果 | `comparison/archive/excluded_methods/` |
 
 ## 2. 未放入或刻意排除
 
@@ -31,7 +30,9 @@
 1. LADD 的 B 阶段为什么在部分 seed/机器上出现后期塌缩，尤其是 BN running stats 是否被污染。
 2. A2 修复已经避免检测 loss 早期失控，但 B 阶段仍可能有长期退化，需要判断是否与 BN、EMA、batch 统计、teacher/student 输入分布或学习率日程有关。
 3. 4090D 上 YOLO11s LADD 当前明显低于 90 上 seed0 结果，需要复核协议/代码/数据增强差异。
-4. CoLD candidate CPM 的方向有正证据，但 TCLD/NCLD 趋势和运行时间与原文不一致，需要外部老师帮忙判断实现近似是否偏离核心公式。
+4. FGD/LD 旧实验分别缺少 teacher attention、误用了分类 logits；请重点复核 2026-06-04 修正版。CCLKD-style 仍缺完整 relationship-level distillation。
+
+CoLD/CrossKD 与无效旧结果已统一归档，仅供追溯，不再列为当前公开排查重点。
 
 ## 4. 安全检查状态
 

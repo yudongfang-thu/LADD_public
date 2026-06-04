@@ -9,7 +9,7 @@ This directory stores the current public HBB LADD code snapshot and records how 
 - LADD cap2 mainline.
 - A2/B MuSGD stability settings.
 - `--freeze-bn-stats` / `FREEZE_BN_STATS=1`.
-- FGD, CrossKD-style, LD, and HalluciDet-style comparison profiles.
+- Corrected FGD/LD, CCLKD-style, and HalluciDet-style comparison profiles; removed methods remain for audit only.
 
 ## Historical Variants
 
