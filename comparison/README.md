@@ -5,6 +5,8 @@
 本次修复见 [`IMPLEMENTATION_REVIEW_CN.md`](IMPLEMENTATION_REVIEW_CN.md)。
 第二、三轮外部复核意见的逐条响应及官方证据见
 [`REVIEW_FEEDBACK_RESPONSE_CN.md`](REVIEW_FEEDBACK_RESPONSE_CN.md)。
+老师确认后的四方法最终实现 smoke 结果见
+[`FINAL_IMPLEMENTATION_SMOKE_CN.md`](FINAL_IMPLEMENTATION_SMOKE_CN.md)。
 
 | 方法 | 来源 | 类型 | 代码位置 |
 |---|---|---|---|
