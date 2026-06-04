@@ -217,7 +217,9 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         profile_kd_replace_base: bool = False,
         fgd_bg_weight: float = 0.25,
         fgd_relation_weight: float = 0.1,
+        fgd_temperature: float = 0.5,
         mgd_mask_ratio: float = 0.5,
+        ld_temperature: float = 10.0,
         crosskd_temperature: float = 2.0,
         crosskd_pred_weight: float = 1.0,
         crosskd_feat_weight: float = 0.25,
@@ -225,9 +227,11 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         cclkd_base_temperature: float = 2.0,
         cclkd_contrastive_temperature: float = 0.1,
         cclkd_feat_weight: float = 1.0,
+        cclkd_logit_weight: float = 1.0,
         cclkd_contrast_weight: float = 0.5,
         cclkd_bg_weight: float = 0.1,
         cclkd_min_confidence: float = 0.1,
+        cclkd_max_tokens: int = 512,
         c2kd_selection_threshold: float = 0.25,
         c2kd_teacher_conf_threshold: float = 0.3,
         mmanet_relation_margin: float = 0.2,
@@ -276,7 +280,9 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         self.profile_kd_replace_base = bool(profile_kd_replace_base)
         self.fgd_bg_weight = float(fgd_bg_weight)
         self.fgd_relation_weight = float(fgd_relation_weight)
+        self.fgd_temperature = max(float(fgd_temperature), 1e-6)
         self.mgd_mask_ratio = min(max(float(mgd_mask_ratio), 0.0), 1.0)
+        self.ld_temperature = max(float(ld_temperature), 1e-6)
         self.crosskd_temperature = max(float(crosskd_temperature), 1e-6)
         self.crosskd_pred_weight = float(crosskd_pred_weight)
         self.crosskd_feat_weight = float(crosskd_feat_weight)
@@ -284,9 +290,11 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         self.cclkd_base_temperature = max(float(cclkd_base_temperature), 1e-6)
         self.cclkd_contrastive_temperature = max(float(cclkd_contrastive_temperature), 1e-6)
         self.cclkd_feat_weight = max(float(cclkd_feat_weight), 0.0)
+        self.cclkd_logit_weight = max(float(cclkd_logit_weight), 0.0)
         self.cclkd_contrast_weight = max(float(cclkd_contrast_weight), 0.0)
         self.cclkd_bg_weight = max(float(cclkd_bg_weight), 0.0)
         self.cclkd_min_confidence = min(max(float(cclkd_min_confidence), 1e-6), 1.0)
+        self.cclkd_max_tokens = max(int(cclkd_max_tokens), 16)
         self.c2kd_selection_threshold = float(c2kd_selection_threshold)
         self.c2kd_teacher_conf_threshold = float(c2kd_teacher_conf_threshold)
         self.mmanet_relation_margin = float(mmanet_relation_margin)
@@ -915,9 +923,9 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         # FGD combines teacher-derived attention with GT foreground/background
         # separation. The legacy profile only implemented the latter.
         spatial_att = teacher_map.detach().abs().mean(dim=1).reshape(bsz, -1)
-        spatial_att = F.softmax(spatial_att, dim=1) * (height * width)
+        spatial_att = F.softmax(spatial_att / self.fgd_temperature, dim=1) * (height * width)
         channel_att = teacher_map.detach().abs().mean(dim=(2, 3))
-        channel_att = F.softmax(channel_att, dim=1) * channels
+        channel_att = F.softmax(channel_att / self.fgd_temperature, dim=1) * channels
         fg = fg_mask.reshape(bsz, -1).bool()
         region_weight = torch.full_like(spatial_att, self.fgd_bg_weight)
         region_weight = torch.where(fg, torch.ones_like(region_weight), region_weight)
@@ -1004,21 +1012,19 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         fg_mask: torch.Tensor,
     ) -> torch.Tensor:
         """Localization Distillation on foreground YOLO DFL regression logits."""
-        if (
-            student_distri is None
-            or teacher_distri is None
-            or student_distri.shape != teacher_distri.shape
-            or student_distri.numel() == 0
-            or student_distri.shape[-1] % 4 != 0
-            or not fg_mask.any()
-        ):
-            if student_distri is not None:
-                return student_distri.new_zeros(())
-            if teacher_distri is not None:
-                return teacher_distri.new_zeros(())
-            return torch.zeros((), device=self.device)
+        if student_distri is None or teacher_distri is None:
+            raise RuntimeError("LD requires raw student and teacher DFL logits; received a missing distribution tensor.")
+        if student_distri.shape != teacher_distri.shape:
+            raise RuntimeError(
+                "LD requires matching raw student/teacher DFL logits, got "
+                f"student={tuple(student_distri.shape)} teacher={tuple(teacher_distri.shape)}."
+            )
+        if student_distri.numel() == 0 or student_distri.shape[-1] % 4 != 0:
+            raise RuntimeError(f"LD received an invalid DFL-logit shape: {tuple(student_distri.shape)}.")
+        if not fg_mask.any():
+            return student_distri.new_zeros(())
 
-        temperature = self.crosskd_temperature
+        temperature = self.ld_temperature
         reg_max = student_distri.shape[-1] // 4
         fg = fg_mask.reshape(student_distri.shape[:2]).bool()
         s = student_distri[fg].reshape(-1, 4, reg_max)
@@ -1055,10 +1061,11 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         token_weight = torch.where(fg, adaptive_weight, adaptive_weight * self.cclkd_bg_weight)
 
         feat_token_loss = (student_flat - teacher_flat).pow(2).mean(dim=-1)
-        adaptive_loss = (feat_token_loss * token_weight).sum() / token_weight.sum().clamp_min(1e-6)
+        feature_loss = (feat_token_loss * token_weight).sum() / token_weight.sum().clamp_min(1e-6)
 
         # Adaptive temperature is applied to prediction distributions. More
         # confident teacher tokens receive a lower (harder) temperature.
+        logit_loss = student_map.new_zeros(())
         if (
             student_scores is not None
             and teacher_scores is not None
@@ -1070,7 +1077,7 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
             s_log_prob = F.log_softmax(student_scores / tau, dim=-1)
             t_prob = F.softmax(teacher_scores.detach() / tau, dim=-1)
             logit_token_loss = F.kl_div(s_log_prob, t_prob, reduction="none").sum(dim=-1) * tau.squeeze(-1).pow(2)
-            adaptive_loss = adaptive_loss + (
+            logit_loss = (
                 (logit_token_loss * token_weight).sum() / token_weight.sum().clamp_min(1e-6)
             )
 
@@ -1079,8 +1086,26 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
             student_pos = F.normalize(student_flat[fg], dim=-1, eps=1e-6)
             teacher_pos = F.normalize(teacher_flat[fg], dim=-1, eps=1e-6)
             labels = target_scores[fg].argmax(dim=-1)
-            if student_pos.shape[0] > self.mmanet_max_tokens:
-                keep = torch.topk(teacher_conf[fg], k=self.mmanet_max_tokens, sorted=False).indices
+            if student_pos.shape[0] > self.cclkd_max_tokens:
+                # Reserve a balanced random quota per class, then fill any
+                # unused budget from the remaining foreground tokens.
+                keep_parts = []
+                unique_labels = labels.unique(sorted=True)
+                per_class = max(self.cclkd_max_tokens // max(unique_labels.numel(), 1), 1)
+                selected = torch.zeros(labels.shape[0], dtype=torch.bool, device=labels.device)
+                for class_id in unique_labels:
+                    class_idx = torch.where(labels == class_id)[0]
+                    class_keep = class_idx[torch.randperm(class_idx.numel(), device=labels.device)[:per_class]]
+                    keep_parts.append(class_keep)
+                    selected[class_keep] = True
+                keep = torch.cat(keep_parts)
+                remaining = self.cclkd_max_tokens - keep.numel()
+                if remaining > 0:
+                    remaining_idx = torch.where(~selected)[0]
+                    fill = remaining_idx[torch.randperm(remaining_idx.numel(), device=labels.device)[:remaining]]
+                    keep = torch.cat((keep, fill))
+                elif remaining < 0:
+                    keep = keep[torch.randperm(keep.numel(), device=labels.device)[: self.cclkd_max_tokens]]
                 student_pos = student_pos[keep]
                 teacher_pos = teacher_pos[keep]
                 labels = labels[keep]
@@ -1089,7 +1114,11 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
             log_prob = F.log_softmax(logits, dim=-1)
             contrastive_loss = -((log_prob * positive).sum(dim=-1) / positive.sum(dim=-1).clamp_min(1.0)).mean()
 
-        return self.cclkd_feat_weight * adaptive_loss + self.cclkd_contrast_weight * contrastive_loss
+        return (
+            self.cclkd_feat_weight * feature_loss
+            + self.cclkd_logit_weight * logit_loss
+            + self.cclkd_contrast_weight * contrastive_loss
+        )
 
     def _c2kd_style_loss(
         self,
@@ -1834,6 +1863,20 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
                 teacher_distri_all = teacher_distri_all.permute(0, 2, 1).contiguous()
             if teacher_distri_all.shape != student_pred_distri.shape:
                 teacher_distri_all = None
+        if self.comparison_kd_profile == "ld" and (
+            not isinstance(teacher_distri_all, torch.Tensor)
+            or teacher_distri_all.shape != student_pred_distri.shape
+        ):
+            raw_shape = (
+                tuple(teacher_preds["boxes"].shape)
+                if isinstance(teacher_preds.get("boxes"), torch.Tensor)
+                else None
+            )
+            raise RuntimeError(
+                "LD could not obtain raw teacher DFL logits matching the student distribution. "
+                f"raw_teacher_boxes={raw_shape}, student={tuple(student_pred_distri.shape)}. "
+                "The teacher eval forward must return (decoded_predictions, raw_predictions_dict)."
+            )
         teacher_scores_all = teacher_preds.get("scores")
         if isinstance(teacher_scores_all, torch.Tensor) and teacher_scores_all.dim() == 3:
             if teacher_scores_all.shape[1] == student_pred_scores.shape[-1]:

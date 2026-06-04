@@ -128,7 +128,9 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--fgd-bg-weight", type=float, default=0.25)
     parser.add_argument("--fgd-relation-weight", type=float, default=0.1)
+    parser.add_argument("--fgd-temperature", type=float, default=0.5)
     parser.add_argument("--mgd-mask-ratio", type=float, default=0.5)
+    parser.add_argument("--ld-temperature", type=float, default=10.0)
     parser.add_argument("--crosskd-temperature", type=float, default=2.0)
     parser.add_argument("--crosskd-pred-weight", type=float, default=1.0)
     parser.add_argument("--crosskd-feat-weight", type=float, default=0.25)
@@ -136,9 +138,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--cclkd-base-temperature", type=float, default=2.0)
     parser.add_argument("--cclkd-contrastive-temperature", type=float, default=0.1)
     parser.add_argument("--cclkd-feat-weight", type=float, default=1.0)
+    parser.add_argument("--cclkd-logit-weight", type=float, default=1.0)
     parser.add_argument("--cclkd-contrast-weight", type=float, default=0.5)
     parser.add_argument("--cclkd-bg-weight", type=float, default=0.1)
     parser.add_argument("--cclkd-min-confidence", type=float, default=0.1)
+    parser.add_argument("--cclkd-max-tokens", type=int, default=512)
     parser.add_argument("--c2kd-selection-threshold", type=float, default=0.25)
     parser.add_argument("--c2kd-teacher-conf-threshold", type=float, default=0.3)
     parser.add_argument("--mmanet-relation-margin", type=float, default=0.2)
@@ -244,7 +248,9 @@ def main() -> None:
         profile_kd_replace_base=int(bool(args.profile_kd_replace_base)),
         fgd_bg_weight=args.fgd_bg_weight,
         fgd_relation_weight=args.fgd_relation_weight,
+        fgd_temperature=args.fgd_temperature,
         mgd_mask_ratio=args.mgd_mask_ratio,
+        ld_temperature=args.ld_temperature,
         crosskd_temperature=args.crosskd_temperature,
         crosskd_pred_weight=args.crosskd_pred_weight,
         crosskd_feat_weight=args.crosskd_feat_weight,
@@ -252,9 +258,11 @@ def main() -> None:
         cclkd_base_temperature=args.cclkd_base_temperature,
         cclkd_contrastive_temperature=args.cclkd_contrastive_temperature,
         cclkd_feat_weight=args.cclkd_feat_weight,
+        cclkd_logit_weight=args.cclkd_logit_weight,
         cclkd_contrast_weight=args.cclkd_contrast_weight,
         cclkd_bg_weight=args.cclkd_bg_weight,
         cclkd_min_confidence=args.cclkd_min_confidence,
+        cclkd_max_tokens=args.cclkd_max_tokens,
         c2kd_selection_threshold=args.c2kd_selection_threshold,
         c2kd_teacher_conf_threshold=args.c2kd_teacher_conf_threshold,
         mmanet_relation_margin=args.mmanet_relation_margin,

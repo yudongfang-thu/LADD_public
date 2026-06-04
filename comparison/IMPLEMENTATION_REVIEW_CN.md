@@ -10,9 +10,9 @@ YOLO11 HBB 训练入口、formal no-mosaic 数据增强和 800 epoch 收敛口�
 
 | 方法 | 当前实现 | 可否直接作为严格复现 | 后续实验要求 |
 |---|---|---|---|
-| FGD | teacher spatial/channel attention + GT fg/bg weighting + batch relation | 否，属于 FGD-style YOLO port | 修复前结果不能代表当前实现，需重跑 |
-| LD | 前景 anchor 的 YOLO DFL regression logits KL | 可以作为 LD 的 YOLO/DFL 适配 | 旧 soft-logit 结果作废，需重跑 |
-| CCLKD-style | teacher-confidence adaptive feature/logit KD + category-constrained contrastive KD | 否，论文无公开可运行代码，且当前缺 relationship-level 项 | 必须先 smoke，再正式跑 |
+| FGD | 官方形式的 softmax spatial/channel attention + GT fg/bg weighting + batch relation 近似 | 否，属于 FGD-style YOLO port | 修复前结果不能代表当前实现，需重跑 |
+| LD | 前景 anchor 的 YOLO DFL regression logits KL，shape 异常直接失败 | 可以作为 LD 的 YOLO/DFL 适配 | 旧 soft-logit 结果作废，需重跑 |
+| CCLKD-style | teacher-confidence adaptive feature/logit KD + 类别分层采样的 contrastive KD | 否，论文无公开可运行代码，且当前缺 relationship-level 项 | 必须先 smoke，再正式跑 |
 | HalluciDet-style | detection-utility guided feature/response/margin alignment | 否，没有显式 hallucination module | 写作时必须标注 `-style` |
 
 ## 2. 本次修复
@@ -37,6 +37,10 @@ feats:  multi-scale feature maps
 当前 profile 框架会先计算各尺度 LD，再按有效尺度平均；这属于 YOLO 适配选择，
 不保证与原实现的样本/尺度加权完全一致，正式写作应注明。
 
+Teacher 虽处于 eval 模式，但当前 Ultralytics Detect head 会返回
+`(decoded_predictions, raw_predictions_dict)`，本实现从第二项提取原始 DFL
+logits。当前增加了 fail-fast 检查，并使用独立 `ld_temperature=10.0`。
+
 ### FGD
 
 旧实现只有 GT 二值前景/背景权重，没有教师特征注意力。本次加入由教师特征
@@ -46,6 +50,7 @@ teacher attention 和前景/背景分离。
 
 当前 batch-wise cosine relation 项仍是便携近似，不等同于官方实现的全部
 global context 模块，因此写作使用 `FGD-style (teacher-attention weighted)`。
+attention 保留官方的 softmax、`H*W`/`C` 缩放，并使用官方默认温度 0.5。
 
 ### CCLKD-style
 
@@ -56,6 +61,9 @@ DOI `10.1080/10095020.2026.2633014` 对应论文
 1. 使用 teacher prediction confidence 决定 token 权重和自适应温度；
 2. 同时对齐 feature 与分类预测分布；
 3. 在 GT-assigned foreground anchor 上，以类别构造跨模态正负样本。
+
+feature/logit 项现有独立权重；超过 token 上限时使用类别分层随机采样，避免旧
+top-K 高置信采样忽略低置信区域，也避免多数类别占满全局随机样本。
 
 当前实现没有完整 relationship-level distillation，也把 candidate box 级 CCL
 近似为 assigned anchor-token CCL。因此代码和论文中都必须写作
@@ -94,3 +102,5 @@ privileged information、检测效用加权对齐和 SAR-only 推理约束。保
 2. LD smoke 必须确认 teacher/student `boxes` 都是 `[B, N, 4*reg_max]`，且 loss 非零。
 3. CCLKD-style smoke 必须监控 contrastive 矩阵显存和 NaN；实现最多保留 512 个 foreground token。
 4. FGD/LD 修复前已经运行的实验全部使用旧 loss，不得与修复后实验混合统计。
+5. 第二轮复核意见响应与未采纳原因见
+   [`REVIEW_FEEDBACK_RESPONSE_CN.md`](REVIEW_FEEDBACK_RESPONSE_CN.md)。

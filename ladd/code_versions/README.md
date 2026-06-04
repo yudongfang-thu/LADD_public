@@ -10,6 +10,7 @@ This directory stores the current public HBB LADD code snapshot and records how 
 - A2/B MuSGD stability settings.
 - `--freeze-bn-stats` / `FREEZE_BN_STATS=1`.
 - Corrected FGD/LD, CCLKD-style, and HalluciDet-style comparison profiles; removed methods remain for audit only.
+- Independent FGD/LD temperatures, LD DFL-logit fail-fast checks, and CCLKD logit/token controls.
 
 ## Historical Variants
 

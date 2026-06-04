@@ -17,7 +17,8 @@ Geo-spatial Information Science，2026，DOI
 
 - teacher-confidence adaptive feature/logit distillation；
 - GT-assigned foreground anchor 上的 category-constrained cross-modal contrastive loss；
-- 最多 512 foreground token 的显存保护。
+- feature/logit 独立权重；
+- 最多 512 foreground token 的类别分层随机采样显存保护。
 
 论文没有公开可运行代码。当前缺少完整 relationship-level distillation，并把
 candidate-box CCL 近似为 assigned anchor-token CCL，因此必须写作 `CCLKD-style`，

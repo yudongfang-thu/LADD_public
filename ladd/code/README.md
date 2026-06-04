@@ -1,8 +1,10 @@
 # LADD HBB 代码快照
 
-最后更新：2026-06-04 08:55 CST
+最后更新：2026-06-04
 
-这里是给外部排查直接阅读的当前 HBB/LADD 代码快照。它已经与本 public 包中的 `../code_versions/current_hbb/` 以及私有工作区当前主线同步。
+这里是给外部排查直接阅读的当前 HBB/LADD 代码快照。它已经与本 public 包中的
+`../code_versions/current_hbb/` 同步；正式实验前仍需把本版本部署到私有工作区和
+目标服务器。
 
 关键点：
 
@@ -17,6 +19,10 @@
 ```text
 --freeze-bn-stats
 --comparison-kd-profile {none,fgd,mgd,ld,crosskd,cclkd,c2kd,mmanet,hallucidet}
+--fgd-temperature 0.5
+--ld-temperature 10.0
+--cclkd-logit-weight 1.0
+--cclkd-max-tokens 512
 ```
 
 此前此目录比 `code_versions/current_hbb/` 旧，会缺少 HalluciDet-style 和 BN-freeze。2026-06-04 已同步修正。

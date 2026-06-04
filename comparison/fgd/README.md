@@ -8,6 +8,10 @@ Focal and Global Knowledge Distillation for Detectors, CVPR 2022.
 分离和 batch-level relation matrix MSE。它是便携的 `FGD-style` YOLO port，不是
 MMDetection 官方实现的逐行复现。
 
+空间与通道 attention 按 FGD 官方代码均使用 softmax，并分别乘 `H*W` 和 `C`；
+默认 temperature 为 0.5。当前 relation 项不是官方的可训练 Global KD context
+模块，因此仍必须标记 `FGD-style`。
+
 ## 代码位置
 
 FGD 在本 public 包中不是独立训练器，使用统一入口：

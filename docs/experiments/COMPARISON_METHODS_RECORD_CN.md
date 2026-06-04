@@ -3,7 +3,9 @@
 最后更新：2026-06-04
 
 用途：给导师说明当前 controlled main table 的方法选择、实现边界和实验有效性。
-详细代码复核见 [`../../comparison/IMPLEMENTATION_REVIEW_CN.md`](../../comparison/IMPLEMENTATION_REVIEW_CN.md)。
+详细代码复核见 [`../../comparison/IMPLEMENTATION_REVIEW_CN.md`](../../comparison/IMPLEMENTATION_REVIEW_CN.md)，
+第二轮意见响应见
+[`../../comparison/REVIEW_FEEDBACK_RESPONSE_CN.md`](../../comparison/REVIEW_FEEDBACK_RESPONSE_CN.md)。
 
 ## 1. 当前四方法
 
@@ -12,9 +14,9 @@ teacher、800 epoch 和 SAR-only inference。
 
 | 类别 | 方法 | 来源 | DOI | 当前实现与状态 |
 |---|---|---|---|---|
-| 通用检测 KD | FGD-style | CVPR 2022, Focal and Global Knowledge Distillation for Detectors | [`10.1109/CVPR52688.2022.00460`](https://doi.org/10.1109/CVPR52688.2022.00460) | 已修为 teacher attention + GT fg/bg + relation；旧结果作废 |
-| 通用输出 KD | LD | CVPR 2022, Localization Distillation for Dense Object Detection | [`10.1109/CVPR52688.2022.00919`](https://doi.org/10.1109/CVPR52688.2022.00919) | 已修为 YOLO DFL regression KL；旧 soft-logit 结果作废 |
-| 跨模态 KD | CCLKD-style | GIS 2026, Cross-modal contrastive learning-based object detection under incomplete modalities | [`10.1080/10095020.2026.2633014`](https://doi.org/10.1080/10095020.2026.2633014) | portable profile 已接入，需 smoke；不是严格复现 |
+| 通用检测 KD | FGD-style | CVPR 2022, Focal and Global Knowledge Distillation for Detectors | [`10.1109/CVPR52688.2022.00460`](https://doi.org/10.1109/CVPR52688.2022.00460) | 官方 softmax attention 形式 + GT fg/bg + relation 近似；旧结果作废 |
+| 通用输出 KD | LD | CVPR 2022, Localization Distillation for Dense Object Detection | [`10.1109/CVPR52688.2022.00919`](https://doi.org/10.1109/CVPR52688.2022.00919) | YOLO DFL regression KL，T=10，错形直接失败；旧 soft-logit 结果作废 |
+| 跨模态 KD | CCLKD-style | GIS 2026, Cross-modal contrastive learning-based object detection under incomplete modalities | [`10.1080/10095020.2026.2633014`](https://doi.org/10.1080/10095020.2026.2633014) | feature/logit 独立权重 + 类别分层采样；需 smoke，不是严格复现 |
 | 跨模态 / privileged modality | HalluciDet-style | WACV 2024, HalluciDet | [`10.1109/WACV57701.2024.00147`](https://doi.org/10.1109/WACV57701.2024.00147) | 已接入；无显式 hallucination module，需写明 `-style` |
 
 ## 2. 选择逻辑
