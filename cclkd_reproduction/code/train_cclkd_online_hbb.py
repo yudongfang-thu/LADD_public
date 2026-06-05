@@ -421,7 +421,10 @@ class CCLKDOnlineHBBTrainer(DetectionTrainer):
         the monitored quantity. This does not change training or reported
         detection metrics.
         """
-        model = self.ema.ema if self.ema else self.model
+        # Standalone validation may fuse or otherwise mutate the model it
+        # receives. Validate a copy so EMA state remains update-compatible with
+        # the live student on the next training epoch.
+        model = deepcopy(self.ema.ema if self.ema else unwrap_model(self.model))
         metrics = self.validator(model=model)
         if metrics is None:
             return None, None
