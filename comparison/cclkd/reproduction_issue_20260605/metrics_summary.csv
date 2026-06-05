@@ -1,0 +1,6 @@
+run,rows,last_epoch,last_map50_95,last_map50,best_epoch,best_map50_95,best_map50_at_best
+90_cclkd_paperclosest,400,400,0.48567,0.76397,400,0.48567,0.76397
+90_sar_baseline_paperclosest_partial,13,13,0.13600,0.30609,13,0.13600,0.30609
+90_sar_yolo11s_legacy_400ep,400,400,0.53255,0.80835,400,0.53255,0.80835
+90_rgb_yolo11s_teacher_400ep,400,400,0.59771,0.91844,400,0.59771,0.91844
+dual4090_cclkd_formal_partial,512,512,0.45225,0.64247,512,0.45225,0.64247
