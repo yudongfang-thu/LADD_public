@@ -42,6 +42,7 @@ cd "$ROOT_DIR"
 
 GPU_ID="${GPU_ID:-0}"
 SEED="${SEED:-0}"
+MODEL_SIZE="${MODEL_SIZE:-n}"
 BATCH_SIZE="${BATCH_SIZE:-64}"
 WORKERS="${WORKERS:-8}"
 IMGSZ="${IMGSZ:-256}"
@@ -82,7 +83,7 @@ run_phase() {
   local epochs="$2"
   local patience="$3"
   local phase_log_dir="${CHAIN_LOG_DIR}/${phase}"
-  local run_name="ladd_hbb_ogsod11n_${RUN_TAG}_${phase}_e${epochs}_b${BATCH_SIZE}_s${SEED}_gpu${GPU_ID}"
+  local run_name="ladd_hbb_ogsod11${MODEL_SIZE}_${RUN_TAG}_${phase}_e${epochs}_b${BATCH_SIZE}_s${SEED}_gpu${GPU_ID}"
   local phase_prefix=""
 
   echo "[$(date '+%F %T')] phase=${phase} model=${current_model}" | tee -a "${CHAIN_LOG_DIR}/chain.log"

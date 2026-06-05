@@ -52,7 +52,7 @@ case "$SIZE" in
   x) BATCH_SIZE=16 ;;
 esac
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT_DIR"
 
 BASE_ROOT="runs_public/ogsod/hbb/formal_nomosaic_20260528"
@@ -78,7 +78,7 @@ OUTER_LOG="${LOG_DIR}/${RUN_TAG}_gpu${GPU_ID}.outer.log"
 PID_PATH="${LOG_DIR}/${RUN_TAG}_gpu${GPU_ID}.pid"
 mkdir -p "$PROJECT_DIR" "$CHAIN_LOG_DIR" "$LOG_DIR"
 
-if [[ -e "${PROJECT_DIR}/ladd_hbb_ogsod11n_${RUN_TAG}_b_e800_b${BATCH_SIZE}_s${SEED}_gpu${GPU_ID}" && "${EXIST_OK:-0}" != "1" ]]; then
+if [[ -e "${PROJECT_DIR}/ladd_hbb_ogsod11${SIZE}_${RUN_TAG}_b_e800_b${BATCH_SIZE}_s${SEED}_gpu${GPU_ID}" && "${EXIST_OK:-0}" != "1" ]]; then
   echo "A likely final B run directory already exists under $PROJECT_DIR" >&2
   echo "Set EXIST_OK=1 only if intentional." >&2
   exit 1
@@ -88,6 +88,9 @@ cmd=(
   env
   "SAR_BASELINE=${SAR_BASELINE}"
   "RGB_TEACHER=${RGB_TEACHER}"
+  "DATA_CFG=configs/datasets/ogsod_hbb_sar.yaml"
+  "TEACHER_DATA_CFG=configs/datasets/ogsod_hbb_rgb.yaml"
+  "MODEL_SIZE=${SIZE}"
   "GPU_ID=${GPU_ID}"
   "SEED=${SEED}"
   "BATCH_SIZE=${BATCH_SIZE}"
