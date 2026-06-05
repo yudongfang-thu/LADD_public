@@ -49,6 +49,7 @@ fi
   --teacher-data "$TEACHER_DATA" \
   --epochs 400 \
   --batch 32 \
+  --imgsz 256 \
   --optimizer SGD \
   --lr0 0.01 \
   --mosaic 1.0 \
@@ -67,7 +68,7 @@ exec "$PYTHON" "$SCRIPT_DIR/train_cclkd_online_hbb.py" \
   --teacher-weights "$MODEL_WEIGHTS" \
   --data "$STUDENT_DATA" \
   --teacher-data "$TEACHER_DATA" \
-  --imgsz 640 \
+  --imgsz 256 \
   --epochs 400 \
   --batch 32 \
   --workers 8 \

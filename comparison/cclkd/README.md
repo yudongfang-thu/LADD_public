@@ -58,7 +58,9 @@ loss 检查需要在服务器环境或装有 torch 的本地环境中补做。�
 1. 先在 [`../../cclkd_reproduction/`](../../cclkd_reproduction/) 中按原文协议复现：
    YOLO11s / YOLO11n、400 epoch、paper-matched augmentation、online
    teacher-student joint training。
-2. 复现确认后，再回到 `comparison/` 中按 LADD 统一受控协议运行 CCLKD 对比。
+2. 复现确认后，再回到 `comparison/` 中用
+   [`../code/launch_formal_online_cclkd_job.sh`](../code/launch_formal_online_cclkd_job.sh)
+   按 LADD 统一受控协议运行 CCLKD 对比。
 
 完成 online trainer 的 GPU smoke 前，当前 frozen-teacher loss 组件只保留为实现部件，
 不能单独作为 CCLKD 官方条件复现。

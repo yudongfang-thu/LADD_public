@@ -16,6 +16,7 @@ trainer 中用 `--comparison-kd-profile` 切换。严格实现边界见
 | `../ladd/code/src/teacher_student_decomposition_kd_hbb/trainer.py` | 阶段控制、teacher/student 前向、BN-freeze 逻辑 |
 | `code/launch_formal_from_yolo_kd_job.sh` | FGD/LD/HalluciDet-style 的 from-YOLO frozen-teacher 正式启动脚本 |
 | `code/launch_formal_transfer_kd_job.sh` | FGD/LD/HalluciDet-style 的 transfer frozen-teacher 启动脚本 |
+| `code/launch_formal_online_cclkd_job.sh` | CCLKD 的 LADD 统一协议 online teacher-student 受控对比启动脚本 |
 | `../cclkd_reproduction/` | CCLKD 原文协议复现目录；已包含 online trainer / launcher / protocol checker，GPU smoke 前不启动正式 CCLKD |
 
 ## 2. Profile 对应关系
@@ -24,7 +25,7 @@ trainer 中用 `--comparison-kd-profile` 切换。严格实现边界见
 |---|---|---|---|
 | FGD-style | `--comparison-kd-profile fgd` | `TSKDDetectionLossHBB._fgd_style_loss()` | 官方 softmax attention 形式 + GT fg/bg weighting + batch relation 近似 |
 | LD | `--comparison-kd-profile ld` | `_ld_style_loss()` | foreground YOLO DFL regression-distribution KL；错形直接失败 |
-| CCLKD | `--comparison-kd-profile cclkd` | `_cclkd_style_loss()` | COP + localization-only LLD + FLD-MSE + RLD feature-correlation + CCL；原文复现见 `../cclkd_reproduction/` |
+| CCLKD | `launch_formal_online_cclkd_job.sh` / `train_cclkd_online_hbb.py` | online teacher detection loss + SAR student detection loss + CCLKD loss | COP + localization-only LLD + FLD-MSE + RLD feature-correlation + CCL；原文复现见 `../cclkd_reproduction/` |
 | HalluciDet-style | `--comparison-kd-profile hallucidet` | `_hallucidet_style_loss()` | privileged RGB-to-SAR hallucination idea 的轻量移植 |
 
 当前 public 对比方法只发布上述四项；其他历史候选不作为当前代码映射的一部分。

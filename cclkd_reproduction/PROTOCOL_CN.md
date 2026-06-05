@@ -54,7 +54,7 @@ online teacher-student joint training
   student 都从 `yolo11n.pt` 或 `yolo11s.pt` COCO 预训练初始化；teacher 使用 RGB
   输入、计算自己的 detection loss，并与 student 一起进入 optimizer。
 - `code/launch_cclkd_paper_repro_job.sh`：只允许 YOLO11s/YOLO11n、400 epoch、
-  batch=32、SGD lr=0.01、mosaic=1.0 和 MixUp。
+  `imgsz=256`、batch=32、SGD lr=0.01、mosaic=1.0 和 MixUp。
 - `code/check_cclkd_repro_protocol.py`：启动前校验 `nc=3`、epoch、augmentation 和
   online trainer 标志。
 

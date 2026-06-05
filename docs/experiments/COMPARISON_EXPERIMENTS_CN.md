@@ -37,11 +37,13 @@ YOLO11s/YOLO11n、400 epoch、paper-matched augmentation。复现通过后，再
 bash comparison/code/launch_formal_from_yolo_kd_job.sh fgd n 0 0
 bash comparison/code/launch_formal_from_yolo_kd_job.sh ld n 0 0
 bash comparison/code/launch_formal_from_yolo_kd_job.sh hallucidet n 0 0
+bash comparison/code/launch_formal_online_cclkd_job.sh n 0 0
 ```
 
 当前 frozen-teacher launcher 只用于 FGD/LD/HalluciDet-style。CCLKD 使用
 `cclkd_reproduction/code/launch_cclkd_paper_repro_job.sh` 做 online teacher-student
-原文复现。
+原文复现；使用 `comparison/code/launch_formal_online_cclkd_job.sh` 做 LADD
+统一协议下的 online CCLKD 受控对比。
 
 ## 4. 结果口径
 

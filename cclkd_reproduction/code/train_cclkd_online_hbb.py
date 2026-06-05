@@ -435,7 +435,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--teacher-weights", required=True, help="Teacher YOLO11n/s COCO pretrained checkpoint.")
     parser.add_argument("--data", type=Path, required=True, help="SAR OGSOD HBB YAML, nc=3.")
     parser.add_argument("--teacher-data", type=Path, required=True, help="RGB OGSOD HBB YAML, nc=3.")
-    parser.add_argument("--imgsz", type=int, default=640)
+    parser.add_argument("--imgsz", type=int, default=256)
     parser.add_argument("--epochs", type=int, default=400)
     parser.add_argument("--batch", type=int, default=32)
     parser.add_argument("--workers", type=int, default=8)

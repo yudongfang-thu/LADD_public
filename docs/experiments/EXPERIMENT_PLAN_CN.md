@@ -226,7 +226,7 @@ Phase 0 (作废): 双卡 4090 旧四方法 smoke/formal partial runs，原因是
 Phase 1 (当前): public 协议审计、CCLKD loss 修正、错误文档修正、推送 GitHub 供人工复核
 Phase 2:        在 cclkd_reproduction/ 中实现并 smoke CCLKD online teacher-student trainer
 Phase 3:        先做 CCLKD 原文条件 YOLO11s / YOLO11n、400 epoch 复现实验
-Phase 4:        FGD/LD/HalluciDet-style 可按修正协议独立 sanity；CCLKD 复现过关后才进入受控对比
+Phase 4:        FGD/LD/HalluciDet-style 可按修正协议独立 sanity；CCLKD 复现过关后用 comparison/code/launch_formal_online_cclkd_job.sh 进入受控对比
 Phase 5:        根据 n 结果决定是否扩展到 s/m/l
 ```
 

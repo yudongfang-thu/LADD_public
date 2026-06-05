@@ -10,6 +10,7 @@ from typing import Any
 ALLOWED_MODELS = {"n", "s"}
 EXPECTED_EPOCHS = 400
 EXPECTED_BATCH = 32
+EXPECTED_IMGSZ = 256
 EXPECTED_OPTIMIZER = "SGD"
 EXPECTED_LR0 = 0.01
 EXPECTED_MOSAIC = 1.0
@@ -97,6 +98,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--teacher-data", type=Path, required=True)
     parser.add_argument("--epochs", type=int, required=True)
     parser.add_argument("--batch", type=int, required=True)
+    parser.add_argument("--imgsz", type=int, required=True)
     parser.add_argument("--optimizer", required=True)
     parser.add_argument("--lr0", type=float, required=True)
     parser.add_argument("--mosaic", type=float, required=True)
@@ -118,6 +120,8 @@ def main() -> None:
         errors.append(f"expected epochs={EXPECTED_EPOCHS}, got {args.epochs}.")
     if args.batch != EXPECTED_BATCH:
         errors.append(f"expected batch={EXPECTED_BATCH}, got {args.batch}.")
+    if args.imgsz != EXPECTED_IMGSZ:
+        errors.append(f"expected imgsz={EXPECTED_IMGSZ}, got {args.imgsz}.")
     if args.optimizer != EXPECTED_OPTIMIZER:
         errors.append(f"expected optimizer={EXPECTED_OPTIMIZER}, got {args.optimizer}.")
     if not _is_close(args.lr0, EXPECTED_LR0):

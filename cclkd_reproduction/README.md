@@ -27,6 +27,7 @@ DOI: 10.1080/10095020.2026.2633014
 | 模态 | 训练期 RGB + SAR，推理期 SAR-only |
 | 模型 | YOLO11s 和 YOLO11n |
 | 训练方式 | CCLKD 原文定义的 online teacher-student joint training |
+| 输入尺寸 | `imgsz=256` |
 | epoch | 与原文一致：400 epoch |
 | 数据增强 | 必须逐项按原文/作者设置对齐，不能沿用 LADD formal no-mosaic 协议替代 |
 | 指标 | AP50-95、AP50，并记录 best epoch |
@@ -38,7 +39,7 @@ DOI: 10.1080/10095020.2026.2633014
 | 文件 | 用途 |
 |---|---|
 | [`code/train_cclkd_online_hbb.py`](code/train_cclkd_online_hbb.py) | Online teacher-student HBB 训练入口；SAR student 与 RGB teacher 同步训练，teacher 有独立 detection loss 并参与 optimizer |
-| [`code/check_cclkd_repro_protocol.py`](code/check_cclkd_repro_protocol.py) | 启动前硬校验：`nc=3`、YOLO11n/s、400ep、batch=32、SGD lr=0.01、mosaic=1.0、online trainer |
+| [`code/check_cclkd_repro_protocol.py`](code/check_cclkd_repro_protocol.py) | 启动前硬校验：`nc=3`、YOLO11n/s、`imgsz=256`、400ep、batch=32、SGD lr=0.01、mosaic=1.0、online trainer |
 | [`code/launch_cclkd_paper_repro_job.sh`](code/launch_cclkd_paper_repro_job.sh) | 原文协议 launcher，只允许 YOLO11n / YOLO11s |
 
 注意：本地公开仓库只完成静态校验。正式训练环境需要先做 tiny smoke，确认
