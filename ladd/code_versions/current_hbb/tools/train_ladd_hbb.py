@@ -110,12 +110,12 @@ def parse_args() -> argparse.Namespace:
 
     parser.add_argument(
         "--comparison-kd-profile",
-        choices=("none", "fgd", "mgd", "ld", "crosskd", "cclkd", "c2kd", "mmanet", "hallucidet"),
+        choices=("none", "fgd", "ld", "cclkd", "hallucidet"),
         default="none",
         help=(
             "Portable comparison KD profile for OGSOD HBB. "
-            "fgd/mgd/ld/crosskd are generic detector KD transfers; "
-            "cclkd/c2kd/mmanet are cross-modal/incomplete-modality transfers; "
+            "fgd and ld are generic detector KD transfers; "
+            "cclkd and hallucidet are cross-modal/privileged-modality transfers; "
             "hallucidet is a task-driven privileged-modality hallucination transfer."
         ),
     )
@@ -128,12 +128,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--fgd-bg-weight", type=float, default=0.25)
     parser.add_argument("--fgd-relation-weight", type=float, default=0.1)
     parser.add_argument("--fgd-temperature", type=float, default=0.5)
-    parser.add_argument("--mgd-mask-ratio", type=float, default=0.5)
     parser.add_argument("--ld-temperature", type=float, default=10.0)
-    parser.add_argument("--crosskd-temperature", type=float, default=2.0)
-    parser.add_argument("--crosskd-pred-weight", type=float, default=1.0)
-    parser.add_argument("--crosskd-feat-weight", type=float, default=0.25)
-    parser.add_argument("--crosskd-teacher-conf-threshold", type=float, default=0.25)
     parser.add_argument("--cclkd-base-temperature", type=float, default=2.0)
     parser.add_argument("--cclkd-contrastive-temperature", type=float, default=0.1)
     parser.add_argument("--cclkd-feat-weight", type=float, default=1.0)
@@ -145,10 +140,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--cclkd-temperature-min", type=float, default=0.5)
     parser.add_argument("--cclkd-temperature-max", type=float, default=5.0)
     parser.add_argument("--cclkd-entropy-scale", type=float, default=5.0)
-    parser.add_argument("--c2kd-selection-threshold", type=float, default=0.25)
-    parser.add_argument("--c2kd-teacher-conf-threshold", type=float, default=0.3)
-    parser.add_argument("--mmanet-relation-margin", type=float, default=0.2)
-    parser.add_argument("--mmanet-max-tokens", type=int, default=512)
     parser.add_argument("--hallucidet-bg-weight", type=float, default=0.05)
     parser.add_argument("--hallucidet-response-weight", type=float, default=0.5)
     parser.add_argument("--hallucidet-margin-weight", type=float, default=0.1)
@@ -251,12 +242,7 @@ def main() -> None:
         fgd_bg_weight=args.fgd_bg_weight,
         fgd_relation_weight=args.fgd_relation_weight,
         fgd_temperature=args.fgd_temperature,
-        mgd_mask_ratio=args.mgd_mask_ratio,
         ld_temperature=args.ld_temperature,
-        crosskd_temperature=args.crosskd_temperature,
-        crosskd_pred_weight=args.crosskd_pred_weight,
-        crosskd_feat_weight=args.crosskd_feat_weight,
-        crosskd_teacher_conf_threshold=args.crosskd_teacher_conf_threshold,
         cclkd_base_temperature=args.cclkd_base_temperature,
         cclkd_contrastive_temperature=args.cclkd_contrastive_temperature,
         cclkd_feat_weight=args.cclkd_feat_weight,
@@ -268,10 +254,6 @@ def main() -> None:
         cclkd_temperature_min=args.cclkd_temperature_min,
         cclkd_temperature_max=args.cclkd_temperature_max,
         cclkd_entropy_scale=args.cclkd_entropy_scale,
-        c2kd_selection_threshold=args.c2kd_selection_threshold,
-        c2kd_teacher_conf_threshold=args.c2kd_teacher_conf_threshold,
-        mmanet_relation_margin=args.mmanet_relation_margin,
-        mmanet_max_tokens=args.mmanet_max_tokens,
         hallucidet_bg_weight=args.hallucidet_bg_weight,
         hallucidet_response_weight=args.hallucidet_response_weight,
         hallucidet_margin_weight=args.hallucidet_margin_weight,

@@ -2,9 +2,10 @@
 
 最后更新：2026-06-05
 
-> 2026-06-04 对比方法决策更新：controlled main table 改为
-> `FGD / LD / CCLKD-style / HalluciDet-style`。CrossKD 已停止并淘汰；CoLD
-> 已降级归档。FGD/LD 修复前结果作废。当前权威说明见
+> 2026-06-05 对比方法决策更新：controlled main table 只保留
+> `FGD / LD / CCLKD / HalluciDet-style` 四项。CCLKD 先在独立目录
+> [`../../cclkd_reproduction/`](../../cclkd_reproduction/) 中按原文协议复现；
+> FGD/LD 修复前结果作废。当前权威说明见
 > [`COMPARISON_EXPERIMENTS_CN.md`](COMPARISON_EXPERIMENTS_CN.md) 和
 > [`../../comparison/IMPLEMENTATION_REVIEW_CN.md`](../../comparison/IMPLEMENTATION_REVIEW_CN.md)；
 > 本文后续旧对比矩阵仅保留为历史计划记录。
@@ -192,17 +193,17 @@ B_WARMUP_BIAS_LR=0.001
 |---|---|---|
 | 通用 KD | FGD-style | 双卡 4090 旧 smoke/formal 作废；待修正协议后重新 smoke |
 | 通用 KD | LD | 双卡 4090 旧 smoke/formal 作废；待修正协议后重新 smoke |
-| 跨模态 KD | CCLKD | loss 已修正为 localization-only LLD / FLD-MSE / RLD feature-correlation；缺 online teacher-student trainer，暂不进入正式对比 |
+| 跨模态 KD | CCLKD | loss 已修正；先在 `cclkd_reproduction/` 按原文 400ep + paper augmentation + online trainer 复现 |
 | 跨模态 KD | HalluciDet-style | 双卡 4090 旧 smoke/formal 作废；待修正协议后重新 smoke |
 
 此前四方法 smoke 记录中，双卡 4090 部分因 `nc=5` yaml 错误作废；117 smoke 仅能证明
 旧代码路径可运行，不能证明当前 public 修正版实现。2026-06-05 当前状态是：不启动新实验，
 先完成 public 审计、CCLKD loss 修正和人工复核。CCLKD 后续必须先实现原文定义的
-online teacher-student 复现入口，再做 YOLO11s / 400 epoch 原文条件复现实验；在此之前
+online teacher-student 复现入口，再做 YOLO11s / YOLO11n、400 epoch 原文条件复现实验；在此之前
 不启动 CCLKD 受控对比。
 
 容量优先级：先 YOLO11n 三 seed闭环，同时保证 YOLO11s seed0 跑通；再扩展到
-s/m/l。CrossKD、CoLD 与无效旧结果不进入当前主表，原始归档数据不随精简 public 分支发布。
+s/m/l。无效旧结果不进入当前主表。
 
 ### 4.2 当前条件：可做与需补
 
@@ -213,9 +214,9 @@ s/m/l。CrossKD、CoLD 与无效旧结果不进入当前主表，原始归档数
 | YOLO11m | seed0 SAR/RGB 已完成 | FGD/LD/HalluciDet-style seed0 可排队；CCLKD 暂停 | 补 SAR/RGB seed42/123 |
 | YOLO11l | seed0 baseline 已完成 | seed0 可作为后续容量点 | 补 SAR/RGB seed42/123 |
 
-## 5. 降级归档
+## 5. 非正式结果
 
-CoLD、CrossKD、修复前 FGD 与旧 soft-logit LD 均不再独立追踪或继续运行；原始归档数据已从精简 public 分支移除。
+修复前 FGD、旧 soft-logit LD、错误 `nc=5` 数据集配置下的所有结果，均不进入当前主表。
 
 ---
 
@@ -224,11 +225,11 @@ CoLD、CrossKD、修复前 FGD 与旧 soft-logit LD 均不再独立追踪或继�
 ```
 Phase 0 (作废): 双卡 4090 旧四方法 smoke/formal partial runs，原因是 `nc=5` yaml
 Phase 1 (当前): public 协议审计、CCLKD loss 修正、错误文档修正、推送 GitHub 供人工复核
-Phase 2:        实现并 smoke CCLKD online teacher-student trainer
-Phase 3:        先做 CCLKD 原文条件 YOLO11s / 400 epoch 复现实验
+Phase 2:        在 cclkd_reproduction/ 中实现并 smoke CCLKD online teacher-student trainer
+Phase 3:        先做 CCLKD 原文条件 YOLO11s / YOLO11n、400 epoch 复现实验
 Phase 4:        FGD/LD/HalluciDet-style 可按修正协议独立 sanity；CCLKD 复现过关后才进入受控对比
 Phase 5:        根据 n 结果决定是否扩展到 s/m/l
 ```
 
-当前明确不启动：任何新训练、LADD 主线、消融、CoLD、CrossKD/MGD/MMANet。关键决策点是
+当前明确不启动：任何新训练、LADD 主线、消融。关键决策点是
 人工复核是否通过。

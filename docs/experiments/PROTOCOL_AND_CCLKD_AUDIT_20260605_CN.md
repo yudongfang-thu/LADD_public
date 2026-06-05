@@ -136,7 +136,7 @@ controlled CCLKD main-table result
 2. teacher branch 使用 RGB 图像和检测监督更新；
 3. student branch 使用 SAR 图像和检测监督更新；
 4. CCLKD loss 从 online teacher outputs/features 蒸馏到 student；
-5. 先按原文最接近条件做 YOLO11s / 400 epoch 复现，再决定是否进入受控对比；
+5. 先按原文最接近条件做 YOLO11s 和 YOLO11n / 400 epoch 复现，再决定是否进入受控对比；
 6. 受控对比若保留 CCLKD，也应使用同一个 online 方法定义，而不是 frozen teacher 近似。
 
 ## 7. 已完成的非训练验证
@@ -160,4 +160,4 @@ bash -n ladd/code_versions/current_hbb/scripts/ogsod_public/run_ladd_phase.sh
 2. 实现 CCLKD online trainer，并复核 teacher/student optimizer、loss 和数据流。
 3. 复核双卡服务器部署前的 yaml、代码 hash 和 `--help` 输出。
 4. 只做 1 epoch / tiny fraction smoke，确认日志包含 `nc=3` 且 teacher/student detection loss 与 CCLKD loss 均非零。
-5. smoke 通过后，先做原文条件 YOLO11s / 400 epoch 复现，再讨论受控对比。
+5. smoke 通过后，先做原文条件 YOLO11s 和 YOLO11n / 400 epoch 复现，再讨论受控对比。

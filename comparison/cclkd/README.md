@@ -4,13 +4,14 @@
 Geo-spatial Information Science，2026，DOI
 [`10.1080/10095020.2026.2633014`](https://doi.org/10.1080/10095020.2026.2633014)。
 
-原文 PDF 已归档在：
+原文 PDF 和论文协议复现清单已移到独立目录：
 
 ```text
-paper/CCLKD__2026_GIS__Cross_Modal_Contrastive_Learning_Incomplete_Modalities.pdf
+../../cclkd_reproduction/
 ```
 
-该 DOI 的 version of record license 为 `CC BY 4.0`；见 `paper/README_CN.md`。
+该 DOI 的 version of record license 为 `CC BY 4.0`；见
+[`../../cclkd_reproduction/paper/README_CN.md`](../../cclkd_reproduction/paper/README_CN.md)。
 
 ## 当前实现
 
@@ -52,12 +53,18 @@ HBB 协议应为 `nc=3`。因此此前双卡 4090 上的 CCLKD smoke 和 formal 
 loss 检查需要在服务器环境或装有 torch 的本地环境中补做。尚未重新做 GPU smoke，
 也未启动新正式实验。
 
-正式 CCLKD 路线必须先补一个 online teacher-student trainer：RGB teacher 分支和
-SAR student 分支同步训练，teacher 侧保留检测监督，student 侧保留 SAR 检测监督与
-CCLKD loss。完成该 trainer 前，CCLKD 只保留为待实现项。
+正式 CCLKD 路线分两步：
+
+1. 先在 [`../../cclkd_reproduction/`](../../cclkd_reproduction/) 中按原文协议复现：
+   YOLO11s / YOLO11n、400 epoch、paper-matched augmentation、online
+   teacher-student joint training。
+2. 复现确认后，再回到 `comparison/` 中按 LADD 统一受控协议运行 CCLKD 对比。
+
+完成 online trainer 前，当前 frozen-teacher loss 组件只保留为实现部件，不能单独作为
+CCLKD 官方条件复现。
 
 ## 后续要求
 
-CCLKD 若进入论文主表，必须先补 online teacher-student trainer，并按原文接近条件
-完成 YOLO11s / 400 epoch 复现实验。当前 frozen-teacher loss 组件不能单独作为
+CCLKD 若进入论文主表，必须先补 online teacher-student trainer，并按原文条件完成
+YOLO11s / YOLO11n、400 epoch 复现实验。当前 frozen-teacher loss 组件不能单独作为
 CCLKD 官方条件复现。

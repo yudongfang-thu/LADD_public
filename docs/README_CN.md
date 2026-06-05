@@ -13,6 +13,7 @@
 | Baseline 规范与状态 | [experiments/BASELINE_STANDARD_CN.md](experiments/BASELINE_STANDARD_CN.md) |
 | LADD 主线规范 | [experiments/LADD_MAINLINE_STANDARD_CN.md](experiments/LADD_MAINLINE_STANDARD_CN.md) |
 | 对比实验 | [experiments/COMPARISON_EXPERIMENTS_CN.md](experiments/COMPARISON_EXPERIMENTS_CN.md) |
+| CCLKD 原文复现 | [../cclkd_reproduction/README.md](../cclkd_reproduction/README.md) |
 | 消融计划 | [experiments/ABLATION_PLAN_CN.md](experiments/ABLATION_PLAN_CN.md) |
 | LADD 方法概述 | [method/METHOD_OVERVIEW_CN.md](method/METHOD_OVERVIEW_CN.md) |
 | 相关工作 | [literature/RELATED_WORK_CN.md](literature/RELATED_WORK_CN.md) |
@@ -24,11 +25,10 @@
 | `method/` | LADD 方法描述 |
 | `experiments/` | 实验规范、计划、状态 |
 | `literature/` | 文献调研与相关工作 |
-| `archive/` | 历史文档（仅供溯源，不作当前结论） |
 
 ## 当前状态摘要
 
 1. 正式 OGSOD 协议：`imgsz=256, 800ep, cos_lr, full no-mosaic, default Albumentations`
 2. LADD 主线：A2 稳定修正 + cap2，YOLO11n 三 seed 在跑
-3. 对比实验：FGD/LD/HalluciDet-style 可保留为受控对比候选；CCLKD 需先补 online teacher-student trainer，FGD/LD 修复前结果作废，CrossKD 已淘汰
+3. 对比实验：当前只保留 FGD/LD/HalluciDet-style/CCLKD 四方法；CCLKD 先走独立原文复现目录，FGD/LD 修复前结果作废
 4. 服务器记录：公开分支只保留结果摘要和代码；原始日志、run 目录、权重和连接信息均不发布

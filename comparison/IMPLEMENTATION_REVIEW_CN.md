@@ -2,10 +2,11 @@
 
 最后更新：2026-06-05
 
-本文档给外部老师复核当前受控对比方法的代码语义。当前 frozen-teacher 正式候选为
-`FGD / LD / HalluciDet-style`；`CCLKD` 仅保留 loss 组件，等待 online teacher-student
-trainer 后才能作为 CCLKD 复现或主表对比。所有 frozen-teacher 方法共享同一套
-YOLO11 HBB 训练入口、formal no-mosaic 数据增强和 800 epoch 收敛口径。
+本文档给外部老师复核当前受控对比方法的代码语义。当前正式方法为
+`FGD / LD / CCLKD / HalluciDet-style`。其中 FGD、LD、HalluciDet-style 使用
+frozen-teacher 受控对比入口；CCLKD 必须先在
+[`../cclkd_reproduction/`](../cclkd_reproduction/) 中补齐 online teacher-student
+原文复现入口，再回到 `comparison/` 执行统一协议对比。
 
 ## 1. 结论
 
@@ -79,28 +80,21 @@ loss 只能作为实现部件，不能作为 CCLKD 复现或正式对比结果�
 privileged information、检测效用加权对齐和 SAR-only 推理约束。保留现状，
 写作时明确 `no explicit hallucination module`。
 
-## 3. 淘汰方法处置
-
-- `CrossKD / MGD / MMANet / C2KD` profile 仅保留用于审计历史代码。
-- formal launcher 会直接拒绝这些 profile，防止误启动。
-- CoLD 已降级为纯历史方法，不再作为当前实验线。
-- CrossKD 与旧 FGD/LD 的历史结果可作为失败/实现修正记录，但不能进入修正后的主表。
-- 原始历史归档已从精简 public 分支移除，仅在历史 Git commit 中可追溯。
-
-## 4. 代码入口
+## 3. 代码入口
 
 | 功能 | 文件 |
 |---|---|
 | Profile loss 与 teacher/student 输出穿透 | `../ladd/code/src/teacher_student_decomposition_kd_hbb/loss.py` |
 | CLI 参数 | `../ladd/code/train_ladd_hbb.py` |
 | Trainer 参数传递 | `../ladd/code/src/teacher_student_decomposition_kd_hbb/trainer.py` |
-| 正式 from-YOLO launcher | `code/launch_formal_from_yolo_kd_job.sh` |
-| 正式 transfer launcher | `code/launch_formal_transfer_kd_job.sh` |
+| 正式 from-YOLO frozen-teacher launcher | `code/launch_formal_from_yolo_kd_job.sh` |
+| 正式 transfer frozen-teacher launcher | `code/launch_formal_transfer_kd_job.sh` |
+| CCLKD 原文复现目录 | `../cclkd_reproduction/` |
 
 两个 launcher 是部署到完整 LADD 工作区使用的模板。Public 包刻意不包含 checkpoint、
 数据集和完整 runtime 配置，因此不能在本仓库内直接启动正式训练。
 
-## 5. 启动前检查
+## 4. 启动前检查
 
 1. 对 FGD/LD/HalluciDet-style 分别执行 `--help` 和短 smoke。
 2. LD smoke 必须确认 teacher/student `boxes` 都是 `[B, N, 4*reg_max]`，且 loss 非零。

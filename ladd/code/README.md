@@ -11,14 +11,14 @@
 | 文件 | 作用 |
 |---|---|
 | `train_ladd_hbb.py` | LADD 与受控对比方法的统一入口 |
-| `src/teacher_student_decomposition_kd_hbb/loss.py` | LADD loss、cap2 reach-rank、FGD/LD/CCLKD/HalluciDet profiles 与历史审计 profiles |
+| `src/teacher_student_decomposition_kd_hbb/loss.py` | LADD loss、cap2 reach-rank、FGD/LD/CCLKD/HalluciDet profiles |
 | `src/teacher_student_decomposition_kd_hbb/trainer.py` | A/B 阶段训练逻辑、BN-freeze |
 
 已包含的稳定性相关开关：
 
 ```text
 --freeze-bn-stats
---comparison-kd-profile {none,fgd,mgd,ld,crosskd,cclkd,c2kd,mmanet,hallucidet}
+--comparison-kd-profile {none,fgd,ld,cclkd,hallucidet}
 --fgd-temperature 0.5
 --ld-temperature 10.0
 --cclkd-logit-weight 1.0

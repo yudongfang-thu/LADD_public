@@ -2,7 +2,7 @@
 
 最后更新：2026-06-05
 
-本文档是当前实验状态的入口。所有历史文档保留在 `archive/` 中。
+本文档是当前实验状态的入口。当前 public 分支只保留主线代码、正式对比方法和关键摘要。
 
 ## 文档导航
 
@@ -11,6 +11,7 @@
 | 给导师看的 baseline + LADD 最新台账 | [BASELINE_LADD_STATUS_CN.md](BASELINE_LADD_STATUS_CN.md) |
 | 给导师看的对比方法来源、简介和 DOI | [COMPARISON_METHODS_RECORD_CN.md](COMPARISON_METHODS_RECORD_CN.md) |
 | 对比方法代码复核 | [../../comparison/IMPLEMENTATION_REVIEW_CN.md](../../comparison/IMPLEMENTATION_REVIEW_CN.md) |
+| CCLKD 原文协议复现 | [../../cclkd_reproduction/README.md](../../cclkd_reproduction/README.md) |
 | Baseline 训练规范与当前状态 | [BASELINE_STANDARD_CN.md](BASELINE_STANDARD_CN.md) |
 | LADD 主线规范与状态 | [LADD_MAINLINE_STANDARD_CN.md](LADD_MAINLINE_STANDARD_CN.md) |
 | 对比实验计划与实现 | [COMPARISON_EXPERIMENTS_CN.md](COMPARISON_EXPERIMENTS_CN.md) |
@@ -34,8 +35,7 @@
 | 线 | 服务器 | 状态 |
 |---|---|---|
 | LADD 主线 | 90 + 4090D | YOLO11n seed0/42 已有正向完成点；双卡 4090 BN-freeze sweep 因 `nc=5` 作废 |
-| 受控对比 | 待人工复核 | FGD/LD 已修复，CCLKD loss 已修正但缺 online trainer，HalluciDet-style 保留；先审计，不启动 CCLKD |
-| CoLD/CrossKD | 不随精简 public 分支发布 | 纯历史证据，不再运行 |
+| 受控对比 | 待人工复核 | 四方法为 FGD/LD/HalluciDet-style/CCLKD；CCLKD 先做独立原文协议复现 |
 | 消融实验 | — | 未开始 |
 
 ## 服务器

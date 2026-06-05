@@ -218,12 +218,7 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         fgd_bg_weight: float = 0.25,
         fgd_relation_weight: float = 0.1,
         fgd_temperature: float = 0.5,
-        mgd_mask_ratio: float = 0.5,
         ld_temperature: float = 10.0,
-        crosskd_temperature: float = 2.0,
-        crosskd_pred_weight: float = 1.0,
-        crosskd_feat_weight: float = 0.25,
-        crosskd_teacher_conf_threshold: float = 0.25,
         cclkd_base_temperature: float = 2.0,
         cclkd_contrastive_temperature: float = 0.1,
         cclkd_feat_weight: float = 1.0,
@@ -235,10 +230,6 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         cclkd_temperature_min: float = 0.5,
         cclkd_temperature_max: float = 5.0,
         cclkd_entropy_scale: float = 5.0,
-        c2kd_selection_threshold: float = 0.25,
-        c2kd_teacher_conf_threshold: float = 0.3,
-        mmanet_relation_margin: float = 0.2,
-        mmanet_max_tokens: int = 512,
         hallucidet_bg_weight: float = 0.05,
         hallucidet_response_weight: float = 0.5,
         hallucidet_margin_weight: float = 0.1,
@@ -284,12 +275,7 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         self.fgd_bg_weight = float(fgd_bg_weight)
         self.fgd_relation_weight = float(fgd_relation_weight)
         self.fgd_temperature = max(float(fgd_temperature), 1e-6)
-        self.mgd_mask_ratio = min(max(float(mgd_mask_ratio), 0.0), 1.0)
         self.ld_temperature = max(float(ld_temperature), 1e-6)
-        self.crosskd_temperature = max(float(crosskd_temperature), 1e-6)
-        self.crosskd_pred_weight = float(crosskd_pred_weight)
-        self.crosskd_feat_weight = float(crosskd_feat_weight)
-        self.crosskd_teacher_conf_threshold = float(crosskd_teacher_conf_threshold)
         self.cclkd_base_temperature = max(float(cclkd_base_temperature), 1e-6)
         self.cclkd_contrastive_temperature = max(float(cclkd_contrastive_temperature), 1e-6)
         self.cclkd_feat_weight = max(float(cclkd_feat_weight), 0.0)
@@ -301,10 +287,6 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         self.cclkd_temperature_min = max(float(cclkd_temperature_min), 1e-6)
         self.cclkd_temperature_max = max(float(cclkd_temperature_max), self.cclkd_temperature_min)
         self.cclkd_entropy_scale = max(float(cclkd_entropy_scale), 1e-6)
-        self.c2kd_selection_threshold = float(c2kd_selection_threshold)
-        self.c2kd_teacher_conf_threshold = float(c2kd_teacher_conf_threshold)
-        self.mmanet_relation_margin = float(mmanet_relation_margin)
-        self.mmanet_max_tokens = max(int(mmanet_max_tokens), 16)
         self.hallucidet_bg_weight = max(float(hallucidet_bg_weight), 0.0)
         self.hallucidet_response_weight = max(float(hallucidet_response_weight), 0.0)
         self.hallucidet_margin_weight = max(float(hallucidet_margin_weight), 0.0)
@@ -463,10 +445,10 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
 
     @staticmethod
     def _validate_comparison_kd_profile(mode: str) -> str:
-        if mode not in {"none", "fgd", "mgd", "ld", "crosskd", "cclkd", "c2kd", "mmanet", "hallucidet"}:
+        if mode not in {"none", "fgd", "ld", "cclkd", "hallucidet"}:
             raise ValueError(
                 "comparison_kd_profile must be one of "
-                "{'none', 'fgd', 'mgd', 'ld', 'crosskd', 'cclkd', 'c2kd', 'mmanet', 'hallucidet'}, got "
+                "{'none', 'fgd', 'ld', 'cclkd', 'hallucidet'}, got "
                 f"{mode!r}."
             )
         return mode
@@ -948,69 +930,6 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
             relation_loss = F.mse_loss(student_rel, teacher_rel)
         return feat_loss + self.fgd_relation_weight * relation_loss
 
-    def _mgd_style_loss(self, student_map: torch.Tensor, teacher_map: torch.Tensor) -> torch.Tensor:
-        """MGD-style random spatial feature recovery.
-
-        The original MGD uses a small generator after masking student features.
-        To keep this comparison portable across YOLO11 scales, we use the
-        trainer's existing projection/calibration path and apply the random
-        mask as a stochastic subset of positions to recover from RGB teacher
-        features. This should be reported as MGD-style, not official MGD.
-        """
-        ratio = self.mgd_mask_ratio
-        if ratio <= 0:
-            return F.mse_loss(student_map, teacher_map.detach())
-        bsz, _, height, width = student_map.shape
-        drop_mask = (torch.rand(bsz, 1, height, width, device=student_map.device) < ratio).to(student_map.dtype)
-        token_loss = (student_map - teacher_map.detach()).pow(2) * drop_mask
-        return token_loss.sum() / (drop_mask.sum() * student_map.shape[1]).clamp_min(1.0)
-
-    def _crosskd_style_loss(
-        self,
-        student_map: torch.Tensor,
-        teacher_map: torch.Tensor,
-        fg_mask: torch.Tensor,
-        student_scores: torch.Tensor | None,
-        teacher_scores: torch.Tensor | None,
-    ) -> torch.Tensor:
-        """CrossKD-style head-aware prediction mimicking for YOLO.
-
-        Official CrossKD routes student head features through a teacher head in
-        MMDetection. YOLO11 does not expose the same cross-head interface here,
-        so this portable profile keeps the core intent: align teacher/student
-        head predictions on reliable teacher foreground tokens and add a small
-        foreground feature alignment term.
-        """
-        fg = fg_mask.reshape(student_map.shape[0], -1).bool()
-        if not fg.any():
-            return student_map.new_zeros(())
-
-        feature_loss = student_map.new_zeros(())
-        if self.crosskd_feat_weight > 0:
-            student_flat = _flatten_feat(student_map)
-            teacher_flat = _flatten_feat(teacher_map.detach())
-            feature_loss = F.mse_loss(student_flat[fg], teacher_flat[fg])
-
-        pred_loss = student_map.new_zeros(())
-        if (
-            self.crosskd_pred_weight > 0
-            and student_scores is not None
-            and teacher_scores is not None
-            and student_scores.shape == teacher_scores.shape
-            and student_scores.numel() > 0
-        ):
-            s = student_scores[fg]
-            t = teacher_scores.detach()[fg]
-            teacher_conf = t.sigmoid().amax(dim=-1)
-            keep = teacher_conf >= self.crosskd_teacher_conf_threshold
-            if keep.any():
-                temperature = self.crosskd_temperature
-                s_log_prob = F.log_softmax(s[keep] / temperature, dim=-1)
-                t_prob = F.softmax(t[keep] / temperature, dim=-1)
-                pred_loss = F.kl_div(s_log_prob, t_prob, reduction="batchmean") * (temperature**2)
-
-        return self.crosskd_pred_weight * pred_loss + self.crosskd_feat_weight * feature_loss
-
     def _ld_style_loss(
         self,
         student_distri: torch.Tensor | None,
@@ -1192,103 +1111,6 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
             return zero
         return self.cclkd_logit_weight * lld_loss + self.cclkd_feat_weight * (fld_loss + rld_loss) + self.cclkd_contrast_weight * ccl_loss
 
-    def _c2kd_style_loss(
-        self,
-        student_scores_pos: torch.Tensor,
-        teacher_scores_pos: torch.Tensor | None,
-        target_scores_pos: torch.Tensor,
-    ) -> torch.Tensor:
-        """C2KD-style on-the-fly selected class distillation.
-
-        We select positive tokens where the RGB teacher is confident and its
-        target-class confidence is not too far from the SAR student's current
-        confidence. The selected tokens receive target/non-target decoupled
-        KL. This mirrors the C2KD idea of filtering distorted cross-modal
-        samples, adapted to dense detection logits.
-        """
-        if (
-            student_scores_pos.numel() == 0
-            or teacher_scores_pos is None
-            or teacher_scores_pos.numel() == 0
-            or student_scores_pos.shape != teacher_scores_pos.shape
-            or student_scores_pos.shape[-1] < 2
-        ):
-            return student_scores_pos.new_zeros(())
-
-        target_idx = target_scores_pos.argmax(dim=-1).long()
-        gather_idx = target_idx.view(-1, 1)
-        teacher_prob = teacher_scores_pos.detach().sigmoid()
-        student_prob = student_scores_pos.sigmoid()
-        teacher_target = teacher_prob.gather(1, gather_idx).squeeze(1)
-        student_target = student_prob.gather(1, gather_idx).squeeze(1)
-        selected = (
-            (teacher_target >= self.c2kd_teacher_conf_threshold)
-            & ((teacher_target - student_target).abs() <= self.c2kd_selection_threshold)
-        )
-        if not selected.any():
-            return student_scores_pos.new_zeros(())
-
-        s = student_scores_pos[selected]
-        t = teacher_scores_pos.detach()[selected]
-        cls = target_idx[selected]
-        target_mask = F.one_hot(cls, num_classes=s.shape[-1]).to(torch.bool)
-        temperature = max(self.dkd_temperature, 1e-6)
-        s_prob = (s / temperature).softmax(dim=-1).clamp_min(1e-8)
-        t_prob = (t / temperature).softmax(dim=-1).clamp_min(1e-8)
-
-        s_t = s_prob.masked_select(target_mask).view(-1, 1)
-        t_t = t_prob.masked_select(target_mask).view(-1, 1)
-        s_bin = torch.cat((s_t, 1.0 - s_t), dim=1).clamp_min(1e-8)
-        t_bin = torch.cat((t_t, 1.0 - t_t), dim=1).clamp_min(1e-8)
-        tckd = F.kl_div(s_bin.log(), t_bin, reduction="batchmean")
-
-        s_non = s_prob.masked_fill(target_mask, 0.0)
-        t_non = t_prob.masked_fill(target_mask, 0.0)
-        s_non = (s_non / s_non.sum(dim=-1, keepdim=True).clamp_min(1e-8)).clamp_min(1e-8)
-        t_non = (t_non / t_non.sum(dim=-1, keepdim=True).clamp_min(1e-8)).clamp_min(1e-8)
-        nckd = F.kl_div(s_non.log(), t_non, reduction="batchmean")
-        return (temperature**2) * (self.lambda_tckd * tckd + self.lambda_nckd * nckd)
-
-    def _mmanet_style_relation_loss(
-        self,
-        student_pos: torch.Tensor,
-        teacher_pos: torch.Tensor,
-        target_scores_pos: torch.Tensor,
-    ) -> torch.Tensor:
-        """MMANet/MAD-style margin-aware relation distillation.
-
-        Foreground token relations from the complete RGB teacher are used as
-        the relation target for the incomplete/deployment SAR student. Same-
-        class pairs are encouraged to be more similar than different-class
-        pairs by a configurable margin.
-        """
-        n_tokens = student_pos.shape[0]
-        if n_tokens < 2:
-            return student_pos.new_zeros(())
-        if n_tokens > self.mmanet_max_tokens:
-            idx = torch.randperm(n_tokens, device=student_pos.device)[: self.mmanet_max_tokens]
-            student_pos = student_pos[idx]
-            teacher_pos = teacher_pos[idx]
-            target_scores_pos = target_scores_pos[idx]
-
-        student_norm = F.normalize(student_pos, dim=-1, eps=1e-6)
-        teacher_norm = F.normalize(teacher_pos.detach(), dim=-1, eps=1e-6)
-        student_rel = student_norm @ student_norm.transpose(0, 1)
-        teacher_rel = teacher_norm @ teacher_norm.transpose(0, 1)
-        relation_loss = F.mse_loss(student_rel, teacher_rel)
-
-        class_ids = target_scores_pos.argmax(dim=-1)
-        same = class_ids[:, None] == class_ids[None, :]
-        eye = torch.eye(same.shape[0], dtype=torch.bool, device=same.device)
-        same = same & ~eye
-        diff = (~same) & ~eye
-        margin_loss = student_pos.new_zeros(())
-        if same.any() and diff.any():
-            same_mean = student_rel[same].mean()
-            diff_mean = student_rel[diff].mean()
-            margin_loss = F.relu(self.mmanet_relation_margin - same_mean + diff_mean)
-        return relation_loss + margin_loss
-
     def _hallucidet_style_loss(
         self,
         student_map: torch.Tensor,
@@ -1367,12 +1189,8 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
             return student_map.new_zeros(())
         if self.comparison_kd_profile == "fgd":
             return self._fgd_style_loss(student_map, teacher_map, fg_mask)
-        if self.comparison_kd_profile == "mgd":
-            return self._mgd_style_loss(student_map, teacher_map)
         if self.comparison_kd_profile == "ld":
             return self._ld_style_loss(student_distri, teacher_distri, fg_mask)
-        if self.comparison_kd_profile == "crosskd":
-            return self._crosskd_style_loss(student_map, teacher_map, fg_mask, student_scores, teacher_scores)
         if self.comparison_kd_profile == "cclkd":
             return self._cclkd_style_loss(
                 student_map,
@@ -1386,20 +1204,6 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
             )
         if self.comparison_kd_profile == "hallucidet":
             return self._hallucidet_style_loss(student_map, teacher_map, fg_mask, student_scores, teacher_scores)
-
-        fg = fg_mask.reshape(student_map.shape[0], -1).bool()
-        if not fg.any():
-            return student_map.new_zeros(())
-        student_flat = _flatten_feat(student_map)
-        teacher_flat = _flatten_feat(teacher_map.detach())
-        target_scores_pos = target_scores[fg]
-
-        if self.comparison_kd_profile == "c2kd":
-            if student_scores is None or teacher_scores is None:
-                return student_map.new_zeros(())
-            return self._c2kd_style_loss(student_scores[fg], teacher_scores[fg], target_scores_pos)
-        if self.comparison_kd_profile == "mmanet":
-            return self._mmanet_style_relation_loss(student_flat[fg], teacher_flat[fg], target_scores_pos)
         raise AssertionError(f"Unexpected comparison_kd_profile: {self.comparison_kd_profile}")
 
     def _compute_recon_task_loss(self, recon_feats, batch):

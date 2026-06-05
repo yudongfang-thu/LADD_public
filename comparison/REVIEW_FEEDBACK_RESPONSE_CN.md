@@ -15,7 +15,7 @@ Ultralytics Detect head 的实际返回语义、实际 smoke 输出，以及 FGD
 | LD | teacher 为 eval 时可能只返回解码框，导致 LD 静默为零 | 风险判断不适用于当前 Ultralytics，但采纳 fail-fast 防御 |
 | LD | 应使用独立温度参数 | 采纳；新增 `ld_temperature=10.0`，对齐 LD 官方配置 |
 | CCLKD | feature/logit 项需要独立权重 | 采纳；新增 `cclkd_logit_weight=1.0` |
-| CCLKD | 不应复用 MMANet token 上限 | 采纳；新增 `cclkd_max_tokens=512` |
+| CCLKD | 不应复用旧 relation-KD token 上限 | 采纳；新增 `cclkd_max_tokens=512` |
 | CCLKD | top-K 高置信采样存在偏差 | 采纳并改进；改为类别分层随机采样，而非无类别约束的全局随机采样 |
 | HalluciDet-style | 当前实现可接受 | 保持不变 |
 
@@ -60,7 +60,7 @@ FGD 官方代码：
 
 - `ld` profile 无法获得匹配 DFL logits 时立即抛出 `RuntimeError`；
 - `_ld_style_loss()` 收到缺失、错形或非 DFL tensor 时立即失败；
-- 不再复用 `crosskd_temperature`，新增 `ld_temperature=10.0`。
+- 不再复用旧通用 KD 温度参数，新增 `ld_temperature=10.0`。
 
 LD 官方配置使用 `KnowledgeDistillationKLDivLoss(..., T=10)`，因此“T=1 才与
 原文一致”的说法也不准确。

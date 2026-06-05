@@ -4,9 +4,11 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  comparison/code/queue_formal_n_3seeds.sh <fgd|ld|cclkd|hallucidet> <gpu_id>
+  comparison/code/queue_formal_n_3seeds.sh <fgd|ld|hallucidet> <gpu_id>
 
 Runs YOLO11n seeds 0, 42, and 123 serially for one frozen comparison method.
+CCLKD is intentionally excluded here because it requires online teacher-student
+training; see cclkd_reproduction/.
 Launch one queue per method; multiple method queues may share a GPU when memory
 and throughput have been checked.
 
@@ -24,7 +26,7 @@ fi
 METHOD="${1:-}"
 GPU_ID="${2:-}"
 case "$METHOD" in
-  fgd|ld|cclkd|hallucidet) ;;
+  fgd|ld|hallucidet) ;;
   *) usage >&2; exit 1 ;;
 esac
 if [[ -z "$GPU_ID" ]]; then

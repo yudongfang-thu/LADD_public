@@ -31,7 +31,7 @@ FGD 在本 public 包中不是独立训练器，使用统一入口：
 | YOLO11s seed0 | 4090 | 192 | 0.50358 current | 未完成 | 历史 partial，当前不视为运行中 |
 
 这些结果来自 2026-06-04 修复前的旧实现；旧实现只有 GT 二值前景/背景权重，
-没有 teacher feature attention。它们保留用于审计，但不能代表当前修正版，也不能
+没有 teacher feature attention。它们仅作历史说明，不能代表当前修正版，也不能
 进入修正版主表。当前 FGD 必须重跑。
 
 完整训练日志和旧 run 目录已从精简 public 分支移除，仅在历史 Git commit 中可追溯。

@@ -17,7 +17,8 @@ Last updated: 2026-06-05 16:45 CST.
 |---|---|
 | `baseline/` | Formal OGSOD HBB baseline code and compact result summary. |
 | `ladd/` | LADD HBB code snapshots, launch scripts, and compact mainline summary. |
-| `comparison/` | Current FGD/LD/HalluciDet review and CCLKD online-trainer gap notes. |
+| `comparison/` | Current FGD/LD/HalluciDet/CCLKD controlled-method review and notes. |
+| `cclkd_reproduction/` | Paper-aligned CCLKD reproduction protocol, paper PDF, and future online-trainer scaffold. |
 | `docs/` | Method notes, experiment status, literature survey, and public-facing summaries. |
 | `shared/` | Dataset YAML templates, shared KD scaffolding, and vendored Ultralytics code. |
 
@@ -35,8 +36,7 @@ weights and generated runs remain untracked.
 
 - Baseline is stable: YOLO11n/s have SAR/RGB 3-seed formal no-mosaic baselines; YOLO11m/l/x have seed0 baselines.
 - LADD main evidence is strongest on YOLO11n: seed0 and seed42 completed with positive gains; seed123 and some 4090D runs expose a B-stage collapse/BN-running-stat issue.
-- Controlled comparisons are under audit. FGD/LD were corrected on 2026-06-04. CCLKD loss-level code was corrected on 2026-06-05, but it still needs an online teacher-student trainer before it can be treated as a CCLKD reproduction or main-table comparison. Dual-4090 smoke/formal partial runs with an erroneous `nc=5` yaml are invalid.
-- CrossKD and CoLD are not active experiment lines and their raw archives are no longer carried in this public branch.
+- Controlled comparisons are under audit. The active set is FGD, LD, HalluciDet-style, and CCLKD. CCLKD loss-level code was corrected on 2026-06-05, but paper-aligned reproduction now lives separately in `cclkd_reproduction/` and requires online teacher-student training before main-table use. Dual-4090 smoke/formal partial runs with an erroneous `nc=5` yaml are invalid.
 
 ## Privacy / Security
 

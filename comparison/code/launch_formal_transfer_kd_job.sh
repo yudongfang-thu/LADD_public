@@ -35,11 +35,7 @@ GPU_ID="${4:-}"
 case "$METHOD" in
   fgd|ld|hallucidet) ;;
   cclkd)
-    echo "CCLKD requires an online teacher-student trainer and is disabled in this frozen-teacher launcher." >&2
-    exit 2
-    ;;
-  crosskd|mgd|c2kd|mmanet)
-    echo "Method '$METHOD' is retained for code audit only and is excluded from formal controlled runs." >&2
+    echo "CCLKD is an online teacher-student method; use cclkd_reproduction/ and the future online launcher." >&2
     exit 2
     ;;
   *) usage >&2; exit 1 ;;
@@ -158,31 +154,8 @@ case "$METHOD" in
       "FGD_TEMPERATURE=${FGD_TEMPERATURE:-0.5}"
     )
     ;;
-  mgd)
-    cmd+=("MGD_MASK_RATIO=${MGD_MASK_RATIO:-0.5}")
-    ;;
   ld)
     cmd+=("LD_TEMPERATURE=${LD_TEMPERATURE:-10.0}")
-    ;;
-  crosskd)
-    cmd+=(
-      "CROSSKD_TEMPERATURE=${CROSSKD_TEMPERATURE:-2.0}"
-      "CROSSKD_PRED_WEIGHT=${CROSSKD_PRED_WEIGHT:-1.0}"
-      "CROSSKD_FEAT_WEIGHT=${CROSSKD_FEAT_WEIGHT:-0.25}"
-      "CROSSKD_TEACHER_CONF_THRESHOLD=${CROSSKD_TEACHER_CONF_THRESHOLD:-0.25}"
-    )
-    ;;
-  c2kd)
-    cmd+=(
-      "C2KD_SELECTION_THRESHOLD=${C2KD_SELECTION_THRESHOLD:-0.25}"
-      "C2KD_TEACHER_CONF_THRESHOLD=${C2KD_TEACHER_CONF_THRESHOLD:-0.3}"
-    )
-    ;;
-  mmanet)
-    cmd+=(
-      "MMANET_RELATION_MARGIN=${MMANET_RELATION_MARGIN:-0.2}"
-      "MMANET_MAX_TOKENS=${MMANET_MAX_TOKENS:-512}"
-    )
     ;;
   hallucidet)
     cmd+=(
