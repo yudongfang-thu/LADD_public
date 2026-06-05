@@ -5,17 +5,16 @@ import argparse
 import sys
 from pathlib import Path
 
-from train_cli_overrides import add_common_detector_train_overrides, collect_common_detector_train_overrides
-from train_path_checks import require_existing_file
-
-
-REPO_ROOT = Path(__file__).resolve().parents[1]
-YOLO_ROOT = REPO_ROOT / "yolo"
-SRC_ROOT = REPO_ROOT / "src"
-for root in (YOLO_ROOT, SRC_ROOT):
+REPO_ROOT = Path(__file__).resolve().parents[2]
+SHARED_ROOT = REPO_ROOT / "shared"
+YOLO_ROOT = SHARED_ROOT / "yolo"
+SRC_ROOT = REPO_ROOT / "ladd" / "code" / "src"
+for root in (SHARED_ROOT, YOLO_ROOT, SRC_ROOT):
     if str(root) not in sys.path:
         sys.path.insert(0, str(root))
 
+from train_cli_overrides import add_common_detector_train_overrides, collect_common_detector_train_overrides  # noqa: E402
+from train_path_checks import require_existing_file  # noqa: E402
 from teacher_student_decomposition_kd_hbb import (  # noqa: E402
     ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer,
 )
@@ -143,6 +142,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--cclkd-bg-weight", type=float, default=0.1)
     parser.add_argument("--cclkd-min-confidence", type=float, default=0.1)
     parser.add_argument("--cclkd-max-tokens", type=int, default=512)
+    parser.add_argument("--cclkd-temperature-min", type=float, default=0.5)
+    parser.add_argument("--cclkd-temperature-max", type=float, default=5.0)
+    parser.add_argument("--cclkd-entropy-scale", type=float, default=5.0)
     parser.add_argument("--c2kd-selection-threshold", type=float, default=0.25)
     parser.add_argument("--c2kd-teacher-conf-threshold", type=float, default=0.3)
     parser.add_argument("--mmanet-relation-margin", type=float, default=0.2)
@@ -263,6 +265,9 @@ def main() -> None:
         cclkd_bg_weight=args.cclkd_bg_weight,
         cclkd_min_confidence=args.cclkd_min_confidence,
         cclkd_max_tokens=args.cclkd_max_tokens,
+        cclkd_temperature_min=args.cclkd_temperature_min,
+        cclkd_temperature_max=args.cclkd_temperature_max,
+        cclkd_entropy_scale=args.cclkd_entropy_scale,
         c2kd_selection_threshold=args.c2kd_selection_threshold,
         c2kd_teacher_conf_threshold=args.c2kd_teacher_conf_threshold,
         mmanet_relation_margin=args.mmanet_relation_margin,

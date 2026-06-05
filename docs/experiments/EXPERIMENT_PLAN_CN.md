@@ -1,6 +1,6 @@
 # LADD 实验计划
 
-最后更新：2026-06-04
+最后更新：2026-06-05
 
 > 2026-06-04 对比方法决策更新：controlled main table 改为
 > `FGD / LD / CCLKD-style / HalluciDet-style`。CrossKD 已停止并淘汰；CoLD
@@ -8,6 +8,11 @@
 > [`COMPARISON_EXPERIMENTS_CN.md`](COMPARISON_EXPERIMENTS_CN.md) 和
 > [`../../comparison/IMPLEMENTATION_REVIEW_CN.md`](../../comparison/IMPLEMENTATION_REVIEW_CN.md)；
 > 本文后续旧对比矩阵仅保留为历史计划记录。
+
+> 2026-06-05 协议审计更新：双卡 4090 部署时 OGSOD HBB dataset yaml 被错误迁移为
+> `nc=5` 旧类别表，正式协议应为 `nc=3`。因此双卡 4090 上 2026-06-04 启动的
+> comparison smoke/formal partial runs 和 LADD BN-freeze sweep 全部作废，不进入
+> active result table。当前不启动新实验，先完成代码和记录全面复核。
 
 ## 1. Baseline
 
@@ -17,8 +22,11 @@
 
 执行策略更新：
 
-- 117 暂停作为当前受控实验主力：该机文件 IO/网络过慢，先不继续消耗调度精力。
-- 90 和 4090D 各准备一套代码树；哪个有空余 GPU 就优先塞正式比较实验。90 当前已同步 HalluciDet-style/LD 代码并启动可跑项；4090D 作为候选执行机，待 SSH/文件传输入口恢复后同步同一套代码。
+- `LADD_public` 冻结为论文代码与实验记录的唯一源；服务器旧代码树只归档，不再反向覆盖 public。
+- 双卡 4090 旧 `/root/shared-nvme/ladd` 已发现 active yaml 协议错误；错误结果已归档。修正后不得直接启动正式队列，必须先通过协议校验和人工复核。
+- 117 已完成最终四方法真实 GPU smoke，但当前 GPU 被其他用户占用；不启动新任务。
+- 4090D 已以无卡模式开机，仅用于恢复和归档已有结果。
+- 90 保留已有进行中/历史任务，暂不新增受控对比任务。
 - 正式比较实验从 `yolo11*.pt` 初始权重启动，不从 SAR baseline `best.pt` 继续训练；训练长度不作为对比指标，统一按 formal no-mosaic 协议训练到收敛。
 - 若使用跨机器结果，论文中需要标注 machine/checkpoint provenance，并保留同 seed/同 epoch 的 sanity comparison。
 
@@ -74,16 +82,19 @@ RGB baseline:
 |---|---|---|
 | YOLO11m seed42/123 SAR+RGB baseline | m 多 seed 验证 | P1 |
 | YOLO11l seed42/123 SAR+RGB baseline | l 多 seed 验证 | P2 |
-| 4090D HBB LADD 代码树同步 | 4090D 空闲时无法接管当前受控实验 | P0 |
+| 双卡 4090 YOLO11s teacher seed42/123 | s 多 seed 对比 | P1 |
+| 双卡 4090 YOLO11m/l pretrain 与 teacher | m/l 容量扩展 | P2 |
 
-90 路径：`/mnt/dataY/ydf/projects/LADD_og`。4090D 路径：`/root/autodl-tmp/LADD`。4090D 当前 SSH 短命令偶尔可用，但访问 `/root/autodl-tmp`、`nvidia-smi` 或上传小文件会被入口断开；恢复后优先同步 `src/teacher_student_decomposition_kd_hbb/`、`tools/train_ladd_hbb.py`、`scripts/ogsod_public/formal_nomosaic_20260528/`、`configs/` 和 `yolo/ultralytics/` 本地 patch。
+执行路径：双卡 4090 `/root/shared-nvme/ladd`；数据 `/root/shared-nvme/OGSOD-1.0`。旧代码与已有结果归档到同盘带时间戳目录，并作为私有 checkpoint/result asset root 接入 public 运行目录。
 
 ### 1.3 待完成
 
 | 优先级 | 实验 | 目的 |
 |---|---:|---|
-| P0 | 同步完整 HBB LADD 代码到 4090D | 让 4090D 空闲时能接管主实验/消融/对比 |
-| P0 | 90 上继续塞可跑的当前受控对比 | 避免 GPU 空闲，先保证 n/s seed0 跑通 |
+| ✅ | 归档双卡 4090 旧代码并部署 `LADD_public` | 已归档至 `/root/shared-nvme/archive/ladd_pre_public_20260604_220559` |
+| 作废 | 双卡 4090 旧四方法目标机 smoke | 使用了错误 `nc=5` yaml，不作为 smoke 证据 |
+| 作废 | 双卡 4090 YOLO11n 四方法正式三 seed 队列 | 已停止并归档，不能进入主表 |
+| P0 | 公开仓库协议与代码审计 | 修正 yaml、CCLKD 实现和文档状态；推送后人工复核 |
 | P1 | YOLO11m SAR/RGB seed42,123 | m 多 seed 验证 |
 | P1 | YOLO11l seed0 SAR/RGB 可用性复核 | l 实验可在 90/4090D 启动 |
 | P2 | YOLO11l SAR/RGB seed42,123 | l 多 seed 验证 |
@@ -102,6 +113,8 @@ RGB baseline:
 
 目标：在 formal no-mosaic 协议下，完成 LADD cap2 的多容量、多 seed 验证。
 
+> 当前不新增 LADD 主线 run。先完成冻结对比实现的正式结果；已有 LADD 结果继续用于主线选择与崩溃分析。
+
 主线配置：`A1=10 → A2=50 → B=800, cap2 reach-rank, A2/B MuSGD lr=0.001`
 
 B 阶段温和修正：90 服务器上 YOLO11n cap2 seed123 的旧 B run 使用 `optimizer=auto, lr0=0.01`，前几轮 `lr/pg0` 到约 0.03，epoch 429 开始检测 loss NaN，最终 `last.pt` 被判定为 NaN/Inf 权重。同期 `reach_*` 为 0，`kd_loss` 仍有限，现象更像检测分支/优化器冲击，而不是 reach 或 cap2 单独爆炸。因此后续正式 LADD 默认采用 B 稳定设置：
@@ -118,39 +131,36 @@ B_WARMUP_BIAS_LR=0.001
 
 | Model | seed0 | seed42 | seed123 |
 |---|---:|---:|---:|
-| YOLO11n cap2 | 0.57662 ✅ | 0.57420 ✅ | B 稳定重跑中，best 0.56089@139/144 |
-| YOLO11s cap2 | B 阶段运行中，best 0.60675@0/362 | — | — |
-| YOLO11m cap2 | A2 阶段运行中，best 0.64011@20/26 | — | — |
+| YOLO11n cap2 `a2mu1e3` | 0.57662@725 ✅ | 0.57420@735 ✅ | old B 崩溃；`bstable1e3` 0.56161@165 后期退化 |
+| YOLO11n cap2 BN-freeze | 0.57276@793 ✅ | 待补 | 0.57269@779 ✅ |
+| YOLO11s cap2 | 0.63551@605，未满 800 | 4090D r2 0.60838@638，低于 baseline | 4090D r2 0.60849@513，低于 baseline |
+| YOLO11m cap2 | B 异常，best 0.59796@1 | — | — |
 
 补充说明：
 
-- YOLO11n cap2 seed123 早先 B run 跑到 483 epoch 后出现 last AP 为 0 的异常，已启动 `bstable1e3` 稳定重跑。
-- seed123 B 稳定重跑当前无 NaN，`lr0=0.001 + MuSGD + no warmup` 初步有效。
+- YOLO11n cap2 seed123 早先 B run 跑到 483 epoch 后出现 last AP 为 0 的异常；`bstable1e3` 完整跑满但 best 仅 `0.56161@165`，后期退化到 0.52875。
 - 4090D 入口在关闭本地 tun 后恢复；HBB/HalluciDet-style 关键代码已同步并通过 hash、`py_compile`、`--help` 和 launcher `bash -n` 检查。4090D 当前 YOLO11n cap2 seed0 B run 在 epoch 342-346 连续 mAP50-95=0，best 0.54925@227，已停止以避免继续占用 4090D。
-- 塌缩排查结论：YOLO11n seed0/123 坏 run 权重无 NaN/Inf，但 `last.pt` 的 BN `running_mean/running_var` 被污染；seed0 BN max running_var 到 1726，seed123 到 1333，而健康 seed42 约 47.7。已新增 `--freeze-bn-stats` / `FREEZE_BN_STATS=1`，训练时冻结 BN running stats 但保留 BN affine 参数梯度。
-- 90 GPU7 已启动 YOLO11n seed0/123 B 修正版：`formal_nomosaic_yolo11n_cap2_s0_bnfreeze1e3_90_gpu7`、`formal_nomosaic_yolo11n_cap2_s123_bnfreeze1e3_90_gpu7`，均从 `a2mu1e3_a2_e50` best 启动，`MuSGD lr0=0.001 no warmup + FREEZE_BN_STATS=1`，已进入 epoch 1。
-- YOLO11s/m 当前数值仅为中途 best，不进入最终主表。
+- 塌缩排查结论：YOLO11n seed0/123 坏 run 权重无 NaN/Inf，但 `last.pt` 的 BN `running_mean/running_var` 被污染；seed0 BN max running_var 到 1726，seed123 到 1333，而健康 seed42 约 47.7。
+- `--freeze-bn-stats` / `FREEZE_BN_STATS=1` 已在 90 上完成 seed0/123 B 阶段，分别得到 `0.57276@793` 与 `0.57269@779`，说明 BN-freeze 是当前最可信的 B 稳定修复。
+- 双卡 4090 已启动诊断实验 `bnfreeze_highlr_oldb_4090dual_diag_v1`：YOLO11n seed0/42/123 均从 90 的 `a2mu1e3_a2_e50` best 启动，B 阶段使用 old B 高学习率设置 `optimizer=auto -> MuSGD(lr=0.01)`、默认 warmup，同时启用 `FREEZE_BN_STATS=1`。该实验只回答“BN-freeze 能否单独救高学习率 B”，不作为正式主表协议。
+- YOLO11s/m 当前数值不进入最终主表：s seed0 未满 800，m seed0 B 异常。
 
 ### 2.2 待完成
 
 | 优先级 | 实验 | 前置 |
 |---|---:|---|
-| P0 | 在 90/4090D 重跑 11n cap2 三 seed，使用 A2/B 温和修正 | 目标执行机代码同步 + n baseline 已齐 |
-| P0 | 等 90 上 11n cap2 seed123 稳定 B 重跑完成 | 用于判断 B 温和修正 |
-| P0 | 在 90/4090D 跑 YOLO11s cap2 seed0 B 或全链重跑 | 目标执行机代码同步 + s baseline 已齐 |
-| P0 | 在 90/4090D 跑 YOLO11m cap2 seed0 | 目标执行机代码同步 + m seed0 SAR/RGB 已齐 |
-| P1 | YOLO11s cap2 seed42,123 | s baseline 三 seed 齐 |
-| P1 | YOLO11m cap2 seed42,123 | 需先补 m seed42,123 SAR/RGB baseline |
-| P1 | YOLO11l cap2 seed0 | 需先复核 l seed0 SAR/RGB baseline 在执行机可用 |
-| P2 | YOLO11l cap2 seed42,123 | 需先补 l seed42,123 SAR/RGB baseline |
+| P0 | 补 YOLO11n seed42 BN-freeze | 形成严格同协议三 seed 稳定主线 |
+| P1 | 在 public 最终代码上重跑 YOLO11s cap2 seed0 | s 容量验证 |
+| P1 | 复盘 4090D YOLO11s 低结果 | 判断是否为协议/代码/环境差异 |
+| P2 | 暂停 YOLO11m/l LADD 扩展 | 等 n/s 主线稳定后再排 |
 
 ### 2.3 预期主表
 
 | Model | SAR baseline | LADD cap2 | Delta |
 |---|---:|---:|---:|
-| YOLO11n | 0.55859 ± 0.00216 | 2/3 done: 0.57531 | 2/3 done: +0.01804 |
-| YOLO11s | 0.62779 ± 0.00289 | B running | TBD |
-| YOLO11m | 0.65580 | A2 running | TBD |
+| YOLO11n | 0.55859 ± 0.00216 | BN-freeze 2/3 done: 0.57273 | BN-freeze 2/3 done: +0.01381 |
+| YOLO11s | 0.62779 ± 0.00289 | 0.63551@605 seed0 | +0.00654 seed0 |
+| YOLO11m | 0.65580 | B 异常，暂停 | TBD |
 | YOLO11l | 0.65427 | not started | TBD |
 
 ---
@@ -180,10 +190,14 @@ B_WARMUP_BIAS_LR=0.001
 
 | 类别 | 方法 | 当前状态 |
 |---|---|---|
-| 通用 KD | FGD-style | 修正版已实现；旧结果归档，待 smoke/重跑 |
-| 通用 KD | LD | 真正 DFL localization KD 已实现；旧 soft-logit 结果归档，待 smoke/重跑 |
-| 跨模态 KD | CCLKD-style | portable profile 已实现，待 smoke |
-| 跨模态 KD | HalluciDet-style | 已实现；候选运行需跑满 |
+| 通用 KD | FGD-style | 双卡 4090 旧 smoke/formal 作废；待修正协议后重新 smoke |
+| 通用 KD | LD | 双卡 4090 旧 smoke/formal 作废；待修正协议后重新 smoke |
+| 跨模态 KD | CCLKD paper-structured reimplementation | 2026-06-05 重写为 COP/ATKD/CCL/RLD 结构；待人工复核与重新 smoke |
+| 跨模态 KD | HalluciDet-style | 双卡 4090 旧 smoke/formal 作废；待修正协议后重新 smoke |
+
+此前四方法 smoke 记录中，双卡 4090 部分因 `nc=5` yaml 错误作废；117 smoke 仅能证明
+旧代码路径可运行，不能证明当前 public 修正版实现。2026-06-05 当前状态是：不启动新实验，
+先完成 public 审计、CCLKD 代码重写和人工复核。
 
 容量优先级：先 YOLO11n 三 seed闭环，同时保证 YOLO11s seed0 跑通；再扩展到
 s/m/l。CrossKD、CoLD 与无效旧结果统一归档到
@@ -193,8 +207,8 @@ s/m/l。CrossKD、CoLD 与无效旧结果统一归档到
 
 | 容量 | baseline 条件 | 可做项 | 需补 |
 |---|---|---|---|
-| YOLO11n | SAR/RGB 0/42/123 已齐 | 四方法 smoke 与正式三 seed | 先验证修正版 loss/显存 |
-| YOLO11s | SAR/RGB 0/42/123 已齐 | 四方法 seed0，稳定后补三 seed | 先完成 seed0 |
+| YOLO11n | SAR/RGB 0/42/123 已齐 | 修正后可重新 smoke | 人工复核通过后再决定是否启动 |
+| YOLO11s | SAR/RGB 0/42/123 已齐 | 当前可跑四方法 seed0 | 双卡 4090 缺 teacher seed42/123 |
 | YOLO11m | seed0 SAR/RGB 已完成 | 四方法 seed0 可排队 | 补 SAR/RGB seed42/123 |
 | YOLO11l | seed0 baseline 已完成 | seed0 可作为后续容量点 | 补 SAR/RGB seed42/123 |
 
@@ -208,11 +222,12 @@ CoLD、CrossKD、修复前 FGD 与旧 soft-logit LD 均不再独立追踪或继�
 ## 6. 执行顺序
 
 ```
-Phase 0 (当前): 90 已同步 HBB LADD 代码；4090D 待 SSH/上传入口恢复后同步同一套代码
-Phase 1:        四个受控对比方法完成 smoke；LADD 保持运行
-Phase 2:        11n seed0 跑通后补三 seed；空闲 GPU 优先塞 FGD/LD/CCLKD-style/HalluciDet-style
-Phase 3:        补齐 m/l baseline 与迁移；扩展 LADD/对比到 n/s/m/l
-Phase 4:        根据结果决定是否补 YOLO11x 或 PFGF/TIRDet-style 附录
+Phase 0 (作废): 双卡 4090 旧四方法 smoke/formal partial runs，原因是 `nc=5` yaml
+Phase 1 (当前): public 协议审计、CCLKD 重写、错误文档修正、推送 GitHub 供人工复核
+Phase 2:        人工复核通过后，先只做协议校验和短 smoke
+Phase 3:        smoke 通过后再决定是否启动 YOLO11n 正式对比
+Phase 4:        根据 n 结果决定是否扩展到 s/m/l
 ```
 
-关键决策点：Phase 2 结束时，如果 11n 三 seed LADD 正向且消融趋势合理 → 论文主表成立，后续只补证据。
+当前明确不启动：任何新训练、LADD 主线、消融、CoLD、CrossKD/MGD/MMANet。关键决策点是
+人工复核是否通过。

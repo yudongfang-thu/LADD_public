@@ -1,6 +1,6 @@
 # Baseline 与 LADD 主方法状态
 
-最后更新：2026-06-04 08:55 CST
+最后更新：2026-06-05 16:45 CST
 
 用途：给导师快速查看当前 formal no-mosaic baseline、LADD 主方法和可启动条件。对比方法来源与 DOI 见 [`COMPARISON_METHODS_RECORD_CN.md`](COMPARISON_METHODS_RECORD_CN.md)。
 
@@ -24,8 +24,8 @@ RGB teacher uses same capacity and same seed when available
 | 服务器 | 路径 | 当前作用 |
 |---|---|---|
 | 90 | `/mnt/dataY/ydf/projects/LADD_og` | baseline 主参考；当前受控对比和部分 LADD 见缝插针 |
-| 4090D | `/root/autodl-tmp/LADD` | 当前跑 YOLO11n/s LADD 与 FGD seed42；2026-06-04 08:55 现场复连失败，运行中行采用 08:33 已记录状态 |
-| 4090 | 已部署 LADD 环境 | CrossKD 已停止；正式对比代码需同步 2026-06-04 修正版 |
+| 4090D | `/root/autodl-tmp/LADD` | 无卡模式/历史结果恢复；当前不作为新实验状态来源 |
+| 双卡 4090 | `/root/shared-nvme/ladd` | 2026-06-05 发现 `nc=5` yaml 错误，相关结果作废；当前不启动新实验 |
 | 117 | 暂停 | 文件 IO/网络过慢，暂不作为当前受控实验主力 |
 
 ## 2. Baseline 最新结果
@@ -78,21 +78,21 @@ A2/B 使用 MuSGD lr0=0.001 no warmup
 |---|---:|---|---:|---:|---:|---:|---|
 | YOLO11n cap2 | 0 | 90 `a2mu1e3` | 800 | 0.57504 | 0.57662@725 | +0.02008 | 完成，可作为主表有效点 |
 | YOLO11n cap2 | 42 | 90 `a2mu1e3` | 800 | 0.57293 | 0.57420@735 | +0.01626 | 完成，可作为主表有效点 |
-| YOLO11n cap2 | 42 | 4090D r2 | 659 | 约 0.565 | 约 0.570 | +0.01 左右 | 正在跑，用于跨机器/新代码 sanity |
-| YOLO11n cap2 | 123 | 90 `bstable1e3` | 800 | 0.52875 | 0.56161@165 | +0.00033 | 后期退化明显，不作为强证据 |
-| YOLO11n cap2 | 0 | 90 BN-freeze | 28 | 0.52649 | 0.52834@26 | -0.02820 | 正在诊断 BN 塌缩修复 |
-| YOLO11n cap2 | 123 | 90 BN-freeze | 29 | 0.54111 | 0.54677@25 | -0.01451 | 正在诊断 BN 塌缩修复 |
-| YOLO11s cap2 | 0 | 90 `a2mu1e3` | 608 | 0.63527 | 0.63551@605 | +0.00654 | 正在跑，已有正向收益 |
-| YOLO11s cap2 | 0 | 4090D r2 | 509 | 约 0.614 | 约 0.614 | -0.015 左右 | 正在跑，仍低于 90 |
-| YOLO11s cap2 | 42 | 4090D r2 | 493 | 约 0.594 | 约 0.594 | -0.035 左右 | 正在跑，仍低于 90 |
-| YOLO11s cap2 | 123 | 4090D r2 | 492 | 约 0.606 | 约 0.606 | -0.018 左右 | 正在跑，仍低于 90 |
+| YOLO11n cap2 | 42 | 4090D r2 | 800 | 0.55222 | 0.57191@420 | +0.01397 | 跑满但后期退化，跨机器 sanity |
+| YOLO11n cap2 | 123 | 90 `bstable1e3` | 800 | 0.52875 | 0.56161@165 | +0.00033 | 能防 NaN，但后期退化，不作为主线 |
+| YOLO11n cap2 | 0 | 90 BN-freeze | 800 | 0.57254 | 0.57276@793 | +0.01622 | 完成，稳定候选 |
+| YOLO11n cap2 | 123 | 90 BN-freeze | 800 | 0.57219 | 0.57269@779 | +0.01141 | 完成，修复 seed123 退化 |
+| YOLO11s cap2 | 0 | 90 `a2mu1e3` | 608 | 0.63527 | 0.63551@605 | +0.00654 | 未满 800，但已有正向收益 |
+| YOLO11s cap2 | 0 | 4090D r2 | 800 | 0.58962 | 0.61787@570 | -0.01110 | 跑满但低于 baseline |
+| YOLO11s cap2 | 42 | 4090D r2 | 800 | 0.58895 | 0.60838@638 | -0.02041 | 跑满但低于 baseline |
+| YOLO11s cap2 | 123 | 4090D r2 | 800 | 0.58143 | 0.60849@513 | -0.01408 | 跑满但低于 baseline |
 | YOLO11m cap2 | 0 | 90 `a2mu1e3` | 121 | 0.52361 | 0.59796@1 | -0.05784 | 当前异常，暂不纳入主表 |
 
 ## 5. 当前判断
 
-YOLO11n 是目前最稳的主线证据：seed0 和 seed42 已经完成且分别提升约 +2.0 和 +1.6 个 AP，说明 LADD 在蒸馏空间最大的 n 容量上确实有效。seed123 的 B 阶段存在塌缩/后期退化问题，已经定位到 BN running stats 污染，并启动 `FREEZE_BN_STATS=1` 修正版；该修正版仍在早期，暂不能判断最终收益。
+YOLO11n 是目前最稳的主线证据：seed0 和 seed42 的 `a2mu1e3` 已经完成且分别提升约 +2.0 和 +1.6 个 AP，说明 LADD 在蒸馏空间最大的 n 容量上确实有效。seed123 的旧 B 和 `bstable1e3` 证明只降低学习率不能解决后期退化；BN-freeze 版本已经跑满 seed0/123，并将 seed123 修复到 `0.57269@779`，相对 SAR baseline 提升 +0.01141。当前最合理的统一主线候选是 `cap2 + A2/B MuSGD 1e-3 + B FREEZE_BN_STATS=1`。
 
-YOLO11s 的 baseline 三 seed 已齐。90 上 seed0 的 LADD 已经跑到 epoch 608，best 0.63551，相对 SAR baseline 0.62897 有 +0.00654，方向是正的；4090D 上 s 三 seed 当前仍偏低，需要继续跑和复核协议/实现差异。
+YOLO11s 的 baseline 三 seed 已齐。90 上 seed0 的 LADD 跑到 epoch 608，best `0.63551@605`，相对 SAR baseline 0.62897 有 +0.00654，方向是正的；4090D 上 s 三 seed 已跑满但全部低于 baseline，需要复核协议/实现差异，不能作为主线证据。
 
 YOLO11m/l seed0 baseline 已齐，但 m 的 LADD 当前异常，l 尚未启动。下一阶段应优先保持 n/s 主线和当前受控对比方法跑完 seed0，再补 n 三 seed闭环，最后扩展到 m/l。
 
@@ -100,8 +100,8 @@ YOLO11m/l seed0 baseline 已齐，但 m 的 LADD 当前异常，l 尚未启动�
 
 当前阶段目标不是一次性铺满所有容量，而是先保证：
 
-1. YOLO11n LADD 主方法至少 2-3 个 seed 形成可信闭环。
-2. YOLO11s LADD 至少 seed0 跑完，并确认 4090D/90 协议差异。
+1. 补 YOLO11n seed42 BN-freeze，使当前稳定主线候选形成严格三 seed 同协议闭环。
+2. YOLO11s LADD 至少 seed0 在 public 最终代码上跑满，并确认 4090D/90 协议差异。
 3. FGD、LD、CCLKD-style、HalluciDet-style 四个受控方法先完成 smoke，再至少在 YOLO11n seed0 闭环；其中 s seed0 作为第二容量优先补。
 4. CoLD/CrossKD 与无效旧结果只保留在统一归档中，不进入 controlled main table。
 

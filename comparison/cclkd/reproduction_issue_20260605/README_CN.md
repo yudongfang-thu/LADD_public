@@ -5,9 +5,12 @@
 本目录整理 CCLKD-style 在 OGSOD HBB 上的两类运行记录：
 
 - 90 服务器：尽量贴近 CCLKD 原文设置的 YOLO11s / 400 epoch 复现实验。
-- 双卡 4090 服务器：正式 controlled comparison 协议下的 YOLO11n / 800 epoch 运行中实验。
+- 双卡 4090 服务器：正式 controlled comparison 协议下的 YOLO11n / 800 epoch partial
+  记录；2026-06-05 后确认该记录使用了错误 `nc=5` yaml，已作废。
 
-注意：本仓库中的实现是 `CCLKD-style` port。原论文没有公开可运行代码；当前实现保留 AT-KD + 类别约束对比蒸馏的主要思想，但把原文候选框级 CCL 近似到 YOLO task-aligned foreground anchor token 上。因此这里的问题记录不应写成“官方代码复现失败”，而应写成“CCLKD-style port 在当前协议下未观察到正收益，需要进一步排查”。
+注意：本目录中的 90 服务器记录来自 2026-06-05 之前的 `CCLKD-style` port。2026-06-05
+后代码已改为 paper-structured reimplementation。这里的问题记录不应写成“官方代码复现失败”，
+而应写成“旧 CCLKD-style port 在当前协议下未观察到正收益，需要进一步排查”。
 
 ## 一、文件结构
 
@@ -78,12 +81,12 @@ comparison/cclkd/reproduction_issue_20260605/
 | 300 | 0.45159 | 0.48348 | -0.03189 |
 | 400 | 0.48567 | 0.53255 | -0.04688 |
 
-## 三、90 服务器：正在补完全对齐 SAR-only baseline
+## 三、90 服务器：完全对齐 SAR-only baseline partial
 
-为了排除“旧 baseline 协议并非完全一致”的问题，已启动完全对齐 CCLKD paper-closest 训练协议的 SAR-only baseline：
+为了排除“旧 baseline 协议并非完全一致”的问题，此前启动过完全对齐 CCLKD paper-closest 训练协议的 SAR-only baseline：
 
 - 目录：`90_sar_baseline_paperclosest/`
-- 当前状态：运行中，已提交 partial `results_partial.csv`
+- 当前状态：只提交 partial `results_partial.csv`；服务器当前是否仍在运行需另行复核
 - 当前 partial：13 rows，epoch13 best mAP50-95 `0.13600`
 
 这个实验完成后，最直接的判断标准是：
@@ -94,7 +97,7 @@ CCLKD paper-closest 400ep vs SAR-only paper-closest 400ep
 
 如果 SAR-only paper-closest 仍接近或超过旧 SAR baseline，则 CCLKD-style port 的负收益基本成立；如果 SAR-only paper-closest 本身显著低于旧 baseline，则需要先解释 baseline protocol 差异。
 
-## 四、双卡 4090：formal comparison CCLKD 当前状态
+## 四、双卡 4090：formal comparison CCLKD partial（作废）
 
 配置：
 
@@ -103,7 +106,8 @@ CCLKD paper-closest 400ep vs SAR-only paper-closest 400ep
 - 初始化：from YOLO pretrain
 - epochs：800
 - seed：0
-- 状态：运行中
+- 状态：已停止并作废
+- 作废原因：双卡 4090 active OGSOD HBB yaml 错误配置为 `nc=5`，正式协议应为 `nc=3`
 
 当前 partial：
 
@@ -111,7 +115,7 @@ CCLKD paper-closest 400ep vs SAR-only paper-closest 400ep
 | --- | ---: | ---: | ---: | ---: |
 | dual4090 CCLKD formal partial | 512 | 512 | 0.45225 | 0.64247 |
 
-这组不是 CCLKD 原文对齐复现实验，而是我们论文主表 controlled comparison 的正式运行。它用于比较 CCLKD-style 与 LD / FGD / HalluciDet-style / LADD 等方法在统一协议下的表现。
+这组不能作为我们论文主表 controlled comparison 结果，也不能作为 CCLKD 趋势证据。
 
 ## 五、当前排查判断
 

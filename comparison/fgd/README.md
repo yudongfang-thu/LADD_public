@@ -26,9 +26,9 @@ FGD 在本 public 包中不是独立训练器，使用统一入口：
 | Model/seed | 服务器 | epoch | best/current AP50-95 | vs SAR baseline | 状态 |
 |---|---|---:|---:|---:|---|
 | YOLO11n seed0 | 4090D | 800 | 0.55867 best | -0.00049 | 完成，基本打平 |
-| YOLO11n seed42 | 4090D | 343 | 0.46993 current | 未完成 | 运行中 |
+| YOLO11n seed42 | 4090D | 343 | 0.46993 current | 未完成 | 历史 partial，当前不视为运行中 |
 | YOLO11n seed123 | 4090 | 134 | 0.37024 current | 未完成 | validation OOM，不计完成 |
-| YOLO11s seed0 | 4090 | 192 | 0.50358 current | 未完成 | 运行中 |
+| YOLO11s seed0 | 4090 | 192 | 0.50358 current | 未完成 | 历史 partial，当前不视为运行中 |
 
 这些结果来自 2026-06-04 修复前的旧实现；旧实现只有 GT 二值前景/背景权重，
 没有 teacher feature attention。它们保留用于审计，但不能代表当前修正版，也不能

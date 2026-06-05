@@ -1,4 +1,4 @@
-# CCLKD-style
+# CCLKD Paper-Structured Reimplementation
 
 论文：*Cross-modal contrastive learning-based object detection under incomplete modalities*，
 Geo-spatial Information Science，2026，DOI
@@ -21,20 +21,37 @@ paper/CCLKD__2026_GIS__Cross_Modal_Contrastive_Learning_Incomplete_Modalities.pd
 ../ladd/code/src/teacher_student_decomposition_kd_hbb/loss.py::_cclkd_style_loss
 ```
 
-当前 portable implementation 包含：
+2026-06-05 后的 paper-structured implementation 包含：
 
-- teacher-confidence adaptive feature/logit distillation；
-- GT-assigned foreground anchor 上的 category-constrained cross-modal contrastive loss；
-- feature/logit 独立权重；
-- 最多 512 foreground token 的类别分层随机采样显存保护。
+- **COP**：基于 RGB teacher 分类 logits 的 dominant class，与 GT assigned label 一致时构成类别正样本 mask；
+- **ATKD / LLD**：按类别正样本 teacher entropy 映射自适应温度，执行分类 logit KD 与 YOLO11 DFL spatial-distribution KD；
+- **ATKD / FLD**：在类别正样本 token 上执行 teacher-student feature distribution KD；
+- **ATKD / RLD**：在同类 token 特征上构造 self-correlation matrix 并对齐；
+- **CCL**：按类别频次反比加权，对 target / non-target spatial distributions 做 teacher-student contrastive alignment；
+- 最多 512 token 的类别内随机采样显存保护。
 
-论文没有公开可运行代码。当前缺少完整 relationship-level distillation，并把
-candidate-box CCL 近似为 assigned anchor-token CCL，因此必须写作 `CCLKD-style`，
-不能声称严格复现。
+`--cclkd-base-temperature` 作为旧 launcher 兼容参数保留；paper-structured 路径实际使用
+`--cclkd-temperature-min / --cclkd-temperature-max / --cclkd-entropy-scale` 控制论文式
+entropy temperature mapping。
+
+论文没有公开可运行代码。当前实现仍是 YOLO11 适配版：论文中的 YOLOv5 candidate
+box / objectness / regional feature extraction没有一一同构公开实现；本仓库用 YOLO11
+DFL raw logits 表示 spatial distribution，用 per-level dense token feature 近似
+candidate region feature。teacher 分支仍来自给定 RGB teacher 权重，不是完全复刻原文
+“joint teacher-student online distillation”训练器。因此写作时只能称为
+`CCLKD paper-structured reimplementation` 或 `CCLKD-style reimplementation`，
+不能声称官方严格复现。
 
 ## 状态
 
-最终实现已通过真实 GPU smoke，并已启动正式实验。
+2026-06-05 发现双卡 4090 部署时 active dataset yaml 误为 `nc=5`，而正式 OGSOD
+HBB 协议应为 `nc=3`。因此此前双卡 4090 上的 CCLKD smoke 和 formal partial run
+全部作废；相关材料只保留在 `reproduction_issue_20260605/` 作为问题证据。
+
+修正后的实现已通过本地 `py_compile` 和 shell `bash -n` 静态检查。当前本地
+`/opt/homebrew/bin/python3` 未安装 `torch`，因此 `--help` 导入和 CPU 合成张量
+loss 检查需要在服务器环境或装有 torch 的本地环境中补做。尚未重新做 GPU smoke，
+也未启动新正式实验。
 
 ## 复现实验问题记录
 

@@ -1,6 +1,10 @@
 # 最终对比方法实现 Smoke 记录
 
-最后更新：2026-06-04
+最后更新：2026-06-05
+
+> 2026-06-05 审计更新：本文中 117 smoke 可作为旧代码路径运行证据；双卡 4090
+> 目标机 smoke 后续发现使用了错误 `nc=5` OGSOD yaml，因此双卡 4090 smoke 结论作废。
+> 当前 CCLKD 已重写为 paper-structured reimplementation，尚未重新 GPU smoke。
 
 本文记录老师确认后的最终受控对比实现 smoke。测试目的仅是验证代码路径、损失数据流、
 反向传播和 checkpoint 保存，不用于比较方法性能。
@@ -60,9 +64,30 @@ checkpoint 保存。当前 smoke 只能证明实现可运行，不能证明方�
 - 第一次 FGD smoke 已完成训练并得到非零 loss，但 117 的 `deco` 环境缺少 `polars`，
   在保存 checkpoint 时失败。补齐 `polars=1.41.2` 后，四个最终 smoke 均完整通过。
 - 117 文件 I/O 较慢。四方法并发冷启动会长时间争抢模型读取，因此最终验收采用顺序执行。
-- 正式实验启动前仍需在目标服务器复核代码 hash、环境依赖和短 smoke。
+- 双卡 4090 的首次并发 smoke 后续发现 active yaml 为错误 `nc=5`，该结论作废。
+- 双卡 4090 的 Ultralytics AMP check 需要本地 `yolo26n.pt`；通过
+  `scripts/prepare_server_runtime.sh` 从私有 asset root 链接，避免外网下载阻塞。
 
-## 5. 已验证的最终代码 Hash
+## 5. 双卡 4090 目标机复核（作废）
+
+- 服务器：双 NVIDIA RTX 4090
+- 工作路径：`/root/shared-nvme/ladd`
+- 代码来源：完整部署的 `LADD_public`
+- 初始化：formal from-YOLO-pretrain，与正式对比协议一致
+- 验收：真实训练、验证、`results.csv`、`best.pt` 和 `last.pt`
+
+| 方法 | `train/kd_loss` | 有限非零 | 验证与 checkpoint | 结论 |
+|---|---:|---|---|---|
+| FGD-style | 75.3329 | 是 | 完成 | 作废：`nc=5` yaml |
+| LD | 23.3249 | 是 | 完成 | 作废：`nc=5` yaml |
+| CCLKD-style | 2.43504 | 是 | 完成 | 作废：`nc=5` yaml，且旧 CCLKD 实现已被替换 |
+| HalluciDet-style | 1.17116 | 是 | 完成 | 作废：`nc=5` yaml |
+
+FGD/LD 的目标机 smoke loss 高于 117，是因为目标机按正式协议从 YOLO 预训练权重启动，
+而 117 smoke 从已收敛 SAR baseline 启动。该差异需要在正式曲线中继续监控，但不代表
+loss 数据流失效。
+
+## 6. 已验证的最终代码 Hash
 
 117 与 public 最终实现一致：
 
@@ -73,5 +98,8 @@ e4fdaad2b0c1f53d88ebb84e3b88c56e32225bea73a355ac598c2f8405bd6b8d  loss.py
 144492b719d8483d8658170c338358bb4b5abf97a123c673a0d03eb29bd1deca  run_ladd_phase.sh
 ```
 
-结论：当前 FGD-style、LD、CCLKD-style 和 HalluciDet-style 代码可作为后续正式实验的
-最终实现基线。
+双卡 4090 上核心 `loss.py` / `trainer.py` hash 与上述最终实现一致。public
+`train_ladd_hbb.py` 只包含独立部署路径 bootstrap 差异。
+
+结论：本文不能再作为双卡 4090 目标机通过证据。后续必须在修正后的 `nc=3`
+yaml 和当前 public 代码上重新做短 smoke。

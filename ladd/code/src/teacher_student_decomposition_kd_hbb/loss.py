@@ -232,6 +232,9 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         cclkd_bg_weight: float = 0.1,
         cclkd_min_confidence: float = 0.1,
         cclkd_max_tokens: int = 512,
+        cclkd_temperature_min: float = 0.5,
+        cclkd_temperature_max: float = 5.0,
+        cclkd_entropy_scale: float = 5.0,
         c2kd_selection_threshold: float = 0.25,
         c2kd_teacher_conf_threshold: float = 0.3,
         mmanet_relation_margin: float = 0.2,
@@ -295,6 +298,9 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         self.cclkd_bg_weight = max(float(cclkd_bg_weight), 0.0)
         self.cclkd_min_confidence = min(max(float(cclkd_min_confidence), 1e-6), 1.0)
         self.cclkd_max_tokens = max(int(cclkd_max_tokens), 16)
+        self.cclkd_temperature_min = max(float(cclkd_temperature_min), 1e-6)
+        self.cclkd_temperature_max = max(float(cclkd_temperature_max), self.cclkd_temperature_min)
+        self.cclkd_entropy_scale = max(float(cclkd_entropy_scale), 1e-6)
         self.c2kd_selection_threshold = float(c2kd_selection_threshold)
         self.c2kd_teacher_conf_threshold = float(c2kd_teacher_conf_threshold)
         self.mmanet_relation_margin = float(mmanet_relation_margin)
@@ -1039,86 +1045,158 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         teacher_map: torch.Tensor,
         fg_mask: torch.Tensor,
         target_scores: torch.Tensor,
+        student_distri: torch.Tensor | None,
+        teacher_distri: torch.Tensor | None,
         student_scores: torch.Tensor | None,
         teacher_scores: torch.Tensor | None,
     ) -> torch.Tensor:
-        """Portable CCLKD-style adaptive and category-constrained distillation.
+        """CCLKD paper-structured ATKD + CCL adaptation for YOLO11 HBB.
 
-        The paper has no public runnable implementation. This profile preserves
-        its reported design intent: teacher-confidence-adaptive feature/logit
-        transfer plus category-constrained cross-modal contrastive alignment.
+        This follows the paper's component structure: COP category mask,
+        entropy-mapped class temperature, LLD/FLD/RLD and class-balanced CCL.
+        YOLO11 has DFL regression distributions instead of YOLOv5 objectness
+        anchors, so raw DFL logits are used as the spatial distribution.
         """
         bsz = student_map.shape[0]
         student_flat = _flatten_feat(student_map)
         teacher_flat = _flatten_feat(teacher_map.detach())
         fg = fg_mask.reshape(bsz, -1).bool()
+        zero = student_map.new_zeros(())
+        if not fg.any() or target_scores.shape[:2] != fg.shape:
+            return zero
 
-        if teacher_scores is not None and teacher_scores.shape[:2] == student_flat.shape[:2]:
-            teacher_conf = teacher_scores.detach().sigmoid().amax(dim=-1)
-        else:
-            teacher_conf = F.cosine_similarity(student_flat.detach(), teacher_flat, dim=-1).clamp_min(0.0)
-        adaptive_weight = teacher_conf.clamp_min(self.cclkd_min_confidence)
-        token_weight = torch.where(fg, adaptive_weight, adaptive_weight * self.cclkd_bg_weight)
+        valid_target = fg & (target_scores.amax(dim=-1) > 0)
+        if not valid_target.any():
+            return zero
 
-        feat_token_loss = (student_flat - teacher_flat).pow(2).mean(dim=-1)
-        feature_loss = (feat_token_loss * token_weight).sum() / token_weight.sum().clamp_min(1e-6)
-
-        # Adaptive temperature is applied to prediction distributions. More
-        # confident teacher tokens receive a lower (harder) temperature.
-        logit_loss = student_map.new_zeros(())
         if (
-            student_scores is not None
-            and teacher_scores is not None
-            and student_scores.shape == teacher_scores.shape
-            and student_scores.shape[-1] >= 2
+            student_scores is None
+            or teacher_scores is None
+            or student_scores.shape != teacher_scores.shape
+            or teacher_scores.shape[:2] != fg.shape
         ):
-            tau = self.cclkd_base_temperature / adaptive_weight
-            tau = tau.clamp(max=10.0 * self.cclkd_base_temperature).unsqueeze(-1)
-            s_log_prob = F.log_softmax(student_scores / tau, dim=-1)
-            t_prob = F.softmax(teacher_scores.detach() / tau, dim=-1)
-            logit_token_loss = F.kl_div(s_log_prob, t_prob, reduction="none").sum(dim=-1) * tau.squeeze(-1).pow(2)
-            logit_loss = (
-                (logit_token_loss * token_weight).sum() / token_weight.sum().clamp_min(1e-6)
-            )
+            raise RuntimeError("CCLKD requires matching student/teacher class logits for COP and LLD.")
 
-        contrastive_loss = student_map.new_zeros(())
-        if fg.any() and target_scores.shape[:2] == fg.shape:
-            student_pos = F.normalize(student_flat[fg], dim=-1, eps=1e-6)
-            teacher_pos = F.normalize(teacher_flat[fg], dim=-1, eps=1e-6)
-            labels = target_scores[fg].argmax(dim=-1)
-            if student_pos.shape[0] > self.cclkd_max_tokens:
-                # Reserve a balanced random quota per class, then fill any
-                # unused budget from the remaining foreground tokens.
-                keep_parts = []
-                unique_labels = labels.unique(sorted=True)
-                per_class = max(self.cclkd_max_tokens // max(unique_labels.numel(), 1), 1)
-                selected = torch.zeros(labels.shape[0], dtype=torch.bool, device=labels.device)
-                for class_id in unique_labels:
-                    class_idx = torch.where(labels == class_id)[0]
-                    class_keep = class_idx[torch.randperm(class_idx.numel(), device=labels.device)[:per_class]]
-                    keep_parts.append(class_keep)
-                    selected[class_keep] = True
-                keep = torch.cat(keep_parts)
-                remaining = self.cclkd_max_tokens - keep.numel()
-                if remaining > 0:
-                    remaining_idx = torch.where(~selected)[0]
-                    fill = remaining_idx[torch.randperm(remaining_idx.numel(), device=labels.device)[:remaining]]
-                    keep = torch.cat((keep, fill))
-                elif remaining < 0:
-                    keep = keep[torch.randperm(keep.numel(), device=labels.device)[: self.cclkd_max_tokens]]
-                student_pos = student_pos[keep]
-                teacher_pos = teacher_pos[keep]
-                labels = labels[keep]
-            logits = (student_pos @ teacher_pos.transpose(0, 1)) / self.cclkd_contrastive_temperature
-            positive = labels[:, None].eq(labels[None, :]).to(logits.dtype)
-            log_prob = F.log_softmax(logits, dim=-1)
-            contrastive_loss = -((log_prob * positive).sum(dim=-1) / positive.sum(dim=-1).clamp_min(1.0)).mean()
+        teacher_probs = teacher_scores.detach().sigmoid()
+        teacher_conf, teacher_label = teacher_probs.max(dim=-1)
+        target_label = target_scores.argmax(dim=-1)
+        cop_pos = valid_target & teacher_label.eq(target_label) & (teacher_conf >= self.cclkd_min_confidence)
+        if not cop_pos.any():
+            return zero
 
-        return (
-            self.cclkd_feat_weight * feature_loss
-            + self.cclkd_logit_weight * logit_loss
-            + self.cclkd_contrast_weight * contrastive_loss
-        )
+        labels_flat = target_label.reshape(-1)
+        cop_pos_flat = cop_pos.reshape(-1)
+        valid_flat = valid_target.reshape(-1)
+        teacher_probs_flat = teacher_probs.reshape(-1, teacher_probs.shape[-1])
+        student_scores_flat = student_scores.reshape(-1, student_scores.shape[-1])
+        teacher_scores_flat = teacher_scores.detach().reshape(-1, teacher_scores.shape[-1])
+        student_feat_flat = student_flat.reshape(-1, student_flat.shape[-1])
+        teacher_feat_flat = teacher_flat.reshape(-1, teacher_flat.shape[-1])
+
+        student_distri_flat = None
+        teacher_distri_flat = None
+        if (
+            student_distri is not None
+            and teacher_distri is not None
+            and student_distri.shape == teacher_distri.shape
+            and student_distri.shape[-1] % 4 == 0
+        ):
+            student_distri_flat = student_distri.reshape(-1, student_distri.shape[-1])
+            teacher_distri_flat = teacher_distri.detach().reshape(-1, teacher_distri.shape[-1])
+
+        classes = labels_flat[cop_pos_flat].unique(sorted=True)
+        inv_freq = []
+        class_masks = []
+        for class_id in classes:
+            pos_mask = cop_pos_flat & labels_flat.eq(class_id)
+            class_masks.append((class_id, pos_mask))
+            inv_freq.append(1.0 / float(pos_mask.sum().clamp_min(1).item()))
+        inv_freq_tensor = torch.tensor(inv_freq, device=student_map.device, dtype=student_map.dtype)
+        class_weights = inv_freq_tensor / inv_freq_tensor.sum().clamp_min(1e-6)
+
+        lld_loss = zero
+        fld_loss = zero
+        rld_loss = zero
+        ccl_loss = zero
+        used_classes = 0
+
+        for class_weight, (class_id, pos_mask) in zip(class_weights, class_masks):
+            if not pos_mask.any():
+                continue
+            pos_idx = torch.where(pos_mask)[0]
+            if pos_idx.numel() > self.cclkd_max_tokens:
+                pos_idx = pos_idx[torch.randperm(pos_idx.numel(), device=pos_idx.device)[: self.cclkd_max_tokens]]
+
+            neg_mask = valid_flat & ~labels_flat.eq(class_id)
+            if not neg_mask.any():
+                neg_mask = (~valid_flat) & (teacher_conf.reshape(-1) >= self.cclkd_min_confidence)
+            neg_idx = torch.where(neg_mask)[0]
+            if neg_idx.numel() > self.cclkd_max_tokens:
+                neg_idx = neg_idx[torch.randperm(neg_idx.numel(), device=neg_idx.device)[: self.cclkd_max_tokens]]
+
+            class_scores = teacher_probs_flat[pos_idx, class_id].clamp(1e-6, 1.0 - 1e-6)
+            entropy = -(class_scores * class_scores.log() + (1.0 - class_scores) * (1.0 - class_scores).log())
+            entropy = (entropy.mean() / 0.6931471805599453).clamp(0.0, 1.0)
+            temperature = self.cclkd_temperature_min + (
+                self.cclkd_temperature_max - self.cclkd_temperature_min
+            ) * torch.sigmoid(self.cclkd_entropy_scale * (entropy - 0.5))
+            temperature = temperature.clamp(self.cclkd_temperature_min, self.cclkd_temperature_max)
+
+            # LLD: class-logit KD plus YOLO11 DFL spatial-distribution KD.
+            s_log_prob = F.log_softmax(student_scores_flat[pos_idx] / temperature, dim=-1)
+            t_prob = F.softmax(teacher_scores_flat[pos_idx] / temperature, dim=-1)
+            cls_lld = F.kl_div(s_log_prob, t_prob, reduction="batchmean") * temperature.pow(2)
+            box_lld = zero
+            if student_distri_flat is not None and teacher_distri_flat is not None:
+                reg_max = student_distri_flat.shape[-1] // 4
+                if reg_max > 0:
+                    s_box = student_distri_flat[pos_idx].reshape(-1, 4, reg_max)
+                    t_box = teacher_distri_flat[pos_idx].reshape(-1, 4, reg_max)
+                    box_lld = (
+                        F.kl_div(
+                            F.log_softmax(s_box / temperature, dim=-1),
+                            F.softmax(t_box / temperature, dim=-1),
+                            reduction="batchmean",
+                        )
+                        * temperature.pow(2)
+                    )
+            lld_loss = lld_loss + class_weight * (cls_lld + box_lld)
+
+            # FLD: category-masked feature distribution distillation.
+            s_feat_log = F.log_softmax(student_feat_flat[pos_idx] / temperature, dim=-1)
+            t_feat_prob = F.softmax(teacher_feat_flat[pos_idx] / temperature, dim=-1)
+            fld_loss = fld_loss + class_weight * F.kl_div(s_feat_log, t_feat_prob, reduction="batchmean") * temperature.pow(2)
+
+            # RLD: intra-category self-correlation alignment.
+            if pos_idx.numel() > 1:
+                s_rel = F.normalize(student_feat_flat[pos_idx], dim=-1, eps=1e-6)
+                t_rel = F.normalize(teacher_feat_flat[pos_idx], dim=-1, eps=1e-6)
+                rld_loss = rld_loss + class_weight * F.mse_loss(
+                    s_rel @ s_rel.transpose(0, 1),
+                    t_rel @ t_rel.transpose(0, 1),
+                )
+
+            # CCL: class-balanced target/non-target teacher-student alignment.
+            if neg_idx.numel() > 0:
+                if student_distri_flat is not None and teacher_distri_flat is not None:
+                    s_pos = F.normalize(student_distri_flat[pos_idx], dim=-1, eps=1e-6)
+                    t_pos = F.normalize(teacher_distri_flat[pos_idx], dim=-1, eps=1e-6)
+                    s_neg = F.normalize(student_distri_flat[neg_idx], dim=-1, eps=1e-6)
+                    t_neg = F.normalize(teacher_distri_flat[neg_idx], dim=-1, eps=1e-6)
+                else:
+                    s_pos = F.normalize(student_feat_flat[pos_idx], dim=-1, eps=1e-6)
+                    t_pos = F.normalize(teacher_feat_flat[pos_idx], dim=-1, eps=1e-6)
+                    s_neg = F.normalize(student_feat_flat[neg_idx], dim=-1, eps=1e-6)
+                    t_neg = F.normalize(teacher_feat_flat[neg_idx], dim=-1, eps=1e-6)
+                pos_sim = (s_pos * t_pos).sum(dim=-1) / self.cclkd_contrastive_temperature
+                neg_sim = (s_neg * t_neg).sum(dim=-1).mean().expand_as(pos_sim) / self.cclkd_contrastive_temperature
+                ccl_loss = ccl_loss + class_weight * (-torch.log_softmax(torch.stack((pos_sim, neg_sim), dim=-1), dim=-1)[:, 0].mean())
+
+            used_classes += 1
+
+        if used_classes == 0:
+            return zero
+        return self.cclkd_logit_weight * lld_loss + self.cclkd_feat_weight * (fld_loss + rld_loss) + self.cclkd_contrast_weight * ccl_loss
 
     def _c2kd_style_loss(
         self,
@@ -1307,6 +1385,8 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
                 teacher_map,
                 fg_mask,
                 target_scores,
+                student_distri,
+                teacher_distri,
                 student_scores,
                 teacher_scores,
             )

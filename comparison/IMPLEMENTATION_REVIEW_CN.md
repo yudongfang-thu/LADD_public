@@ -1,6 +1,6 @@
 # 对比方法实现复核
 
-最后更新：2026-06-04
+最后更新：2026-06-05
 
 本文档给外部老师复核当前受控对比方法的代码语义。正式候选为
 `FGD / LD / CCLKD-style / HalluciDet-style`。所有方法共享同一套
@@ -12,7 +12,7 @@ YOLO11 HBB 训练入口、formal no-mosaic 数据增强和 800 epoch 收敛口�
 |---|---|---|---|
 | FGD | 官方形式的 softmax spatial/channel attention + GT fg/bg weighting + batch relation 近似 | 否，属于 FGD-style YOLO port | 修复前结果不能代表当前实现，需重跑 |
 | LD | 前景 anchor 的 YOLO DFL regression logits KL，shape 异常直接失败 | 可以作为 LD 的 YOLO/DFL 适配 | 旧 soft-logit 结果作废，需重跑 |
-| CCLKD-style | teacher-confidence adaptive feature/logit KD + 类别分层采样的 contrastive KD | 否，论文无公开可运行代码，且当前缺 relationship-level 项 | 必须先 smoke，再正式跑 |
+| CCLKD paper-structured reimplementation | COP + entropy temperature + LLD/FLD/RLD + class-balanced CCL 的 YOLO11 适配 | 否，论文无公开可运行代码，且当前不是完整 online teacher-student trainer | 人工复核后先 smoke，再讨论正式跑 |
 | HalluciDet-style | detection-utility guided feature/response/margin alignment | 否，没有显式 hallucination module | 写作时必须标注 `-style` |
 
 ## 2. 本次修复
@@ -52,22 +52,24 @@ teacher attention 和前景/背景分离。
 global context 模块，因此写作使用 `FGD-style (teacher-attention weighted)`。
 attention 保留官方的 softmax、`H*W`/`C` 缩放，并使用官方默认温度 0.5。
 
-### CCLKD-style
+### CCLKD paper-structured reimplementation
 
 DOI `10.1080/10095020.2026.2633014` 对应论文
 *Cross-modal contrastive learning-based object detection under incomplete modalities*。
-论文未提供可运行代码，当前实现只保留可明确映射的设计意图：
+论文未提供可运行代码。2026-06-05 版本按论文结构重新实现：
 
-1. 使用 teacher prediction confidence 决定 token 权重和自适应温度；
-2. 同时对齐 feature 与分类预测分布；
-3. 在 GT-assigned foreground anchor 上，以类别构造跨模态正负样本。
+1. COP：teacher dominant class 与 GT assigned label 一致时形成类别正样本 mask；
+2. adaptive temperature：按类别正样本 teacher probability entropy 映射到 `[0.5, 5.0]`；
+3. LLD：分类 logits KL + YOLO11 DFL raw regression logits KL；
+4. FLD：类别正样本 feature distribution KL；
+5. RLD：同类 token feature self-correlation matrix MSE；
+6. CCL：按类别频次反比加权，对 target / non-target spatial distributions 做 contrastive loss。
 
-feature/logit 项现有独立权重；超过 token 上限时使用类别分层随机采样，避免旧
-top-K 高置信采样忽略低置信区域，也避免多数类别占满全局随机样本。
-
-当前实现没有完整 relationship-level distillation，也把 candidate box 级 CCL
-近似为 assigned anchor-token CCL。因此代码和论文中都必须写作
-`CCLKD-style portable implementation`，不能声称官方严格复现。
+仍需注明适配边界：YOLO11 没有论文 YOLOv5 candidate-box/objectness 的完全同构公开实现，
+因此本实现用 DFL raw logits 作为 spatial distribution，用 dense token feature 近似
+candidate region feature；teacher 仍来自给定 RGB teacher 权重，不是完整 joint online
+teacher-student training branch。因此只能写作 `CCLKD paper-structured reimplementation
+adapted to YOLO11 HBB`，不能声称官方严格复现。
 
 ### HalluciDet-style
 

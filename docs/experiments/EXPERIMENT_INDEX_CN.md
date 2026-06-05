@@ -1,6 +1,6 @@
 # 实验记录索引
 
-最后更新：2026-06-03
+最后更新：2026-06-05
 
 本文档是当前实验状态的入口。所有历史文档保留在 `archive/` 中。
 
@@ -34,8 +34,8 @@
 
 | 线 | 服务器 | 状态 |
 |---|---|---|
-| LADD 主线 | 90 + 4090D | YOLO11n seed0/42 已有正向完成点；seed0/123 BN-freeze 修正版在 90 诊断；YOLO11s 多 run 运行中 |
-| 受控对比 | 待重新部署 | FGD/LD 已修复，CCLKD-style 已接入，HalluciDet-style 保留；先 smoke 后重跑 |
+| LADD 主线 | 90 + 4090D | YOLO11n seed0/42 已有正向完成点；双卡 4090 BN-freeze sweep 因 `nc=5` 作废 |
+| 受控对比 | 待人工复核 | FGD/LD 已修复，CCLKD 已重写，HalluciDet-style 保留；先审计，不启动 |
 | CoLD/CrossKD 归档 | `comparison/archive/excluded_methods/` | 纯历史证据，不再运行 |
 | 消融实验 | — | 未开始 |
 
@@ -44,5 +44,5 @@
 | 服务器 | 用途 |
 |---|---|
 | 90 (8x3090) | baseline 主参考、LADD 诊断与受控对比 |
-| 4090D | 当前接管 LADD/FGD 并行实验 |
+| 4090D | 无卡模式/历史结果恢复；当前不作为新实验状态来源 |
 | 117 (RTX 5880 Ada) | 因 IO/网络过慢，暂不作为当前受控实验主力 |

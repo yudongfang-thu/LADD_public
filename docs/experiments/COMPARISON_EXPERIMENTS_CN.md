@@ -1,6 +1,6 @@
 # OGSOD 正式对比实验
 
-最后更新：2026-06-04
+最后更新：2026-06-05
 
 ## 1. 受控协议
 
@@ -17,10 +17,10 @@ teacher = same-capacity same-seed RGB baseline best.pt
 
 | 方法 | 角色 | 当前代码状态 | 当前实验状态 |
 |---|---|---|---|
-| FGD-style | 通用 feature KD | 2026-06-04 加入 teacher attention，保留 GT fg/bg 与 relation | 修复前结果作废，待 smoke/重跑 |
-| LD | 通用 localization-output KD | 2026-06-04 改为前景 DFL regression KL | 修复前 soft-logit 结果作废，待 smoke/重跑 |
-| CCLKD-style | 跨模态 category-constrained KD | portable profile 已接入；缺完整 relationship-level 项 | 待 smoke/正式启动 |
-| HalluciDet-style | privileged-modality KD | 已接入，无显式 hallucination module | 候选运行需跑满 |
+| FGD-style | 通用 feature KD | 2026-06-04 加入 teacher attention，保留 GT fg/bg 与 relation | 双卡 4090 旧 smoke/formal 因 `nc=5` 作废；待重 smoke |
+| LD | 通用 localization-output KD | 2026-06-04 改为前景 DFL regression KL | 双卡 4090 旧 smoke/formal 因 `nc=5` 作废；待重 smoke |
+| CCLKD paper-structured reimplementation | 跨模态 category-constrained KD | 2026-06-05 改为 COP/ATKD/CCL/RLD 结构 | 尚未 GPU smoke；待人工复核 |
+| HalluciDet-style | privileged-modality KD | 已接入，无显式 hallucination module | 双卡 4090 旧 smoke/formal 因 `nc=5` 作废；待重 smoke |
 
 实现边界见 [`../../comparison/IMPLEMENTATION_REVIEW_CN.md`](../../comparison/IMPLEMENTATION_REVIEW_CN.md)。
 
@@ -44,7 +44,7 @@ Formal launcher 会拒绝 `crosskd/mgd/c2kd/mmanet`，防止历史 profile 被�
 
 ## 5. 当前执行顺序
 
-1. 分别对 FGD/LD/CCLKD-style 做 1 个短 smoke，验证 loss、shape、显存和数值稳定性。
-2. 先跑 YOLO11n seed0；确认有效后补 n seed42/123。
-3. 同时保证 YOLO11s seed0 跑通，再扩展三 seed。
-4. m/l 仅在对应 baseline 和 n/s 结论稳定后扩展。
+1. 当前不启动新实验。
+2. 双卡 4090 旧 smoke/formal partial runs 因 `nc=5` yaml 作废。
+3. 先完成 public diff 人工复核。
+4. 人工复核通过后，先做协议校验和短 smoke，再讨论正式队列。
