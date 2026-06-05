@@ -411,6 +411,26 @@ class CCLKDOnlineHBBTrainer(DetectionTrainer):
             _callbacks=self.callbacks,
         )
 
+    def validate(self):
+        """Validate the SAR student as a detector without accumulating online loss.
+
+        The online CCLKD training criterion returns seven loss items
+        (student/teacher detection losses plus KD). Ultralytics' in-training
+        validator expects the validation loss vector to match detector-only
+        losses, so we run validation in inference mode and keep mAP/fitness as
+        the monitored quantity. This does not change training or reported
+        detection metrics.
+        """
+        model = self.ema.ema if self.ema else self.model
+        metrics = self.validator(model=model)
+        if metrics is None:
+            return None, None
+        fitness = metrics.pop("fitness", -self.loss.detach().cpu().numpy())
+        metrics.update({key: float("nan") for key in self.label_loss_items(prefix="val")})
+        if not self.best_fitness or self.best_fitness < fitness:
+            self.best_fitness = fitness
+        return metrics, fitness
+
     def save_model(self):
         super().save_model()
         if self.teacher_model is None or RANK not in {-1, 0}:
