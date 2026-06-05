@@ -83,9 +83,9 @@ privileged information、检测效用加权对齐和 SAR-only 推理约束。保
 
 - `CrossKD / MGD / MMANet / C2KD` profile 仅保留用于审计历史代码。
 - formal launcher 会直接拒绝这些 profile，防止误启动。
-- CoLD 已降级为纯历史归档，不再作为当前实验线。
+- CoLD 已降级为纯历史方法，不再作为当前实验线。
 - CrossKD 与旧 FGD/LD 的历史结果可作为失败/实现修正记录，但不能进入修正后的主表。
-- 统一归档入口：[`archive/excluded_methods/README.md`](archive/excluded_methods/README.md)。
+- 原始历史归档已从精简 public 分支移除，仅在历史 Git commit 中可追溯。
 
 ## 4. 代码入口
 

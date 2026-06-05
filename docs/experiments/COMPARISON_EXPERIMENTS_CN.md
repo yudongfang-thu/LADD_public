@@ -41,7 +41,7 @@ teacher-student 复现入口。
 - CrossKD 历史结果只用于说明为什么淘汰，不进入主表。
 - FGD 旧结果缺少 teacher attention，不代表修正版。
 - LD 旧结果是分类 soft-logit KD，不代表 Localization Distillation。
-- CoLD 已降级并统一归档，不再作为当前实验线。
+- CoLD 已降级，不再作为当前实验线；原始调试归档不随精简 public 分支发布。
 
 ## 5. 当前执行顺序
 

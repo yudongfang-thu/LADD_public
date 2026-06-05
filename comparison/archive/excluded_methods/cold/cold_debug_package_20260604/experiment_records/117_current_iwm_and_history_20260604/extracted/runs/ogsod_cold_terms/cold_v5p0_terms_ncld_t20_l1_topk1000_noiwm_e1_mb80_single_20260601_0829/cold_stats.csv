@@ -1,2 +1,0 @@
-epoch,tcld_loss,ncld_loss,loc_cold,candidate_count,target_candidate_count,nontarget_candidate_count,tcld_terms,ncld_terms,candidate_iou_mean,candidate_iou_positive_count,effective_iwm_weight_mean
-0,0,0.0030216302,0.0060432605,94952.578,94952.578,189905.16,0,564.16254,0,0,1

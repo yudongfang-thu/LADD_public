@@ -5,16 +5,14 @@ import argparse
 import sys
 from pathlib import Path
 
-from train_cli_overrides import add_common_detector_train_overrides, collect_common_detector_train_overrides
-
-
-REPO_ROOT = Path(__file__).resolve().parents[1]
-YOLO_ROOT = REPO_ROOT / "yolo"
-SRC_ROOT = REPO_ROOT / "src"
-for root in (YOLO_ROOT, SRC_ROOT):
+REPO_ROOT = Path(__file__).resolve().parents[2]
+SHARED_ROOT = REPO_ROOT / "shared"
+YOLO_ROOT = SHARED_ROOT / "yolo"
+for root in (SHARED_ROOT, YOLO_ROOT):
     if str(root) not in sys.path:
         sys.path.insert(0, str(root))
 
+from train_cli_overrides import add_common_detector_train_overrides, collect_common_detector_train_overrides  # noqa: E402
 from d2ad_obb.baseline_trainer import UnifiedAugOBBTrainer  # noqa: E402
 from ultralytics import YOLO  # noqa: E402
 

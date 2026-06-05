@@ -57,11 +57,7 @@ LADD 解决的是 RGB 到 SAR 的跨模态目标检测蒸馏。训练时有配�
 | A2 | `50` | `1.0` | 用检测监督稳定学生适配，防止 B 入口冲击过大 |
 | B | `800` | `1.0` | 冻结教师解耦网络，训练学生检测与蒸馏 |
 
-去掉 A2 时，B 入口 KD loss 更高且恢复更慢；带 A1+A2 的链路更容易恢复检测性能。
-
-![B 入口 KD 冲击](ladd/diagnostics/b_collapse/ladd_b_entry_kd_shock.png)
-
-图文件：[ladd_b_entry_kd_shock.png](ladd/diagnostics/b_collapse/ladd_b_entry_kd_shock.png)
+去掉 A2 时，B 入口 KD loss 更高且恢复更慢；带 A1+A2 的链路更容易恢复检测性能。原始诊断图已从精简 public 分支移除，保留文字结论。
 
 ## 5. Reach Loss 与坍缩
 
@@ -127,11 +123,7 @@ A2_WARMUP_BIAS_LR=0.001
 
 该修正已让 formal no-mosaic `11n_s0` original/cap2 两个版本稳定跑完 A2，并进入 B。因此它已经计入当前正式 LADD 主线细节，而不是临时 workaround。
 
-对应曲线如下：旧 A2 默认配置在第 8 个 epoch 检测 loss 变为 NaN，mAP50-95 掉到 `0.04909`；修正版 A2 完整跑完 50 epoch，mAP50-95 最高 `0.56273@49`。同时 `reach_match_loss` 没有先爆，说明这次失稳主要来自检测分支更新过猛。
-
-![A2 检测稳定修正](ladd/diagnostics/a2_stability/ladd_a2_stability_fix_20260601.png)
-
-图文件：[ladd_a2_stability_fix_20260601.png](ladd/diagnostics/a2_stability/ladd_a2_stability_fix_20260601.png)
+旧 A2 默认配置在第 8 个 epoch 检测 loss 变为 NaN，mAP50-95 掉到 `0.04909`；修正版 A2 完整跑完 50 epoch，mAP50-95 最高 `0.56273@49`。同时 `reach_match_loss` 没有先爆，说明这次失稳主要来自检测分支更新过猛。原始诊断图已从精简 public 分支移除。
 
 ## 8. 当前方法叙事边界
 

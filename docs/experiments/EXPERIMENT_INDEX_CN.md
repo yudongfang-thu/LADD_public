@@ -15,7 +15,6 @@
 | LADD 主线规范与状态 | [LADD_MAINLINE_STANDARD_CN.md](LADD_MAINLINE_STANDARD_CN.md) |
 | 对比实验计划与实现 | [COMPARISON_EXPERIMENTS_CN.md](COMPARISON_EXPERIMENTS_CN.md) |
 | 消融实验计划 | [ABLATION_PLAN_CN.md](ABLATION_PLAN_CN.md) |
-| 淘汰方法与无效结果归档 | [../../comparison/archive/excluded_methods/README.md](../../comparison/archive/excluded_methods/README.md) |
 | LADD 方法概述 | [../method/METHOD_OVERVIEW_CN.md](../method/METHOD_OVERVIEW_CN.md) |
 
 ## 当前正式主线
@@ -36,7 +35,7 @@
 |---|---|---|
 | LADD 主线 | 90 + 4090D | YOLO11n seed0/42 已有正向完成点；双卡 4090 BN-freeze sweep 因 `nc=5` 作废 |
 | 受控对比 | 待人工复核 | FGD/LD 已修复，CCLKD loss 已修正但缺 online trainer，HalluciDet-style 保留；先审计，不启动 CCLKD |
-| CoLD/CrossKD 归档 | `comparison/archive/excluded_methods/` | 纯历史证据，不再运行 |
+| CoLD/CrossKD | 不随精简 public 分支发布 | 纯历史证据，不再运行 |
 | 消融实验 | — | 未开始 |
 
 ## 服务器

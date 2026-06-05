@@ -45,7 +45,7 @@ CCLKD 官方条件复现实验，也不应进入正式对比主表。
 
 2026-06-05 发现双卡 4090 部署时 active dataset yaml 误为 `nc=5`，而正式 OGSOD
 HBB 协议应为 `nc=3`。因此此前双卡 4090 上的 CCLKD smoke 和 formal partial run
-全部作废；相关材料只保留在 `reproduction_issue_20260605/` 作为问题证据。
+全部作废；原始问题证据包已从精简 public 分支移除，仅在历史提交中可追溯。
 
 当前 loss 级实现已通过本地 `py_compile` 和 shell `bash -n` 静态检查。当前本地
 `/opt/homebrew/bin/python3` 未安装 `torch`，因此 `--help` 导入和 CPU 合成张量
@@ -56,15 +56,8 @@ loss 检查需要在服务器环境或装有 torch 的本地环境中补做。�
 SAR student 分支同步训练，teacher 侧保留检测监督，student 侧保留 SAR 检测监督与
 CCLKD loss。完成该 trainer 前，CCLKD 只保留为待实现项。
 
-## 复现实验问题记录
+## 后续要求
 
-2026-06-05 新增 CCLKD-style 复现实验问题证据包：
-
-```text
-reproduction_issue_20260605/
-```
-
-当前观察到：90 服务器上尽量贴近原文的 YOLO11s / 400ep CCLKD-style run 已完整跑完，
-但 mAP50-95 为 `0.48567`，低于已有 SAR YOLO11s 400ep baseline 的 `0.53255`。
-为了排除 baseline protocol 不完全一致的问题，已在 90 上启动完全同协议 SAR-only baseline
-并持续记录 partial 结果。双卡 4090 的 formal comparison CCLKD partial 也一并收录。
+CCLKD 若进入论文主表，必须先补 online teacher-student trainer，并按原文接近条件
+完成 YOLO11s / 400 epoch 复现实验。当前 frozen-teacher loss 组件不能单独作为
+CCLKD 官方条件复现。

@@ -46,4 +46,4 @@ same-capacity same-seed RGB teacher
 SAR-only inference
 ```
 
-训练长度不是对比指标，必须训练到收敛或明确异常退出。CoLD/CrossKD 与无效旧结果只在 `archive/excluded_methods/` 中保留历史证据。
+训练长度不是对比指标，必须训练到收敛或明确异常退出。CoLD/CrossKD 与无效旧结果不进入当前主表，原始归档数据不随精简 public 分支发布。

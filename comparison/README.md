@@ -5,8 +5,7 @@
 本次修复见 [`IMPLEMENTATION_REVIEW_CN.md`](IMPLEMENTATION_REVIEW_CN.md)。
 第二、三轮外部复核意见的逐条响应及官方证据见
 [`REVIEW_FEEDBACK_RESPONSE_CN.md`](REVIEW_FEEDBACK_RESPONSE_CN.md)。
-旧 smoke 记录见 [`FINAL_IMPLEMENTATION_SMOKE_CN.md`](FINAL_IMPLEMENTATION_SMOKE_CN.md)；
-其中双卡 4090 部分已因 `nc=5` yaml 错误作废。
+旧 smoke 记录已降级为历史说明；双卡 4090 部分已因 `nc=5` yaml 错误作废。
 
 | 方法 | 来源 | 类型 | 代码位置 |
 |---|---|---|---|
@@ -16,8 +15,7 @@
 | HalluciDet-style | WACV 2024 inspiration | 跨模态 privileged KD | 同上 - `hallucidet` profile |
 
 CrossKD/MGD/MMANet/C2KD profile 保留用于历史审计，但 formal launcher 已禁止启动。
-CoLD、CrossKD 与无效旧结果已统一移至
-[`archive/excluded_methods/`](archive/excluded_methods/)，不再作为活跃实验线。
+CoLD、CrossKD 与无效旧结果不再作为活跃实验线，原始归档数据不随精简 public 分支发布。
 
 ## 当前结论
 

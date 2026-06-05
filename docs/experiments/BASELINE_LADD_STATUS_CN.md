@@ -103,6 +103,6 @@ YOLO11m/l seed0 baseline 已齐，但 m 的 LADD 当前异常，l 尚未启动�
 1. 补 YOLO11n seed42 BN-freeze，使当前稳定主线候选形成严格三 seed 同协议闭环。
 2. YOLO11s LADD 至少 seed0 在 public 最终代码上跑满，并确认 4090D/90 协议差异。
 3. FGD、LD、HalluciDet-style 先完成 smoke，再至少在 YOLO11n seed0 闭环；CCLKD 需先补 online teacher-student trainer 和原文条件复现。
-4. CoLD/CrossKD 与无效旧结果只保留在统一归档中，不进入 controlled main table。
+4. CoLD/CrossKD 与无效旧结果不进入 controlled main table，原始归档数据不随精简 public 分支发布。
 
-更细的 LADD 崩溃证据见 [`../../ladd/diagnostics/b_collapse/LADD_CRASH_EVIDENCE_20260604_CN.md`](../../ladd/diagnostics/b_collapse/LADD_CRASH_EVIDENCE_20260604_CN.md)，当前受控对比方法代码映射见 [`../../comparison/METHOD_CODE_MAP_CN.md`](../../comparison/METHOD_CODE_MAP_CN.md)。
+当前受控对比方法代码映射见 [`../../comparison/METHOD_CODE_MAP_CN.md`](../../comparison/METHOD_CODE_MAP_CN.md)。

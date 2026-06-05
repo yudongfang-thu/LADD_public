@@ -1,21 +1,18 @@
-# LADD Public 证据包说明
+# LADD Public 精简仓库说明
 
 最后更新：2026-06-05 16:45 CST
 
-本文档说明这个公开包给外部老师排查时应该怎么看。它的目标不是隐藏问题，而是把当前遇到的困难、代码版本、配置、曲线和服务器记录尽量放齐。
+本文档说明当前公开仓库的范围。此前用于排查问题的大体量证据包已经降级；当前 public 分支只保留论文主线代码、协议文档、关键结果摘要和必要论文资料。
 
 ## 1. 已放入的核心材料
 
 | 模块 | 已放入内容 | 位置 |
 |---|---|---|
-| Baseline | 90 服务器 formal no-mosaic baseline 的 `results.csv`/`args.yaml`，n/s 三 seed 和 m/l/x seed0 | `baseline/results/90_formal_nomosaic_20260528/` |
 | Baseline 说明 | 最新 baseline 数字、gap、缺口 | `baseline/results/BASELINE_RESULTS_CN.md`, `docs/experiments/BASELINE_LADD_STATUS_CN.md` |
 | LADD 当前代码 | 当前 HBB LADD trainer/loss/model/train script/run scripts | `ladd/code_versions/current_hbb/` |
-| LADD 结果 | 90 与 4090D 的 LADD 结果 CSV、args、训练图片、压缩训练日志 | `ladd/results/90_formal_nomosaic_20260528/`, `ladd/results/4090d_formal_nomosaic_20260528/`, `server_logs/` |
-| LADD 诊断图 | A2 稳定性修复、B 入口 KD 冲击、loss 诊断图 | `ladd/diagnostics/` |
+| LADD 结果摘要 | 当前主线结果和主线规范 | `ladd/results/LADD_RESULTS_CN.md`, `docs/experiments/LADD_MAINLINE_STANDARD_CN.md` |
 | 受控对比 | FGD/LD 修正版、HalluciDet-style 与 CCLKD online-trainer gap 复核 | `comparison/IMPLEMENTATION_REVIEW_CN.md`, `comparison/{fgd,ld,cclkd,hallucidet}/` |
 | 协议审计 | 双卡 4090 `nc=5` 事故、无效结果归档、CCLKD loss 修正与 online 缺口 | `docs/experiments/PROTOCOL_AND_CCLKD_AUDIT_20260605_CN.md` |
-| 降级归档 | CoLD、CrossKD、修复前 FGD/LD 结果 | `comparison/archive/excluded_methods/` |
 
 ## 2. 未放入或刻意排除
 
@@ -25,6 +22,7 @@
 | 原始 OGSOD 数据集 | 数据量大且涉及数据授权 |
 | `weights/*.pt` / `*.pth` checkpoint | GitHub 不适合承载大量 checkpoint；调试时优先看 CSV、args、代码和日志 |
 | 私有服务器详细 IP/端口 | 不能公开；文档只保留 90/117/4090D 这种代号 |
+| 原始 run 目录、训练曲线图片、压缩日志、旧方法归档 | 已从 public 分支移除，避免仓库继续作为事故取证包膨胀 |
 
 ## 3. 公开排查重点
 
@@ -35,8 +33,8 @@
 5. FGD/LD 旧实验分别缺少 teacher attention、误用了分类 logits；请重点复核 2026-06-04 修正版。
 6. CCLKD 已在 2026-06-05 修正 LLD/FLD/RLD loss 语义，但仍缺原文 online teacher-student trainer；请重点复核 `comparison/cclkd/README.md` 和 loss 实现。
 
-CoLD/CrossKD 与无效旧结果已统一归档，仅供追溯，不再列为当前公开排查重点。
+CoLD/CrossKD 与无效旧结果不再随 public 分支发布，仅在历史 Git commit 中可追溯。
 
 ## 4. 安全检查状态
 
-已删除公开目录中的服务器连接文档，已把 public dataset YAML 的绝对路径改成 `/path/to/...` 占位符，已移除 checkpoint 权重。当前仍保留一些 `args.yaml` 和压缩日志中的训练机本地路径，用于说明实验 provenance；这些路径不是登录信息。
+已删除公开目录中的服务器连接文档，已把 public dataset YAML 的绝对路径改成 `/path/to/...` 占位符，已移除 checkpoint 权重、原始日志和大体量 run 目录。

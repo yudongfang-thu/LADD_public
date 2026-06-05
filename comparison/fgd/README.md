@@ -34,5 +34,4 @@ FGD 在本 public 包中不是独立训练器，使用统一入口：
 没有 teacher feature attention。它们保留用于审计，但不能代表当前修正版，也不能
 进入修正版主表。当前 FGD 必须重跑。
 
-完整训练日志已归档到
-[`../archive/excluded_methods/legacy_results/fgd_pre_20260604/`](../archive/excluded_methods/legacy_results/fgd_pre_20260604/)。
+完整训练日志和旧 run 目录已从精简 public 分支移除，仅在历史 Git commit 中可追溯。

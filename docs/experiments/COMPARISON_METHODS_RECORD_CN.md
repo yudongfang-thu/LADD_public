@@ -34,7 +34,7 @@ seed RGB teacher、800 epoch 和 SAR-only inference。CCLKD 不适用该 frozen-
 | CrossKD | 代码保留，formal launcher 禁止启动 | 当前 YOLO port 没有真正 cross-head routing |
 | MGD | 代码保留，禁止启动 | 无可训练 generator，不是完整 MGD |
 | MMANet/C2KD | 代码保留，禁止启动 | 与原方法机制/任务存在较大差距 |
-| CoLD | 降级并统一归档 | YOLOv5x 协议、容量和复现状态不适合 controlled main table |
+| CoLD | 降级，不随精简 public 分支发布 | YOLOv5x 协议、容量和复现状态不适合 controlled main table |
 
 ## 4. 当前实验有效性
 

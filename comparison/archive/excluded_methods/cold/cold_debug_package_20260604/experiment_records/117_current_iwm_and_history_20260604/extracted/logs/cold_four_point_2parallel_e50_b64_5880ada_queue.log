@@ -1,5 +1,0 @@
-[2026-06-01_01:41:14] FOUR-POINT 2-PARALLEL START epochs=50 batch=64
-[2026-06-01_01:41:14] START term=tcld run=cold_v5p0_terms_tcld_t20_l1_topk1000_noiwm_e50_b64_5880ada
-[2026-06-01_01:41:34] READY tcld: Starting native YOLOv5-v5.0
-[2026-06-01_01:41:34] START term=ncld run=cold_v5p0_terms_ncld_t20_l1_topk1000_noiwm_e50_b64_5880ada
-[2026-06-01_08:29:52] WAVE FAILED tcld+ncld

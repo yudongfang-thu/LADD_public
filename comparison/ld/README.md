@@ -20,7 +20,6 @@ foreground assigned anchors -> reshape [-1, 4, reg_max] -> temperature KL
 
 ## 结果
 
-修正版尚需 smoke，之后重跑 YOLO11n/s。
+修正版已通过 117 真实 GPU smoke，之后重跑 YOLO11n/s。
 
-旧 soft-logit 结果已归档到
-[`../archive/excluded_methods/legacy_results/ld_softlogit_pre_20260604/`](../archive/excluded_methods/legacy_results/ld_softlogit_pre_20260604/)。
+旧 soft-logit 结果不进入当前主表；原始归档数据已从精简 public 分支移除。

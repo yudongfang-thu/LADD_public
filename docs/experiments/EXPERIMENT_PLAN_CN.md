@@ -202,8 +202,7 @@ online teacher-student 复现入口，再做 YOLO11s / 400 epoch 原文条件复
 不启动 CCLKD 受控对比。
 
 容量优先级：先 YOLO11n 三 seed闭环，同时保证 YOLO11s seed0 跑通；再扩展到
-s/m/l。CrossKD、CoLD 与无效旧结果统一归档到
-[`../../comparison/archive/excluded_methods/`](../../comparison/archive/excluded_methods/)。
+s/m/l。CrossKD、CoLD 与无效旧结果不进入当前主表，原始归档数据不随精简 public 分支发布。
 
 ### 4.2 当前条件：可做与需补
 
@@ -216,8 +215,7 @@ s/m/l。CrossKD、CoLD 与无效旧结果统一归档到
 
 ## 5. 降级归档
 
-CoLD、CrossKD、修复前 FGD 与旧 soft-logit LD 均不再独立追踪或继续运行。
-完整材料见 [`../../comparison/archive/excluded_methods/`](../../comparison/archive/excluded_methods/)。
+CoLD、CrossKD、修复前 FGD 与旧 soft-logit LD 均不再独立追踪或继续运行；原始归档数据已从精简 public 分支移除。
 
 ---
 

@@ -1,1 +1,0 @@
-/root/autodl-tmp/LADD/runs_public/ogsod/hbb/formal_nomosaic_20260528/comparisons/from_yolo_pretrain/yolo11n/crosskd/transfer_crosskd_hbb_ogsod11n_from_yolo_formal_nomosaic_yolo11n_crosskd_from_yolo_s0_r1_b_e800_b64_s0_gpu0

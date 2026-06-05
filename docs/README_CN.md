@@ -15,7 +15,6 @@
 | 对比实验 | [experiments/COMPARISON_EXPERIMENTS_CN.md](experiments/COMPARISON_EXPERIMENTS_CN.md) |
 | 消融计划 | [experiments/ABLATION_PLAN_CN.md](experiments/ABLATION_PLAN_CN.md) |
 | LADD 方法概述 | [method/METHOD_OVERVIEW_CN.md](method/METHOD_OVERVIEW_CN.md) |
-| 淘汰方法与无效结果归档 | [../comparison/archive/excluded_methods/README.md](../comparison/archive/excluded_methods/README.md) |
 | 相关工作 | [literature/RELATED_WORK_CN.md](literature/RELATED_WORK_CN.md) |
 
 ## 目录说明
@@ -32,4 +31,4 @@
 1. 正式 OGSOD 协议：`imgsz=256, 800ep, cos_lr, full no-mosaic, default Albumentations`
 2. LADD 主线：A2 稳定修正 + cap2，YOLO11n 三 seed 在跑
 3. 对比实验：FGD/LD/HalluciDet-style 可保留为受控对比候选；CCLKD 需先补 online teacher-student trainer，FGD/LD 修复前结果作废，CrossKD 已淘汰
-4. 服务器记录：公开包只保留匿名化的结果、配置、日志和代码；不包含 SSH、密码、密钥或完整连接命令
+4. 服务器记录：公开分支只保留结果摘要和代码；原始日志、run 目录、权重和连接信息均不发布

@@ -43,6 +43,5 @@ CCLKD 旧实现同时存在方法偏差。2026-06-05 loss 级代码已修正 LLD
 但仍缺原文定义的 online teacher-student trainer。CCLKD 在补齐 online 复现入口和
 原文条件复现实验前，不得写入正式受控对比结果表。
 
-旧 FGD/LD、CrossKD 与 CoLD 数据统一见
-[`archive/excluded_methods/`](archive/excluded_methods/)；代码位置和当前 profile 映射见
+旧 FGD/LD、CrossKD 与 CoLD 原始数据已从精简 public 分支移除；代码位置和当前 profile 映射见
 [`METHOD_CODE_MAP_CN.md`](METHOD_CODE_MAP_CN.md)。
