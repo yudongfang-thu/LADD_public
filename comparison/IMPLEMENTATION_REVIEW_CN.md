@@ -2,8 +2,9 @@
 
 最后更新：2026-06-05
 
-本文档给外部老师复核当前受控对比方法的代码语义。正式候选为
-`FGD / LD / CCLKD-style / HalluciDet-style`。所有方法共享同一套
+本文档给外部老师复核当前受控对比方法的代码语义。当前 frozen-teacher 正式候选为
+`FGD / LD / HalluciDet-style`；`CCLKD` 仅保留 loss 组件，等待 online teacher-student
+trainer 后才能作为 CCLKD 复现或主表对比。所有 frozen-teacher 方法共享同一套
 YOLO11 HBB 训练入口、formal no-mosaic 数据增强和 800 epoch 收敛口径。
 
 ## 1. 结论
@@ -12,7 +13,7 @@ YOLO11 HBB 训练入口、formal no-mosaic 数据增强和 800 epoch 收敛口�
 |---|---|---|---|
 | FGD | 官方形式的 softmax spatial/channel attention + GT fg/bg weighting + batch relation 近似 | 否，属于 FGD-style YOLO port | 修复前结果不能代表当前实现，需重跑 |
 | LD | 前景 anchor 的 YOLO DFL regression logits KL，shape 异常直接失败 | 可以作为 LD 的 YOLO/DFL 适配 | 旧 soft-logit 结果作废，需重跑 |
-| CCLKD paper-structured reimplementation | COP + entropy temperature + LLD/FLD/RLD + class-balanced CCL 的 YOLO11 适配 | 否，论文无公开可运行代码，且当前不是完整 online teacher-student trainer | 人工复核后先 smoke，再讨论正式跑 |
+| CCLKD paper-structured reimplementation | COP + entropy temperature + localization-only LLD / FLD-MSE / RLD feature-correlation / class-balanced CCL 的 YOLO11 loss 适配 | 否，当前缺原文定义的 online teacher-student trainer | 暂不正式跑，先实现 online 复现入口 |
 | HalluciDet-style | detection-utility guided feature/response/margin alignment | 否，没有显式 hallucination module | 写作时必须标注 `-style` |
 
 ## 2. 本次修复
@@ -60,16 +61,17 @@ DOI `10.1080/10095020.2026.2633014` 对应论文
 
 1. COP：teacher dominant class 与 GT assigned label 一致时形成类别正样本 mask；
 2. adaptive temperature：按类别正样本 teacher probability entropy 映射到 `[0.5, 5.0]`；
-3. LLD：分类 logits KL + YOLO11 DFL raw regression logits KL；
-4. FLD：类别正样本 feature distribution KL；
-5. RLD：同类 token feature self-correlation matrix MSE；
+3. LLD：只对 YOLO11 DFL raw regression logits 做 localization distribution KD，不做分类 logit KL；
+4. FLD：类别正样本 feature MSE；
+5. RLD：同类 token 的 `R^T R / n` feature-dimension correlation matrix MSE；
 6. CCL：按类别频次反比加权，对 target / non-target spatial distributions 做 contrastive loss。
 
 仍需注明适配边界：YOLO11 没有论文 YOLOv5 candidate-box/objectness 的完全同构公开实现，
 因此本实现用 DFL raw logits 作为 spatial distribution，用 dense token feature 近似
-candidate region feature；teacher 仍来自给定 RGB teacher 权重，不是完整 joint online
-teacher-student training branch。因此只能写作 `CCLKD paper-structured reimplementation
-adapted to YOLO11 HBB`，不能声称官方严格复现。
+candidate region feature。更关键的是，当前 trainer 仍使用 frozen RGB teacher，
+而 CCLKD 原文方法定义包含 joint online teacher-student training branch。因此当前
+loss 只能作为实现部件，不能作为 CCLKD 复现或正式对比结果入口；必须补 online trainer
+后再 smoke / formal。
 
 ### HalluciDet-style
 
@@ -100,9 +102,9 @@ privileged information、检测效用加权对齐和 SAR-only 推理约束。保
 
 ## 5. 启动前检查
 
-1. 对四个 profile 分别执行 `--help` 和短 smoke。
+1. 对 FGD/LD/HalluciDet-style 分别执行 `--help` 和短 smoke。
 2. LD smoke 必须确认 teacher/student `boxes` 都是 `[B, N, 4*reg_max]`，且 loss 非零。
-3. CCLKD-style smoke 必须监控 contrastive 矩阵显存和 NaN；实现最多保留 512 个 foreground token。
+3. CCLKD 必须先实现 online teacher-student trainer；frozen-teacher smoke 不再作为 CCLKD 通过证据。
 4. FGD/LD 修复前已经运行的实验全部使用旧 loss，不得与修复后实验混合统计。
 5. 第二轮复核意见响应与未采纳原因见
    [`REVIEW_FEEDBACK_RESPONSE_CN.md`](REVIEW_FEEDBACK_RESPONSE_CN.md)。

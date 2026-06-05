@@ -31,5 +31,5 @@
 
 1. 正式 OGSOD 协议：`imgsz=256, 800ep, cos_lr, full no-mosaic, default Albumentations`
 2. LADD 主线：A2 稳定修正 + cap2，YOLO11n 三 seed 在跑
-3. 对比实验：正式四方法改为 FGD/LD/CCLKD-style/HalluciDet-style；FGD/LD 修复前结果作废，CrossKD 已淘汰
+3. 对比实验：FGD/LD/HalluciDet-style 可保留为受控对比候选；CCLKD 需先补 online teacher-student trainer，FGD/LD 修复前结果作废，CrossKD 已淘汰
 4. 服务器记录：公开包只保留匿名化的结果、配置、日志和代码；不包含 SSH、密码、密钥或完整连接命令

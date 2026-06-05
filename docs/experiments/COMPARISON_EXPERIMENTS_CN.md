@@ -13,13 +13,13 @@ teacher = same-capacity same-seed RGB baseline best.pt
 
 训练长度不是指标；只有跑到收敛或明确异常退出的实验才能进入统计。
 
-## 2. 正式四方法
+## 2. 当前候选方法
 
 | 方法 | 角色 | 当前代码状态 | 当前实验状态 |
 |---|---|---|---|
 | FGD-style | 通用 feature KD | 2026-06-04 加入 teacher attention，保留 GT fg/bg 与 relation | 双卡 4090 旧 smoke/formal 因 `nc=5` 作废；待重 smoke |
 | LD | 通用 localization-output KD | 2026-06-04 改为前景 DFL regression KL | 双卡 4090 旧 smoke/formal 因 `nc=5` 作废；待重 smoke |
-| CCLKD paper-structured reimplementation | 跨模态 category-constrained KD | 2026-06-05 改为 COP/ATKD/CCL/RLD 结构 | 尚未 GPU smoke；待人工复核 |
+| CCLKD | 跨模态 category-constrained KD | loss 级实现已修正；缺原文 online teacher-student trainer | 暂不启动正式对比，先做 online 复现入口 |
 | HalluciDet-style | privileged-modality KD | 已接入，无显式 hallucination module | 双卡 4090 旧 smoke/formal 因 `nc=5` 作废；待重 smoke |
 
 实现边界见 [`../../comparison/IMPLEMENTATION_REVIEW_CN.md`](../../comparison/IMPLEMENTATION_REVIEW_CN.md)。
@@ -29,11 +29,12 @@ teacher = same-capacity same-seed RGB baseline best.pt
 ```bash
 bash comparison/code/launch_formal_from_yolo_kd_job.sh fgd n 0 0
 bash comparison/code/launch_formal_from_yolo_kd_job.sh ld n 0 0
-bash comparison/code/launch_formal_from_yolo_kd_job.sh cclkd n 0 0
 bash comparison/code/launch_formal_from_yolo_kd_job.sh hallucidet n 0 0
 ```
 
 Formal launcher 会拒绝 `crosskd/mgd/c2kd/mmanet`，防止历史 profile 被误启动。
+当前 `cclkd` frozen-teacher launcher 不再作为正式入口；CCLKD 需要新的 online
+teacher-student 复现入口。
 
 ## 4. 结果口径
 
@@ -47,4 +48,4 @@ Formal launcher 会拒绝 `crosskd/mgd/c2kd/mmanet`，防止历史 profile 被�
 1. 当前不启动新实验。
 2. 双卡 4090 旧 smoke/formal partial runs 因 `nc=5` yaml 作废。
 3. 先完成 public diff 人工复核。
-4. 人工复核通过后，先做协议校验和短 smoke，再讨论正式队列。
+4. 人工复核通过后，FGD/LD/HalluciDet-style 可先做协议校验和短 smoke；CCLKD 必须先补 online trainer 和原文条件复现。

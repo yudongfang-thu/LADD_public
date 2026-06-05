@@ -192,12 +192,14 @@ B_WARMUP_BIAS_LR=0.001
 |---|---|---|
 | 通用 KD | FGD-style | 双卡 4090 旧 smoke/formal 作废；待修正协议后重新 smoke |
 | 通用 KD | LD | 双卡 4090 旧 smoke/formal 作废；待修正协议后重新 smoke |
-| 跨模态 KD | CCLKD paper-structured reimplementation | 2026-06-05 重写为 COP/ATKD/CCL/RLD 结构；待人工复核与重新 smoke |
+| 跨模态 KD | CCLKD | loss 已修正为 localization-only LLD / FLD-MSE / RLD feature-correlation；缺 online teacher-student trainer，暂不进入正式对比 |
 | 跨模态 KD | HalluciDet-style | 双卡 4090 旧 smoke/formal 作废；待修正协议后重新 smoke |
 
 此前四方法 smoke 记录中，双卡 4090 部分因 `nc=5` yaml 错误作废；117 smoke 仅能证明
 旧代码路径可运行，不能证明当前 public 修正版实现。2026-06-05 当前状态是：不启动新实验，
-先完成 public 审计、CCLKD 代码重写和人工复核。
+先完成 public 审计、CCLKD loss 修正和人工复核。CCLKD 后续必须先实现原文定义的
+online teacher-student 复现入口，再做 YOLO11s / 400 epoch 原文条件复现实验；在此之前
+不启动 CCLKD 受控对比。
 
 容量优先级：先 YOLO11n 三 seed闭环，同时保证 YOLO11s seed0 跑通；再扩展到
 s/m/l。CrossKD、CoLD 与无效旧结果统一归档到
@@ -208,8 +210,8 @@ s/m/l。CrossKD、CoLD 与无效旧结果统一归档到
 | 容量 | baseline 条件 | 可做项 | 需补 |
 |---|---|---|---|
 | YOLO11n | SAR/RGB 0/42/123 已齐 | 修正后可重新 smoke | 人工复核通过后再决定是否启动 |
-| YOLO11s | SAR/RGB 0/42/123 已齐 | 当前可跑四方法 seed0 | 双卡 4090 缺 teacher seed42/123 |
-| YOLO11m | seed0 SAR/RGB 已完成 | 四方法 seed0 可排队 | 补 SAR/RGB seed42/123 |
+| YOLO11s | SAR/RGB 0/42/123 已齐 | FGD/LD/HalluciDet-style 可做 seed0 sanity；CCLKD 需先补 online trainer | 双卡 4090 缺 teacher seed42/123 |
+| YOLO11m | seed0 SAR/RGB 已完成 | FGD/LD/HalluciDet-style seed0 可排队；CCLKD 暂停 | 补 SAR/RGB seed42/123 |
 | YOLO11l | seed0 baseline 已完成 | seed0 可作为后续容量点 | 补 SAR/RGB seed42/123 |
 
 ## 5. 降级归档
@@ -223,10 +225,11 @@ CoLD、CrossKD、修复前 FGD 与旧 soft-logit LD 均不再独立追踪或继�
 
 ```
 Phase 0 (作废): 双卡 4090 旧四方法 smoke/formal partial runs，原因是 `nc=5` yaml
-Phase 1 (当前): public 协议审计、CCLKD 重写、错误文档修正、推送 GitHub 供人工复核
-Phase 2:        人工复核通过后，先只做协议校验和短 smoke
-Phase 3:        smoke 通过后再决定是否启动 YOLO11n 正式对比
-Phase 4:        根据 n 结果决定是否扩展到 s/m/l
+Phase 1 (当前): public 协议审计、CCLKD loss 修正、错误文档修正、推送 GitHub 供人工复核
+Phase 2:        实现并 smoke CCLKD online teacher-student trainer
+Phase 3:        先做 CCLKD 原文条件 YOLO11s / 400 epoch 复现实验
+Phase 4:        FGD/LD/HalluciDet-style 可按修正协议独立 sanity；CCLKD 复现过关后才进入受控对比
+Phase 5:        根据 n 结果决定是否扩展到 s/m/l
 ```
 
 当前明确不启动：任何新训练、LADD 主线、消融、CoLD、CrossKD/MGD/MMANet。关键决策点是

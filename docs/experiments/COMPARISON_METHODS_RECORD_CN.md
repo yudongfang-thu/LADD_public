@@ -7,23 +7,24 @@
 第二轮意见响应见
 [`../../comparison/REVIEW_FEEDBACK_RESPONSE_CN.md`](../../comparison/REVIEW_FEEDBACK_RESPONSE_CN.md)。
 
-## 1. 当前四方法
+## 1. 当前方法状态
 
-所有方法统一使用 `from-yolo-pretrain`、formal no-mosaic、同容量同 seed RGB
-teacher、800 epoch 和 SAR-only inference。
+FGD/LD/HalluciDet-style 统一使用 `from-yolo-pretrain`、formal no-mosaic、同容量同
+seed RGB teacher、800 epoch 和 SAR-only inference。CCLKD 不适用该 frozen-teacher
+入口，必须先补 online teacher-student trainer。
 
 | 类别 | 方法 | 来源 | DOI | 当前实现与状态 |
 |---|---|---|---|---|
 | 通用检测 KD | FGD-style | CVPR 2022, Focal and Global Knowledge Distillation for Detectors | [`10.1109/CVPR52688.2022.00460`](https://doi.org/10.1109/CVPR52688.2022.00460) | 官方 softmax attention 形式 + GT fg/bg + relation 近似；旧结果作废 |
 | 通用输出 KD | LD | CVPR 2022, Localization Distillation for Dense Object Detection | [`10.1109/CVPR52688.2022.00919`](https://doi.org/10.1109/CVPR52688.2022.00919) | YOLO DFL regression KL，T=10，错形直接失败；旧 soft-logit 结果作废 |
-| 跨模态 KD | CCLKD paper-structured reimplementation | GIS 2026, Cross-modal contrastive learning-based object detection under incomplete modalities | [`10.1080/10095020.2026.2633014`](https://doi.org/10.1080/10095020.2026.2633014) | COP + entropy temperature + LLD/FLD/RLD + CCL；待人工复核和重新 smoke，不是官方严格复现 |
+| 跨模态 KD | CCLKD | GIS 2026, Cross-modal contrastive learning-based object detection under incomplete modalities | [`10.1080/10095020.2026.2633014`](https://doi.org/10.1080/10095020.2026.2633014) | loss 级 COP + entropy temperature + localization-only LLD / FLD-MSE / RLD feature-correlation / CCL 已修正；仍缺 online teacher-student trainer，暂不进入正式对比 |
 | 跨模态 / privileged modality | HalluciDet-style | WACV 2024, HalluciDet | [`10.1109/WACV57701.2024.00147`](https://doi.org/10.1109/WACV57701.2024.00147) | 已接入；无显式 hallucination module，需写明 `-style` |
 
 ## 2. 选择逻辑
 
 - FGD-style 检验普通 feature KD 是否足够。
 - LD 检验只蒸馏定位输出分布是否足够。
-- CCLKD paper-structured reimplementation 检验 category-constrained cross-modal contrastive KD。
+- CCLKD 需要先补 online teacher-student trainer；补齐前不作为 controlled main table 方法运行。
 - HalluciDet-style 检验训练期 RGB privileged information 对 SAR-only detector 的帮助。
 
 ## 3. 淘汰与外部报告

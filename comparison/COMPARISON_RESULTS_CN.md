@@ -20,7 +20,7 @@
 | LD 旧实现 | YOLO11n/s seed0 | 90 | 中期记录 | public 内已有 CSV | 实际为 soft-logit KD，结果作废 |
 | FGD-style 修正版 | YOLO11n seed0 | 双卡 4090 | 已停止 | 作废 | 目标机 yaml 为 `nc=5`，不进入主表 |
 | LD 修正版 | YOLO11n seed0 | 双卡 4090 | 已停止 | 作废 | 目标机 yaml 为 `nc=5`，不进入主表 |
-| CCLKD paper-structured reimplementation | YOLO11n seed0 | 双卡 4090 | 已停止 | 作废 | 旧实现 + `nc=5`，不进入主表 |
+| CCLKD | YOLO11n seed0 | 双卡 4090 | 已停止 | 作废 | frozen-teacher 旧实现 + `nc=5`，不进入主表 |
 | HalluciDet-style | YOLO11n seed0 | 双卡 4090 | 已停止 | 作废 | 目标机 yaml 为 `nc=5`，不进入主表 |
 
 ## 当前判断
@@ -34,13 +34,14 @@
 2: storage_tank
 ```
 
-因此 2026-06-04 晚上在双卡 4090 启动的四方法 smoke / formal partial runs
+因此 2026-06-04 晚上在双卡 4090 启动的旧四方法 smoke / formal partial runs
 全部作废。结果和日志已从 active 路径移走，服务器侧归档到
 `/root/shared-nvme/archive/invalid_5class_yaml_20260605_162122`。当前没有任何
 双卡 4090 修正版正式结果可用于主表。
 
-CCLKD 旧实现同时存在方法偏差，已在 2026-06-05 改为 paper-structured
-reimplementation。新实现尚未重新 GPU smoke；不启动新实验前不得写入结果表。
+CCLKD 旧实现同时存在方法偏差。2026-06-05 loss 级代码已修正 LLD/FLD/RLD，
+但仍缺原文定义的 online teacher-student trainer。CCLKD 在补齐 online 复现入口和
+原文条件复现实验前，不得写入正式受控对比结果表。
 
 旧 FGD/LD、CrossKD 与 CoLD 数据统一见
 [`archive/excluded_methods/`](archive/excluded_methods/)；代码位置和当前 profile 映射见

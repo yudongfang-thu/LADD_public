@@ -15,7 +15,7 @@ trainer 中用 `--comparison-kd-profile` 切换。严格实现边界见
 | `../ladd/code/src/teacher_student_decomposition_kd_hbb/loss.py` | LADD 主 loss 和所有 comparison KD profile |
 | `../ladd/code/src/teacher_student_decomposition_kd_hbb/trainer.py` | 阶段控制、teacher/student 前向、BN-freeze 逻辑 |
 | `code/launch_formal_from_yolo_kd_job.sh` | 从同容量同 seed YOLO RGB teacher 初始化/蒸馏的正式启动脚本 |
-| `code/launch_formal_transfer_kd_job.sh` | transfer teacher 形式的正式四方法启动脚本 |
+| `code/launch_formal_transfer_kd_job.sh` | transfer teacher 形式的 FGD/LD/HalluciDet-style 启动脚本；CCLKD 已禁用，等待 online trainer |
 
 ## 2. Profile 对应关系
 
@@ -23,15 +23,15 @@ trainer 中用 `--comparison-kd-profile` 切换。严格实现边界见
 |---|---|---|---|
 | FGD-style | `--comparison-kd-profile fgd` | `TSKDDetectionLossHBB._fgd_style_loss()` | 官方 softmax attention 形式 + GT fg/bg weighting + batch relation 近似 |
 | LD | `--comparison-kd-profile ld` | `_ld_style_loss()` | foreground YOLO DFL regression-distribution KL；错形直接失败 |
-| CCLKD-style | `--comparison-kd-profile cclkd` | `_cclkd_style_loss()` | 独立 feature/logit 权重 + 类别分层采样 contrastive KD |
+| CCLKD loss component | `--comparison-kd-profile cclkd` | `_cclkd_style_loss()` | COP + localization-only LLD + FLD-MSE + RLD feature-correlation + CCL；formal frozen-teacher launcher 已禁用 |
 | HalluciDet-style | `--comparison-kd-profile hallucidet` | `_hallucidet_style_loss()` | privileged RGB-to-SAR hallucination idea 的轻量移植 |
 
 `crosskd/mgd/c2kd/mmanet` 仍可在底层 CLI 中用于审计，但 formal launcher 会拒绝运行。
 
 ## 3. 代码新鲜度
 
-2026-06-04 已修复 LD/FGD 语义并接入 CCLKD-style；第二轮修正增加独立温度、
-LD fail-fast 和 CCLKD 分权/采样控制。`ladd/code/` 与
+2026-06-04 已修复 LD/FGD 语义。2026-06-05 CCLKD loss 级实现已修正，但仍等待
+online teacher-student trainer。`ladd/code/` 与
 `ladd/code_versions/current_hbb/` 应保持字节一致；任何实验启动前先执行同步检查。
 
 ## 4. 结果口径

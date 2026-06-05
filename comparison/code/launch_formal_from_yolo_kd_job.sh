@@ -4,7 +4,7 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  comparison/code/launch_formal_from_yolo_kd_job.sh <fgd|ld|cclkd|hallucidet> <n|s|m|l|x> <seed> <gpu_id>
+  comparison/code/launch_formal_from_yolo_kd_job.sh <fgd|ld|hallucidet> <n|s|m|l|x> <seed> <gpu_id>
 
 Runs a from-YOLO-pretrain KD comparison under the formal OGSOD HBB protocol:
   student init = yolo11<size>.pt
@@ -31,7 +31,11 @@ SEED="${3:-}"
 GPU_ID="${4:-}"
 
 case "$METHOD" in
-  fgd|ld|cclkd|hallucidet) ;;
+  fgd|ld|hallucidet) ;;
+  cclkd)
+    echo "CCLKD requires an online teacher-student trainer and is disabled in this frozen-teacher launcher." >&2
+    exit 2
+    ;;
   crosskd|mgd|c2kd|mmanet)
     echo "Method '$METHOD' is retained for code audit only and is excluded from formal controlled runs." >&2
     exit 2
@@ -158,21 +162,6 @@ case "$METHOD" in
     ;;
   ld)
     cmd+=("LD_TEMPERATURE=${LD_TEMPERATURE:-10.0}")
-    ;;
-  cclkd)
-    cmd+=(
-      "CCLKD_BASE_TEMPERATURE=${CCLKD_BASE_TEMPERATURE:-2.0}"
-      "CCLKD_CONTRASTIVE_TEMPERATURE=${CCLKD_CONTRASTIVE_TEMPERATURE:-0.1}"
-      "CCLKD_FEAT_WEIGHT=${CCLKD_FEAT_WEIGHT:-1.0}"
-      "CCLKD_LOGIT_WEIGHT=${CCLKD_LOGIT_WEIGHT:-1.0}"
-      "CCLKD_CONTRAST_WEIGHT=${CCLKD_CONTRAST_WEIGHT:-0.5}"
-      "CCLKD_BG_WEIGHT=${CCLKD_BG_WEIGHT:-0.1}"
-      "CCLKD_MIN_CONFIDENCE=${CCLKD_MIN_CONFIDENCE:-0.1}"
-      "CCLKD_MAX_TOKENS=${CCLKD_MAX_TOKENS:-512}"
-      "CCLKD_TEMPERATURE_MIN=${CCLKD_TEMPERATURE_MIN:-0.5}"
-      "CCLKD_TEMPERATURE_MAX=${CCLKD_TEMPERATURE_MAX:-5.0}"
-      "CCLKD_ENTROPY_SCALE=${CCLKD_ENTROPY_SCALE:-5.0}"
-    )
     ;;
   crosskd)
     cmd+=(

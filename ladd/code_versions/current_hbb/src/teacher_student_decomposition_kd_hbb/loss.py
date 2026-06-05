@@ -1088,8 +1088,6 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         cop_pos_flat = cop_pos.reshape(-1)
         valid_flat = valid_target.reshape(-1)
         teacher_probs_flat = teacher_probs.reshape(-1, teacher_probs.shape[-1])
-        student_scores_flat = student_scores.reshape(-1, student_scores.shape[-1])
-        teacher_scores_flat = teacher_scores.detach().reshape(-1, teacher_scores.shape[-1])
         student_feat_flat = student_flat.reshape(-1, student_flat.shape[-1])
         teacher_feat_flat = teacher_flat.reshape(-1, teacher_flat.shape[-1])
 
@@ -1142,10 +1140,8 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
             ) * torch.sigmoid(self.cclkd_entropy_scale * (entropy - 0.5))
             temperature = temperature.clamp(self.cclkd_temperature_min, self.cclkd_temperature_max)
 
-            # LLD: class-logit KD plus YOLO11 DFL spatial-distribution KD.
-            s_log_prob = F.log_softmax(student_scores_flat[pos_idx] / temperature, dim=-1)
-            t_prob = F.softmax(teacher_scores_flat[pos_idx] / temperature, dim=-1)
-            cls_lld = F.kl_div(s_log_prob, t_prob, reduction="batchmean") * temperature.pow(2)
+            # LLD: YOLO11 DFL spatial-distribution KD. Classification logits
+            # are deliberately excluded because CCLKD LLD is localization-only.
             box_lld = zero
             if student_distri_flat is not None and teacher_distri_flat is not None:
                 reg_max = student_distri_flat.shape[-1] // 4
@@ -1160,21 +1156,19 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
                         )
                         * temperature.pow(2)
                     )
-            lld_loss = lld_loss + class_weight * (cls_lld + box_lld)
+            lld_loss = lld_loss + class_weight * box_lld
 
-            # FLD: category-masked feature distribution distillation.
-            s_feat_log = F.log_softmax(student_feat_flat[pos_idx] / temperature, dim=-1)
-            t_feat_prob = F.softmax(teacher_feat_flat[pos_idx] / temperature, dim=-1)
-            fld_loss = fld_loss + class_weight * F.kl_div(s_feat_log, t_feat_prob, reduction="batchmean") * temperature.pow(2)
+            # FLD: category-masked feature MSE, not probability KL.
+            fld_loss = fld_loss + class_weight * F.mse_loss(student_feat_flat[pos_idx], teacher_feat_flat[pos_idx])
 
-            # RLD: intra-category self-correlation alignment.
+            # RLD: feature-dimension correlation alignment, C = R^T R / n.
             if pos_idx.numel() > 1:
                 s_rel = F.normalize(student_feat_flat[pos_idx], dim=-1, eps=1e-6)
                 t_rel = F.normalize(teacher_feat_flat[pos_idx], dim=-1, eps=1e-6)
-                rld_loss = rld_loss + class_weight * F.mse_loss(
-                    s_rel @ s_rel.transpose(0, 1),
-                    t_rel @ t_rel.transpose(0, 1),
-                )
+                n_pos = float(pos_idx.numel())
+                s_corr = s_rel.transpose(0, 1) @ s_rel / n_pos
+                t_corr = t_rel.transpose(0, 1) @ t_rel / n_pos
+                rld_loss = rld_loss + class_weight * F.mse_loss(s_corr, t_corr)
 
             # CCL: class-balanced target/non-target teacher-student alignment.
             if neg_idx.numel() > 0:

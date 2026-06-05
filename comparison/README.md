@@ -12,7 +12,7 @@
 |---|---|---|---|
 | FGD-style | CVPR 2022 | teacher-attention weighted feature KD | `../ladd/code/src/.../loss.py` - `fgd` profile |
 | LD | CVPR 2022 / TPAMI 2023 | DFL localization KD | 同上 - `ld` profile |
-| CCLKD paper-structured reimplementation | GIS 2026 | 跨模态类别约束 KD | 同上 - `cclkd` profile |
+| CCLKD | GIS 2026 | 跨模态类别约束 KD | loss 组件保留为 `cclkd` profile；正式入口等待 online trainer |
 | HalluciDet-style | WACV 2024 inspiration | 跨模态 privileged KD | 同上 - `hallucidet` profile |
 
 CrossKD/MGD/MMANet/C2KD profile 保留用于历史审计，但 formal launcher 已禁止启动。
@@ -22,5 +22,5 @@ CoLD、CrossKD 与无效旧结果已统一移至
 ## 当前结论
 
 FGD/LD 在 2026-06-04 修复了实现语义，修复前结果不能代表当前实现，必须重跑。
-CCLKD 在 2026-06-05 改为 paper-structured reimplementation。双卡 4090 旧结果因
-`nc=5` yaml 错误作废。当前阶段是人工复核，不启动正式实验。
+CCLKD 在 2026-06-05 修正 loss 级 LLD/FLD/RLD，但当前 frozen-teacher trainer
+不符合原文 online 方法定义。双卡 4090 旧结果因 `nc=5` yaml 错误作废。当前阶段是人工复核，不启动 CCLKD 正式实验。

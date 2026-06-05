@@ -35,7 +35,7 @@
 | 线 | 服务器 | 状态 |
 |---|---|---|
 | LADD 主线 | 90 + 4090D | YOLO11n seed0/42 已有正向完成点；双卡 4090 BN-freeze sweep 因 `nc=5` 作废 |
-| 受控对比 | 待人工复核 | FGD/LD 已修复，CCLKD 已重写，HalluciDet-style 保留；先审计，不启动 |
+| 受控对比 | 待人工复核 | FGD/LD 已修复，CCLKD loss 已修正但缺 online trainer，HalluciDet-style 保留；先审计，不启动 CCLKD |
 | CoLD/CrossKD 归档 | `comparison/archive/excluded_methods/` | 纯历史证据，不再运行 |
 | 消融实验 | — | 未开始 |
 
