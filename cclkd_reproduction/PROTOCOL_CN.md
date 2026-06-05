@@ -48,10 +48,15 @@ online teacher-student joint training
 因此两套结果不可直接混入同一张 controlled main table。CCLKD 复现结果用于确认
 方法实现是否可信；之后如需进入 LADD 主表，需要另起“统一受控协议”的 CCLKD run。
 
-## 4. 待补代码
+## 4. 代码入口与当前状态
 
-- `train_cclkd_online_hbb.py`：online teacher-student 训练入口。
-- `launch_cclkd_paper_repro_job.sh`：只允许 YOLO11s/YOLO11n、400 epoch 和
-  paper-matched augmentation。
-- `check_cclkd_repro_protocol.py`：启动前校验 `nc=3`、epoch、augmentation 和
+- `code/train_cclkd_online_hbb.py`：online teacher-student 训练入口。teacher 和
+  student 都从 `yolo11n.pt` 或 `yolo11s.pt` COCO 预训练初始化；teacher 使用 RGB
+  输入、计算自己的 detection loss，并与 student 一起进入 optimizer。
+- `code/launch_cclkd_paper_repro_job.sh`：只允许 YOLO11s/YOLO11n、400 epoch、
+  batch=32、SGD lr=0.01、mosaic=1.0 和 MixUp。
+- `code/check_cclkd_repro_protocol.py`：启动前校验 `nc=3`、epoch、augmentation 和
   online trainer 标志。
+
+当前只完成代码静态检查；还需要在 GPU 训练环境做 1 epoch / tiny fraction smoke，
+确认日志中 `s_box/s_cls/s_dfl`、`t_box/t_cls/t_dfl` 和 `cclkd_loss` 均正常产生。

@@ -4,8 +4,9 @@
 
 > 2026-06-05 审计更新：本文中 117 smoke 可作为旧代码路径运行证据；双卡 4090
 > 目标机 smoke 后续发现使用了错误 `nc=5` OGSOD yaml，因此双卡 4090 smoke 结论作废。
-> 当前 CCLKD loss 级 LLD/FLD/RLD 已修正，但仍缺 online teacher-student trainer；
-> frozen-teacher smoke 不再能作为 CCLKD 方法通过证据。
+> 当前 CCLKD loss 级 LLD/FLD/RLD 已修正，且 `cclkd_reproduction/code/`
+> 已补 online teacher-student trainer；frozen-teacher smoke 不再能作为 CCLKD 方法通过证据。
+> 新 online trainer 尚需在 GPU 训练环境做 tiny smoke。
 
 本文记录老师确认后的最终受控对比实现 smoke。测试目的仅是验证代码路径、损失数据流、
 反向传播和 checkpoint 保存，不用于比较方法性能。

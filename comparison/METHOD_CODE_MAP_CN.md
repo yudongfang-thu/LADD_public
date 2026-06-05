@@ -16,7 +16,7 @@ trainer 中用 `--comparison-kd-profile` 切换。严格实现边界见
 | `../ladd/code/src/teacher_student_decomposition_kd_hbb/trainer.py` | 阶段控制、teacher/student 前向、BN-freeze 逻辑 |
 | `code/launch_formal_from_yolo_kd_job.sh` | FGD/LD/HalluciDet-style 的 from-YOLO frozen-teacher 正式启动脚本 |
 | `code/launch_formal_transfer_kd_job.sh` | FGD/LD/HalluciDet-style 的 transfer frozen-teacher 启动脚本 |
-| `../cclkd_reproduction/` | CCLKD 原文协议复现目录；online trainer 补齐前不启动正式 CCLKD |
+| `../cclkd_reproduction/` | CCLKD 原文协议复现目录；已包含 online trainer / launcher / protocol checker，GPU smoke 前不启动正式 CCLKD |
 
 ## 2. Profile 对应关系
 
@@ -31,8 +31,9 @@ trainer 中用 `--comparison-kd-profile` 切换。严格实现边界见
 
 ## 3. 代码新鲜度
 
-2026-06-04 已修复 LD/FGD 语义。2026-06-05 CCLKD loss 级实现已修正，但仍等待
-online teacher-student trainer。`ladd/code/` 与
+2026-06-04 已修复 LD/FGD 语义。2026-06-05 CCLKD loss 级实现已修正，并补齐
+`cclkd_reproduction/code/` online teacher-student 复现入口；当前仍等待 GPU smoke。
+`ladd/code/` 与
 `ladd/code_versions/current_hbb/` 应保持字节一致；任何实验启动前先执行同步检查。
 
 ## 4. 结果口径

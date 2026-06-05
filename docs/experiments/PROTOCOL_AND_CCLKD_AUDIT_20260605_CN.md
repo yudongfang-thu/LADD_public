@@ -112,12 +112,12 @@ comparison/code/launch_formal_transfer_kd_job.sh
 - 论文实现基于 YOLOv5 风格 candidate boxes / objectness / regional feature extraction，本仓库是 YOLO11 HBB + DFL。
 - 当前用 YOLO11 DFL raw logits 适配论文 spatial distribution。
 - 当前用 per-level dense token feature 近似 candidate-box region feature。
-- 当前 teacher 仍来自给定 RGB teacher 权重，不是完整 joint teacher-student online training branch。这是最大架构差距；在补齐 online trainer 前，CCLKD 不应进入正式对比主表。
+- frozen-teacher 对比入口中的 teacher 仍来自给定 RGB teacher 权重，不是完整 joint teacher-student online training branch。这是最大架构差距；必须改用 `cclkd_reproduction/code/` 的 online trainer 完成 smoke 和复现后，CCLKD 才能进入正式对比主表讨论。
 
 推荐写法：
 
 ```text
-CCLKD loss-level YOLO11 adaptation pending online teacher-student trainer
+CCLKD online YOLO11 adaptation pending GPU smoke and 400-epoch paper-protocol reproduction
 ```
 
 不推荐写法：
@@ -130,7 +130,7 @@ controlled CCLKD main-table result
 
 ## 6. 原文条件复现要求
 
-后续 CCLKD 复现实验必须先实现并验证 online trainer：
+后续 CCLKD 复现实验必须先验证 online trainer：
 
 1. RGB teacher branch 与 SAR student branch 同步训练；
 2. teacher branch 使用 RGB 图像和检测监督更新；
@@ -157,7 +157,7 @@ bash -n ladd/code_versions/current_hbb/scripts/ogsod_public/run_ladd_phase.sh
 ## 8. 人工复核后才能继续的步骤
 
 1. 复核 public 仓库 diff。
-2. 实现 CCLKD online trainer，并复核 teacher/student optimizer、loss 和数据流。
+2. 使用 `cclkd_reproduction/code/train_cclkd_online_hbb.py` 复核 teacher/student optimizer、loss 和数据流。
 3. 复核双卡服务器部署前的 yaml、代码 hash 和 `--help` 输出。
 4. 只做 1 epoch / tiny fraction smoke，确认日志包含 `nc=3` 且 teacher/student detection loss 与 CCLKD loss 均非零。
 5. smoke 通过后，先做原文条件 YOLO11s 和 YOLO11n / 400 epoch 复现，再讨论受控对比。

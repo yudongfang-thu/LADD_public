@@ -37,9 +37,9 @@
 `/root/shared-nvme/archive/invalid_5class_yaml_20260605_162122`。当前没有任何
 双卡 4090 修正版正式结果可用于主表。
 
-CCLKD 旧实现同时存在方法偏差。2026-06-05 loss 级代码已修正 LLD/FLD/RLD，
-但仍缺原文定义的 online teacher-student trainer。CCLKD 在补齐 online 复现入口和
-原文条件复现实验前，不得写入正式受控对比结果表。
+CCLKD 旧实现同时存在方法偏差。2026-06-05 loss 级代码已修正 LLD/FLD/RLD；
+`cclkd_reproduction/code/` 已补原文定义的 online teacher-student trainer。CCLKD 在
+online 入口完成 GPU smoke 和原文条件复现实验前，不得写入正式受控对比结果表。
 
 旧 FGD/LD 原始训练数据已从 public 当前分支移除，仅 Git 历史可追溯；代码位置和当前 profile 映射见
 [`METHOD_CODE_MAP_CN.md`](METHOD_CODE_MAP_CN.md)。

@@ -5,8 +5,8 @@
 本文档给外部老师复核当前受控对比方法的代码语义。当前正式方法为
 `FGD / LD / CCLKD / HalluciDet-style`。其中 FGD、LD、HalluciDet-style 使用
 frozen-teacher 受控对比入口；CCLKD 必须先在
-[`../cclkd_reproduction/`](../cclkd_reproduction/) 中补齐 online teacher-student
-原文复现入口，再回到 `comparison/` 执行统一协议对比。
+[`../cclkd_reproduction/`](../cclkd_reproduction/) 中使用 online teacher-student
+原文复现入口完成 smoke 和 400ep 复现，再回到 `comparison/` 执行统一协议对比。
 
 ## 1. 结论
 
@@ -14,7 +14,7 @@ frozen-teacher 受控对比入口；CCLKD 必须先在
 |---|---|---|---|
 | FGD | 官方形式的 softmax spatial/channel attention + GT fg/bg weighting + batch relation 近似 | 否，属于 FGD-style YOLO port | 修复前结果不能代表当前实现，需重跑 |
 | LD | 前景 anchor 的 YOLO DFL regression logits KL，shape 异常直接失败 | 可以作为 LD 的 YOLO/DFL 适配 | 旧 soft-logit 结果作废，需重跑 |
-| CCLKD paper-structured reimplementation | COP + entropy temperature + localization-only LLD / FLD-MSE / RLD feature-correlation / class-balanced CCL 的 YOLO11 loss 适配 | 否，当前缺原文定义的 online teacher-student trainer | 暂不正式跑，先实现 online 复现入口 |
+| CCLKD paper-structured reimplementation | COP + entropy temperature + localization-only LLD / FLD-MSE / RLD feature-correlation / class-balanced CCL 的 YOLO11 loss 适配；online trainer 已补 | 否，需先完成原文协议 smoke/复现 | 暂不正式跑，先 smoke online 复现入口 |
 | HalluciDet-style | detection-utility guided feature/response/margin alignment | 否，没有显式 hallucination module | 写作时必须标注 `-style` |
 
 ## 2. 本次修复
@@ -69,10 +69,10 @@ DOI `10.1080/10095020.2026.2633014` 对应论文
 
 仍需注明适配边界：YOLO11 没有论文 YOLOv5 candidate-box/objectness 的完全同构公开实现，
 因此本实现用 DFL raw logits 作为 spatial distribution，用 dense token feature 近似
-candidate region feature。更关键的是，当前 trainer 仍使用 frozen RGB teacher，
-而 CCLKD 原文方法定义包含 joint online teacher-student training branch。因此当前
-loss 只能作为实现部件，不能作为 CCLKD 复现或正式对比结果入口；必须补 online trainer
-后再 smoke / formal。
+candidate region feature。更关键的是，frozen-teacher 对比入口仍不符合 CCLKD 原文；
+原文方法定义包含 joint online teacher-student training branch。因此当前 frozen-teacher
+loss 只能作为实现部件，不能作为 CCLKD 复现或正式对比结果入口；应使用
+`cclkd_reproduction/code/train_cclkd_online_hbb.py` 先做 smoke / formal。
 
 ### HalluciDet-style
 
@@ -98,7 +98,7 @@ privileged information、检测效用加权对齐和 SAR-only 推理约束。保
 
 1. 对 FGD/LD/HalluciDet-style 分别执行 `--help` 和短 smoke。
 2. LD smoke 必须确认 teacher/student `boxes` 都是 `[B, N, 4*reg_max]`，且 loss 非零。
-3. CCLKD 必须先实现 online teacher-student trainer；frozen-teacher smoke 不再作为 CCLKD 通过证据。
+3. CCLKD 必须先 smoke online teacher-student trainer；frozen-teacher smoke 不再作为 CCLKD 通过证据。
 4. FGD/LD 修复前已经运行的实验全部使用旧 loss，不得与修复后实验混合统计。
 5. 第二轮复核意见响应与未采纳原因见
    [`REVIEW_FEEDBACK_RESPONSE_CN.md`](REVIEW_FEEDBACK_RESPONSE_CN.md)。

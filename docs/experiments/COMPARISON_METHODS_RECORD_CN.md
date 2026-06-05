@@ -18,14 +18,14 @@ seed RGB teacher、800 epoch 和 SAR-only inference。CCLKD 不适用 frozen-tea
 |---|---|---|---|---|
 | 通用检测 KD | FGD-style | CVPR 2022, Focal and Global Knowledge Distillation for Detectors | [`10.1109/CVPR52688.2022.00460`](https://doi.org/10.1109/CVPR52688.2022.00460) | 官方 softmax attention 形式 + GT fg/bg + relation 近似；旧结果作废 |
 | 通用输出 KD | LD | CVPR 2022, Localization Distillation for Dense Object Detection | [`10.1109/CVPR52688.2022.00919`](https://doi.org/10.1109/CVPR52688.2022.00919) | YOLO DFL regression KL，T=10，错形直接失败；旧 soft-logit 结果作废 |
-| 跨模态 KD | CCLKD | GIS 2026, Cross-modal contrastive learning-based object detection under incomplete modalities | [`10.1080/10095020.2026.2633014`](https://doi.org/10.1080/10095020.2026.2633014) | loss 级 COP + entropy temperature + localization-only LLD / FLD-MSE / RLD feature-correlation / CCL 已修正；先按原文 400ep、paper augmentation、online trainer 复现 |
+| 跨模态 KD | CCLKD | GIS 2026, Cross-modal contrastive learning-based object detection under incomplete modalities | [`10.1080/10095020.2026.2633014`](https://doi.org/10.1080/10095020.2026.2633014) | loss 级 COP + entropy temperature + localization-only LLD / FLD-MSE / RLD feature-correlation / CCL 已修正；online trainer 已补，先按原文 400ep、paper augmentation 复现 |
 | 跨模态 / privileged modality | HalluciDet-style | WACV 2024, HalluciDet | [`10.1109/WACV57701.2024.00147`](https://doi.org/10.1109/WACV57701.2024.00147) | 已接入；无显式 hallucination module，需写明 `-style` |
 
 ## 2. 选择逻辑
 
 - FGD-style 检验普通 feature KD 是否足够。
 - LD 检验只蒸馏定位输出分布是否足够。
-- CCLKD 需要先补 online teacher-student trainer，并在独立复现目录中完成 YOLO11s/YOLO11n 原文协议复现。
+- CCLKD 需要先 smoke online teacher-student trainer，并在独立复现目录中完成 YOLO11s/YOLO11n 原文协议复现。
 - HalluciDet-style 检验训练期 RGB privileged information 对 SAR-only detector 的帮助。
 
 ## 3. 当前实验有效性

@@ -38,9 +38,9 @@ entropy temperature mapping。
 论文没有公开可运行代码。当前实现仍只是 loss 级 YOLO11 适配版：论文中的 YOLOv5
 candidate box / objectness / regional feature extraction 没有一一同构公开实现；本仓库用
 YOLO11 DFL raw logits 表示 spatial distribution，用 per-level dense token feature
-近似 candidate region feature。更重要的是，当前 trainer 仍是 frozen RGB teacher，
-不是论文定义的 “joint teacher-student online distillation”。因此当前代码不能作为
-CCLKD 官方条件复现实验，也不应进入正式对比主表。
+近似 candidate region feature。更重要的是，frozen-teacher 对比入口不是论文定义的
+“joint teacher-student online distillation”。因此该入口不能作为 CCLKD 官方条件复现实验，
+也不应进入正式对比主表；原文复现应使用 `../../cclkd_reproduction/code/`。
 
 ## 状态
 
@@ -60,11 +60,11 @@ loss 检查需要在服务器环境或装有 torch 的本地环境中补做。�
    teacher-student joint training。
 2. 复现确认后，再回到 `comparison/` 中按 LADD 统一受控协议运行 CCLKD 对比。
 
-完成 online trainer 前，当前 frozen-teacher loss 组件只保留为实现部件，不能单独作为
-CCLKD 官方条件复现。
+完成 online trainer 的 GPU smoke 前，当前 frozen-teacher loss 组件只保留为实现部件，
+不能单独作为 CCLKD 官方条件复现。
 
 ## 后续要求
 
-CCLKD 若进入论文主表，必须先补 online teacher-student trainer，并按原文条件完成
-YOLO11s / YOLO11n、400 epoch 复现实验。当前 frozen-teacher loss 组件不能单独作为
-CCLKD 官方条件复现。
+CCLKD 若进入论文主表，必须先使用 `../../cclkd_reproduction/code/` 的 online
+teacher-student trainer，并按原文条件完成 YOLO11s / YOLO11n、400 epoch 复现实验。
+当前 frozen-teacher loss 组件不能单独作为 CCLKD 官方条件复现。

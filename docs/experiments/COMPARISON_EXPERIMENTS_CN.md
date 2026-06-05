@@ -26,7 +26,7 @@ YOLO11s/YOLO11n、400 epoch、paper-matched augmentation。复现通过后，再
 |---|---|---|---|
 | FGD-style | 通用 feature KD | 2026-06-04 加入 teacher attention，保留 GT fg/bg 与 relation | 双卡 4090 旧 smoke/formal 因 `nc=5` 作废；待重 smoke |
 | LD | 通用 localization-output KD | 2026-06-04 改为前景 DFL regression KL | 双卡 4090 旧 smoke/formal 因 `nc=5` 作废；待重 smoke |
-| CCLKD | 跨模态 category-constrained KD | loss 级实现已修正；缺原文 online teacher-student trainer | 先进入 `cclkd_reproduction/` 做原文复现 |
+| CCLKD | 跨模态 category-constrained KD | loss 级实现已修正；online trainer 已补，待 GPU smoke | 先进入 `cclkd_reproduction/` 做原文复现 |
 | HalluciDet-style | privileged-modality KD | 已接入，无显式 hallucination module | 双卡 4090 旧 smoke/formal 因 `nc=5` 作废；待重 smoke |
 
 实现边界见 [`../../comparison/IMPLEMENTATION_REVIEW_CN.md`](../../comparison/IMPLEMENTATION_REVIEW_CN.md)。
@@ -39,8 +39,9 @@ bash comparison/code/launch_formal_from_yolo_kd_job.sh ld n 0 0
 bash comparison/code/launch_formal_from_yolo_kd_job.sh hallucidet n 0 0
 ```
 
-当前 frozen-teacher launcher 只用于 FGD/LD/HalluciDet-style。CCLKD 需要新的
-online teacher-student 复现入口。
+当前 frozen-teacher launcher 只用于 FGD/LD/HalluciDet-style。CCLKD 使用
+`cclkd_reproduction/code/launch_cclkd_paper_repro_job.sh` 做 online teacher-student
+原文复现。
 
 ## 4. 结果口径
 
@@ -53,4 +54,4 @@ online teacher-student 复现入口。
 1. 当前不启动新实验。
 2. 双卡 4090 旧 smoke/formal partial runs 因 `nc=5` yaml 作废。
 3. 先完成 public diff 人工复核。
-4. 人工复核通过后，FGD/LD/HalluciDet-style 可先做协议校验和短 smoke；CCLKD 必须先补 online trainer，并在 `cclkd_reproduction/` 做原文条件复现。
+4. 人工复核通过后，FGD/LD/HalluciDet-style 可先做协议校验和短 smoke；CCLKD 必须先 smoke online trainer，并在 `cclkd_reproduction/` 做原文条件复现。

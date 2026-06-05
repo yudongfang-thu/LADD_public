@@ -44,6 +44,7 @@ sed "s|/path/to/OGSOD-1.0|${DATASET_ROOT}|g" \
 
 ln -sfn ../ladd/code/train_ladd_hbb.py tools/train_ladd_hbb.py
 ln -sfn ../baseline/code/train_ogsod_baseline.py tools/train_ogsod_baseline.py
+ln -sfn ../cclkd_reproduction/code/train_cclkd_online_hbb.py tools/train_cclkd_online_hbb.py
 ln -sfn ../../ladd/code_versions/current_hbb/scripts/ogsod_public/run_ladd_phase.sh \
   scripts/ogsod_public/run_ladd_phase.sh
 ln -sfn ../../ladd/code_versions/current_hbb/scripts/ogsod_public/run_hbb_ladd_converged_chain.sh \

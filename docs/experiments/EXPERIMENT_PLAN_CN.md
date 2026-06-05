@@ -193,13 +193,12 @@ B_WARMUP_BIAS_LR=0.001
 |---|---|---|
 | 通用 KD | FGD-style | 双卡 4090 旧 smoke/formal 作废；待修正协议后重新 smoke |
 | 通用 KD | LD | 双卡 4090 旧 smoke/formal 作废；待修正协议后重新 smoke |
-| 跨模态 KD | CCLKD | loss 已修正；先在 `cclkd_reproduction/` 按原文 400ep + paper augmentation + online trainer 复现 |
+| 跨模态 KD | CCLKD | loss 已修正；online trainer 已补；先在 `cclkd_reproduction/` 按原文 400ep + paper augmentation 复现 |
 | 跨模态 KD | HalluciDet-style | 双卡 4090 旧 smoke/formal 作废；待修正协议后重新 smoke |
 
 此前四方法 smoke 记录中，双卡 4090 部分因 `nc=5` yaml 错误作废；117 smoke 仅能证明
 旧代码路径可运行，不能证明当前 public 修正版实现。2026-06-05 当前状态是：不启动新实验，
-先完成 public 审计、CCLKD loss 修正和人工复核。CCLKD 后续必须先实现原文定义的
-online teacher-student 复现入口，再做 YOLO11s / YOLO11n、400 epoch 原文条件复现实验；在此之前
+先完成 public 审计、CCLKD loss 修正、online teacher-student 复现入口 smoke 和人工复核。CCLKD 后续必须先做 YOLO11s / YOLO11n、400 epoch 原文条件复现实验；在此之前
 不启动 CCLKD 受控对比。
 
 容量优先级：先 YOLO11n 三 seed闭环，同时保证 YOLO11s seed0 跑通；再扩展到
@@ -210,7 +209,7 @@ s/m/l。无效旧结果不进入当前主表。
 | 容量 | baseline 条件 | 可做项 | 需补 |
 |---|---|---|---|
 | YOLO11n | SAR/RGB 0/42/123 已齐 | 修正后可重新 smoke | 人工复核通过后再决定是否启动 |
-| YOLO11s | SAR/RGB 0/42/123 已齐 | FGD/LD/HalluciDet-style 可做 seed0 sanity；CCLKD 需先补 online trainer | 双卡 4090 缺 teacher seed42/123 |
+| YOLO11s | SAR/RGB 0/42/123 已齐 | FGD/LD/HalluciDet-style 可做 seed0 sanity；CCLKD 需先 smoke online trainer | 双卡 4090 缺 teacher seed42/123 |
 | YOLO11m | seed0 SAR/RGB 已完成 | FGD/LD/HalluciDet-style seed0 可排队；CCLKD 暂停 | 补 SAR/RGB seed42/123 |
 | YOLO11l | seed0 baseline 已完成 | seed0 可作为后续容量点 | 补 SAR/RGB seed42/123 |
 
