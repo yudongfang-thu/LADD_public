@@ -4,6 +4,14 @@
 Geo-spatial Information Science，2026，DOI
 [`10.1080/10095020.2026.2633014`](https://doi.org/10.1080/10095020.2026.2633014)。
 
+原文 PDF 已归档在：
+
+```text
+paper/CCLKD__2026_GIS__Cross_Modal_Contrastive_Learning_Incomplete_Modalities.pdf
+```
+
+该 DOI 的 version of record license 为 `CC BY 4.0`；见 `paper/README_CN.md`。
+
 ## 当前实现
 
 使用统一 HBB profile：
