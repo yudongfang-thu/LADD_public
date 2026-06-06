@@ -1,0 +1,74 @@
+[
+  {
+    "run": "cclkd_paper_repro_yolo11n_s0_400ep_online",
+    "size": "n",
+    "seed": 0,
+    "exists": true,
+    "latest_epoch": "400",
+    "latest_time": "41256",
+    "latest_precision": "0.696845",
+    "latest_recall": "0.593599",
+    "latest_mAP50": "0.624522",
+    "latest_AP50_95": "0.385318",
+    "best_epoch": "400",
+    "best_mAP50": "0.624522",
+    "best_AP50_95": "0.385318"
+  },
+  {
+    "run": "cclkd_paper_repro_yolo11n_s42_400ep_online",
+    "size": "n",
+    "seed": 42,
+    "exists": true,
+    "latest_epoch": "50",
+    "latest_time": "5352.98",
+    "latest_precision": "0.528207",
+    "latest_recall": "0.440088",
+    "latest_mAP50": "0.444479",
+    "latest_AP50_95": "0.22989",
+    "best_epoch": "50",
+    "best_mAP50": "0.444479",
+    "best_AP50_95": "0.22989"
+  },
+  {
+    "run": "cclkd_paper_repro_yolo11n_s123_400ep_online",
+    "size": "n",
+    "seed": 123,
+    "exists": false
+  },
+  {
+    "run": "cclkd_paper_repro_yolo11s_s0_400ep_online",
+    "size": "s",
+    "seed": 0,
+    "exists": true,
+    "latest_epoch": "400",
+    "latest_time": "42837.7",
+    "latest_precision": "0.804146",
+    "latest_recall": "0.715463",
+    "latest_mAP50": "0.754318",
+    "latest_AP50_95": "0.484594",
+    "best_epoch": "400",
+    "best_mAP50": "0.754318",
+    "best_AP50_95": "0.484594"
+  },
+  {
+    "run": "cclkd_paper_repro_yolo11s_s42_400ep_online",
+    "size": "s",
+    "seed": 42,
+    "exists": true,
+    "latest_epoch": "34",
+    "latest_time": "3870.64",
+    "latest_precision": "0.552572",
+    "latest_recall": "0.46847",
+    "latest_mAP50": "0.478586",
+    "latest_AP50_95": "0.242644",
+    "best_epoch": "33",
+    "best_mAP50": "0.481251",
+    "best_AP50_95": "0.247938"
+  },
+  {
+    "run": "cclkd_paper_repro_yolo11s_s123_400ep_online",
+    "size": "s",
+    "seed": 123,
+    "exists": false
+  }
+]
