@@ -65,7 +65,7 @@ class CCLKDOnlineReproLoss(nn.Module):
         lld_weight: float = 1.0,
         fld_weight: float = 1.0,
         rld_weight: float = 1.0,
-        ccl_weight: float = 0.5,
+        ccl_weight: float = 1.0,
         temperature_min: float = 0.5,
         temperature_max: float = 5.0,
         entropy_scale: float = 5.0,
@@ -296,7 +296,7 @@ class CCLKDOnlineHBBTrainer(DetectionTrainer):
             "lld_weight": float(overrides.pop("lld_weight", 1.0)),
             "fld_weight": float(overrides.pop("fld_weight", 1.0)),
             "rld_weight": float(overrides.pop("rld_weight", 1.0)),
-            "ccl_weight": float(overrides.pop("ccl_weight", 0.5)),
+            "ccl_weight": float(overrides.pop("ccl_weight", 1.0)),
             "temperature_min": float(overrides.pop("cclkd_temperature_min", 0.5)),
             "temperature_max": float(overrides.pop("cclkd_temperature_max", 5.0)),
             "entropy_scale": float(overrides.pop("cclkd_entropy_scale", 5.0)),
@@ -474,7 +474,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--lld-weight", type=float, default=1.0)
     parser.add_argument("--fld-weight", type=float, default=1.0)
     parser.add_argument("--rld-weight", type=float, default=1.0)
-    parser.add_argument("--ccl-weight", type=float, default=0.5)
+    parser.add_argument("--ccl-weight", type=float, default=1.0)
     parser.add_argument("--cclkd-temperature-min", type=float, default=0.5)
     parser.add_argument("--cclkd-temperature-max", type=float, default=5.0)
     parser.add_argument("--cclkd-entropy-scale", type=float, default=5.0)

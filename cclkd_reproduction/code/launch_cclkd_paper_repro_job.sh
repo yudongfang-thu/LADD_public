@@ -80,4 +80,9 @@ exec "$PYTHON" "$SCRIPT_DIR/train_cclkd_online_hbb.py" \
   --mosaic 1.0 \
   --mixup "$MIXUP" \
   --close-mosaic 10 \
+  --kd-weight 1.0 \
+  --lld-weight 1.0 \
+  --fld-weight 1.0 \
+  --rld-weight 1.0 \
+  --ccl-weight 1.0 \
   --seed "$SEED"

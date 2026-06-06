@@ -41,6 +41,7 @@ DOI: 10.1080/10095020.2026.2633014
 | [`code/train_cclkd_online_hbb.py`](code/train_cclkd_online_hbb.py) | Online teacher-student HBB 训练入口；SAR student 与 RGB teacher 同步训练，teacher 有独立 detection loss 并参与 optimizer |
 | [`code/check_cclkd_repro_protocol.py`](code/check_cclkd_repro_protocol.py) | 启动前硬校验：`nc=3`、YOLO11n/s、`imgsz=256`、400ep、batch=32、SGD lr=0.01、mosaic=1.0、online trainer |
 | [`code/launch_cclkd_paper_repro_job.sh`](code/launch_cclkd_paper_repro_job.sh) | 原文协议 launcher，只允许 YOLO11n / YOLO11s |
+| [`ABLATION_PLAN_CN.md`](ABLATION_PLAN_CN.md) | YOLO11n 消融计划；逐项映射原文 Table 12 的 LLD / FLD / RLD / PATM / CCL |
 
 注意：本地公开仓库只完成静态校验。正式训练环境需要先做 tiny smoke，确认
 student detection loss、teacher detection loss 和 CCLKD loss 都非零，再启动 400 epoch。
