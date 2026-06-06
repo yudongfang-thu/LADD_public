@@ -49,6 +49,39 @@
 - `ogsod_hbb_rgb.yaml`
 - 均为 `nc=3`，类别为 `bridge / harbor / storage_tank`
 
+### 2.1 数据规模复核
+
+本次上传的诊断包里包含原始 queue log，可以确认复现实验实际使用的是
+CCLKD 论文量级的大切片 OGSOD，而不是 CoLD 复现中常见的 `2870/1162`
+小切片协议。
+
+压缩包 `../cclkd_repro_diag_20260606_144738.tar.gz` 中的
+`queue_s_gpu1_20260606_014745.log` 记录了 Ultralytics 实际扫描到的
+训练/验证规模：
+
+```text
+train: Scanning /root/shared-nvme/OGSOD-1.0/sar/labels/train ... 1/14664
+...
+all 3667 9614 ...
+```
+
+双卡服务器上对应目录的实际文件计数也已复核：
+
+| split | SAR images | SAR labels | RGB images | RGB labels |
+|---|---:|---:|---:|---:|
+| train | 14664 | 14664 | 14664 | 14664 |
+| test | 3667 | 3667 | 3667 | 3667 |
+
+因此，当前 CCLKD reproduction 的低 AP 不能解释为“只用了 2870 张训练图，
+400 epoch 等效训练强度不足”。更可能的排查方向应放在 CCLKD 机制适配、
+online teacher 训练状态、teacher-side validation、以及 paper-protocol
+SAR/RGB standalone baseline。
+
+另一个独立问题是：双卡服务器上的 `cold_anchor` / `yolov5_v5p0` 目录中仍存在
+`nc=5` 的旧 CoLD/Yolov5 YAML，但这些 YAML 不被 `LADD_public` 当前
+CCLKD reproduction 使用；本次 CCLKD reproduction 使用的是本目录快照中的
+`nc=3` public YAML。
+
 ## 3. 需要老师重点看的证据文件
 
 本目录小文件：
