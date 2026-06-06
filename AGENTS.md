@@ -14,14 +14,13 @@ LADD (Learnability-Aware Decomposition Distillation) — RGB-guided SAR object d
 | `ladd/code/` | Current LADD HBB training code (model/loss/trainer) |
 | `ladd/code_versions/current_hbb/` | Snapshot of the current HBB code version with scripts |
 | `ladd/scripts/` | Launch scripts for formal LADD jobs |
-| `ladd/results/` | LADD result CSVs, args, training images |
-| `ladd/diagnostics/` | Collapse debugging images and notes |
+| `ladd/results/` | Compact LADD result summaries |
 | `baseline/code/` | Single-modality baseline trainer |
 | `baseline/scripts/` | Baseline launch and run scripts |
 | `comparison/code/` | Formal launch scripts for FGD/LD/CCLKD/HalluciDet comparison jobs |
-| `comparison/archive/excluded_methods/` | Downgraded CoLD/CrossKD material and invalid pre-fix FGD/LD results; audit only |
+| `comparison/{fgd,ld,cclkd,hallucidet}/` | Method notes and compact result summaries for active comparison methods |
+| `cclkd_reproduction/` | CCLKD paper-protocol online trainer, paper PDF, YOLO11n ablation plan, and compact diagnostics |
 | `docs/` | Method overview, experiment plans/status, literature survey |
-| `server_logs/` | Compressed server-side training logs |
 | `shared/configs/datasets_public/` | OGSOD-1.0 dataset YAMLs (SAR/RGB detect) |
 
 No checkpoint weights (`.pt`/`.pth`) are included; they're in `.gitignore`.
@@ -85,7 +84,7 @@ bash ladd/scripts/launch_formal_ladd_job.sh cap2 n 0 <gpu_id>
 bash comparison/code/launch_formal_from_yolo_kd_job.sh fgd n 0 <gpu_id>
 ```
 
-Formal launchers support: `fgd`, `ld`, `cclkd`, `hallucidet`.
+Formal launchers support `fgd`, `ld`, and `hallucidet` through frozen-teacher profiles. CCLKD uses the online trainer in `cclkd_reproduction/code/` for paper-protocol reproduction and `comparison/code/launch_formal_online_cclkd_job.sh` for controlled comparison after reproduction smoke.
 
 ### Formal protocol parameters (OGSOD-1.0 HBB)
 
@@ -130,11 +129,8 @@ Four files follow the standard pattern:
 
 Launch scripts that invoke the LADD trainer with `--comparison-kd-profile` set to one of the four controlled methods. Formal launchers reject archived profiles.
 
-### Excluded-method archive (`comparison/archive/excluded_methods/`)
-
-CoLD, CrossKD, and invalid pre-fix FGD/LD results are retained only for audit. Do not launch experiments from this directory or use its results in the corrected main table.
-
 ## Known issues (current debugging focus)
 
 1. **B-stage collapse**: LADD B phase shows late-training degradation on some seeds/machines — likely BN running stats pollution. Fix attempt: `FREEZE_BN_STATS=1`.
-2. **4090D vs 90 divergence**: YOLO11s LADD results significantly lower on 4090D than on server 90 — protocol/implementation divergence under investigation.
+2. **CCLKD reproduction gap**: Old CCLKD runs before 2026-06-06 used an incorrect CCL formulation and are diagnostic only. Current CCL uses neck features and per-sampled negative similarity.
+3. **4090D vs 90 divergence**: YOLO11s LADD results significantly lower on 4090D than on server 90 — protocol/implementation divergence under investigation.

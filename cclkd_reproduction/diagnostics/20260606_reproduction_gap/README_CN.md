@@ -1,10 +1,16 @@
 # CCLKD 原文协议复现实验异常记录
 
-最后更新：2026-06-06 14:55 CST
+最后更新：2026-06-06 16:25 CST
+
+> 重要：本目录是 **2026-06-06 修复前** CCLKD reproduction 失败运行的诊断快照，
+> 用于解释旧结果为什么不能作为有效复现。目录中的 `train_cclkd_online_hbb.py`
+> 保留了当时的旧实现：`ccl_weight=0.5`，且 CCL 使用 DFL regression logits 并把
+> 负样本相似度退化为 batch mean 标量。当前有效实现请看
+> `../../code/train_cclkd_online_hbb.py`。
 
 ## 1. 现象摘要
 
-当前 `cclkd_reproduction/` 的 paper-protocol 复现实验可以稳定运行，不再出现此前的 validation loss / EMA mutation 崩溃；但已经完成的 seed0 结果明显低于 CCLKD 论文报告量级，说明复现实验本身仍存在重大差距，需要进一步排查。
+修复前 `cclkd_reproduction/` 的 paper-protocol 复现实验可以稳定运行，不再出现此前的 validation loss / EMA mutation 崩溃；但已经完成的 seed0 结果明显低于 CCLKD 论文报告量级。后续复核发现，当时 full CCLKD 仍存在 CCL 实现偏差，因此本目录结果只能作为旧问题证据，不能作为有效复现或消融结果。
 
 已完成结果：
 
@@ -51,13 +57,10 @@
 
 ### 2.1 数据规模复核
 
-本次上传的诊断包里包含原始 queue log，可以确认复现实验实际使用的是
-CCLKD 论文量级的大切片 OGSOD，而不是 CoLD 复现中常见的 `2870/1162`
-小切片协议。
-
-压缩包 `../cclkd_repro_diag_20260606_144738.tar.gz` 中的
-`queue_s_gpu1_20260606_014745.log` 记录了 Ultralytics 实际扫描到的
-训练/验证规模：
+原始 queue log 曾用于确认复现实验实际使用的是 CCLKD 论文量级的大切片
+OGSOD，而不是 CoLD 复现中常见的 `2870/1162` 小切片协议。为了精简公开仓库，
+完整压缩日志包已移除；保留的 CSV / YAML / summary 仍记录了对应运行结果。
+当时日志中的关键扫描信息为：
 
 ```text
 train: Scanning /root/shared-nvme/OGSOD-1.0/sar/labels/train ... 1/14664
@@ -84,24 +87,17 @@ CCLKD reproduction 使用；本次 CCLKD reproduction 使用的是本目录快�
 
 ## 3. 需要老师重点看的证据文件
 
-本目录小文件：
+本目录保留的小文件：
 
 - `summary.json`：远程结果自动摘要
 - `*_results.csv`：已完成/运行中的结果曲线快照
-- `train_cclkd_online_hbb.py`：当前 online CCLKD trainer 实现快照
-- `launch_cclkd_paper_repro_job.sh`：当前复现启动脚本快照
+- `train_cclkd_online_hbb.py`：旧失败运行使用的 online CCLKD trainer 快照，不代表当前实现
+- `launch_cclkd_paper_repro_job.sh`：旧失败运行使用的复现启动脚本快照
 - `check_cclkd_repro_protocol.py`：启动前协议检查脚本快照
 - `ogsod_hbb_sar.yaml` / `ogsod_hbb_rgb.yaml`：训练数据配置快照
 
-完整日志压缩包：
-
-- `../cclkd_repro_diag_20260606_144738.tar.gz`
-
-压缩包内包含：
-
-- `queue_n_gpu0_20260606_014745.log`
-- `queue_s_gpu1_20260606_014745.log`
-- 完整 results.csv / code / yaml 快照
+完整压缩日志包已从当前 public 分支移除，避免仓库继续膨胀。需要原始日志时应回到
+服务器运行目录或历史提交中查找；当前分支只保留可人工复核的小型证据。
 
 ## 4. 已观察到的异常点
 
@@ -109,7 +105,8 @@ CCLKD reproduction 使用；本次 CCLKD reproduction 使用的是本目录快�
 2. YOLO11n seed0 更低，AP50-95 为 `0.385318`。
 3. 日志中没有发现 `Traceback`、`RuntimeError`、`KeyError`、`CUDA out of memory` 等硬崩溃。
 4. seed0 的最终 epoch 同时也是 best epoch，说明不是 early collapse 后恢复失败，而是整条曲线最终仍停在较低水平。
-5. 训练日志中早期 `cclkd_loss` 会出现一段为 0 的阶段，随后变为非零；这可能来自前景 token / class-positive pair 条件触发，也可能暴露候选 token 构造与论文 COP 机制的差异，需要核查。
+5. 训练日志中早期 `cclkd_loss` 会出现一段为 0 的阶段，随后变为非零；这可能来自前景 token / class-positive pair 条件触发，也可能暴露候选 token 构造与论文 COP 机制的差异。
+6. 旧实现中 CCL 错误使用 DFL regression logits，并将负样本相似度 `mean().expand_as(...)` 为一个标量；这会直接影响 `ccl_only` 和 `full` 的可解释性，已在当前实现中修复。
 
 ## 5. 可能排查方向
 
