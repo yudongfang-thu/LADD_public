@@ -82,7 +82,7 @@ ladd/code_versions/current_hbb/src/teacher_student_decomposition_kd_hbb/loss.py
 - LLD：只对 YOLO11 DFL raw regression logits 做 localization distribution KD，不包含分类 logit KL。
 - FLD：类别正样本 token feature MSE。
 - RLD：同类 token 的 `R^T R / n` feature-dimension correlation matrix MSE。
-- CCL：按类别频次反比加权，对 target / non-target teacher-student spatial distributions 做 contrastive loss。
+- CCL：按类别频次反比加权，对 target / non-target teacher-student neck spatial features 做 contrastive loss；DFL regression distribution 只用于 LLD。
 
 新增参数：
 

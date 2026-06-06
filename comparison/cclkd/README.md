@@ -28,7 +28,7 @@ Geo-spatial Information Science，2026，DOI
 - **ATKD / LLD**：按类别正样本 teacher entropy 映射自适应温度，只对 YOLO11 DFL spatial-distribution 做 localization KD，不做分类 logit KL；
 - **ATKD / FLD**：在类别正样本 token 上执行 teacher-student feature MSE；
 - **ATKD / RLD**：在同类 token 特征上构造 `R^T R / n` 的 feature-dimension correlation matrix 并对齐；
-- **CCL**：按类别频次反比加权，对 target / non-target spatial distributions 做 teacher-student contrastive alignment；
+- **CCL**：按类别频次反比加权，对 target / non-target neck spatial features 做 teacher-student contrastive alignment；DFL regression distribution 只用于 LLD；
 - 最多 512 token 的类别内随机采样显存保护。
 
 `--cclkd-base-temperature` 作为旧 launcher 兼容参数保留；paper-structured 路径实际使用

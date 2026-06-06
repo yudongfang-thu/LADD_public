@@ -46,6 +46,11 @@ bash cclkd_reproduction/code/launch_cclkd_n_ablation_job.sh <ablation> <seed> <g
 原文没有报告 Fixed-Temp KD 的具体固定温度值。本仓库使用 `T=1.0` 作为无 PATM
 时的中性固定温度，并在结果表中明确记录。
 
+注意：`ccl_only` 的唯一 KD 信号来自 COP 触发后的 CCL。teacher 与 student 都从
+COCO 初始化时，早期 teacher 对 OGSOD RGB 的置信度可能低于 `min_confidence`，
+导致 COP 正样本为空、CCL 返回 0。因此 `ccl_only` 前若干 epoch 与 SAR baseline
+曲线接近属于预期空窗期，记录结果时必须标注。
+
 ## 已修正的复现权重
 
 原文 Table 4 的最佳配置为 `lambda_kd=1.0, lambda_cc=1.0`。此前代码默认

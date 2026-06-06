@@ -65,11 +65,11 @@ DOI `10.1080/10095020.2026.2633014` 对应论文
 3. LLD：只对 YOLO11 DFL raw regression logits 做 localization distribution KD，不做分类 logit KL；
 4. FLD：类别正样本 feature MSE；
 5. RLD：同类 token 的 `R^T R / n` feature-dimension correlation matrix MSE；
-6. CCL：按类别频次反比加权，对 target / non-target spatial distributions 做 contrastive loss。
+6. CCL：按类别频次反比加权，对 target / non-target neck spatial features 做 contrastive loss；DFL regression distribution 只用于 LLD。
 
 仍需注明适配边界：YOLO11 没有论文 YOLOv5 candidate-box/objectness 的完全同构公开实现，
-因此本实现用 DFL raw logits 作为 spatial distribution，用 dense token feature 近似
-candidate region feature。更关键的是，frozen-teacher 对比入口仍不符合 CCLKD 原文；
+因此本实现用 DFL raw logits 适配 LLD localization distribution，用 dense token
+feature 近似 candidate region feature 并承担 CCL。更关键的是，frozen-teacher 对比入口仍不符合 CCLKD 原文；
 原文方法定义包含 joint online teacher-student training branch。因此当前 frozen-teacher
 loss 只能作为实现部件，不能作为 CCLKD 复现或正式对比结果入口；应使用
 `cclkd_reproduction/code/train_cclkd_online_hbb.py` 先做 smoke / formal。

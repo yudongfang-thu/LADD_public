@@ -1091,18 +1091,20 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
 
             # CCL: class-balanced target/non-target teacher-student alignment.
             if neg_idx.numel() > 0:
-                if student_distri_flat is not None and teacher_distri_flat is not None:
-                    s_pos = F.normalize(student_distri_flat[pos_idx], dim=-1, eps=1e-6)
-                    t_pos = F.normalize(teacher_distri_flat[pos_idx], dim=-1, eps=1e-6)
-                    s_neg = F.normalize(student_distri_flat[neg_idx], dim=-1, eps=1e-6)
-                    t_neg = F.normalize(teacher_distri_flat[neg_idx], dim=-1, eps=1e-6)
+                if neg_idx.numel() >= pos_idx.numel():
+                    sampled_neg = neg_idx[torch.randperm(neg_idx.numel(), device=neg_idx.device)[: pos_idx.numel()]]
                 else:
-                    s_pos = F.normalize(student_feat_flat[pos_idx], dim=-1, eps=1e-6)
-                    t_pos = F.normalize(teacher_feat_flat[pos_idx], dim=-1, eps=1e-6)
-                    s_neg = F.normalize(student_feat_flat[neg_idx], dim=-1, eps=1e-6)
-                    t_neg = F.normalize(teacher_feat_flat[neg_idx], dim=-1, eps=1e-6)
+                    sampled_neg = neg_idx
+                min_n = min(pos_idx.numel(), sampled_neg.numel())
+                if min_n == 0:
+                    used_classes += 1
+                    continue
+                s_pos = F.normalize(student_feat_flat[pos_idx[:min_n]], dim=-1, eps=1e-6)
+                t_pos = F.normalize(teacher_feat_flat[pos_idx[:min_n]], dim=-1, eps=1e-6)
+                s_neg = F.normalize(student_feat_flat[sampled_neg[:min_n]], dim=-1, eps=1e-6)
+                t_neg = F.normalize(teacher_feat_flat[sampled_neg[:min_n]], dim=-1, eps=1e-6)
                 pos_sim = (s_pos * t_pos).sum(dim=-1) / self.cclkd_contrastive_temperature
-                neg_sim = (s_neg * t_neg).sum(dim=-1).mean().expand_as(pos_sim) / self.cclkd_contrastive_temperature
+                neg_sim = (s_neg * t_neg).sum(dim=-1) / self.cclkd_contrastive_temperature
                 ccl_loss = ccl_loss + class_weight * (-torch.log_softmax(torch.stack((pos_sim, neg_sim), dim=-1), dim=-1)[:, 0].mean())
 
             used_classes += 1

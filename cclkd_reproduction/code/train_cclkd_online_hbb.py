@@ -259,12 +259,20 @@ class CCLKDOnlineReproLoss(nn.Module):
                 rld = rld + class_weight * F.mse_loss(s_rel.T @ s_rel / n_pos, t_rel.T @ t_rel / n_pos)
 
             if neg_idx.numel() > 0:
-                s_pos = F.normalize(student_distri_flat[pos_idx], dim=-1, eps=1e-6)
-                t_pos = F.normalize(teacher_distri_flat[pos_idx], dim=-1, eps=1e-6)
-                s_neg = F.normalize(student_distri_flat[neg_idx], dim=-1, eps=1e-6)
-                t_neg = F.normalize(teacher_distri_flat[neg_idx], dim=-1, eps=1e-6)
+                if neg_idx.numel() >= pos_idx.numel():
+                    sampled_neg = neg_idx[torch.randperm(neg_idx.numel(), device=neg_idx.device)[: pos_idx.numel()]]
+                else:
+                    sampled_neg = neg_idx
+                min_n = min(pos_idx.numel(), sampled_neg.numel())
+                if min_n == 0:
+                    used += 1
+                    continue
+                s_pos = F.normalize(student_feat_flat[pos_idx[:min_n]], dim=-1, eps=1e-6)
+                t_pos = F.normalize(teacher_feat_flat[pos_idx[:min_n]], dim=-1, eps=1e-6)
+                s_neg = F.normalize(student_feat_flat[sampled_neg[:min_n]], dim=-1, eps=1e-6)
+                t_neg = F.normalize(teacher_feat_flat[sampled_neg[:min_n]], dim=-1, eps=1e-6)
                 pos_sim = (s_pos * t_pos).sum(dim=-1) / self.contrastive_temperature
-                neg_sim = (s_neg * t_neg).sum(dim=-1).mean().expand_as(pos_sim) / self.contrastive_temperature
+                neg_sim = (s_neg * t_neg).sum(dim=-1) / self.contrastive_temperature
                 logits = torch.stack((pos_sim, neg_sim), dim=-1)
                 ccl = ccl + class_weight * (-F.log_softmax(logits, dim=-1)[:, 0].mean())
             used += 1
