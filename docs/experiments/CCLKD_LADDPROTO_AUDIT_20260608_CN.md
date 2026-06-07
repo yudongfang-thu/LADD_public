@@ -136,3 +136,77 @@ optimizer=auto -> MuSGD(lr=0.01, momentum=0.9)
 4. 如果 100 epoch 仍显著落后 baseline，下一步优先检查 online teacher 的训练定义，而不是再调整 256/640 或数据增强。
 
 按 2026-06-08 00:26 的速度估计，新 CCLKD 每个 epoch 约 160-168 秒。100 epoch 预计在 2026-06-08 04:50-05:10 左右完成；400 epoch 保守估计在 2026-06-08 18:30-19:30 左右完成。
+
+## 8. 2026-06-08 二次实现审计：PATM 与 CCL anchor
+
+2026-06-08 进一步检查发现两个实现层问题：
+
+1. PATM temperature 原先对一个 class 内所有 COP token 的 binary entropy 取均值，得到 per-class scalar temperature。这不符合按位置不确定性自适应温度的语义。
+2. CCL 原先用 `student_pos` 对齐 `teacher_pos`，同时用 `student_neg` 对齐 `teacher_neg` 作为 negative logit。该写法会给非 k 类 student token 施加“远离非 k 类 teacher token”的梯度，破坏非 COP/异类位置的跨模态一致性。
+
+已修复：
+
+```text
+cclkd_reproduction/code/train_cclkd_online_hbb.py
+ladd/code/src/teacher_student_decomposition_kd_hbb/loss.py
+ladd/code_versions/current_hbb/src/teacher_student_decomposition_kd_hbb/loss.py
+```
+
+修复内容：
+
+1. PATM temperature 改为 per-position vector。DFL KL 使用 `reduction="none"` 得到每个 token 的 LLD，再乘各自的 `T^2` 后平均。
+2. CCL 改为以 class-k student positive token 为 anchor，对比 teacher positive token 与 teacher negative token：
+
+```python
+s_anchor = normalize(student_feat[pos_k])
+t_pos = normalize(teacher_feat[pos_k])
+t_neg = normalize(teacher_feat[neg_not_k])
+pos_sim = cosine(s_anchor, t_pos)
+neg_sim = cosine(s_anchor, t_neg)
+```
+
+这样梯度只流入 `s_anchor`：推向同类 teacher，推离异类 teacher；不再把非 k student token 推离非 k teacher token。
+
+远端处理：
+
+```text
+/root/shared-nvme/LADD_public/archive/invalid_cclkd_auto_sepclip_patm_ccl_anchor_20260608_0035
+```
+
+只归档并停止受影响的三条 run：
+
+| Ablation | 受影响原因 | 停止 epoch | AP50 | AP50-95 |
+|---|---|---:|---:|---:|
+| ATKD | PATM per-class temperature | 13 | 0.33583 | 0.14753 |
+| CCL only | CCL anchor direction | 13 | 0.29767 | 0.12429 |
+| Full | PATM + CCL anchor direction | 13 | 0.32416 | 0.14103 |
+
+继续保留并运行的三条：
+
+```text
+LLD
+LLD + FLD
+LLD + FLD + RLD
+```
+
+原因：它们使用 fixed temperature (`min=max=1.0`) 且 `ccl_weight=0`，因此不受 per-position PATM 与 CCL anchor 修复的实质影响。
+
+重启的修正版三条位于：
+
+```text
+/root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/comparisons/online_cclkd/yolo11n/cclkd_auto_sepclip_patmpos_cclanchor
+```
+
+日志位于：
+
+```text
+/root/shared-nvme/LADD_public/logs/formal_nomosaic_20260528/comparisons/online_cclkd_auto_sepclip_patmpos_cclanchor
+```
+
+新 PIDs：
+
+| Ablation | PID | GPU |
+|---|---:|---:|
+| ATKD | 93296 | 1 |
+| CCL only | 93297 | 1 |
+| Full | 93298 | 1 |

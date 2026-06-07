@@ -245,10 +245,11 @@ class CCLKDOnlineReproLoss(nn.Module):
             s_box = student_distri_flat[pos_idx].reshape(-1, 4, reg_max)
             t_box = teacher_distri_flat[pos_idx].reshape(-1, 4, reg_max)
             box_lld = F.kl_div(
-                F.log_softmax(s_box / temperature, dim=-1),
-                F.softmax(t_box / temperature, dim=-1),
-                reduction="batchmean",
-            ) * temperature.pow(2)
+                F.log_softmax(s_box / temperature.view(-1, 1, 1), dim=-1),
+                F.softmax(t_box / temperature.view(-1, 1, 1), dim=-1),
+                reduction="none",
+            ).sum(dim=(-1, -2))
+            box_lld = (box_lld * temperature.pow(2)).mean()
             lld = lld + class_weight * box_lld
             fld = fld + class_weight * F.mse_loss(student_feat_flat[pos_idx], teacher_feat_flat[pos_idx])
 
@@ -267,12 +268,11 @@ class CCLKDOnlineReproLoss(nn.Module):
                 if min_n == 0:
                     used += 1
                     continue
-                s_pos = F.normalize(student_feat_flat[pos_idx[:min_n]], dim=-1, eps=1e-6)
+                s_anchor = F.normalize(student_feat_flat[pos_idx[:min_n]], dim=-1, eps=1e-6)
                 t_pos = F.normalize(teacher_feat_flat[pos_idx[:min_n]], dim=-1, eps=1e-6)
-                s_neg = F.normalize(student_feat_flat[sampled_neg[:min_n]], dim=-1, eps=1e-6)
                 t_neg = F.normalize(teacher_feat_flat[sampled_neg[:min_n]], dim=-1, eps=1e-6)
-                pos_sim = (s_pos * t_pos).sum(dim=-1) / self.contrastive_temperature
-                neg_sim = (s_neg * t_neg).sum(dim=-1) / self.contrastive_temperature
+                pos_sim = (s_anchor * t_pos).sum(dim=-1) / self.contrastive_temperature
+                neg_sim = (s_anchor * t_neg).sum(dim=-1) / self.contrastive_temperature
                 logits = torch.stack((pos_sim, neg_sim), dim=-1)
                 ccl = ccl + class_weight * (-F.log_softmax(logits, dim=-1)[:, 0].mean())
             used += 1
@@ -284,7 +284,7 @@ class CCLKDOnlineReproLoss(nn.Module):
     def _adaptive_temperature(self, class_scores: torch.Tensor) -> torch.Tensor:
         class_scores = class_scores.clamp(1e-6, 1.0 - 1e-6)
         entropy = -(class_scores * class_scores.log() + (1.0 - class_scores) * (1.0 - class_scores).log())
-        entropy = (entropy.mean() / math.log(2.0)).clamp(0.0, 1.0)
+        entropy = (entropy / math.log(2.0)).clamp(0.0, 1.0)
         temperature = self.temperature_min + (self.temperature_max - self.temperature_min) * torch.sigmoid(
             self.entropy_scale * (entropy - 0.5)
         )
