@@ -15,6 +15,7 @@ Optional environment:
   PYTHON            python executable (default: python3)
   MIXUP             paper-aligned MixUp probability (default: 0.1; set ALLOW_UNVERIFIED_MIXUP=1 if unknown)
   ALLOW_UNVERIFIED_MIXUP  allow MIXUP=0 only with an explicit audit note
+  CCLKD_FORMULATION paper-aligned implementation variant (default: paper)
 EOF
 }
 
@@ -38,6 +39,11 @@ STUDENT_DATA="${STUDENT_DATA:?set STUDENT_DATA to SAR OGSOD HBB yaml}"
 TEACHER_DATA="${TEACHER_DATA:?set TEACHER_DATA to RGB OGSOD HBB yaml}"
 MODEL_WEIGHTS="$REPO_ROOT/yolo11${MODEL_SIZE}.pt"
 MIXUP="${MIXUP:-0.1}"
+CCLKD_FORMULATION="${CCLKD_FORMULATION:-paper}"
+if [[ "$CCLKD_FORMULATION" != "adapted" && "$CCLKD_FORMULATION" != "paper" ]]; then
+  echo "CCLKD_FORMULATION must be adapted or paper, got: $CCLKD_FORMULATION" >&2
+  exit 1
+fi
 ALLOW_FLAG=()
 if [[ "${ALLOW_UNVERIFIED_MIXUP:-0}" == "1" ]]; then
   ALLOW_FLAG+=(--allow-unverified-mixup)
@@ -59,7 +65,7 @@ fi
   --teacher-weights "$MODEL_WEIGHTS" \
   "${ALLOW_FLAG[@]}"
 
-RUN_NAME="cclkd_paper_repro_yolo11${MODEL_SIZE}_s${SEED}_400ep_online"
+RUN_NAME="cclkd_paper_repro_yolo11${MODEL_SIZE}_${CCLKD_FORMULATION}_s${SEED}_400ep_online"
 mkdir -p "$REPO_ROOT/logs/cclkd_reproduction"
 
 exec "$PYTHON" "$SCRIPT_DIR/train_cclkd_online_hbb.py" \
@@ -85,4 +91,6 @@ exec "$PYTHON" "$SCRIPT_DIR/train_cclkd_online_hbb.py" \
   --fld-weight 1.0 \
   --rld-weight 1.0 \
   --ccl-weight 1.0 \
+  --cclkd-formulation "$CCLKD_FORMULATION" \
+  --cclkd-roi-grid-size "${CCLKD_ROI_GRID_SIZE:-3}" \
   --seed "$SEED"

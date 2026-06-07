@@ -54,9 +54,15 @@ online teacher-student joint training
   student 都从 `yolo11n.pt` 或 `yolo11s.pt` COCO 预训练初始化；teacher 使用 RGB
   输入、计算自己的 detection loss，并与 student 一起进入 optimizer。
 - `code/launch_cclkd_paper_repro_job.sh`：只允许 YOLO11s/YOLO11n、400 epoch、
-  `imgsz=256`、batch=32、SGD lr=0.01、mosaic=1.0 和 MixUp。
+  `imgsz=256`、batch=32、SGD lr=0.01、mosaic=1.0、MixUp，并默认启用
+  `CCLKD_FORMULATION=paper`。
 - `code/check_cclkd_repro_protocol.py`：启动前校验 `nc=3`、epoch、augmentation 和
   online trainer 标志。
 
-当前只完成代码静态检查；还需要在 GPU 训练环境做 1 epoch / tiny fraction smoke，
-确认日志中 `s_box/s_cls/s_dfl`、`t_box/t_cls/t_dfl` 和 `cclkd_loss` 均正常产生。
+实现上保留两个 formulation：`adapted` 是此前 YOLO11 token-level 适配版；
+`paper` 使用 teacher-side COP、target/non-target LLD、class-wise adaptive
+temperature 和 box-aligned feature sampling，作为后续原文复现实验的默认选择。
+
+当前只完成本地静态检查和 loss 单元 smoke；还需要在 GPU 训练环境做 1 epoch /
+tiny fraction smoke，确认日志中 `s_box/s_cls/s_dfl`、`t_box/t_cls/t_dfl` 和
+`cclkd_loss` 均正常产生。

@@ -46,6 +46,19 @@ DOI: 10.1080/10095020.2026.2633014
 注意：本地公开仓库只完成静态校验。正式训练环境需要先做 tiny smoke，确认
 student detection loss、teacher detection loss 和 CCLKD loss 都非零，再启动 400 epoch。
 
+## 实现模式
+
+`code/train_cclkd_online_hbb.py` 提供两个 CCLKD formulation：
+
+| 模式 | 用途 |
+|---|---|
+| `adapted` | YOLO11 token-level 适配版，保留此前用于 LADD 统一协议对比的实现边界 |
+| `paper` | 尽量贴近原文的实现：teacher-side COP、target/non-target LLD、class-wise adaptive temperature、box-aligned feature sampling 的 FLD/RLD/CCL |
+
+原文协议 launcher `code/launch_cclkd_paper_repro_job.sh` 默认使用 `CCLKD_FORMULATION=paper`。
+LADD formal 受控对比 launcher 默认仍为 `adapted`，如需跑贴近原文版需要显式设置
+`CCLKD_FORMULATION=paper`。
+
 示例：
 
 ```bash

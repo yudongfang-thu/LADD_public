@@ -26,6 +26,7 @@ Optional:
   BATCH_SIZE=64
   CCLKD_KD_WEIGHT=1.0
   CCLKD_CCL_WEIGHT=1.0
+  CCLKD_FORMULATION=adapted|paper
   EXIST_OK=1
 EOF
 }
@@ -65,6 +66,15 @@ case "$SIZE" in
   n|s) DEFAULT_BATCH=64 ;;
 esac
 BATCH_SIZE="${BATCH_SIZE:-$DEFAULT_BATCH}"
+CCLKD_FORMULATION="${CCLKD_FORMULATION:-adapted}"
+if [[ "$CCLKD_FORMULATION" != "adapted" && "$CCLKD_FORMULATION" != "paper" ]]; then
+  echo "CCLKD_FORMULATION must be adapted or paper, got: $CCLKD_FORMULATION" >&2
+  exit 1
+fi
+FORMULATION_SUFFIX=""
+if [[ "$CCLKD_FORMULATION" != "adapted" ]]; then
+  FORMULATION_SUFFIX="_${CCLKD_FORMULATION}"
+fi
 
 if [[ ! -f "$PRETRAIN" ]]; then
   echo "Missing YOLO pretrain checkpoint: $PRETRAIN" >&2
@@ -79,7 +89,7 @@ if [[ ! -f "$RGB_DATA" ]]; then
   exit 1
 fi
 
-RUN_TAG="formal_nomosaic_yolo11${SIZE}_cclkd_online_from_yolo_s${SEED}${RUN_TAG_SUFFIX:-}"
+RUN_TAG="formal_nomosaic_yolo11${SIZE}_cclkd_online_from_yolo${FORMULATION_SUFFIX}_s${SEED}${RUN_TAG_SUFFIX:-}"
 PROJECT_DIR="${BASE_ROOT}/comparisons/online_cclkd/yolo11${SIZE}/cclkd"
 LOG_DIR="logs/formal_nomosaic_20260528/comparisons/online_cclkd"
 OUTER_LOG="${LOG_DIR}/${RUN_TAG}_gpu${GPU_ID}.outer.log"
@@ -113,6 +123,8 @@ cmd=(
   --fld-weight "${CCLKD_FLD_WEIGHT:-1.0}"
   --rld-weight "${CCLKD_RLD_WEIGHT:-1.0}"
   --ccl-weight "${CCLKD_CCL_WEIGHT:-1.0}"
+  --cclkd-formulation "$CCLKD_FORMULATION"
+  --cclkd-roi-grid-size "${CCLKD_ROI_GRID_SIZE:-3}"
   --optimizer "${OPTIMIZER:-auto}"
   --lr0 "${LR0:-0.01}"
   --lrf "${LRF:-0.01}"

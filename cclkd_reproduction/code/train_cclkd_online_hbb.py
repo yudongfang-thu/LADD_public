@@ -46,6 +46,18 @@ def _flatten_feat(x: torch.Tensor) -> torch.Tensor:
     return x.permute(0, 2, 3, 1).reshape(x.shape[0], -1, x.shape[1])
 
 
+def _detach_pred_dict(preds: dict[str, torch.Tensor]) -> dict[str, torch.Tensor | list[torch.Tensor]]:
+    out: dict[str, torch.Tensor | list[torch.Tensor]] = {}
+    for key, value in preds.items():
+        if isinstance(value, torch.Tensor):
+            out[key] = value.detach()
+        elif isinstance(value, list):
+            out[key] = [v.detach() if isinstance(v, torch.Tensor) else v for v in value]
+        else:
+            out[key] = value
+    return out
+
+
 class CCLKDOnlineReproLoss(nn.Module):
     """Online CCLKD reproduction loss for HBB YOLO11.
 
@@ -72,8 +84,12 @@ class CCLKDOnlineReproLoss(nn.Module):
         contrastive_temperature: float = 0.1,
         min_confidence: float = 0.1,
         max_tokens: int = 512,
+        formulation: str = "adapted",
+        roi_grid_size: int = 3,
     ):
         super().__init__()
+        if formulation not in {"adapted", "paper"}:
+            raise ValueError(f"formulation must be 'adapted' or 'paper', got {formulation!r}.")
         self.teacher_model = teacher_model
         self.student_det = student_model.init_criterion()
         self.teacher_det = teacher_model.init_criterion()
@@ -90,6 +106,8 @@ class CCLKDOnlineReproLoss(nn.Module):
         self.contrastive_temperature = float(contrastive_temperature)
         self.min_confidence = float(min_confidence)
         self.max_tokens = int(max_tokens)
+        self.formulation = formulation
+        self.roi_grid_size = int(roi_grid_size)
 
     def update(self) -> None:
         for criterion in (self.student_det, self.teacher_det):
@@ -106,9 +124,9 @@ class CCLKDOnlineReproLoss(nn.Module):
 
         student_main = _parse_pred_dict(student_preds)
         teacher_main = _parse_pred_dict(teacher_preds)
-        (fg_mask, _, _, _, _), _, _ = self.assigner_loss.get_assigned_targets_and_loss(student_main, batch)
-        target_scores = self._target_scores(student_main, batch, fg_mask)
-        kd_loss = self._cclkd_loss(student_main, teacher_main, fg_mask, target_scores)
+        assign_source = teacher_main if self.formulation == "paper" else student_main
+        fg_mask, target_scores, target_bboxes = self._assigned_targets(assign_source, batch)
+        kd_loss = self._cclkd_loss(student_main, teacher_main, fg_mask, target_scores, target_bboxes)
 
         total = student_det_loss + self.teacher_det_weight * teacher_det_loss + self.kd_weight * kd_loss
         items = torch.cat(
@@ -120,15 +138,17 @@ class CCLKDOnlineReproLoss(nn.Module):
         )
         return total, items
 
-    def _target_scores(
+    def _assigned_targets(
         self,
         preds: dict[str, torch.Tensor],
         batch: dict[str, torch.Tensor],
-        fg_mask: torch.Tensor,
-    ) -> torch.Tensor:
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        preds = _detach_pred_dict(preds)
         pred_distri = preds["boxes"].permute(0, 2, 1).contiguous()
         pred_scores = preds["scores"].permute(0, 2, 1).contiguous()
-        anchor_points, stride_tensor = self.assigner_loss.get_assigned_targets_and_loss(preds, batch)[0][3:]
+        from ultralytics.utils.tal import make_anchors
+
+        anchor_points, stride_tensor = make_anchors(preds["feats"], self.assigner_loss.stride, 0.5)
         dtype = pred_scores.dtype
         imgsz = torch.tensor(preds["feats"][0].shape[2:], device=pred_scores.device, dtype=dtype) * self.assigner_loss.stride[0]
         targets = torch.cat((batch["batch_idx"].view(-1, 1), batch["cls"].view(-1, 1), batch["bboxes"]), 1)
@@ -136,7 +156,7 @@ class CCLKDOnlineReproLoss(nn.Module):
         gt_labels, gt_bboxes = targets.split((1, 4), 2)
         mask_gt = gt_bboxes.sum(2, keepdim=True).gt_(0.0)
         pred_bboxes = self.assigner_loss.bbox_decode(anchor_points, pred_distri)
-        _, _, target_scores, _, _ = self.assigner_loss.assigner(
+        _, target_bboxes, target_scores, fg_mask, _ = self.assigner_loss.assigner(
             pred_scores.detach().sigmoid(),
             (pred_bboxes.detach() * stride_tensor).type(gt_bboxes.dtype),
             anchor_points * stride_tensor,
@@ -144,9 +164,7 @@ class CCLKDOnlineReproLoss(nn.Module):
             gt_bboxes,
             mask_gt,
         )
-        if target_scores.shape[:2] != fg_mask.shape:
-            raise RuntimeError("Internal target score shape mismatch in CCLKD online loss.")
-        return target_scores
+        return fg_mask, target_scores, target_bboxes
 
     def _cclkd_loss(
         self,
@@ -154,6 +172,7 @@ class CCLKDOnlineReproLoss(nn.Module):
         teacher: dict[str, torch.Tensor],
         fg_mask: torch.Tensor,
         target_scores: torch.Tensor,
+        target_bboxes: torch.Tensor,
     ) -> torch.Tensor:
         student_distri = student["boxes"].permute(0, 2, 1).contiguous()
         teacher_distri = teacher["boxes"].detach().permute(0, 2, 1).contiguous()
@@ -167,15 +186,18 @@ class CCLKDOnlineReproLoss(nn.Module):
         offset = 0
         for student_feat, teacher_feat in zip(student["feats"], teacher["feats"]):
             tokens = student_feat.shape[2] * student_feat.shape[3]
+            level_stride = float(self.assigner_loss.stride[levels])
             total = total + self._cclkd_level_loss(
                 student_feat,
                 teacher_feat.detach(),
+                level_stride,
                 fg_mask[:, offset : offset + tokens],
                 target_scores[:, offset : offset + tokens],
                 student_distri[:, offset : offset + tokens],
                 teacher_distri[:, offset : offset + tokens],
                 student_scores[:, offset : offset + tokens],
                 teacher_scores[:, offset : offset + tokens],
+                target_bboxes[:, offset : offset + tokens],
             )
             offset += tokens
             levels += 1
@@ -185,12 +207,14 @@ class CCLKDOnlineReproLoss(nn.Module):
         self,
         student_map: torch.Tensor,
         teacher_map: torch.Tensor,
+        level_stride: float,
         fg_mask: torch.Tensor,
         target_scores: torch.Tensor,
         student_distri: torch.Tensor,
         teacher_distri: torch.Tensor,
         student_scores: torch.Tensor,
         teacher_scores: torch.Tensor,
+        target_bboxes: torch.Tensor,
     ) -> torch.Tensor:
         zero = student_map.new_zeros(())
         fg = fg_mask.bool()
@@ -210,6 +234,7 @@ class CCLKDOnlineReproLoss(nn.Module):
         cop_flat = cop.reshape(-1)
         teacher_conf_flat = teacher_conf.reshape(-1)
         teacher_probs_flat = teacher_probs.reshape(-1, teacher_probs.shape[-1])
+        target_bboxes_flat = target_bboxes.reshape(-1, target_bboxes.shape[-1])
         student_feat_flat = _flatten_feat(student_map).reshape(-1, student_map.shape[1])
         teacher_feat_flat = _flatten_feat(teacher_map).reshape(-1, teacher_map.shape[1])
         student_distri_flat = student_distri.reshape(-1, student_distri.shape[-1])
@@ -235,27 +260,55 @@ class CCLKDOnlineReproLoss(nn.Module):
                 pos_idx = pos_idx[torch.randperm(pos_idx.numel(), device=pos_idx.device)[: self.max_tokens]]
 
             neg_idx = torch.where(valid_flat & ~labels.eq(class_id))[0]
-            if neg_idx.numel() == 0:
+            if neg_idx.numel() == 0 and self.formulation != "paper":
                 neg_idx = torch.where((~valid_flat) & (teacher_conf_flat >= self.min_confidence))[0]
             if neg_idx.numel() > self.max_tokens:
                 neg_idx = neg_idx[torch.randperm(neg_idx.numel(), device=neg_idx.device)[: self.max_tokens]]
 
-            temperature = self._adaptive_temperature(teacher_probs_flat[pos_idx, class_id])
+            if self.formulation == "paper":
+                temperature = self._adaptive_temperature_class(teacher_probs_flat[pos_idx, class_id])
+            else:
+                temperature = self._adaptive_temperature(teacher_probs_flat[pos_idx, class_id])
             reg_max = student_distri_flat.shape[-1] // 4
             s_box = student_distri_flat[pos_idx].reshape(-1, 4, reg_max)
             t_box = teacher_distri_flat[pos_idx].reshape(-1, 4, reg_max)
-            box_lld = F.kl_div(
-                F.log_softmax(s_box / temperature.view(-1, 1, 1), dim=-1),
-                F.softmax(t_box / temperature.view(-1, 1, 1), dim=-1),
-                reduction="none",
-            ).sum(dim=(-1, -2))
-            box_lld = (box_lld * temperature.pow(2)).mean()
+            if self.formulation == "paper":
+                box_lld = self._dfl_kl(s_box, t_box, temperature)
+                if neg_idx.numel() > 0:
+                    neg_for_lld = neg_idx
+                    if neg_for_lld.numel() > pos_idx.numel():
+                        neg_for_lld = neg_for_lld[
+                            torch.randperm(neg_for_lld.numel(), device=neg_for_lld.device)[: pos_idx.numel()]
+                        ]
+                    s_neg_box = student_distri_flat[neg_for_lld].reshape(-1, 4, reg_max)
+                    t_neg_box = teacher_distri_flat[neg_for_lld].reshape(-1, 4, reg_max)
+                    box_lld = box_lld + self._dfl_kl(s_neg_box, t_neg_box, temperature)
+            else:
+                box_lld = F.kl_div(
+                    F.log_softmax(s_box / temperature.view(-1, 1, 1), dim=-1),
+                    F.softmax(t_box / temperature.view(-1, 1, 1), dim=-1),
+                    reduction="none",
+                ).sum(dim=(-1, -2))
+                box_lld = (box_lld * temperature.pow(2)).mean()
             lld = lld + class_weight * box_lld
-            fld = fld + class_weight * F.mse_loss(student_feat_flat[pos_idx], teacher_feat_flat[pos_idx])
+
+            if self.formulation == "paper":
+                pos_boxes = target_bboxes_flat[pos_idx]
+                s_pos_feat = self._sample_box_features(student_map, pos_idx, pos_boxes, level_stride)
+                t_pos_feat = self._sample_box_features(teacher_map, pos_idx, pos_boxes, level_stride)
+                fld = fld + class_weight * F.kl_div(
+                    F.log_softmax(s_pos_feat, dim=-1),
+                    F.softmax(t_pos_feat, dim=-1),
+                    reduction="batchmean",
+                )
+            else:
+                s_pos_feat = student_feat_flat[pos_idx]
+                t_pos_feat = teacher_feat_flat[pos_idx]
+                fld = fld + class_weight * F.mse_loss(s_pos_feat, t_pos_feat)
 
             if pos_idx.numel() > 1:
-                s_rel = F.normalize(student_feat_flat[pos_idx], dim=-1, eps=1e-6)
-                t_rel = F.normalize(teacher_feat_flat[pos_idx], dim=-1, eps=1e-6)
+                s_rel = F.normalize(s_pos_feat, dim=-1, eps=1e-6)
+                t_rel = F.normalize(t_pos_feat, dim=-1, eps=1e-6)
                 n_pos = float(pos_idx.numel())
                 rld = rld + class_weight * F.mse_loss(s_rel.T @ s_rel / n_pos, t_rel.T @ t_rel / n_pos)
 
@@ -268,11 +321,37 @@ class CCLKDOnlineReproLoss(nn.Module):
                 if min_n == 0:
                     used += 1
                     continue
-                s_anchor = F.normalize(student_feat_flat[pos_idx[:min_n]], dim=-1, eps=1e-6)
-                t_pos = F.normalize(teacher_feat_flat[pos_idx[:min_n]], dim=-1, eps=1e-6)
-                t_neg = F.normalize(teacher_feat_flat[sampled_neg[:min_n]], dim=-1, eps=1e-6)
-                pos_sim = (s_anchor * t_pos).sum(dim=-1) / self.contrastive_temperature
-                neg_sim = (s_anchor * t_neg).sum(dim=-1) / self.contrastive_temperature
+                if self.formulation == "paper":
+                    pos_boxes = target_bboxes_flat[pos_idx[:min_n]]
+                    neg_boxes = target_bboxes_flat[sampled_neg[:min_n]]
+                    s_pos = F.normalize(
+                        self._sample_box_features(student_map, pos_idx[:min_n], pos_boxes, level_stride),
+                        dim=-1,
+                        eps=1e-6,
+                    )
+                    t_pos = F.normalize(
+                        self._sample_box_features(teacher_map, pos_idx[:min_n], pos_boxes, level_stride),
+                        dim=-1,
+                        eps=1e-6,
+                    )
+                    s_neg = F.normalize(
+                        self._sample_box_features(student_map, sampled_neg[:min_n], neg_boxes, level_stride),
+                        dim=-1,
+                        eps=1e-6,
+                    )
+                    t_neg = F.normalize(
+                        self._sample_box_features(teacher_map, sampled_neg[:min_n], neg_boxes, level_stride),
+                        dim=-1,
+                        eps=1e-6,
+                    )
+                    pos_sim = (s_pos * t_pos).sum(dim=-1) / self.contrastive_temperature
+                    neg_sim = (s_neg * t_neg).sum(dim=-1) / self.contrastive_temperature
+                else:
+                    s_anchor = F.normalize(student_feat_flat[pos_idx[:min_n]], dim=-1, eps=1e-6)
+                    t_pos = F.normalize(teacher_feat_flat[pos_idx[:min_n]], dim=-1, eps=1e-6)
+                    t_neg = F.normalize(teacher_feat_flat[sampled_neg[:min_n]], dim=-1, eps=1e-6)
+                    pos_sim = (s_anchor * t_pos).sum(dim=-1) / self.contrastive_temperature
+                    neg_sim = (s_anchor * t_neg).sum(dim=-1) / self.contrastive_temperature
                 logits = torch.stack((pos_sim, neg_sim), dim=-1)
                 ccl = ccl + class_weight * (-F.log_softmax(logits, dim=-1)[:, 0].mean())
             used += 1
@@ -281,10 +360,71 @@ class CCLKDOnlineReproLoss(nn.Module):
             return zero
         return self.lld_weight * lld + self.fld_weight * fld + self.rld_weight * rld + self.ccl_weight * ccl
 
+    @staticmethod
+    def _dfl_kl(student_box: torch.Tensor, teacher_box: torch.Tensor, temperature: torch.Tensor) -> torch.Tensor:
+        if student_box.numel() == 0:
+            return student_box.new_zeros(())
+        if temperature.ndim == 0:
+            t = temperature.view(1, 1, 1)
+            scale = temperature.pow(2)
+        else:
+            t = temperature.view(-1, 1, 1)
+            scale = temperature.pow(2)
+        loss = F.kl_div(
+            F.log_softmax(student_box / t, dim=-1),
+            F.softmax(teacher_box / t, dim=-1),
+            reduction="none",
+        ).sum(dim=(-1, -2))
+        return (loss * scale).mean()
+
+    def _sample_box_features(
+        self,
+        feature_map: torch.Tensor,
+        flat_idx: torch.Tensor,
+        boxes_xyxy: torch.Tensor,
+        level_stride: float,
+    ) -> torch.Tensor:
+        """Paper-style region feature extraction via bilinear sampling inside each assigned box."""
+        if flat_idx.numel() == 0:
+            return feature_map.new_zeros((0, feature_map.shape[1]))
+        bsz, channels, height, width = feature_map.shape
+        tokens = height * width
+        batch_idx = torch.div(flat_idx, tokens, rounding_mode="floor")
+        boxes = boxes_xyxy.to(device=feature_map.device, dtype=feature_map.dtype)
+        image_w = float(width * level_stride)
+        image_h = float(height * level_stride)
+        x1 = boxes[:, 0].clamp(0, image_w - 1)
+        y1 = boxes[:, 1].clamp(0, image_h - 1)
+        x2 = boxes[:, 2].clamp(0, image_w - 1)
+        y2 = boxes[:, 3].clamp(0, image_h - 1)
+        x2 = torch.maximum(x2, x1 + 1.0)
+        y2 = torch.maximum(y2, y1 + 1.0)
+
+        grid_size = max(self.roi_grid_size, 1)
+        lin = torch.linspace(0.5 / grid_size, 1.0 - 0.5 / grid_size, grid_size, device=feature_map.device, dtype=feature_map.dtype)
+        yy, xx = torch.meshgrid(lin, lin, indexing="ij")
+        xs = x1[:, None, None] + (x2 - x1)[:, None, None] * xx
+        ys = y1[:, None, None] + (y2 - y1)[:, None, None] * yy
+        x_norm = xs / max(image_w - 1.0, 1.0) * 2.0 - 1.0
+        y_norm = ys / max(image_h - 1.0, 1.0) * 2.0 - 1.0
+        grid = torch.stack((x_norm, y_norm), dim=-1)
+
+        sampled = F.grid_sample(feature_map[batch_idx], grid, mode="bilinear", padding_mode="border", align_corners=True)
+        return sampled.flatten(2).mean(dim=-1).reshape(flat_idx.numel(), channels)
+
     def _adaptive_temperature(self, class_scores: torch.Tensor) -> torch.Tensor:
         class_scores = class_scores.clamp(1e-6, 1.0 - 1e-6)
         entropy = -(class_scores * class_scores.log() + (1.0 - class_scores) * (1.0 - class_scores).log())
         entropy = (entropy / math.log(2.0)).clamp(0.0, 1.0)
+        temperature = self.temperature_min + (self.temperature_max - self.temperature_min) * torch.sigmoid(
+            self.entropy_scale * (entropy - 0.5)
+        )
+        return temperature.clamp(self.temperature_min, self.temperature_max)
+
+    def _adaptive_temperature_class(self, class_scores: torch.Tensor) -> torch.Tensor:
+        class_scores = class_scores.clamp(1e-6, 1.0 - 1e-6)
+        entropy = -(class_scores * class_scores.log() + (1.0 - class_scores) * (1.0 - class_scores).log())
+        entropy = (entropy.mean() / math.log(2.0)).clamp(0.0, 1.0)
         temperature = self.temperature_min + (self.temperature_max - self.temperature_min) * torch.sigmoid(
             self.entropy_scale * (entropy - 0.5)
         )
@@ -311,6 +451,8 @@ class CCLKDOnlineHBBTrainer(DetectionTrainer):
             "contrastive_temperature": float(overrides.pop("cclkd_contrastive_temperature", 0.1)),
             "min_confidence": float(overrides.pop("cclkd_min_confidence", 0.1)),
             "max_tokens": int(overrides.pop("cclkd_max_tokens", 512)),
+            "formulation": overrides.pop("cclkd_formulation", "adapted"),
+            "roi_grid_size": int(overrides.pop("cclkd_roi_grid_size", 3)),
         }
         if self.cclkd_cfg["teacher_data"] is None or self.cclkd_cfg["teacher_weights"] is None:
             raise ValueError("CCLKDOnlineHBBTrainer requires teacher_data and teacher_weights.")
@@ -380,7 +522,10 @@ class CCLKDOnlineHBBTrainer(DetectionTrainer):
         student.criterion = CCLKDOnlineReproLoss(student, self.teacher_model, **self.cclkd_cfg_without_paths())
         if self.ema:
             self.ema.ema.criterion = student.init_criterion()
-        LOGGER.info("CCLKD online reproduction: teacher is trainable and optimized with RGB detection loss.")
+        LOGGER.info(
+            "CCLKD online reproduction: teacher is trainable and optimized with RGB detection loss "
+            f"(formulation={self.cclkd_cfg['formulation']})."
+        )
 
     def cclkd_cfg_without_paths(self) -> dict[str, float | int]:
         return {k: v for k, v in self.cclkd_cfg.items() if k not in {"teacher_data", "teacher_weights"}}
@@ -490,6 +635,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--cclkd-contrastive-temperature", type=float, default=0.1)
     parser.add_argument("--cclkd-min-confidence", type=float, default=0.1)
     parser.add_argument("--cclkd-max-tokens", type=int, default=512)
+    parser.add_argument(
+        "--cclkd-formulation",
+        choices=("adapted", "paper"),
+        default="adapted",
+        help="'adapted' keeps the YOLO11 token-level proxy; 'paper' uses teacher COP, target/non-target LLD, "
+        "class-wise temperature, and box-aligned feature sampling.",
+    )
+    parser.add_argument("--cclkd-roi-grid-size", type=int, default=3)
     add_common_detector_train_overrides(parser)
     return parser.parse_args()
 
@@ -530,6 +683,8 @@ def main() -> None:
         cclkd_contrastive_temperature=args.cclkd_contrastive_temperature,
         cclkd_min_confidence=args.cclkd_min_confidence,
         cclkd_max_tokens=args.cclkd_max_tokens,
+        cclkd_formulation=args.cclkd_formulation,
+        cclkd_roi_grid_size=args.cclkd_roi_grid_size,
     )
     train_kwargs.update(collect_common_detector_train_overrides(args))
     model.train(**train_kwargs)
