@@ -392,10 +392,11 @@ class CCLKDOnlineHBBTrainer(DetectionTrainer):
 
     def optimizer_step(self):
         self.scaler.unscale_(self.optimizer)
-        params = list(self.model.parameters())
         if self.teacher_model is not None:
-            params += list(self.teacher_model.parameters())
-        torch.nn.utils.clip_grad_norm_(params, max_norm=10.0)
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=10.0)
+            torch.nn.utils.clip_grad_norm_(self.teacher_model.parameters(), max_norm=10.0)
+        else:
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=10.0)
         self.scaler.step(self.optimizer)
         self.scaler.update()
         self.optimizer.zero_grad()

@@ -113,7 +113,7 @@ cmd=(
   --fld-weight "${CCLKD_FLD_WEIGHT:-1.0}"
   --rld-weight "${CCLKD_RLD_WEIGHT:-1.0}"
   --ccl-weight "${CCLKD_CCL_WEIGHT:-1.0}"
-  --optimizer "${OPTIMIZER:-SGD}"
+  --optimizer "${OPTIMIZER:-auto}"
   --lr0 "${LR0:-0.01}"
   --lrf "${LRF:-0.01}"
   --cos-lr
