@@ -1,0 +1,15 @@
+server: 90
+root: /mnt/dataY/ydf/dataset/OGSOD/OGSOD-1.0/sar
+yaml: /mnt/dataY/ydf/projects/LADD_public/configs/datasets/ogsod_hbb_sar.yaml
+images_train: 14664
+images_test: 3667
+labels_train_files: 14664
+labels_test_files: 3667
+train_instances_by_class:
+0 25533
+1 3306
+2 10136
+test_instances_by_class:
+0 6389
+1 803
+2 2422

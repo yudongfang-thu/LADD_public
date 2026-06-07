@@ -1,0 +1,10 @@
+path: /mnt/dataY/ydf/dataset/OGSOD/OGSOD-1.0/rgb
+train: images/train
+val: images/test
+test: images/test
+
+nc: 3
+names:
+  0: bridge
+  1: harbor
+  2: storage_tank

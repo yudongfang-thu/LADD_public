@@ -54,6 +54,20 @@ export TEACHER_DATA=/path/to/ogsod_hbb_rgb.yaml
 bash cclkd_reproduction/code/launch_cclkd_paper_repro_job.sh s 0 0
 ```
 
+## 当前复现差距审计
+
+2026-06-07 已整理一版复现差距材料：
+
+```text
+diagnostics/20260607_protocol_gap/README_CN.md
+diagnostics/20260607_protocol_gap/RESULT_SUMMARY.csv
+diagnostics/20260607_protocol_gap/server_artifacts/
+```
+
+该目录包含 CCLKD 原文协议与结果、YOLO-CMFM 外部 baseline 参照、90/双卡服务器上
+已完成/未完成 CCLKD 与 paper-protocol SAR-only baseline 的 `results.csv`、`args.yaml`、
+日志、dataset yaml 和数据集统计。权重文件和模型导出文件均未纳入。
+
 ## 与受控对比的关系
 
 - `cclkd_reproduction/`：回答“我们是否能按 CCLKD 原文协议复现其方法”。
