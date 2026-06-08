@@ -25,6 +25,7 @@ Optional:
   EPOCHS=400
   BATCH_SIZE=64
   CCLKD_FORMULATION=paper
+  CCLKD_CCL_MODE=paper_pair|anchor_teacher_neg
   CCLKD_FLD_TEMPERATURE=1.0
   CCLKD_FLD_TEMPERATURE_MODE=patm|fixed
   EXIST_OK=1
@@ -101,20 +102,25 @@ case "$SIZE" in
 esac
 BATCH_SIZE="${BATCH_SIZE:-$DEFAULT_BATCH}"
 CCLKD_FORMULATION="${CCLKD_FORMULATION:-paper}"
+CCLKD_CCL_MODE="${CCLKD_CCL_MODE:-paper_pair}"
 
 if [[ "$CCLKD_FORMULATION" != "paper" ]]; then
   echo "Formal CCLKD ablations should use CCLKD_FORMULATION=paper, got: $CCLKD_FORMULATION" >&2
   exit 1
 fi
-if [[ ! -f "$PRETRAIN" ]]; then
+if [[ "$CCLKD_CCL_MODE" != "paper_pair" && "$CCLKD_CCL_MODE" != "anchor_teacher_neg" ]]; then
+  echo "CCLKD_CCL_MODE must be paper_pair or anchor_teacher_neg, got: $CCLKD_CCL_MODE" >&2
+  exit 1
+fi
+if [[ "${DRY_RUN:-0}" != "1" && ! -f "$PRETRAIN" ]]; then
   echo "Missing YOLO pretrain checkpoint: $PRETRAIN" >&2
   exit 1
 fi
-if [[ ! -f "$SAR_DATA" ]]; then
+if [[ "${DRY_RUN:-0}" != "1" && ! -f "$SAR_DATA" ]]; then
   echo "Missing SAR dataset yaml: $SAR_DATA" >&2
   exit 1
 fi
-if [[ ! -f "$RGB_DATA" ]]; then
+if [[ "${DRY_RUN:-0}" != "1" && ! -f "$RGB_DATA" ]]; then
   echo "Missing RGB dataset yaml: $RGB_DATA" >&2
   exit 1
 fi
@@ -136,8 +142,6 @@ fi
 cmd=(
   "$PYTHON" cclkd_reproduction/code/train_cclkd_online_hbb.py
   --model-size "$SIZE"
-  --model "$PRETRAIN"
-  --teacher-weights "$PRETRAIN"
   --data "$SAR_DATA"
   --teacher-data "$RGB_DATA"
   --imgsz 256
@@ -159,6 +163,7 @@ cmd=(
   --cclkd-fld-temperature "${CCLKD_FLD_TEMPERATURE:-1.0}"
   --cclkd-fld-temperature-mode "${CCLKD_FLD_TEMPERATURE_MODE:-patm}"
   --cclkd-formulation "$CCLKD_FORMULATION"
+  --cclkd-ccl-mode "$CCLKD_CCL_MODE"
   --cclkd-roi-grid-size "${CCLKD_ROI_GRID_SIZE:-3}"
   --optimizer "${OPTIMIZER:-auto}"
   --lr0 "${LR0:-0.01}"

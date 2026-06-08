@@ -104,8 +104,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--mosaic", type=float, required=True)
     parser.add_argument("--mixup", type=float, required=True)
     parser.add_argument("--online-trainer", action="store_true")
-    parser.add_argument("--student-weights", type=Path, required=True)
-    parser.add_argument("--teacher-weights", type=Path, required=True)
     parser.add_argument("--allow-unverified-mixup", action="store_true")
     return parser.parse_args()
 
@@ -132,11 +130,6 @@ def main() -> None:
         errors.append("CCLKD paper protocol uses MixUp; pass --mixup > 0 or --allow-unverified-mixup with a note.")
     if not args.online_trainer:
         errors.append("online teacher-student trainer flag is required; frozen teacher runs are not paper reproduction.")
-
-    expected_weight_name = f"yolo11{args.model_size}.pt"
-    for role, path in (("student", args.student_weights), ("teacher", args.teacher_weights)):
-        if path.name != expected_weight_name:
-            errors.append(f"{role} weights must be {expected_weight_name}, got {path}.")
 
     if errors:
         print("CCLKD reproduction protocol check failed:", file=sys.stderr)

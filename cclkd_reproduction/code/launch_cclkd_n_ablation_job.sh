@@ -25,6 +25,7 @@ Optional environment:
   EPOCHS            default 400
   BATCH             default 32
   MIXUP             default 0.1
+  CCLKD_CCL_MODE    paper_pair|anchor_teacher_neg (default: paper_pair)
   PROJECT_DIR       default runs_public/ogsod/hbb/cclkd_reproduction_ablation/yolo11n
   EXIST_OK          pass --exist-ok when set to 1
 EOF
@@ -48,7 +49,17 @@ MODEL_WEIGHTS="$REPO_ROOT/yolo11n.pt"
 EPOCHS="${EPOCHS:-400}"
 BATCH="${BATCH:-32}"
 MIXUP="${MIXUP:-0.1}"
+CCLKD_CCL_MODE="${CCLKD_CCL_MODE:-paper_pair}"
 PROJECT_DIR="${PROJECT_DIR:-$REPO_ROOT/runs_public/ogsod/hbb/cclkd_reproduction_ablation/yolo11n}"
+
+if [[ "$CCLKD_CCL_MODE" != "paper_pair" && "$CCLKD_CCL_MODE" != "anchor_teacher_neg" ]]; then
+  echo "CCLKD_CCL_MODE must be paper_pair or anchor_teacher_neg, got: $CCLKD_CCL_MODE" >&2
+  exit 1
+fi
+if [[ ! -f "$MODEL_WEIGHTS" ]]; then
+  echo "Missing YOLO pretrain checkpoint: $MODEL_WEIGHTS" >&2
+  exit 1
+fi
 
 LLD=0
 FLD=0
@@ -97,9 +108,7 @@ esac
   --lr0 0.01 \
   --mosaic 1.0 \
   --mixup "$MIXUP" \
-  --online-trainer \
-  --student-weights "$MODEL_WEIGHTS" \
-  --teacher-weights "$MODEL_WEIGHTS"
+  --online-trainer
 
 RUN_NAME="cclkd_ablation_yolo11n_${ABLATION}_s${SEED}_${EPOCHS}ep"
 EXIST_ARGS=()
@@ -109,8 +118,6 @@ fi
 
 exec "$PYTHON" "$SCRIPT_DIR/train_cclkd_online_hbb.py" \
   --model-size n \
-  --model "$MODEL_WEIGHTS" \
-  --teacher-weights "$MODEL_WEIGHTS" \
   --data "$STUDENT_DATA" \
   --teacher-data "$TEACHER_DATA" \
   --imgsz 256 \
@@ -134,4 +141,6 @@ exec "$PYTHON" "$SCRIPT_DIR/train_cclkd_online_hbb.py" \
   --ccl-weight "$CCL" \
   --cclkd-temperature-min "$TMIN" \
   --cclkd-temperature-max "$TMAX" \
+  --cclkd-formulation paper \
+  --cclkd-ccl-mode "$CCLKD_CCL_MODE" \
   --seed "$SEED"

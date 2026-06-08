@@ -58,6 +58,12 @@ def _detach_pred_dict(preds: dict[str, torch.Tensor]) -> dict[str, torch.Tensor 
     return out
 
 
+def _cclkd_pretrain_path(model_size: str) -> Path:
+    if model_size not in {"n", "s"}:
+        raise ValueError(f"CCLKD online reproduction only supports YOLO11n/s, got {model_size!r}.")
+    return REPO_ROOT / f"yolo11{model_size}.pt"
+
+
 class CCLKDOnlineReproLoss(nn.Module):
     """Online CCLKD reproduction loss for HBB YOLO11.
 
@@ -87,11 +93,17 @@ class CCLKDOnlineReproLoss(nn.Module):
         min_confidence: float = 0.1,
         max_tokens: int = 512,
         formulation: str = "adapted",
+        ccl_mode: str = "paper_pair",
         roi_grid_size: int = 3,
     ):
         super().__init__()
         if formulation not in {"adapted", "paper"}:
             raise ValueError(f"formulation must be 'adapted' or 'paper', got {formulation!r}.")
+        if ccl_mode not in {"paper_pair", "anchor_teacher_neg"}:
+            raise ValueError(
+                "ccl_mode must be 'paper_pair' or 'anchor_teacher_neg', "
+                f"got {ccl_mode!r}."
+            )
         if fld_temperature <= 0:
             raise ValueError(f"fld_temperature must be positive, got {fld_temperature}.")
         if fld_temperature_mode not in {"fixed", "patm"}:
@@ -115,6 +127,7 @@ class CCLKDOnlineReproLoss(nn.Module):
         self.min_confidence = float(min_confidence)
         self.max_tokens = int(max_tokens)
         self.formulation = formulation
+        self.ccl_mode = ccl_mode
         self.roi_grid_size = int(roi_grid_size)
         self._kd_component_levels: list[torch.Tensor] | None = None
 
@@ -341,7 +354,7 @@ class CCLKDOnlineReproLoss(nn.Module):
                 if self.formulation == "paper":
                     pos_boxes = target_bboxes_flat[pos_idx[:min_n]]
                     neg_boxes = target_bboxes_flat[sampled_neg[:min_n]]
-                    s_anchor = F.normalize(
+                    s_pos = F.normalize(
                         self._sample_box_features(student_map, pos_idx[:min_n], pos_boxes, level_stride),
                         dim=-1,
                         eps=1e-6,
@@ -351,13 +364,21 @@ class CCLKDOnlineReproLoss(nn.Module):
                         dim=-1,
                         eps=1e-6,
                     )
+                    s_neg = F.normalize(
+                        self._sample_box_features(student_map, sampled_neg[:min_n], neg_boxes, level_stride),
+                        dim=-1,
+                        eps=1e-6,
+                    )
                     t_neg = F.normalize(
                         self._sample_box_features(teacher_map, sampled_neg[:min_n], neg_boxes, level_stride),
                         dim=-1,
                         eps=1e-6,
                     )
-                    pos_sim = (s_anchor * t_pos).sum(dim=-1) / self.contrastive_temperature
-                    neg_sim = (s_anchor * t_neg).sum(dim=-1) / self.contrastive_temperature
+                    pos_sim = (s_pos * t_pos).sum(dim=-1) / self.contrastive_temperature
+                    if self.ccl_mode == "paper_pair":
+                        neg_sim = (s_neg * t_neg).sum(dim=-1) / self.contrastive_temperature
+                    else:
+                        neg_sim = (s_pos * t_neg).sum(dim=-1) / self.contrastive_temperature
                 else:
                     s_anchor = F.normalize(student_feat_flat[pos_idx[:min_n]], dim=-1, eps=1e-6)
                     t_pos = F.normalize(teacher_feat_flat[pos_idx[:min_n]], dim=-1, eps=1e-6)
@@ -499,9 +520,14 @@ class CCLKDOnlineHBBTrainer(DetectionTrainer):
 
     def __init__(self, cfg=DEFAULT_CFG, overrides: dict | None = None, _callbacks: dict | None = None):
         overrides = {} if overrides is None else dict(overrides)
+        if "teacher_weights" in overrides:
+            raise ValueError(
+                "CCLKD online trainer no longer accepts arbitrary teacher_weights; "
+                "teacher and student both initialize from yolo11{model_size}.pt."
+            )
         self.cclkd_cfg = {
             "teacher_data": overrides.pop("teacher_data", None),
-            "teacher_weights": overrides.pop("teacher_weights", None),
+            "model_size": overrides.pop("model_size", None),
             "teacher_det_weight": float(overrides.pop("teacher_det_weight", 1.0)),
             "kd_weight": float(overrides.pop("kd_weight", 1.0)),
             "lld_weight": float(overrides.pop("lld_weight", 1.0)),
@@ -517,10 +543,13 @@ class CCLKDOnlineHBBTrainer(DetectionTrainer):
             "min_confidence": float(overrides.pop("cclkd_min_confidence", 0.1)),
             "max_tokens": int(overrides.pop("cclkd_max_tokens", 512)),
             "formulation": overrides.pop("cclkd_formulation", "adapted"),
+            "ccl_mode": overrides.pop("cclkd_ccl_mode", "paper_pair"),
             "roi_grid_size": int(overrides.pop("cclkd_roi_grid_size", 3)),
         }
-        if self.cclkd_cfg["teacher_data"] is None or self.cclkd_cfg["teacher_weights"] is None:
-            raise ValueError("CCLKDOnlineHBBTrainer requires teacher_data and teacher_weights.")
+        if self.cclkd_cfg["model_size"] not in {"n", "s"}:
+            raise ValueError("CCLKDOnlineHBBTrainer requires model_size to be one of {'n', 's'}.")
+        if self.cclkd_cfg["teacher_data"] is None:
+            raise ValueError("CCLKDOnlineHBBTrainer requires teacher_data.")
         overrides["task"] = "detect"
         super().__init__(cfg, overrides, _callbacks)
         if self.world_size > 1:
@@ -530,7 +559,10 @@ class CCLKDOnlineHBBTrainer(DetectionTrainer):
 
     def setup_model(self):
         ckpt = super().setup_model()
-        teacher_weights, _ = load_checkpoint(str(self.cclkd_cfg["teacher_weights"]), device=self.device)
+        pretrain_path = _cclkd_pretrain_path(str(self.cclkd_cfg["model_size"]))
+        if not pretrain_path.is_file():
+            raise FileNotFoundError(f"Missing CCLKD online pretrain checkpoint: {pretrain_path}")
+        teacher_weights, _ = load_checkpoint(str(pretrain_path), device=self.device)
         self.teacher_model = DetectionModel(
             cfg=teacher_weights.yaml,
             nc=self.data["nc"],
@@ -589,11 +621,11 @@ class CCLKDOnlineHBBTrainer(DetectionTrainer):
             self.ema.ema.criterion = student.init_criterion()
         LOGGER.info(
             "CCLKD online reproduction: teacher is trainable and optimized with RGB detection loss "
-            f"(formulation={self.cclkd_cfg['formulation']})."
+            f"(formulation={self.cclkd_cfg['formulation']}, ccl_mode={self.cclkd_cfg['ccl_mode']})."
         )
 
-    def cclkd_cfg_without_paths(self) -> dict[str, float | int]:
-        return {k: v for k, v in self.cclkd_cfg.items() if k not in {"teacher_data", "teacher_weights"}}
+    def cclkd_cfg_without_paths(self) -> dict[str, Any]:
+        return {k: v for k, v in self.cclkd_cfg.items() if k not in {"teacher_data", "model_size"}}
 
     def _model_train(self):
         super()._model_train()
@@ -677,8 +709,6 @@ class CCLKDOnlineHBBTrainer(DetectionTrainer):
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="CCLKD paper-protocol online HBB reproduction trainer.")
     parser.add_argument("--model-size", choices=("n", "s"), required=True)
-    parser.add_argument("--model", required=True, help="Student YOLO11n/s COCO pretrained checkpoint.")
-    parser.add_argument("--teacher-weights", required=True, help="Teacher YOLO11n/s COCO pretrained checkpoint.")
     parser.add_argument("--data", type=Path, required=True, help="SAR OGSOD HBB YAML, nc=3.")
     parser.add_argument("--teacher-data", type=Path, required=True, help="RGB OGSOD HBB YAML, nc=3.")
     parser.add_argument("--imgsz", type=int, default=256)
@@ -718,6 +748,13 @@ def parse_args() -> argparse.Namespace:
         help="'adapted' keeps the YOLO11 token-level proxy; 'paper' uses teacher COP, target/non-target LLD, "
         "class-wise temperature, and box-aligned feature sampling.",
     )
+    parser.add_argument(
+        "--cclkd-ccl-mode",
+        choices=("paper_pair", "anchor_teacher_neg"),
+        default="paper_pair",
+        help="'paper_pair' uses sim(T_pos,S_pos) vs sim(T_neg,S_neg), matching CCLKD Algorithm 2 more closely; "
+        "'anchor_teacher_neg' keeps the previous student-anchor approximation.",
+    )
     parser.add_argument("--cclkd-roi-grid-size", type=int, default=3)
     add_common_detector_train_overrides(parser)
     return parser.parse_args()
@@ -725,17 +762,16 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    expected = f"yolo11{args.model_size}.pt"
-    for role, value in (("student", args.model), ("teacher", args.teacher_weights)):
-        if Path(value).name != expected:
-            raise SystemExit(f"{role} weights must be {expected} for CCLKD paper reproduction, got {value}.")
+    pretrain_path = _cclkd_pretrain_path(args.model_size)
+    if not pretrain_path.is_file():
+        raise SystemExit(f"Missing CCLKD online pretrain checkpoint: {pretrain_path}")
 
-    model = YOLO(args.model)
+    model = YOLO(str(pretrain_path))
     train_kwargs = dict(
         trainer=CCLKDOnlineHBBTrainer,
+        model_size=args.model_size,
         data=str(args.data.resolve()),
         teacher_data=str(args.teacher_data.resolve()),
-        teacher_weights=str(Path(args.teacher_weights).resolve()),
         imgsz=args.imgsz,
         epochs=args.epochs,
         batch=args.batch,
@@ -762,6 +798,7 @@ def main() -> None:
         cclkd_min_confidence=args.cclkd_min_confidence,
         cclkd_max_tokens=args.cclkd_max_tokens,
         cclkd_formulation=args.cclkd_formulation,
+        cclkd_ccl_mode=args.cclkd_ccl_mode,
         cclkd_roi_grid_size=args.cclkd_roi_grid_size,
     )
     train_kwargs.update(collect_common_detector_train_overrides(args))

@@ -27,6 +27,7 @@ Optional:
   CCLKD_KD_WEIGHT=1.0
   CCLKD_CCL_WEIGHT=1.0
   CCLKD_FORMULATION=adapted|paper
+  CCLKD_CCL_MODE=paper_pair|anchor_teacher_neg
   EXIST_OK=1
 EOF
 }
@@ -67,8 +68,13 @@ case "$SIZE" in
 esac
 BATCH_SIZE="${BATCH_SIZE:-$DEFAULT_BATCH}"
 CCLKD_FORMULATION="${CCLKD_FORMULATION:-adapted}"
+CCLKD_CCL_MODE="${CCLKD_CCL_MODE:-paper_pair}"
 if [[ "$CCLKD_FORMULATION" != "adapted" && "$CCLKD_FORMULATION" != "paper" ]]; then
   echo "CCLKD_FORMULATION must be adapted or paper, got: $CCLKD_FORMULATION" >&2
+  exit 1
+fi
+if [[ "$CCLKD_CCL_MODE" != "paper_pair" && "$CCLKD_CCL_MODE" != "anchor_teacher_neg" ]]; then
+  echo "CCLKD_CCL_MODE must be paper_pair or anchor_teacher_neg, got: $CCLKD_CCL_MODE" >&2
   exit 1
 fi
 FORMULATION_SUFFIX=""
@@ -76,15 +82,15 @@ if [[ "$CCLKD_FORMULATION" != "adapted" ]]; then
   FORMULATION_SUFFIX="_${CCLKD_FORMULATION}"
 fi
 
-if [[ ! -f "$PRETRAIN" ]]; then
+if [[ "${DRY_RUN:-0}" != "1" && ! -f "$PRETRAIN" ]]; then
   echo "Missing YOLO pretrain checkpoint: $PRETRAIN" >&2
   exit 1
 fi
-if [[ ! -f "$SAR_DATA" ]]; then
+if [[ "${DRY_RUN:-0}" != "1" && ! -f "$SAR_DATA" ]]; then
   echo "Missing SAR dataset yaml: $SAR_DATA" >&2
   exit 1
 fi
-if [[ ! -f "$RGB_DATA" ]]; then
+if [[ "${DRY_RUN:-0}" != "1" && ! -f "$RGB_DATA" ]]; then
   echo "Missing RGB dataset yaml: $RGB_DATA" >&2
   exit 1
 fi
@@ -106,8 +112,6 @@ fi
 cmd=(
   "$PYTHON" cclkd_reproduction/code/train_cclkd_online_hbb.py
   --model-size "$SIZE"
-  --model "$PRETRAIN"
-  --teacher-weights "$PRETRAIN"
   --data "$SAR_DATA"
   --teacher-data "$RGB_DATA"
   --imgsz 256
@@ -124,6 +128,7 @@ cmd=(
   --rld-weight "${CCLKD_RLD_WEIGHT:-1.0}"
   --ccl-weight "${CCLKD_CCL_WEIGHT:-1.0}"
   --cclkd-formulation "$CCLKD_FORMULATION"
+  --cclkd-ccl-mode "$CCLKD_CCL_MODE"
   --cclkd-roi-grid-size "${CCLKD_ROI_GRID_SIZE:-3}"
   --optimizer "${OPTIMIZER:-auto}"
   --lr0 "${LR0:-0.01}"
