@@ -26,6 +26,8 @@ Optional:
   BATCH_SIZE=64
   CCLKD_FORMULATION=paper
   CCLKD_CCL_MODE=paper_pair|anchor_teacher_neg
+  CCLKD_CCL_SOURCE=box_distribution|roi_feature
+  CCLKD_RLD_MODE=paper_instance|channel
   CCLKD_FLD_TEMPERATURE=1.0
   CCLKD_FLD_TEMPERATURE_MODE=patm|fixed
   EXIST_OK=1
@@ -103,6 +105,8 @@ esac
 BATCH_SIZE="${BATCH_SIZE:-$DEFAULT_BATCH}"
 CCLKD_FORMULATION="${CCLKD_FORMULATION:-paper}"
 CCLKD_CCL_MODE="${CCLKD_CCL_MODE:-paper_pair}"
+CCLKD_CCL_SOURCE="${CCLKD_CCL_SOURCE:-box_distribution}"
+CCLKD_RLD_MODE="${CCLKD_RLD_MODE:-paper_instance}"
 
 if [[ "$CCLKD_FORMULATION" != "paper" ]]; then
   echo "Formal CCLKD ablations should use CCLKD_FORMULATION=paper, got: $CCLKD_FORMULATION" >&2
@@ -110,6 +114,14 @@ if [[ "$CCLKD_FORMULATION" != "paper" ]]; then
 fi
 if [[ "$CCLKD_CCL_MODE" != "paper_pair" && "$CCLKD_CCL_MODE" != "anchor_teacher_neg" ]]; then
   echo "CCLKD_CCL_MODE must be paper_pair or anchor_teacher_neg, got: $CCLKD_CCL_MODE" >&2
+  exit 1
+fi
+if [[ "$CCLKD_CCL_SOURCE" != "box_distribution" && "$CCLKD_CCL_SOURCE" != "roi_feature" ]]; then
+  echo "CCLKD_CCL_SOURCE must be box_distribution or roi_feature, got: $CCLKD_CCL_SOURCE" >&2
+  exit 1
+fi
+if [[ "$CCLKD_RLD_MODE" != "paper_instance" && "$CCLKD_RLD_MODE" != "channel" ]]; then
+  echo "CCLKD_RLD_MODE must be paper_instance or channel, got: $CCLKD_RLD_MODE" >&2
   exit 1
 fi
 if [[ "${DRY_RUN:-0}" != "1" && ! -f "$PRETRAIN" ]]; then
@@ -125,7 +137,7 @@ if [[ "${DRY_RUN:-0}" != "1" && ! -f "$RGB_DATA" ]]; then
   exit 1
 fi
 
-RUN_TAG="formal_nomosaic_yolo11${SIZE}_cclkd_paper_${ABLATION}_s${SEED}${RUN_TAG_SUFFIX:-}"
+RUN_TAG="formal_nomosaic_yolo11${SIZE}_cclkd_paper_${ABLATION}_${CCLKD_CCL_MODE}_${CCLKD_CCL_SOURCE}_${CCLKD_RLD_MODE}_s${SEED}${RUN_TAG_SUFFIX:-}"
 PROJECT_DIR="${BASE_ROOT}/comparisons/online_cclkd/yolo11${SIZE}/paper_ablation"
 LOG_DIR="logs/formal_nomosaic_20260528/comparisons/online_cclkd_paper_ablation"
 OUTER_LOG="${LOG_DIR}/${RUN_TAG}_gpu${GPU_ID}.outer.log"
@@ -164,6 +176,8 @@ cmd=(
   --cclkd-fld-temperature-mode "${CCLKD_FLD_TEMPERATURE_MODE:-patm}"
   --cclkd-formulation "$CCLKD_FORMULATION"
   --cclkd-ccl-mode "$CCLKD_CCL_MODE"
+  --cclkd-ccl-source "$CCLKD_CCL_SOURCE"
+  --cclkd-rld-mode "$CCLKD_RLD_MODE"
   --cclkd-roi-grid-size "${CCLKD_ROI_GRID_SIZE:-3}"
   --optimizer "${OPTIMIZER:-auto}"
   --lr0 "${LR0:-0.01}"

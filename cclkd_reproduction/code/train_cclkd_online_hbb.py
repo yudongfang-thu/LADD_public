@@ -94,6 +94,8 @@ class CCLKDOnlineReproLoss(nn.Module):
         max_tokens: int = 512,
         formulation: str = "adapted",
         ccl_mode: str = "paper_pair",
+        ccl_source: str = "box_distribution",
+        rld_mode: str = "paper_instance",
         roi_grid_size: int = 3,
     ):
         super().__init__()
@@ -103,6 +105,16 @@ class CCLKDOnlineReproLoss(nn.Module):
             raise ValueError(
                 "ccl_mode must be 'paper_pair' or 'anchor_teacher_neg', "
                 f"got {ccl_mode!r}."
+            )
+        if ccl_source not in {"box_distribution", "roi_feature"}:
+            raise ValueError(
+                "ccl_source must be 'box_distribution' or 'roi_feature', "
+                f"got {ccl_source!r}."
+            )
+        if rld_mode not in {"paper_instance", "channel"}:
+            raise ValueError(
+                "rld_mode must be 'paper_instance' or 'channel', "
+                f"got {rld_mode!r}."
             )
         if fld_temperature <= 0:
             raise ValueError(f"fld_temperature must be positive, got {fld_temperature}.")
@@ -128,6 +140,8 @@ class CCLKDOnlineReproLoss(nn.Module):
         self.max_tokens = int(max_tokens)
         self.formulation = formulation
         self.ccl_mode = ccl_mode
+        self.ccl_source = ccl_source
+        self.rld_mode = rld_mode
         self.roi_grid_size = int(roi_grid_size)
         self._kd_component_levels: list[torch.Tensor] | None = None
 
@@ -352,28 +366,44 @@ class CCLKDOnlineReproLoss(nn.Module):
                     used += 1
                     continue
                 if self.formulation == "paper":
-                    pos_boxes = target_bboxes_flat[pos_idx[:min_n]]
-                    neg_boxes = target_bboxes_flat[sampled_neg[:min_n]]
-                    s_pos = F.normalize(
-                        self._sample_box_features(student_map, pos_idx[:min_n], pos_boxes, level_stride),
-                        dim=-1,
-                        eps=1e-6,
-                    )
-                    t_pos = F.normalize(
-                        self._sample_box_features(teacher_map, pos_idx[:min_n], pos_boxes, level_stride),
-                        dim=-1,
-                        eps=1e-6,
-                    )
-                    s_neg = F.normalize(
-                        self._sample_box_features(student_map, sampled_neg[:min_n], neg_boxes, level_stride),
-                        dim=-1,
-                        eps=1e-6,
-                    )
-                    t_neg = F.normalize(
-                        self._sample_box_features(teacher_map, sampled_neg[:min_n], neg_boxes, level_stride),
-                        dim=-1,
-                        eps=1e-6,
-                    )
+                    if self.ccl_source == "box_distribution":
+                        if temperature.ndim == 0 or temperature.numel() == 1:
+                            ccl_temperature = temperature.reshape(1, 1)
+                        elif temperature.numel() >= min_n:
+                            ccl_temperature = temperature[:min_n].reshape(-1, 1)
+                        else:
+                            ccl_temperature = temperature.mean().reshape(1, 1)
+                        s_pos = F.softmax(student_distri_flat[pos_idx[:min_n]] / ccl_temperature, dim=-1)
+                        t_pos = F.softmax(teacher_distri_flat[pos_idx[:min_n]] / ccl_temperature, dim=-1)
+                        s_neg = F.softmax(student_distri_flat[sampled_neg[:min_n]] / ccl_temperature, dim=-1)
+                        t_neg = F.softmax(teacher_distri_flat[sampled_neg[:min_n]] / ccl_temperature, dim=-1)
+                        s_pos = F.normalize(s_pos, dim=-1, eps=1e-6)
+                        t_pos = F.normalize(t_pos, dim=-1, eps=1e-6)
+                        s_neg = F.normalize(s_neg, dim=-1, eps=1e-6)
+                        t_neg = F.normalize(t_neg, dim=-1, eps=1e-6)
+                    else:
+                        pos_boxes = target_bboxes_flat[pos_idx[:min_n]]
+                        neg_boxes = target_bboxes_flat[sampled_neg[:min_n]]
+                        s_pos = F.normalize(
+                            self._sample_box_features(student_map, pos_idx[:min_n], pos_boxes, level_stride),
+                            dim=-1,
+                            eps=1e-6,
+                        )
+                        t_pos = F.normalize(
+                            self._sample_box_features(teacher_map, pos_idx[:min_n], pos_boxes, level_stride),
+                            dim=-1,
+                            eps=1e-6,
+                        )
+                        s_neg = F.normalize(
+                            self._sample_box_features(student_map, sampled_neg[:min_n], neg_boxes, level_stride),
+                            dim=-1,
+                            eps=1e-6,
+                        )
+                        t_neg = F.normalize(
+                            self._sample_box_features(teacher_map, sampled_neg[:min_n], neg_boxes, level_stride),
+                            dim=-1,
+                            eps=1e-6,
+                        )
                     pos_sim = (s_pos * t_pos).sum(dim=-1) / self.contrastive_temperature
                     if self.ccl_mode == "paper_pair":
                         neg_sim = (s_neg * t_neg).sum(dim=-1) / self.contrastive_temperature
@@ -449,17 +479,26 @@ class CCLKDOnlineReproLoss(nn.Module):
         ).sum(dim=-1)
         return (loss * scale).mean()
 
-    @staticmethod
-    def _relationship_loss(student_feat: torch.Tensor, teacher_feat: torch.Tensor, temperature: torch.Tensor) -> torch.Tensor:
+    def _relationship_loss(
+        self,
+        student_feat: torch.Tensor,
+        teacher_feat: torch.Tensor,
+        temperature: torch.Tensor,
+    ) -> torch.Tensor:
         if student_feat.numel() == 0 or student_feat.shape[0] <= 1:
             return student_feat.new_zeros(())
         s_rel = F.normalize(student_feat, dim=-1, eps=1e-6)
         t_rel = F.normalize(teacher_feat, dim=-1, eps=1e-6)
-        n_pos = float(student_feat.shape[0])
-        s_corr = s_rel.T @ s_rel / n_pos
-        t_corr = t_rel.T @ t_rel / n_pos
+        if self.rld_mode == "paper_instance":
+            norm = math.sqrt(float(student_feat.shape[-1]))
+            s_corr = (s_rel @ s_rel.T) / max(norm, 1.0)
+            t_corr = (t_rel @ t_rel.T) / max(norm, 1.0)
+        else:
+            n_pos = float(student_feat.shape[0])
+            s_corr = s_rel.T @ s_rel / max(n_pos, 1.0)
+            t_corr = t_rel.T @ t_rel / max(n_pos, 1.0)
         scale = temperature.pow(2) if temperature.ndim == 0 else temperature.pow(2).mean()
-        return (s_corr - t_corr).pow(2).sum() * scale
+        return (s_corr - t_corr).pow(2).mean() * scale
 
     def _sample_box_features(
         self,
@@ -544,6 +583,8 @@ class CCLKDOnlineHBBTrainer(DetectionTrainer):
             "max_tokens": int(overrides.pop("cclkd_max_tokens", 512)),
             "formulation": overrides.pop("cclkd_formulation", "adapted"),
             "ccl_mode": overrides.pop("cclkd_ccl_mode", "paper_pair"),
+            "ccl_source": overrides.pop("cclkd_ccl_source", "box_distribution"),
+            "rld_mode": overrides.pop("cclkd_rld_mode", "paper_instance"),
             "roi_grid_size": int(overrides.pop("cclkd_roi_grid_size", 3)),
         }
         if self.cclkd_cfg["model_size"] not in {"n", "s"}:
@@ -621,7 +662,10 @@ class CCLKDOnlineHBBTrainer(DetectionTrainer):
             self.ema.ema.criterion = student.init_criterion()
         LOGGER.info(
             "CCLKD online reproduction: teacher is trainable and optimized with RGB detection loss "
-            f"(formulation={self.cclkd_cfg['formulation']}, ccl_mode={self.cclkd_cfg['ccl_mode']})."
+            f"(formulation={self.cclkd_cfg['formulation']}, "
+            f"ccl_mode={self.cclkd_cfg['ccl_mode']}, "
+            f"ccl_source={self.cclkd_cfg['ccl_source']}, "
+            f"rld_mode={self.cclkd_cfg['rld_mode']})."
         )
 
     def cclkd_cfg_without_paths(self) -> dict[str, Any]:
@@ -746,7 +790,7 @@ def parse_args() -> argparse.Namespace:
         choices=("adapted", "paper"),
         default="paper",
         help="'paper' is the default CCLKD reproduction path: teacher-side COP, target/non-target LLD, "
-        "class-wise temperature, paper-pair CCL, and box-aligned feature sampling. "
+        "class-wise temperature, paper-pair box-distribution CCL, and box-aligned FLD feature sampling. "
         "'adapted' is kept only for legacy YOLO11 token-level diagnostic runs.",
     )
     parser.add_argument(
@@ -755,6 +799,20 @@ def parse_args() -> argparse.Namespace:
         default="paper_pair",
         help="'paper_pair' uses sim(T_pos,S_pos) vs sim(T_neg,S_neg), matching CCLKD Algorithm 2 more closely; "
         "'anchor_teacher_neg' keeps the previous student-anchor approximation.",
+    )
+    parser.add_argument(
+        "--cclkd-ccl-source",
+        choices=("box_distribution", "roi_feature"),
+        default="box_distribution",
+        help="'box_distribution' uses YOLO box/DFL localization logits for CCL, closer to CCLKD Eq.17-18; "
+        "'roi_feature' keeps the previous box-aligned feature CCL.",
+    )
+    parser.add_argument(
+        "--cclkd-rld-mode",
+        choices=("paper_instance", "channel"),
+        default="paper_instance",
+        help="'paper_instance' computes R=F F^T over instances within each class, closer to CCLKD Eq.13-14; "
+        "'channel' keeps the previous F^T F channel-correlation diagnostic.",
     )
     parser.add_argument("--cclkd-roi-grid-size", type=int, default=3)
     add_common_detector_train_overrides(parser)
@@ -805,6 +863,8 @@ def main() -> None:
         cclkd_max_tokens=args.cclkd_max_tokens,
         cclkd_formulation=args.cclkd_formulation,
         cclkd_ccl_mode=args.cclkd_ccl_mode,
+        cclkd_ccl_source=args.cclkd_ccl_source,
+        cclkd_rld_mode=args.cclkd_rld_mode,
         cclkd_roi_grid_size=args.cclkd_roi_grid_size,
     )
     train_kwargs.update(collect_common_detector_train_overrides(args))
