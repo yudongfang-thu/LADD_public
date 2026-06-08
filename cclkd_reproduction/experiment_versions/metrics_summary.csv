@@ -1,0 +1,12 @@
+version,run,status,latest_epoch,latest_AP50,latest_AP,latest_KD,epoch50_AP50,epoch50_AP,mtime,note
+v0_initial_paper_ablation,lld,running,304,0.751658,0.493256,0.471530,0.555032,0.313466,2026-06-08 21:31:49,valid: LLD-only curve; no CCL/RLD/PATM dependency
+v0_initial_paper_ablation,lld_fld,running,287,0.743759,0.486046,0.642010,0.558326,0.311368,2026-06-08 21:32:45,valid: LLD+FLD fixed-temperature curve; no CCL/RLD/PATM dependency
+v0_initial_paper_ablation,lld_fld_rld_old,stopped/superseded,151,0.651822,0.398525,1.004960,0.555973,0.306399,2026-06-08 15:18:59,invalid: RLD used mean-MSE scale and no PATM T_j^2
+v0_initial_paper_ablation,atkd_old,stopped/superseded,149,0.647249,0.396648,2.046540,0.551512,0.305113,2026-06-08 15:18:50,invalid: PATM only affected LLD; FLD/RLD not aligned to Algorithm 1
+v0_initial_paper_ablation,ccl_only_old,stopped/superseded,148,0.645997,0.397882,0.216940,0.545892,0.302388,2026-06-08 15:08:28,invalid: CCL paper branch used student negative vs teacher negative
+v0_initial_paper_ablation,full_old,stopped/superseded,143,0.639091,0.393667,2.463390,0.550356,0.305264,2026-06-08 15:08:22,invalid: both CCL anchor and RLD/PATM issues
+v1_ccl_anchorfix,ccl_only_cclanchorfix,running,150,0.644947,0.397256,0.053320,0.542228,0.301586,2026-06-08 21:31:41,valid current CCL-only curve
+v1_ccl_anchorfix,full_cclanchorfix,stopped/superseded,3,0.048144,0.014841,8.331120,,,2026-06-08 15:17:01,superseded: CCL anchor fixed; RLD/PATM were still incomplete
+v2_rld_patmfix,lld_fld_rld_rldpatmfix,running,146,0.646752,0.395538,1.245440,0.550384,0.306155,2026-06-08 21:31:48,valid current LLD+FLD+RLD curve
+v2_rld_patmfix,atkd_rldpatmfix,running,146,0.646546,0.390955,3.955070,0.554280,0.302668,2026-06-08 21:33:17,valid current ATKD curve
+v2_rld_patmfix,full_rldpatmfix,running,150,0.643886,0.392374,4.173890,0.549127,0.301626,2026-06-08 21:33:23,valid current full CCLKD curve

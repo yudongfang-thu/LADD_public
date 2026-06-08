@@ -1,0 +1,3 @@
+run,status,latest_epoch,latest_AP50,latest_AP,latest_KD,epoch50_AP50,epoch50_AP,mtime,note
+ccl_only_cclanchorfix,running,150,0.644947,0.397256,0.053320,0.542228,0.301586,2026-06-08 21:31:41,valid current CCL-only curve
+full_cclanchorfix,stopped/superseded,3,0.048144,0.014841,8.331120,,,2026-06-08 15:17:01,superseded: CCL anchor fixed; RLD/PATM were still incomplete

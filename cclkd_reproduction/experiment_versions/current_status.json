@@ -1,0 +1,79 @@
+{
+  "remote_time": "2026-06-08 21:34:17",
+  "gpu": [
+    {
+      "index": "0",
+      "memory_used_mib": "12450",
+      "memory_free_mib": "11632",
+      "utilization_gpu_pct": "98"
+    },
+    {
+      "index": "1",
+      "memory_used_mib": "12586",
+      "memory_free_mib": "11496",
+      "utilization_gpu_pct": "98"
+    }
+  ],
+  "runs": [
+    {
+      "name": "lld",
+      "pid": "104239",
+      "alive": true,
+      "stat": "Rl",
+      "etime": "12:58:45",
+      "pcpu": "103",
+      "pmem": "1.1",
+      "cmd": "python3 cclkd_reproduction/code/train_cclkd_online_hbb.py --model-size n --model yolo11n.pt --teacher-weights yolo11n.pt --data configs/datasets/ogsod_hbb_sar.yaml --teacher-data configs/datasets/ogsod_hbb_rgb.yaml --imgsz 256 --epochs 400 --batch 64 --workers 8 --device 0 --patience 400 --project runs_public/ogsod/hbb/formal_nomosaic_20260528/comparisons/online_cclkd/yolo11n/paper_ablation --name online_cclkd_hbb_ogsod11n_from_yolo_formal_nomosaic_yolo11n_cclkd_paper_lld_s0_e400_b64_s0_gpu0 --teacher-det-weight 1.0 --kd-weight 1.0 --lld-weight 1 --fld-weight 0 --rld-weight 0 --ccl-weight 0 --cclkd-temperature-min 1.0 --cclkd-temperature-max 1.0 --cclkd-formulation paper --cclkd-roi-grid-size 3 --optimizer auto --lr0 0.01 --lrf 0.01 --cos-lr --mosaic 0.0 --mixup 0.0 --cutmix 0.0 --close-mosaic 0 --degrees 0.0 --perspective 0.0 --translate 0.1 --scale 0.5 --fliplr 0.5 --flipud 0.0 --hsv-h 0.0 --hsv-s 0.0 --hsv-v 0.0 --erasing 0.0 --seed 0 --deterministic --save-period 100"
+    },
+    {
+      "name": "lld_fld",
+      "pid": "104551",
+      "alive": true,
+      "stat": "Rl",
+      "etime": "12:58:03",
+      "pcpu": "103",
+      "pmem": "1.1",
+      "cmd": "python3 cclkd_reproduction/code/train_cclkd_online_hbb.py --model-size n --model yolo11n.pt --teacher-weights yolo11n.pt --data configs/datasets/ogsod_hbb_sar.yaml --teacher-data configs/datasets/ogsod_hbb_rgb.yaml --imgsz 256 --epochs 400 --batch 64 --workers 8 --device 1 --patience 400 --project runs_public/ogsod/hbb/formal_nomosaic_20260528/comparisons/online_cclkd/yolo11n/paper_ablation --name online_cclkd_hbb_ogsod11n_from_yolo_formal_nomosaic_yolo11n_cclkd_paper_lld_fld_s0_e400_b64_s0_gpu1 --teacher-det-weight 1.0 --kd-weight 1.0 --lld-weight 1 --fld-weight 1 --rld-weight 0 --ccl-weight 0 --cclkd-temperature-min 1.0 --cclkd-temperature-max 1.0 --cclkd-formulation paper --cclkd-roi-grid-size 3 --optimizer auto --lr0 0.01 --lrf 0.01 --cos-lr --mosaic 0.0 --mixup 0.0 --cutmix 0.0 --close-mosaic 0 --degrees 0.0 --perspective 0.0 --translate 0.1 --scale 0.5 --fliplr 0.5 --flipud 0.0 --hsv-h 0.0 --hsv-s 0.0 --hsv-v 0.0 --erasing 0.0 --seed 0 --deterministic --save-period 100"
+    },
+    {
+      "name": "ccl_only_cclanchorfix",
+      "pid": "114333",
+      "alive": true,
+      "stat": "Rl",
+      "etime": "06:25:20",
+      "pcpu": "104",
+      "pmem": "0.8",
+      "cmd": "python3 cclkd_reproduction/code/train_cclkd_online_hbb.py --model-size n --model yolo11n.pt --teacher-weights yolo11n.pt --data configs/datasets/ogsod_hbb_sar.yaml --teacher-data configs/datasets/ogsod_hbb_rgb.yaml --imgsz 256 --epochs 400 --batch 64 --workers 4 --device 0 --patience 400 --project runs_public/ogsod/hbb/formal_nomosaic_20260528/comparisons/online_cclkd/yolo11n/paper_ablation --name online_cclkd_hbb_ogsod11n_from_yolo_formal_nomosaic_yolo11n_cclkd_paper_ccl_only_s0_cclanchorfix_e400_b64_s0_gpu0 --teacher-det-weight 1.0 --kd-weight 1.0 --lld-weight 0 --fld-weight 0 --rld-weight 0 --ccl-weight 1 --cclkd-temperature-min 1.0 --cclkd-temperature-max 1.0 --cclkd-fld-temperature 1.0 --cclkd-fld-temperature-mode fixed --cclkd-formulation paper --cclkd-roi-grid-size 3 --optimizer auto --lr0 0.01 --lrf 0.01 --cos-lr --mosaic 0.0 --mixup 0.0 --cutmix 0.0 --close-mosaic 0 --degrees 0.0 --perspective 0.0 --translate 0.1 --scale 0.5 --fliplr 0.5 --flipud 0.0 --hsv-h 0.0 --hsv-s 0.0 --hsv-v 0.0 --erasing 0.0 --seed 0 --deterministic --save-period 100"
+    },
+    {
+      "name": "lld_fld_rld_rldpatmfix",
+      "pid": "115163",
+      "alive": true,
+      "stat": "Rl",
+      "etime": "06:14:59",
+      "pcpu": "106",
+      "pmem": "0.8",
+      "cmd": "python3 cclkd_reproduction/code/train_cclkd_online_hbb.py --model-size n --model yolo11n.pt --teacher-weights yolo11n.pt --data configs/datasets/ogsod_hbb_sar.yaml --teacher-data configs/datasets/ogsod_hbb_rgb.yaml --imgsz 256 --epochs 400 --batch 64 --workers 4 --device 0 --patience 400 --project runs_public/ogsod/hbb/formal_nomosaic_20260528/comparisons/online_cclkd/yolo11n/paper_ablation --name online_cclkd_hbb_ogsod11n_from_yolo_formal_nomosaic_yolo11n_cclkd_paper_lld_fld_rld_s0_rldpatmfix_e400_b64_s0_gpu0 --teacher-det-weight 1.0 --kd-weight 1.0 --lld-weight 1 --fld-weight 1 --rld-weight 1 --ccl-weight 0 --cclkd-temperature-min 1.0 --cclkd-temperature-max 1.0 --cclkd-fld-temperature 1.0 --cclkd-fld-temperature-mode patm --cclkd-formulation paper --cclkd-roi-grid-size 3 --optimizer auto --lr0 0.01 --lrf 0.01 --cos-lr --mosaic 0.0 --mixup 0.0 --cutmix 0.0 --close-mosaic 0 --degrees 0.0 --perspective 0.0 --translate 0.1 --scale 0.5 --fliplr 0.5 --flipud 0.0 --hsv-h 0.0 --hsv-s 0.0 --hsv-v 0.0 --erasing 0.0 --seed 0 --deterministic --save-period 100"
+    },
+    {
+      "name": "atkd_rldpatmfix",
+      "pid": "115169",
+      "alive": true,
+      "stat": "Rl",
+      "etime": "06:14:59",
+      "pcpu": "106",
+      "pmem": "0.8",
+      "cmd": "python3 cclkd_reproduction/code/train_cclkd_online_hbb.py --model-size n --model yolo11n.pt --teacher-weights yolo11n.pt --data configs/datasets/ogsod_hbb_sar.yaml --teacher-data configs/datasets/ogsod_hbb_rgb.yaml --imgsz 256 --epochs 400 --batch 64 --workers 4 --device 1 --patience 400 --project runs_public/ogsod/hbb/formal_nomosaic_20260528/comparisons/online_cclkd/yolo11n/paper_ablation --name online_cclkd_hbb_ogsod11n_from_yolo_formal_nomosaic_yolo11n_cclkd_paper_atkd_s0_rldpatmfix_e400_b64_s0_gpu1 --teacher-det-weight 1.0 --kd-weight 1.0 --lld-weight 1 --fld-weight 1 --rld-weight 1 --ccl-weight 0 --cclkd-temperature-min 0.5 --cclkd-temperature-max 5.0 --cclkd-fld-temperature 1.0 --cclkd-fld-temperature-mode patm --cclkd-formulation paper --cclkd-roi-grid-size 3 --optimizer auto --lr0 0.01 --lrf 0.01 --cos-lr --mosaic 0.0 --mixup 0.0 --cutmix 0.0 --close-mosaic 0 --degrees 0.0 --perspective 0.0 --translate 0.1 --scale 0.5 --fliplr 0.5 --flipud 0.0 --hsv-h 0.0 --hsv-s 0.0 --hsv-v 0.0 --erasing 0.0 --seed 0 --deterministic --save-period 100"
+    },
+    {
+      "name": "full_rldpatmfix",
+      "pid": "115175",
+      "alive": true,
+      "stat": "Rl",
+      "etime": "06:14:59",
+      "pcpu": "106",
+      "pmem": "0.8",
+      "cmd": "python3 cclkd_reproduction/code/train_cclkd_online_hbb.py --model-size n --model yolo11n.pt --teacher-weights yolo11n.pt --data configs/datasets/ogsod_hbb_sar.yaml --teacher-data configs/datasets/ogsod_hbb_rgb.yaml --imgsz 256 --epochs 400 --batch 64 --workers 4 --device 1 --patience 400 --project runs_public/ogsod/hbb/formal_nomosaic_20260528/comparisons/online_cclkd/yolo11n/paper_ablation --name online_cclkd_hbb_ogsod11n_from_yolo_formal_nomosaic_yolo11n_cclkd_paper_full_s0_rldpatmfix_e400_b64_s0_gpu1 --teacher-det-weight 1.0 --kd-weight 1.0 --lld-weight 1 --fld-weight 1 --rld-weight 1 --ccl-weight 1 --cclkd-temperature-min 0.5 --cclkd-temperature-max 5.0 --cclkd-fld-temperature 1.0 --cclkd-fld-temperature-mode patm --cclkd-formulation paper --cclkd-roi-grid-size 3 --optimizer auto --lr0 0.01 --lrf 0.01 --cos-lr --mosaic 0.0 --mixup 0.0 --cutmix 0.0 --close-mosaic 0 --degrees 0.0 --perspective 0.0 --translate 0.1 --scale 0.5 --fliplr 0.5 --flipud 0.0 --hsv-h 0.0 --hsv-s 0.0 --hsv-v 0.0 --erasing 0.0 --seed 0 --deterministic --save-period 100"
+    }
+  ]
+}
