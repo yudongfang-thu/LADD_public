@@ -116,6 +116,7 @@ class CCLKDOnlineReproLoss(nn.Module):
         self.max_tokens = int(max_tokens)
         self.formulation = formulation
         self.roi_grid_size = int(roi_grid_size)
+        self._kd_component_levels: list[torch.Tensor] | None = None
 
     def update(self) -> None:
         for criterion in (self.student_det, self.teacher_det):
@@ -134,7 +135,13 @@ class CCLKDOnlineReproLoss(nn.Module):
         teacher_main = _parse_pred_dict(teacher_preds)
         assign_source = teacher_main if self.formulation == "paper" else student_main
         fg_mask, target_scores, target_bboxes = self._assigned_targets(assign_source, batch)
+        self._kd_component_levels = []
         kd_loss = self._cclkd_loss(student_main, teacher_main, fg_mask, target_scores, target_bboxes)
+        if self._kd_component_levels:
+            kd_components = torch.stack(self._kd_component_levels).mean(dim=0)
+        else:
+            kd_components = kd_loss.detach().new_zeros(4)
+        self._kd_component_levels = None
 
         total = student_det_loss + self.teacher_det_weight * teacher_det_loss + self.kd_weight * kd_loss
         items = torch.cat(
@@ -142,6 +149,7 @@ class CCLKDOnlineReproLoss(nn.Module):
                 student_items.detach(),
                 teacher_items.detach(),
                 kd_loss.detach().reshape(1),
+                kd_components.detach(),
             )
         )
         return total, items
@@ -228,6 +236,7 @@ class CCLKDOnlineReproLoss(nn.Module):
         fg = fg_mask.bool()
         valid = fg & (target_scores.amax(dim=-1) > 0)
         if not valid.any():
+            self._record_kd_components(zero, zero, zero, zero)
             return zero
 
         teacher_probs = teacher_scores.sigmoid()
@@ -235,6 +244,7 @@ class CCLKDOnlineReproLoss(nn.Module):
         target_label = target_scores.argmax(dim=-1)
         cop = valid & teacher_label.eq(target_label) & (teacher_conf >= self.min_confidence)
         if not cop.any():
+            self._record_kd_components(zero, zero, zero, zero)
             return zero
 
         labels = target_label.reshape(-1)
@@ -333,7 +343,7 @@ class CCLKDOnlineReproLoss(nn.Module):
                 if self.formulation == "paper":
                     pos_boxes = target_bboxes_flat[pos_idx[:min_n]]
                     neg_boxes = target_bboxes_flat[sampled_neg[:min_n]]
-                    s_pos = F.normalize(
+                    s_anchor = F.normalize(
                         self._sample_box_features(student_map, pos_idx[:min_n], pos_boxes, level_stride),
                         dim=-1,
                         eps=1e-6,
@@ -343,18 +353,13 @@ class CCLKDOnlineReproLoss(nn.Module):
                         dim=-1,
                         eps=1e-6,
                     )
-                    s_neg = F.normalize(
-                        self._sample_box_features(student_map, sampled_neg[:min_n], neg_boxes, level_stride),
-                        dim=-1,
-                        eps=1e-6,
-                    )
                     t_neg = F.normalize(
                         self._sample_box_features(teacher_map, sampled_neg[:min_n], neg_boxes, level_stride),
                         dim=-1,
                         eps=1e-6,
                     )
-                    pos_sim = (s_pos * t_pos).sum(dim=-1) / self.contrastive_temperature
-                    neg_sim = (s_neg * t_neg).sum(dim=-1) / self.contrastive_temperature
+                    pos_sim = (s_anchor * t_pos).sum(dim=-1) / self.contrastive_temperature
+                    neg_sim = (s_anchor * t_neg).sum(dim=-1) / self.contrastive_temperature
                 else:
                     s_anchor = F.normalize(student_feat_flat[pos_idx[:min_n]], dim=-1, eps=1e-6)
                     t_pos = F.normalize(teacher_feat_flat[pos_idx[:min_n]], dim=-1, eps=1e-6)
@@ -366,8 +371,30 @@ class CCLKDOnlineReproLoss(nn.Module):
             used += 1
 
         if used == 0:
+            self._record_kd_components(zero, zero, zero, zero)
             return zero
+        self._record_kd_components(lld, fld, rld, ccl)
         return self.lld_weight * lld + self.fld_weight * fld + self.rld_weight * rld + self.ccl_weight * ccl
+
+    def _record_kd_components(
+        self,
+        lld: torch.Tensor,
+        fld: torch.Tensor,
+        rld: torch.Tensor,
+        ccl: torch.Tensor,
+    ) -> None:
+        if self._kd_component_levels is None:
+            return
+        self._kd_component_levels.append(
+            torch.stack(
+                (
+                    (self.lld_weight * lld).detach(),
+                    (self.fld_weight * fld).detach(),
+                    (self.rld_weight * rld).detach(),
+                    (self.ccl_weight * ccl).detach(),
+                )
+            )
+        )
 
     @staticmethod
     def _dfl_kl(student_box: torch.Tensor, teacher_box: torch.Tensor, temperature: torch.Tensor) -> torch.Tensor:
@@ -585,6 +612,10 @@ class CCLKDOnlineHBBTrainer(DetectionTrainer):
             "t_cls_loss",
             "t_dfl_loss",
             "cclkd_loss",
+            "cclkd_lld_loss",
+            "cclkd_fld_loss",
+            "cclkd_rld_loss",
+            "cclkd_ccl_loss",
         )
         return yolo.detect.DetectionValidator(
             self.test_loader,
