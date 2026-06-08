@@ -367,16 +367,10 @@ class CCLKDOnlineReproLoss(nn.Module):
                     continue
                 if self.formulation == "paper":
                     if self.ccl_source == "box_distribution":
-                        if temperature.ndim == 0 or temperature.numel() == 1:
-                            ccl_temperature = temperature.reshape(1, 1)
-                        elif temperature.numel() >= min_n:
-                            ccl_temperature = temperature[:min_n].reshape(-1, 1)
-                        else:
-                            ccl_temperature = temperature.mean().reshape(1, 1)
-                        s_pos = F.softmax(student_distri_flat[pos_idx[:min_n]] / ccl_temperature, dim=-1)
-                        t_pos = F.softmax(teacher_distri_flat[pos_idx[:min_n]] / ccl_temperature, dim=-1)
-                        s_neg = F.softmax(student_distri_flat[sampled_neg[:min_n]] / ccl_temperature, dim=-1)
-                        t_neg = F.softmax(teacher_distri_flat[sampled_neg[:min_n]] / ccl_temperature, dim=-1)
+                        s_pos = self._dfl_distribution_vector(student_distri_flat[pos_idx[:min_n]], temperature)
+                        t_pos = self._dfl_distribution_vector(teacher_distri_flat[pos_idx[:min_n]], temperature)
+                        s_neg = self._dfl_distribution_vector(student_distri_flat[sampled_neg[:min_n]], temperature)
+                        t_neg = self._dfl_distribution_vector(teacher_distri_flat[sampled_neg[:min_n]], temperature)
                         s_pos = F.normalize(s_pos, dim=-1, eps=1e-6)
                         t_pos = F.normalize(t_pos, dim=-1, eps=1e-6)
                         s_neg = F.normalize(s_neg, dim=-1, eps=1e-6)
@@ -461,6 +455,25 @@ class CCLKDOnlineReproLoss(nn.Module):
             reduction="none",
         ).sum(dim=(-1, -2))
         return (loss * scale).mean()
+
+    @staticmethod
+    def _dfl_distribution_vector(box_logits: torch.Tensor, temperature: torch.Tensor) -> torch.Tensor:
+        if box_logits.numel() == 0:
+            return box_logits
+        reg_max = box_logits.shape[-1] // 4
+        if reg_max <= 0 or reg_max * 4 != box_logits.shape[-1]:
+            raise RuntimeError(
+                f"Expected YOLO DFL logits with 4*reg_max channels, got shape={tuple(box_logits.shape)}."
+            )
+        box = box_logits.reshape(-1, 4, reg_max)
+        if temperature.ndim == 0 or temperature.numel() == 1:
+            t = temperature.reshape(1, 1, 1)
+        elif temperature.numel() >= box.shape[0]:
+            t = temperature[: box.shape[0]].reshape(-1, 1, 1)
+        else:
+            t = temperature.mean().reshape(1, 1, 1)
+        prob = F.softmax(box / t, dim=-1)
+        return prob.flatten(1)
 
     @staticmethod
     def _feature_kl(student_feat: torch.Tensor, teacher_feat: torch.Tensor, temperature: torch.Tensor) -> torch.Tensor:
@@ -804,7 +817,7 @@ def parse_args() -> argparse.Namespace:
         "--cclkd-ccl-source",
         choices=("box_distribution", "roi_feature"),
         default="box_distribution",
-        help="'box_distribution' uses YOLO box/DFL localization logits for CCL, closer to CCLKD Eq.17-18; "
+        help="'box_distribution' uses per-side YOLO DFL localization distributions for CCL, closer to CCLKD Eq.17-18; "
         "'roi_feature' keeps the previous box-aligned feature CCL.",
     )
     parser.add_argument(
