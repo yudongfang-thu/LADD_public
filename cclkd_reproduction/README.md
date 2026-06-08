@@ -1,6 +1,6 @@
 # CCLKD 原文协议复现
 
-最后更新：2026-06-05
+最后更新：2026-06-08
 
 本目录专门用于复现 CCLKD 原文，不属于 `comparison/` 下的受控对比方法目录。
 
@@ -42,6 +42,7 @@ DOI: 10.1080/10095020.2026.2633014
 | [`code/check_cclkd_repro_protocol.py`](code/check_cclkd_repro_protocol.py) | 启动前硬校验：`nc=3`、YOLO11n/s、`imgsz=256`、400ep、batch=32、SGD lr=0.01、mosaic=1.0、online trainer |
 | [`code/launch_cclkd_paper_repro_job.sh`](code/launch_cclkd_paper_repro_job.sh) | 原文协议 launcher，只允许 YOLO11n / YOLO11s |
 | [`ABLATION_PLAN_CN.md`](ABLATION_PLAN_CN.md) | YOLO11n 消融计划；逐项映射原文 Table 12 的 LLD / FLD / RLD / PATM / CCL |
+| [`CCLKD_PAPER_AUDIT_CN.md`](CCLKD_PAPER_AUDIT_CN.md) | 原文方法信息、当前代码映射、LADD 受控协议边界、作废结果规则 |
 
 注意：本地公开仓库只完成静态校验。正式训练环境需要先做 tiny smoke，确认
 student detection loss、teacher detection loss 和 CCLKD loss 都非零，再启动 400 epoch。
@@ -56,8 +57,9 @@ student detection loss、teacher detection loss 和 CCLKD loss 都非零，再�
 | `paper` | 尽量贴近原文的实现：teacher-side COP、target/non-target LLD、class-wise adaptive temperature、box-aligned feature sampling 的 FLD/RLD/CCL |
 
 原文协议 launcher `code/launch_cclkd_paper_repro_job.sh` 默认使用 `CCLKD_FORMULATION=paper`。
-LADD formal 受控对比 launcher 默认仍为 `adapted`，如需跑贴近原文版需要显式设置
-`CCLKD_FORMULATION=paper`。
+LADD formal 受控消融必须使用
+[`../comparison/code/launch_formal_online_cclkd_ablation_job.sh`](../comparison/code/launch_formal_online_cclkd_ablation_job.sh)，
+该入口强制 `CCLKD_FORMULATION=paper`，但训练协议使用 LADD formal no-mosaic baseline。
 
 示例：
 
