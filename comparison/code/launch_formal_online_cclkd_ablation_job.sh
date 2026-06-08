@@ -25,6 +25,8 @@ Optional:
   EPOCHS=400
   BATCH_SIZE=64
   CCLKD_FORMULATION=paper
+  CCLKD_FLD_TEMPERATURE=1.0
+  CCLKD_FLD_TEMPERATURE_MODE=fixed|patm
   EXIST_OK=1
 EOF
 }
@@ -154,6 +156,8 @@ cmd=(
   --ccl-weight "$CCL"
   --cclkd-temperature-min "$TMIN"
   --cclkd-temperature-max "$TMAX"
+  --cclkd-fld-temperature "${CCLKD_FLD_TEMPERATURE:-1.0}"
+  --cclkd-fld-temperature-mode "${CCLKD_FLD_TEMPERATURE_MODE:-fixed}"
   --cclkd-formulation "$CCLKD_FORMULATION"
   --cclkd-roi-grid-size "${CCLKD_ROI_GRID_SIZE:-3}"
   --optimizer "${OPTIMIZER:-auto}"

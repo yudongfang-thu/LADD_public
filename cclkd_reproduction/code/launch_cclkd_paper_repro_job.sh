@@ -16,6 +16,8 @@ Optional environment:
   MIXUP             paper-aligned MixUp probability (default: 0.1; set ALLOW_UNVERIFIED_MIXUP=1 if unknown)
   ALLOW_UNVERIFIED_MIXUP  allow MIXUP=0 only with an explicit audit note
   CCLKD_FORMULATION paper-aligned implementation variant (default: paper)
+  CCLKD_FLD_TEMPERATURE fixed FLD softmax/KL temperature (default: 1.0)
+  CCLKD_FLD_TEMPERATURE_MODE fixed|patm (default: fixed)
 EOF
 }
 
@@ -92,5 +94,7 @@ exec "$PYTHON" "$SCRIPT_DIR/train_cclkd_online_hbb.py" \
   --rld-weight 1.0 \
   --ccl-weight 1.0 \
   --cclkd-formulation "$CCLKD_FORMULATION" \
+  --cclkd-fld-temperature "${CCLKD_FLD_TEMPERATURE:-1.0}" \
+  --cclkd-fld-temperature-mode "${CCLKD_FLD_TEMPERATURE_MODE:-fixed}" \
   --cclkd-roi-grid-size "${CCLKD_ROI_GRID_SIZE:-3}" \
   --seed "$SEED"

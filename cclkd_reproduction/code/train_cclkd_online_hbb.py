@@ -82,6 +82,8 @@ class CCLKDOnlineReproLoss(nn.Module):
         temperature_max: float = 5.0,
         entropy_scale: float = 5.0,
         contrastive_temperature: float = 0.1,
+        fld_temperature: float = 1.0,
+        fld_temperature_mode: str = "fixed",
         min_confidence: float = 0.1,
         max_tokens: int = 512,
         formulation: str = "adapted",
@@ -90,6 +92,10 @@ class CCLKDOnlineReproLoss(nn.Module):
         super().__init__()
         if formulation not in {"adapted", "paper"}:
             raise ValueError(f"formulation must be 'adapted' or 'paper', got {formulation!r}.")
+        if fld_temperature <= 0:
+            raise ValueError(f"fld_temperature must be positive, got {fld_temperature}.")
+        if fld_temperature_mode not in {"fixed", "patm"}:
+            raise ValueError(f"fld_temperature_mode must be 'fixed' or 'patm', got {fld_temperature_mode!r}.")
         self.teacher_model = teacher_model
         self.student_det = student_model.init_criterion()
         self.teacher_det = teacher_model.init_criterion()
@@ -104,6 +110,8 @@ class CCLKDOnlineReproLoss(nn.Module):
         self.temperature_max = float(temperature_max)
         self.entropy_scale = float(entropy_scale)
         self.contrastive_temperature = float(contrastive_temperature)
+        self.fld_temperature = float(fld_temperature)
+        self.fld_temperature_mode = fld_temperature_mode
         self.min_confidence = float(min_confidence)
         self.max_tokens = int(max_tokens)
         self.formulation = formulation
@@ -296,11 +304,12 @@ class CCLKDOnlineReproLoss(nn.Module):
                 pos_boxes = target_bboxes_flat[pos_idx]
                 s_pos_feat = self._sample_box_features(student_map, pos_idx, pos_boxes, level_stride)
                 t_pos_feat = self._sample_box_features(teacher_map, pos_idx, pos_boxes, level_stride)
-                fld = fld + class_weight * F.kl_div(
-                    F.log_softmax(s_pos_feat, dim=-1),
-                    F.softmax(t_pos_feat, dim=-1),
-                    reduction="batchmean",
+                fld_temperature = (
+                    temperature
+                    if self.fld_temperature_mode == "patm"
+                    else student_map.new_tensor(self.fld_temperature)
                 )
+                fld = fld + class_weight * self._feature_kl(s_pos_feat, t_pos_feat, fld_temperature)
             else:
                 s_pos_feat = student_feat_flat[pos_idx]
                 t_pos_feat = teacher_feat_flat[pos_idx]
@@ -377,6 +386,23 @@ class CCLKDOnlineReproLoss(nn.Module):
         ).sum(dim=(-1, -2))
         return (loss * scale).mean()
 
+    @staticmethod
+    def _feature_kl(student_feat: torch.Tensor, teacher_feat: torch.Tensor, temperature: torch.Tensor) -> torch.Tensor:
+        if student_feat.numel() == 0:
+            return student_feat.new_zeros(())
+        if temperature.ndim == 0:
+            t = temperature
+            scale = temperature.pow(2)
+        else:
+            t = temperature.view(-1, 1)
+            scale = temperature.pow(2)
+        loss = F.kl_div(
+            F.log_softmax(student_feat / t, dim=-1),
+            F.softmax(teacher_feat / t, dim=-1),
+            reduction="none",
+        ).sum(dim=-1)
+        return (loss * scale).mean()
+
     def _sample_box_features(
         self,
         feature_map: torch.Tensor,
@@ -449,6 +475,8 @@ class CCLKDOnlineHBBTrainer(DetectionTrainer):
             "temperature_max": float(overrides.pop("cclkd_temperature_max", 5.0)),
             "entropy_scale": float(overrides.pop("cclkd_entropy_scale", 5.0)),
             "contrastive_temperature": float(overrides.pop("cclkd_contrastive_temperature", 0.1)),
+            "fld_temperature": float(overrides.pop("cclkd_fld_temperature", 1.0)),
+            "fld_temperature_mode": overrides.pop("cclkd_fld_temperature_mode", "fixed"),
             "min_confidence": float(overrides.pop("cclkd_min_confidence", 0.1)),
             "max_tokens": int(overrides.pop("cclkd_max_tokens", 512)),
             "formulation": overrides.pop("cclkd_formulation", "adapted"),
@@ -633,6 +661,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--cclkd-temperature-max", type=float, default=5.0)
     parser.add_argument("--cclkd-entropy-scale", type=float, default=5.0)
     parser.add_argument("--cclkd-contrastive-temperature", type=float, default=0.1)
+    parser.add_argument("--cclkd-fld-temperature", type=float, default=1.0)
+    parser.add_argument(
+        "--cclkd-fld-temperature-mode",
+        choices=("fixed", "patm"),
+        default="fixed",
+        help="'fixed' uses --cclkd-fld-temperature; 'patm' reuses the class-wise PATM temperature for FLD.",
+    )
     parser.add_argument("--cclkd-min-confidence", type=float, default=0.1)
     parser.add_argument("--cclkd-max-tokens", type=int, default=512)
     parser.add_argument(
@@ -681,6 +716,8 @@ def main() -> None:
         cclkd_temperature_max=args.cclkd_temperature_max,
         cclkd_entropy_scale=args.cclkd_entropy_scale,
         cclkd_contrastive_temperature=args.cclkd_contrastive_temperature,
+        cclkd_fld_temperature=args.cclkd_fld_temperature,
+        cclkd_fld_temperature_mode=args.cclkd_fld_temperature_mode,
         cclkd_min_confidence=args.cclkd_min_confidence,
         cclkd_max_tokens=args.cclkd_max_tokens,
         cclkd_formulation=args.cclkd_formulation,

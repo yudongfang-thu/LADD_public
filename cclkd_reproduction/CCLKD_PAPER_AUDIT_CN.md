@@ -113,13 +113,14 @@
 | target/non-target LLD | `formulation=paper` 中正样本和采样负样本都进入 DFL KL。 |
 | box-aligned FLD/RLD/CCL | `formulation=paper` 通过 `_sample_box_features(...)` 使用 `grid_sample` 从 neck feature map 按 box 采样。 |
 | class-balanced CCL | 按当前 mini-batch COP 类别频次做 `1/n_j` 归一权重。 |
+| FLD temperature | 新增 `--cclkd-fld-temperature` 与 `--cclkd-fld-temperature-mode {fixed,patm}`。默认 `fixed=1.0` 保持历史可比；诊断时可设 `fixed=4.0` 或 `patm`。 |
 
 ## 当前实现仍是 YOLO11 适配的地方
 
 这些不是“已完全等价于原文”的部分，后续写论文或报告必须明确：
 
 1. 原文公式基于候选框级 `p_box`、`p_cls` 和区域特征；当前 YOLO11 HBB 实现把 anchor/token assignment、DFL logits 和 neck feature map 映射到这个定义。
-2. 原文 FLD 文字描述为区域特征经 `1x1 conv` 降维后蒸馏；当前实现没有额外学习一个 `1x1 conv` 投影，而是直接对 box-sampled neck feature 做 KL。
+2. 原文 FLD 文字描述为区域特征经 `1x1 conv` 降维后蒸馏；当前实现没有额外学习一个 `1x1 conv` 投影，而是直接对 box-sampled neck feature 做 KL。直接对 BN 后 neck feature 做 softmax/KL 可能数值过尖，因此代码已提供 FLD 温度参数；默认 `1.0` 用于保持当前结果可比，`4.0` 或 `patm` 应作为后续诊断消融。
 3. 原文 CCL 的 Algorithm 2 以 target/non-target candidate-box pair 为单位；当前 `paper` formulation 使用正候选框 teacher-student 相似度和负候选框 teacher-student 相似度构造二分类 InfoNCE，是 YOLO11 检测头上的近似实现。
 4. `grid_sample` 的 CUDA backward 非完全 deterministic，PyTorch 会给 warn-only 提示；这不应视为训练失败，但会影响 bit-level determinism。
 5. `cclkd_reproduction/code/train_cclkd_online_hbb.py` 默认参数仍是 `--cclkd-formulation adapted`，这是为了兼容旧诊断入口；正式 CCLKD 实验必须由 launcher 显式传入 `paper`。
@@ -137,7 +138,18 @@ EPOCHS=400 BATCH_SIZE=64 comparison/code/launch_formal_online_cclkd_ablation_job
 EPOCHS=400 BATCH_SIZE=64 comparison/code/launch_formal_online_cclkd_ablation_job.sh n full 0 1
 ```
 
-两张 4090 同时只能直接跑两个任务；不要用队列脚本。每轮完成后人工启动下一轮。
+FLD 温度诊断示例：
+
+```bash
+EPOCHS=400 BATCH_SIZE=64 CCLKD_FLD_TEMPERATURE=4.0 \
+  comparison/code/launch_formal_online_cclkd_ablation_job.sh n full 0 1
+
+EPOCHS=400 BATCH_SIZE=64 CCLKD_FLD_TEMPERATURE_MODE=patm \
+  comparison/code/launch_formal_online_cclkd_ablation_job.sh n full 0 1
+```
+
+两张 24GB 4090 可以按显存占用多任务并行。YOLO11n CCLKD 当前约 4GB/进程，
+可采用 3 条/卡并行；启动前仍需用 `nvidia-smi` 核对显存余量。不要用队列脚本。
 
 当前 run 输出路径：
 
