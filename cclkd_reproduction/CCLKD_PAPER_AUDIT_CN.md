@@ -113,14 +113,14 @@
 | target/non-target LLD | `formulation=paper` 中正样本和采样负样本都进入 DFL KL。 |
 | box-aligned FLD/RLD/CCL | `formulation=paper` 通过 `_sample_box_features(...)` 使用 `grid_sample` 从 neck feature map 按 box 采样。 |
 | class-balanced CCL | 按当前 mini-batch COP 类别频次做 `1/n_j` 归一权重。 |
-| FLD temperature | 新增 `--cclkd-fld-temperature` 与 `--cclkd-fld-temperature-mode {fixed,patm}`。默认 `fixed=1.0` 保持历史可比；诊断时可设 `fixed=4.0` 或 `patm`。 |
+| FLD/RLD temperature | `formulation=paper` 默认使用 `--cclkd-fld-temperature-mode patm`，使 FLD 复用 class-wise PATM 温度；RLD 也按原文 Algorithm 1 乘 `T_j^2`。如需数值诊断，可显式设置 `--cclkd-fld-temperature-mode fixed --cclkd-fld-temperature 4.0`。 |
 
 ## 当前实现仍是 YOLO11 适配的地方
 
 这些不是“已完全等价于原文”的部分，后续写论文或报告必须明确：
 
 1. 原文公式基于候选框级 `p_box`、`p_cls` 和区域特征；当前 YOLO11 HBB 实现把 anchor/token assignment、DFL logits 和 neck feature map 映射到这个定义。
-2. 原文 FLD 文字描述为区域特征经 `1x1 conv` 降维后蒸馏；当前实现没有额外学习一个 `1x1 conv` 投影，而是直接对 box-sampled neck feature 做 KL。直接对 BN 后 neck feature 做 softmax/KL 可能数值过尖，因此代码已提供 FLD 温度参数；默认 `1.0` 用于保持当前结果可比，`4.0` 或 `patm` 应作为后续诊断消融。
+2. 原文 FLD 文字描述为区域特征经 `1x1 conv` 降维后蒸馏；当前实现没有额外学习一个 `1x1 conv` 投影，而是直接对 box-sampled neck feature 做 KL。直接对 BN 后 neck feature 做 softmax/KL 可能数值过尖，因此代码保留 FLD 固定温度参数用于诊断，但 paper ablation 默认应使用 `patm`。
 3. 原文 CCL 的 Algorithm 2 以 target/non-target candidate-box pair 为单位；当前 `paper` formulation 使用正候选框 teacher-student 相似度和负候选框 teacher-student 相似度构造二分类 InfoNCE，是 YOLO11 检测头上的近似实现。
 4. `grid_sample` 的 CUDA backward 非完全 deterministic，PyTorch 会给 warn-only 提示；这不应视为训练失败，但会影响 bit-level determinism。
 5. `cclkd_reproduction/code/train_cclkd_online_hbb.py` 默认参数仍是 `--cclkd-formulation adapted`，这是为了兼容旧诊断入口；正式 CCLKD 实验必须由 launcher 显式传入 `paper`。
@@ -167,6 +167,7 @@ logs/formal_nomosaic_20260528/comparisons/online_cclkd_paper_ablation/
 3. 2026-06-08 之前 CCL 使用 DFL 回归特征或错误负样本方向的结果。
 4. 使用 CCLKD 原文 paper protocol 但被误当作 LADD baseline 协议的结果。
 5. 只跑 full、没有完整 Table 12 结构消融的结果。
+6. 2026-06-08 15:18 CST 之前的 `lld_fld_rld`、`atkd` 和 `full` 结果：RLD 使用 mean MSE 而非 Frobenius-squared 量级，且 PATM 没有作用到 FLD/RLD，不能作为正式 Table 12 消融。
 
 ## 最低启动前检查
 

@@ -83,7 +83,7 @@ class CCLKDOnlineReproLoss(nn.Module):
         entropy_scale: float = 5.0,
         contrastive_temperature: float = 0.1,
         fld_temperature: float = 1.0,
-        fld_temperature_mode: str = "fixed",
+        fld_temperature_mode: str = "patm",
         min_confidence: float = 0.1,
         max_tokens: int = 512,
         formulation: str = "adapted",
@@ -326,10 +326,8 @@ class CCLKDOnlineReproLoss(nn.Module):
                 fld = fld + class_weight * F.mse_loss(s_pos_feat, t_pos_feat)
 
             if pos_idx.numel() > 1:
-                s_rel = F.normalize(s_pos_feat, dim=-1, eps=1e-6)
-                t_rel = F.normalize(t_pos_feat, dim=-1, eps=1e-6)
-                n_pos = float(pos_idx.numel())
-                rld = rld + class_weight * F.mse_loss(s_rel.T @ s_rel / n_pos, t_rel.T @ t_rel / n_pos)
+                rld_temperature = temperature if self.formulation == "paper" else student_map.new_tensor(1.0)
+                rld = rld + class_weight * self._relationship_loss(s_pos_feat, t_pos_feat, rld_temperature)
 
             if neg_idx.numel() > 0:
                 if neg_idx.numel() >= pos_idx.numel():
@@ -430,6 +428,18 @@ class CCLKDOnlineReproLoss(nn.Module):
         ).sum(dim=-1)
         return (loss * scale).mean()
 
+    @staticmethod
+    def _relationship_loss(student_feat: torch.Tensor, teacher_feat: torch.Tensor, temperature: torch.Tensor) -> torch.Tensor:
+        if student_feat.numel() == 0 or student_feat.shape[0] <= 1:
+            return student_feat.new_zeros(())
+        s_rel = F.normalize(student_feat, dim=-1, eps=1e-6)
+        t_rel = F.normalize(teacher_feat, dim=-1, eps=1e-6)
+        n_pos = float(student_feat.shape[0])
+        s_corr = s_rel.T @ s_rel / n_pos
+        t_corr = t_rel.T @ t_rel / n_pos
+        scale = temperature.pow(2) if temperature.ndim == 0 else temperature.pow(2).mean()
+        return (s_corr - t_corr).pow(2).sum() * scale
+
     def _sample_box_features(
         self,
         feature_map: torch.Tensor,
@@ -503,7 +513,7 @@ class CCLKDOnlineHBBTrainer(DetectionTrainer):
             "entropy_scale": float(overrides.pop("cclkd_entropy_scale", 5.0)),
             "contrastive_temperature": float(overrides.pop("cclkd_contrastive_temperature", 0.1)),
             "fld_temperature": float(overrides.pop("cclkd_fld_temperature", 1.0)),
-            "fld_temperature_mode": overrides.pop("cclkd_fld_temperature_mode", "fixed"),
+            "fld_temperature_mode": overrides.pop("cclkd_fld_temperature_mode", "patm"),
             "min_confidence": float(overrides.pop("cclkd_min_confidence", 0.1)),
             "max_tokens": int(overrides.pop("cclkd_max_tokens", 512)),
             "formulation": overrides.pop("cclkd_formulation", "adapted"),
@@ -696,7 +706,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--cclkd-fld-temperature-mode",
         choices=("fixed", "patm"),
-        default="fixed",
+        default="patm",
         help="'fixed' uses --cclkd-fld-temperature; 'patm' reuses the class-wise PATM temperature for FLD.",
     )
     parser.add_argument("--cclkd-min-confidence", type=float, default=0.1)
