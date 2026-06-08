@@ -744,9 +744,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--cclkd-formulation",
         choices=("adapted", "paper"),
-        default="adapted",
-        help="'adapted' keeps the YOLO11 token-level proxy; 'paper' uses teacher COP, target/non-target LLD, "
-        "class-wise temperature, and box-aligned feature sampling.",
+        default="paper",
+        help="'paper' is the default CCLKD reproduction path: teacher-side COP, target/non-target LLD, "
+        "class-wise temperature, paper-pair CCL, and box-aligned feature sampling. "
+        "'adapted' is kept only for legacy YOLO11 token-level diagnostic runs.",
     )
     parser.add_argument(
         "--cclkd-ccl-mode",
@@ -762,6 +763,11 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
+    if args.cclkd_formulation == "adapted":
+        LOGGER.warning(
+            "CCLKD formulation is set to 'adapted'. This is a legacy YOLO11 token-level diagnostic mode, "
+            "not the paper-aligned CCLKD reproduction path. Use --cclkd-formulation paper for formal experiments."
+        )
     pretrain_path = _cclkd_pretrain_path(args.model_size)
     if not pretrain_path.is_file():
         raise SystemExit(f"Missing CCLKD online pretrain checkpoint: {pretrain_path}")
