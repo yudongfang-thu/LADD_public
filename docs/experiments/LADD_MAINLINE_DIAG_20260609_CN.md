@@ -20,7 +20,7 @@ H1 不改变 LADD 方法本身，只消除训练和诊断实现污染：
 - `FREEZE_BN_STATS=1` 只冻结 BatchNorm running statistics。
 - BN-freeze 不再改变任何参数的 `requires_grad`。
 - `ladd_diag_log_grad=1` 只记录梯度范数。
-- 梯度裁剪只能通过显式 `LADD_GRAD_CLIP_NORM>0` 启用；H1 主线使用 `0.0`。
+- `LADD_GRAD_CLIP_NORM=0.0` 表示不覆盖 vendored Ultralytics 默认 `max_norm=10.0` 裁剪；`>0` 才使用显式 override。
 - B phase 可通过 `LADD_ASSERT_PHASE_FREEZE=1` 检查 `teacher_decomposition`、`student_reachability`、`teacher_task_heads` 是否保持 frozen。
 
 ## 3. 合格判据

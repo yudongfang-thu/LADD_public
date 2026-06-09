@@ -44,7 +44,7 @@ def test_set_bn_stats_eval_does_not_change_requires_grad() -> None:
     assert bn.bias.requires_grad is True
 
 
-def test_grad_log_uses_explicit_clip_norm() -> None:
+def test_grad_log_preserves_default_clip_norm() -> None:
     for path in (
         REPO_ROOT / "ladd" / "code" / "src" / "teacher_student_decomposition_kd_hbb" / "trainer.py",
         REPO_ROOT
@@ -56,6 +56,7 @@ def test_grad_log_uses_explicit_clip_norm() -> None:
         / "trainer.py",
     ):
         text = path.read_text(encoding="utf-8")
-        assert "max_norm=10.0" not in text
+        assert "_DEFAULT_ULTRALYTICS_GRAD_CLIP_NORM = 10.0" in text
+        assert "ULTRALYTICS_DEFAULT" in text
         assert "ladd_grad_clip_norm" in text
         assert "ladd_assert_phase_freeze" in text

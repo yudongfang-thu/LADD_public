@@ -8,7 +8,7 @@
 
 - BN-freeze 不再改变任何参数的 `requires_grad`。
 - `LADD_DIAG_LOG_GRAD=1` 不再隐式执行梯度裁剪。
-- 新增显式 `LADD_GRAD_CLIP_NORM` 参数，默认 `0.0`，表示关闭 LADD trainer 额外裁剪。
+- 新增显式 `LADD_GRAD_CLIP_NORM` 参数，默认 `0.0`，表示不覆盖 vendored Ultralytics 默认 `max_norm=10.0` 裁剪。
 - 新增 `LADD_ASSERT_PHASE_FREEZE`，用于在 B phase 检查 frozen module 是否被意外打开。
 - launcher、chain 和 phase manifest 记录 H1 相关诊断变量，方便日志审计。
 
@@ -37,7 +37,7 @@ H1 的目标是排除实现污染，不把 H1 宣传为最终主线。
 
 - `py_compile`：通过。
 - `bash -n`：formal launcher、LR/BN matrix、chain 和 phase 脚本均通过。
-- static check：通过，两个 HBB trainer 不含 hard-coded `max_norm=10.0`，并包含 `ladd_grad_clip_norm` 与 `ladd_assert_phase_freeze`。
+- static check：通过，两个 HBB trainer 包含 `ladd_grad_clip_norm`、`ladd_assert_phase_freeze` 与默认 Ultralytics clip norm 记录。
 - pytest/smoke：`pytest -q tests/test_ladd_h1_diagnostics.py` 通过。
 - LR/BN matrix dry run：通过，printed command 包含 `LADD_GRAD_CLIP_NORM=0.0` 与 `LADD_ASSERT_PHASE_FREEZE=1`。
 - formal launcher deep dry run：本地缺少正式 baseline/teacher checkpoint，停在前置 checkpoint 检查；需在服务器权重齐全环境复跑。

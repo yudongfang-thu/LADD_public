@@ -530,6 +530,8 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
 ):
     """Single-phase manual trainer for A1/A2/B/C with teacher-side u_t controls."""
 
+    _DEFAULT_ULTRALYTICS_GRAD_CLIP_NORM = 10.0
+
     def __init__(self, cfg=DEFAULT_CFG, overrides: dict | None = None, _callbacks: dict | None = None):
         overrides = {} if overrides is None else dict(overrides)
         phase = str(overrides.pop("phase", "")).lower()
@@ -982,6 +984,11 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             self._last_grad_norms = None
         if grad_clip_norm > 0.0:
             torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=grad_clip_norm)
+        else:
+            torch.nn.utils.clip_grad_norm_(
+                self.model.parameters(),
+                max_norm=self._DEFAULT_ULTRALYTICS_GRAD_CLIP_NORM,
+            )
         self.scaler.step(self.optimizer)
         self.scaler.update()
         self.optimizer.zero_grad()
@@ -1019,6 +1026,12 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
         trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
         bn_total, bn_eval = self._count_bn_modules()
         grad_clip_norm = float(self.diagnostic_cfg.get("ladd_grad_clip_norm", 0.0) or 0.0)
+        if grad_clip_norm > 0.0:
+            grad_clip_label = "EXPLICIT"
+            effective_grad_clip_norm = grad_clip_norm
+        else:
+            grad_clip_label = "ULTRALYTICS_DEFAULT"
+            effective_grad_clip_norm = self._DEFAULT_ULTRALYTICS_GRAD_CLIP_NORM
         LOGGER.info(
             "ladd_phase_diag "
             f"phase={self.manual_phase_cfg.get('phase', '')} "
@@ -1028,8 +1041,9 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             f"freeze_bn_after_epoch={int(self.diagnostic_cfg.get('freeze_bn_after_epoch', -1))} "
             f"ladd_assert_phase_freeze={bool(self.diagnostic_cfg.get('ladd_assert_phase_freeze', False))} "
             f"ladd_diag_log_grad={bool(self.diagnostic_cfg.get('ladd_diag_log_grad', False))} "
-            f"ladd_grad_clip={'ON' if grad_clip_norm > 0.0 else 'OFF'} "
-            f"ladd_grad_clip_norm={grad_clip_norm}"
+            f"ladd_grad_clip={grad_clip_label} "
+            f"ladd_grad_clip_norm={grad_clip_norm} "
+            f"effective_grad_clip_norm={effective_grad_clip_norm}"
         )
 
     def _assert_modules_frozen(self, model, module_names: tuple[str, ...], *, context: str) -> None:

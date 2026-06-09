@@ -73,7 +73,7 @@ def parse_args() -> argparse.Namespace:
         "--ladd-grad-clip-norm",
         type=float,
         default=0.0,
-        help="Explicit gradient clipping norm. 0.0 disables LADD trainer clipping.",
+        help="Explicit gradient clipping override. <=0 preserves Ultralytics default clipping.",
     )
     parser.add_argument(
         "--ladd-assert-phase-freeze",
