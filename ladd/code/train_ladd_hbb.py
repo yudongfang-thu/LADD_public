@@ -70,6 +70,18 @@ def parse_args() -> argparse.Namespace:
         help="Also record gradient norms in ladd_diagnostics.csv. Disabled by default to avoid overhead.",
     )
     parser.add_argument(
+        "--ladd-grad-clip-norm",
+        type=float,
+        default=0.0,
+        help="Explicit gradient clipping norm. 0.0 disables LADD trainer clipping.",
+    )
+    parser.add_argument(
+        "--ladd-assert-phase-freeze",
+        type=int,
+        default=0,
+        help="Assert B-phase frozen LADD modules remain requires_grad=False.",
+    )
+    parser.add_argument(
         "--ladd-diag-log-every",
         type=int,
         default=1,
@@ -195,6 +207,8 @@ def main() -> None:
         freeze_bn_after_epoch=args.freeze_bn_after_epoch,
         ladd_diag_log_bn=args.ladd_diag_log_bn,
         ladd_diag_log_grad=args.ladd_diag_log_grad,
+        ladd_grad_clip_norm=args.ladd_grad_clip_norm,
+        ladd_assert_phase_freeze=args.ladd_assert_phase_freeze,
         ladd_diag_log_every=args.ladd_diag_log_every,
         data=str(args.data.resolve()),
         teacher_data=str(args.teacher_data.resolve()),

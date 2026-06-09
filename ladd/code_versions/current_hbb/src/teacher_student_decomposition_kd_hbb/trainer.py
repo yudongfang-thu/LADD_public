@@ -181,9 +181,13 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(DetectionTrainer):
             "freeze_bn_after_epoch": int(overrides.pop("freeze_bn_after_epoch", -1)),
             "ladd_diag_log_bn": int(overrides.pop("ladd_diag_log_bn", 1)) > 0,
             "ladd_diag_log_grad": int(overrides.pop("ladd_diag_log_grad", 0)) > 0,
+            "ladd_grad_clip_norm": float(overrides.pop("ladd_grad_clip_norm", 0.0)),
+            "ladd_assert_phase_freeze": int(overrides.pop("ladd_assert_phase_freeze", 0)) > 0,
             "ladd_diag_log_every": max(int(overrides.pop("ladd_diag_log_every", 1)), 1),
         }
         self._last_grad_norms = None
+        self._phase_freeze_asserted = False
+        self._phase_training_state_logged = False
         if self.tskd_cfg["teacher_data"] is None:
             raise ValueError("HBB LADD trainer requires 'teacher_data'.")
         overrides["task"] = "detect"
@@ -920,6 +924,10 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
         )
         self._maybe_reset_student_from_scratch_for_phase_b()
         self._apply_manual_phase(announce=True)
+        if self._should_freeze_bn_stats():
+            self._set_bn_stats_eval(unwrap_model(self.model))
+        self._log_phase_training_state()
+        self._assert_phase_freeze_once()
         self._log_bn_stats_strategy()
         self._run_initial_validation_snapshot()
 
@@ -959,13 +967,17 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             model.student_r_fg_heads.train(train_residual_aux)
         if self._should_freeze_bn_stats():
             self._set_bn_stats_eval(model)
+        self._assert_phase_freeze_once()
 
     def optimizer_step(self):
-        if not self.diagnostic_cfg.get("ladd_diag_log_grad", False):
-            return super().optimizer_step()
         self.scaler.unscale_(self.optimizer)
-        self._last_grad_norms = self._collect_grad_norms()
-        torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=10.0)
+        if self.diagnostic_cfg.get("ladd_diag_log_grad", False):
+            self._last_grad_norms = self._collect_grad_norms()
+        else:
+            self._last_grad_norms = None
+        grad_clip_norm = float(self.diagnostic_cfg.get("ladd_grad_clip_norm", 0.0) or 0.0)
+        if grad_clip_norm > 0.0:
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=grad_clip_norm)
         self.scaler.step(self.optimizer)
         self.scaler.update()
         self.optimizer.zero_grad()
@@ -978,11 +990,68 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
 
     @staticmethod
     def _set_bn_stats_eval(model):
+        """Freeze BatchNorm running statistics without changing trainability."""
         for module in model.modules():
             if isinstance(module, torch.nn.modules.batchnorm._BatchNorm):
                 module.eval()
-                for parameter in module.parameters(recurse=False):
-                    parameter.requires_grad_(True)
+
+    def _count_bn_modules(self) -> tuple[int, int]:
+        model = unwrap_model(self.model)
+        total = 0
+        eval_count = 0
+        for module in model.modules():
+            if isinstance(module, torch.nn.modules.batchnorm._BatchNorm):
+                total += 1
+                if not module.training:
+                    eval_count += 1
+        return total, eval_count
+
+    def _log_phase_training_state(self) -> None:
+        if self._phase_training_state_logged or RANK not in {-1, 0}:
+            return
+        self._phase_training_state_logged = True
+        model = unwrap_model(self.model)
+        total_params = sum(p.numel() for p in model.parameters())
+        trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+        bn_total, bn_eval = self._count_bn_modules()
+        grad_clip_norm = float(self.diagnostic_cfg.get("ladd_grad_clip_norm", 0.0) or 0.0)
+        LOGGER.info(
+            "ladd_phase_diag "
+            f"phase={self.manual_phase_cfg.get('phase', '')} "
+            f"trainable_params={trainable_params}/{total_params} "
+            f"bn_eval={bn_eval}/{bn_total} "
+            f"freeze_bn_stats={bool(self.diagnostic_cfg.get('freeze_bn_stats', False))} "
+            f"freeze_bn_after_epoch={int(self.diagnostic_cfg.get('freeze_bn_after_epoch', -1))} "
+            f"ladd_assert_phase_freeze={bool(self.diagnostic_cfg.get('ladd_assert_phase_freeze', False))} "
+            f"ladd_diag_log_grad={bool(self.diagnostic_cfg.get('ladd_diag_log_grad', False))} "
+            f"grad_clipping={'ON' if grad_clip_norm > 0.0 else 'OFF'} "
+            f"ladd_grad_clip_norm={grad_clip_norm}"
+        )
+
+    def _assert_phase_freeze_once(self) -> None:
+        if self._phase_freeze_asserted:
+            return
+        if not self.diagnostic_cfg.get("ladd_assert_phase_freeze", False):
+            return
+        if self.manual_phase_cfg.get("phase") != "b":
+            return
+        self._phase_freeze_asserted = True
+        model = unwrap_model(self.model)
+        frozen_module_names = ("teacher_decomposition", "student_reachability", "teacher_task_heads")
+        for module_name in frozen_module_names:
+            module = getattr(model, module_name, None)
+            if module is None:
+                if RANK in {-1, 0}:
+                    LOGGER.warning(f"ladd_assert_phase_freeze: phase=b module '{module_name}' not found; skipping.")
+                continue
+            for parameter_name, parameter in module.named_parameters():
+                if parameter.requires_grad:
+                    raise RuntimeError(
+                        "ladd_assert_phase_freeze failed: "
+                        f"phase=b module={module_name} parameter={parameter_name} requires_grad=True"
+                    )
+        if RANK in {-1, 0}:
+            LOGGER.info("ladd_assert_phase_freeze: phase=b frozen module checks passed.")
 
     def _bn_stats_mode_label(self) -> str:
         if self.diagnostic_cfg.get("freeze_bn_stats", False):

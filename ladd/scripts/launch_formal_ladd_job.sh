@@ -19,6 +19,8 @@ Variants:
 
 Optional:
   RUN_TAG_SUFFIX=_a2lr1e3  # append a suffix to avoid overwriting prior runs
+  EXP_SUFFIX=diag_h1_s_s0_b400  # alias appended to the run tag
+  EPOCHS=400              # alias for EPOCHS_B in diagnostics
   EPOCHS_B=400             # diagnostic override; defaults preserve formal protocol
   LADD_CHAIN_SCRIPT=...     # explicit path to run_hbb_ladd_converged_chain.sh
 EOF
@@ -72,6 +74,9 @@ if [[ ! -f "$RGB_TEACHER" ]]; then
   exit 1
 fi
 
+if [[ -n "${EXP_SUFFIX:-}" && -z "${RUN_TAG_SUFFIX:-}" ]]; then
+  RUN_TAG_SUFFIX="_${EXP_SUFFIX}"
+fi
 RUN_TAG="formal_nomosaic_yolo11${SIZE}_${VARIANT}_s${SEED}${RUN_TAG_SUFFIX:-}"
 PROJECT_DIR="${BASE_ROOT}/ladd/yolo11${SIZE}/${VARIANT}"
 CHAIN_LOG_DIR="logs/formal_nomosaic_20260528/ladd/${RUN_TAG}_gpu${GPU_ID}"
@@ -80,12 +85,12 @@ OUTER_LOG="${LOG_DIR}/${RUN_TAG}_gpu${GPU_ID}.outer.log"
 PID_PATH="${LOG_DIR}/${RUN_TAG}_gpu${GPU_ID}.pid"
 EPOCHS_A1_VALUE="${EPOCHS_A1:-10}"
 EPOCHS_A2_VALUE="${EPOCHS_A2:-50}"
-EPOCHS_B_VALUE="${EPOCHS_B:-800}"
+EPOCHS_B_VALUE="${EPOCHS_B:-${EPOCHS:-800}}"
 PATIENCE_A_VALUE="${PATIENCE_A:-200}"
 PATIENCE_B_VALUE="${PATIENCE_B:-${EPOCHS_B_VALUE}}"
 SAVE_PERIOD_VALUE="${SAVE_PERIOD:-100}"
 B_CLOSE_AT_EPOCH_VALUE="${B_CLOSE_AT_EPOCH:-${EPOCHS_B_VALUE}}"
-CHAIN_SCRIPT="${LADD_CHAIN_SCRIPT:-scripts/ogsod_public/run_hbb_ladd_converged_chain.sh}"
+CHAIN_SCRIPT="${LADD_CHAIN_SCRIPT:-ladd/code_versions/current_hbb/scripts/ogsod_public/run_hbb_ladd_converged_chain.sh}"
 mkdir -p "$PROJECT_DIR" "$CHAIN_LOG_DIR" "$LOG_DIR"
 
 if [[ ! -f "$CHAIN_SCRIPT" ]]; then
@@ -104,8 +109,8 @@ cmd=(
   env
   "SAR_BASELINE=${SAR_BASELINE}"
   "RGB_TEACHER=${RGB_TEACHER}"
-  "DATA_CFG=configs/datasets/ogsod_hbb_sar.yaml"
-  "TEACHER_DATA_CFG=configs/datasets/ogsod_hbb_rgb.yaml"
+  "DATA_CFG=${DATA_CFG:-shared/configs/datasets_public/ogsod1_sar_detect.yaml}"
+  "TEACHER_DATA_CFG=${TEACHER_DATA_CFG:-shared/configs/datasets_public/ogsod1_rgb_detect.yaml}"
   "MODEL_SIZE=${SIZE}"
   "GPU_ID=${GPU_ID}"
   "SEED=${SEED}"
@@ -144,6 +149,9 @@ cmd=(
 )
 
 for optional_env in \
+  ALPHA_KD LAMBDA_REACH LAMBDA_MATCH_INNER LAMBDA_RANK_INNER \
+  LADD_GRAD_CLIP_NORM LADD_ASSERT_PHASE_FREEZE \
+  LADD_CHAIN_PHASES SERVER_TAG \
   A1_OPTIMIZER A1_LR0 A1_LRF A1_COS_LR A1_WARMUP_EPOCHS A1_WARMUP_BIAS_LR A1_WARMUP_MOMENTUM A1_DET_LOSS_SCALE \
   A2_OPTIMIZER A2_LR0 A2_LRF A2_COS_LR A2_WARMUP_EPOCHS A2_WARMUP_BIAS_LR A2_WARMUP_MOMENTUM A2_DET_LOSS_SCALE \
   A1_FREEZE_BN_STATS A2_FREEZE_BN_STATS B_FREEZE_BN_STATS \
@@ -153,6 +161,12 @@ for optional_env in \
     cmd+=("${optional_env}=${!optional_env}")
   fi
 done
+if [[ -n "${FREEZE_BN_STATS:-}" ]]; then
+  cmd+=("B_FREEZE_BN_STATS=${FREEZE_BN_STATS}")
+fi
+if [[ -n "${FREEZE_BN_AFTER_EPOCH:-}" ]]; then
+  cmd+=("B_FREEZE_BN_AFTER_EPOCH=${FREEZE_BN_AFTER_EPOCH}")
+fi
 
 cmd+=(
   "$CHAIN_SCRIPT"

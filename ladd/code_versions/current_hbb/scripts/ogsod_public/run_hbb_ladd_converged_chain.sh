@@ -25,7 +25,8 @@ Common overrides:
   GPU_ID, SEED, PROJECT_DIR, CHAIN_LOG_DIR, EPOCHS_A1, EPOCHS_A2, EPOCHS_B,
   BATCH_SIZE, WORKERS, PATIENCE_B, RANK_D_NEG_CAP, LAMBDA_ANTI_COLLAPSE,
   ANTI_COLLAPSE_FLOOR, A1_/A2_/B_ optimizer overrides, B_FREEZE_BN_AFTER_EPOCH,
-  LADD_DIAG_LOG_BN, LADD_DIAG_LOG_GRAD, LADD_DIAG_LOG_EVERY, EXIST_OK=1
+  LADD_DIAG_LOG_BN, LADD_DIAG_LOG_GRAD, LADD_GRAD_CLIP_NORM,
+  LADD_ASSERT_PHASE_FREEZE, LADD_DIAG_LOG_EVERY, LADD_CHAIN_PHASES, EXIST_OK=1
 EOF
 }
 
@@ -35,7 +36,7 @@ if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
 fi
 
 RUN_TAG="${1:-converged800_ladd_$(date +%Y%m%d_%H%M%S)}"
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+ROOT_DIR="$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)"
 cd "$ROOT_DIR"
 
 : "${SAR_BASELINE:?Set SAR_BASELINE to the converged SAR baseline checkpoint.}"
@@ -54,12 +55,17 @@ PATIENCE_A="${PATIENCE_A:-200}"
 PATIENCE_B="${PATIENCE_B:-80}"
 PROJECT_DIR="${PROJECT_DIR:-runs_public/ogsod/hbb/ladd_converged_20260524}"
 CHAIN_LOG_DIR="${CHAIN_LOG_DIR:-logs/ogsod_public/hbb_${RUN_TAG}_a1_a2_b_converged_chain}"
+LADD_CHAIN_PHASES="${LADD_CHAIN_PHASES:-a1,a2,b}"
+GIT_COMMIT="${GIT_COMMIT:-$(git rev-parse HEAD 2>/dev/null || echo unknown)}"
+SERVER_TAG="${SERVER_TAG:-unknown_server}"
 
 mkdir -p "$CHAIN_LOG_DIR"
 manifest="${CHAIN_LOG_DIR}/manifest.txt"
 {
+  echo "git_commit=${GIT_COMMIT}"
+  echo "server_tag=${SERVER_TAG}"
   echo "task=hbb"
-  echo "chain=a1,a2,b"
+  echo "chain=${LADD_CHAIN_PHASES}"
   echo "run_tag=${RUN_TAG}"
   echo "sar_baseline=${SAR_BASELINE}"
   echo "rgb_teacher=${RGB_TEACHER}"
@@ -75,6 +81,8 @@ manifest="${CHAIN_LOG_DIR}/manifest.txt"
   echo "b_freeze_bn_after_epoch=${B_FREEZE_BN_AFTER_EPOCH:--1}"
   echo "ladd_diag_log_bn=${LADD_DIAG_LOG_BN:-1}"
   echo "ladd_diag_log_grad=${LADD_DIAG_LOG_GRAD:-0}"
+  echo "ladd_grad_clip_norm=${LADD_GRAD_CLIP_NORM:-0.0}"
+  echo "ladd_assert_phase_freeze=${LADD_ASSERT_PHASE_FREEZE:-0}"
   echo "ladd_diag_log_every=${LADD_DIAG_LOG_EVERY:-1}"
   echo "rank_d_neg_cap=${RANK_D_NEG_CAP:-4.0}"
   echo "lambda_anti_collapse=${LAMBDA_ANTI_COLLAPSE:-0.0}"
@@ -179,10 +187,12 @@ run_phase() {
   env_args+=(
     LADD_DIAG_LOG_BN="${LADD_DIAG_LOG_BN:-1}"
     LADD_DIAG_LOG_GRAD="${LADD_DIAG_LOG_GRAD:-0}"
+    LADD_GRAD_CLIP_NORM="${LADD_GRAD_CLIP_NORM:-0.0}"
+    LADD_ASSERT_PHASE_FREEZE="${LADD_ASSERT_PHASE_FREEZE:-0}"
     LADD_DIAG_LOG_EVERY="${LADD_DIAG_LOG_EVERY:-1}"
   )
 
-  env "${env_args[@]}" scripts/ogsod_public/run_ladd_phase.sh hbb "$phase" "$RUN_TAG"
+  env "${env_args[@]}" ladd/code_versions/current_hbb/scripts/ogsod_public/run_ladd_phase.sh hbb "$phase" "$RUN_TAG"
   local actual_run_dir
   actual_run_dir="$(cat "${phase_log_dir}/actual_run_dir.txt")"
   echo "${phase}=${actual_run_dir}" >> "$manifest"
@@ -194,9 +204,18 @@ run_phase() {
   current_model="$next_model"
 }
 
-run_phase a1 "$EPOCHS_A1" "$PATIENCE_A"
-run_phase a2 "$EPOCHS_A2" "$PATIENCE_A"
-run_phase b "$EPOCHS_B" "$PATIENCE_B"
+IFS=',' read -r -a requested_phases <<< "$LADD_CHAIN_PHASES"
+for phase in "${requested_phases[@]}"; do
+  case "$phase" in
+    a1) run_phase a1 "$EPOCHS_A1" "$PATIENCE_A" ;;
+    a2) run_phase a2 "$EPOCHS_A2" "$PATIENCE_A" ;;
+    b) run_phase b "$EPOCHS_B" "$PATIENCE_B" ;;
+    *)
+      echo "Unsupported LADD_CHAIN_PHASES entry: ${phase}. Valid sequence entries: a1,a2,b" >&2
+      exit 2
+      ;;
+  esac
+done
 
 echo "[$(date '+%F %T')] Chain complete. Final model: ${current_model}" | tee -a "${CHAIN_LOG_DIR}/chain.log"
 printf '%s\n' "$current_model" > "${CHAIN_LOG_DIR}/final_model.txt"

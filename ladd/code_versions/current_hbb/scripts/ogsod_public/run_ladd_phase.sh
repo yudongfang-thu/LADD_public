@@ -27,7 +27,8 @@ Detector schedule overrides:
 
 LADD diagnostics:
   FREEZE_BN_STATS=1, FREEZE_BN_AFTER_EPOCH=200,
-  LADD_DIAG_LOG_BN=1, LADD_DIAG_LOG_GRAD=0, LADD_DIAG_LOG_EVERY=1
+  LADD_DIAG_LOG_BN=1, LADD_DIAG_LOG_GRAD=0, LADD_GRAD_CLIP_NORM=0.0,
+  LADD_ASSERT_PHASE_FREEZE=0, LADD_DIAG_LOG_EVERY=1
 
 Reach anti-collapse overrides:
   RANK_D_NEG_CAP, LAMBDA_ANTI_COLLAPSE, ANTI_COLLAPSE_FLOOR
@@ -60,7 +61,7 @@ if [[ "$TASK" == "obb" && ( "$PHASE" == "b1" || "$PHASE" == "b2" ) ]]; then
   exit 1
 fi
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+ROOT_DIR="$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)"
 cd "$ROOT_DIR"
 
 case "$PHASE" in
@@ -117,7 +118,7 @@ MASTER_LOG="${LOG_DIR}/master.log"
 MANIFEST="${LOG_DIR}/manifest.txt"
 TOOL="tools/train_teacher_student_decomposition_kd_phase_nrrl_teacher_u_aux.py"
 if [[ "$TASK" == "hbb" ]]; then
-  TOOL="tools/train_ladd_hbb.py"
+  TOOL="ladd/code_versions/current_hbb/tools/train_ladd_hbb.py"
 fi
 
 GPU_ID="${GPU_ID:-0}"
@@ -158,6 +159,8 @@ USE_FG_MASK_FOR_REC="${USE_FG_MASK_FOR_REC:-0}"
 STRICT_BATCH_SIZE="${STRICT_BATCH_SIZE:-0}"
 VALIDATE_BEFORE_TRAIN="${VALIDATE_BEFORE_TRAIN:-0}"
 EXIST_OK="${EXIST_OK:-0}"
+GIT_COMMIT="${GIT_COMMIT:-$(git rev-parse HEAD 2>/dev/null || echo unknown)}"
+SERVER_TAG="${SERVER_TAG:-unknown_server}"
 
 resolve_close_mosaic() {
   if [[ -n "${CLOSE_MOSAIC:-}" ]]; then
@@ -234,6 +237,8 @@ STAGE_LOG="${LOG_DIR}/${PHASE}.log"
 mkdir -p "$LOG_DIR"
 
 {
+  echo "git_commit=${GIT_COMMIT}"
+  echo "server_tag=${SERVER_TAG}"
   echo "task=${TASK}"
   echo "phase=${PHASE}"
   echo "run_tag=${RUN_TAG}"
@@ -258,6 +263,8 @@ mkdir -p "$LOG_DIR"
   echo "freeze_bn_after_epoch=${FREEZE_BN_AFTER_EPOCH:--1}"
   echo "ladd_diag_log_bn=${LADD_DIAG_LOG_BN:-1}"
   echo "ladd_diag_log_grad=${LADD_DIAG_LOG_GRAD:-0}"
+  echo "ladd_grad_clip_norm=${LADD_GRAD_CLIP_NORM:-0.0}"
+  echo "ladd_assert_phase_freeze=${LADD_ASSERT_PHASE_FREEZE:-0}"
   echo "ladd_diag_log_every=${LADD_DIAG_LOG_EVERY:-1}"
   echo "close_at_epoch=${CLOSE_AT_EPOCH:-}"
   echo "close_mosaic=${RESOLVED_CLOSE_MOSAIC}"
@@ -303,6 +310,8 @@ cmd=(
   --freeze-bn-after-epoch "${FREEZE_BN_AFTER_EPOCH:--1}"
   --ladd-diag-log-bn "${LADD_DIAG_LOG_BN:-1}"
   --ladd-diag-log-grad "${LADD_DIAG_LOG_GRAD:-0}"
+  --ladd-grad-clip-norm "${LADD_GRAD_CLIP_NORM:-0.0}"
+  --ladd-assert-phase-freeze "${LADD_ASSERT_PHASE_FREEZE:-0}"
   --ladd-diag-log-every "${LADD_DIAG_LOG_EVERY:-1}"
   --reach-target-mode "$REACH_TARGET_MODE"
   --kd-target-mode "$KD_TARGET_MODE"
