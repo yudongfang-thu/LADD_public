@@ -1,6 +1,7 @@
 # v3 paper-pair CCL + per-side DFL box-distribution snapshot
 
-Snapshot time: `2026-06-09 16:50` on the dual-4090 server.
+Initial raw-log snapshot time: `2026-06-09 16:50` on the dual-4090 server.
+Latest lightweight CSV/status update: `2026-06-09 20:29`.
 
 This version corresponds to the current paper-aligned diagnostic branch:
 
@@ -23,10 +24,12 @@ The key implementation differences from previous archived versions are:
 | File | Content |
 |---|---|
 | `cclkd_v3_snapshot.tgz` | Raw pulled artifact bundle from the 4090 server; contains `results.csv`, `args.yaml`, selected text logs, process status, and file manifest. No checkpoint weights are included. |
+| `cclkd_v3_update.tgz` | Lightweight latest update bundle with current `results.csv`, `args.yaml`, process status, and manifests. No checkpoint weights are included. |
 | `process_status.json` | Active process snapshot at pull time. |
 | `current_status.json` | Compact parsed status for the six current runs. |
 | `metrics_summary.csv` | Current epoch, best/latest metrics, baseline-at-same-epoch deltas, and ETA. |
 | `milestone_comparison.csv` | Fixed-epoch ranking and baseline deltas. |
+| `files_update_20260609_2029.txt` | File manifest for the lightweight update bundle. |
 | `results/` | Copied `results.csv` for each current run. |
 | `args/` | Copied `args.yaml` for each current run. |
 
@@ -36,28 +39,31 @@ Baseline reference: `../baseline_reference/sar_yolo11n_400ep_laddproto_results.c
 
 | Run | Epoch | AP50 | AP50-95 | Same-epoch baseline AP50-95 | Delta AP50-95 | Note |
 |---|---:|---:|---:|---:|---:|---|
-| `lld` | 158 | 0.652329 | 0.401732 | 0.386820 | +0.014912 | running |
-| `lld_fld` | 161 | 0.656575 | 0.407762 | 0.388560 | +0.019202 | running |
-| `lld_fld_rld` | 164 | 0.657699 | 0.406629 | 0.391310 | +0.015319 | running |
-| `ccl_only` | 357 | 0.773673 | 0.510307 | 0.502990 | +0.007317 | running |
-| `atkd` | 392 | 0.787397 | 0.523595 | 0.514900 | +0.008695 | running |
-| `full` | 359 | 0.776816 | 0.516802 | 0.503950 | +0.012852 | running |
+| `lld` | 244 | 0.719204 | 0.463431 | 0.443510 | +0.019921 | running |
+| `lld_fld` | 249 | 0.721280 | 0.465211 | 0.446960 | +0.018251 | running |
+| `lld_fld_rld` | 256 | 0.726508 | 0.464087 | 0.450790 | +0.013297 | running |
+| `ccl_only` | 400 | 0.785596 | 0.520551 | 0.515460 | +0.005091 | completed |
+| `atkd` | 400 | 0.788921 | 0.524869 | 0.515460 | +0.009409 | completed |
+| `full` | 400 | 0.787642 | 0.525314 | 0.515460 | +0.009854 | completed |
 
 ## Fixed-epoch ranking
 
 The main relation is directionally healthy but small:
 
 ```text
-E200: full 0.433274 > atkd 0.430199 > ccl_only 0.428485
-E250: full 0.464674 > atkd 0.460946 > ccl_only 0.458394
-E300: full 0.492442 > atkd 0.490531 > ccl_only 0.485905
-E350: full 0.513572 > atkd 0.512457 > ccl_only 0.508147
+E200: lld_fld 0.435608 > full 0.433895 > lld 0.431651 > atkd 0.430931 > lld_fld_rld 0.429893 > ccl_only 0.429273
+E225: full 0.450408 > lld_fld 0.450250 > lld 0.449980 > atkd 0.446349 > lld_fld_rld 0.444728 > ccl_only 0.444627
+E238: lld 0.459383 > lld_fld 0.458373 > full 0.457883 > atkd 0.454678 > lld_fld_rld 0.452986 > ccl_only 0.451762
+E250: full 0.465338 > atkd 0.461998 > lld_fld_rld 0.460387 > ccl_only 0.459055
+E300: full 0.492990 > atkd 0.490579 > ccl_only 0.486651
+E350: full 0.514404 > atkd 0.512768 > ccl_only 0.508547
+E400: full 0.525314 > atkd 0.524869 > ccl_only 0.520551
 ```
 
 The early non-CCL branch relation is less clean:
 
 ```text
-E150: lld_fld 0.400576 > full 0.400169 > atkd 0.398089 > lld 0.396877 > lld_fld_rld 0.396802 > ccl_only 0.392827
+E150: lld_fld 0.401291 > full 0.400819 > atkd 0.398739 > lld_fld_rld 0.397772 > lld 0.397343 > ccl_only 0.393371
 ```
 
 This means:
@@ -65,7 +71,8 @@ This means:
 - CCL appears to be a positive add-on to ATKD at equal epoch.
 - CCL-only is consistently weaker than full, as expected.
 - `lld_fld` remains slightly stronger than `lld_fld_rld` in the early/mid phase, so RLD is not yet showing a clean positive contribution.
-- The absolute gain is small: near late training, `full` is only about `+0.013` AP50-95 above the same-protocol SAR baseline.
+- `E250` does not yet include exact `lld`/`lld_fld` rows in the current pulled CSV, so it should not be treated as a complete non-CCL comparison until those runs pass 250.
+- The final gain is small: at epoch 400, `full` is only `+0.009854` AP50-95 above the same-protocol SAR baseline and only `+0.000445` AP50-95 above `atkd`.
 
 ## Why this still needs audit
 

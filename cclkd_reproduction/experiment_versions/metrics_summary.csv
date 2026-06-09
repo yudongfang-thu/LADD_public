@@ -10,9 +10,9 @@ v1_ccl_anchorfix,full_cclanchorfix,stopped/superseded,3,0.048144,0.014841,8.3311
 v2_rld_patmfix,lld_fld_rld_rldpatmfix,running,146,0.646752,0.395538,1.245440,0.550384,0.306155,2026-06-08 21:31:48,valid current LLD+FLD+RLD curve
 v2_rld_patmfix,atkd_rldpatmfix,running,146,0.646546,0.390955,3.955070,0.554280,0.302668,2026-06-08 21:33:17,valid current ATKD curve
 v2_rld_patmfix,full_rldpatmfix,running,150,0.643886,0.392374,4.173890,0.549127,0.301626,2026-06-08 21:33:23,valid current full CCLKD curve
-v3_paper_pair_boxdist_20260609,lld,running,158,0.652329,0.401732,0.847560,0.548583,0.306479,2026-06-09 16:50,"current paper-pair CCL + per-side box_distribution DFL snapshot; gain is stable but small, under audit"
-v3_paper_pair_boxdist_20260609,lld_fld,running,161,0.656575,0.407762,0.963410,0.551476,0.308383,2026-06-09 16:50,"current paper-pair CCL + per-side box_distribution DFL snapshot; gain is stable but small, under audit"
-v3_paper_pair_boxdist_20260609,lld_fld_rld,running,164,0.657699,0.406629,0.972000,0.552071,0.306471,2026-06-09 16:50,"current paper-pair CCL + per-side box_distribution DFL snapshot; gain is stable but small, under audit"
-v3_paper_pair_boxdist_20260609,ccl_only,running,357,0.773673,0.510307,0.505170,0.542180,0.301020,2026-06-09 16:50,"current paper-pair CCL + per-side box_distribution DFL snapshot; gain is stable but small, under audit"
-v3_paper_pair_boxdist_20260609,atkd,running,392,0.787397,0.523595,1.212330,0.550304,0.305924,2026-06-09 16:50,"current paper-pair CCL + per-side box_distribution DFL snapshot; gain is stable but small, under audit"
-v3_paper_pair_boxdist_20260609,full,running,359,0.776816,0.516802,1.749980,0.553707,0.305825,2026-06-09 16:50,"current paper-pair CCL + per-side box_distribution DFL snapshot; gain is stable but small, under audit"
+v3_paper_pair_boxdist_20260609,lld,running,244,0.719204,0.463431,0.61552,0.555144,0.30926,2026-06-09 20:29,"updated snapshot: full/atkd/ccl_only complete; LLD branches near 250; stable small gains, RLD still weak"
+v3_paper_pair_boxdist_20260609,lld_fld,running,249,0.72128,0.465211,0.73407,0.552524,0.308923,2026-06-09 20:29,"updated snapshot: full/atkd/ccl_only complete; LLD branches near 250; stable small gains, RLD still weak"
+v3_paper_pair_boxdist_20260609,lld_fld_rld,running,256,0.726508,0.464087,0.66654,0.553824,0.308279,2026-06-09 20:29,"updated snapshot: full/atkd/ccl_only complete; LLD branches near 250; stable small gains, RLD still weak"
+v3_paper_pair_boxdist_20260609,ccl_only,done_or_unknown,400,0.785596,0.520551,0.51333,0.544636,0.301498,2026-06-09 20:29,"updated snapshot: full/atkd/ccl_only complete; LLD branches near 250; stable small gains, RLD still weak"
+v3_paper_pair_boxdist_20260609,atkd,done_or_unknown,400,0.788921,0.524869,1.21654,0.556797,0.309049,2026-06-09 20:29,"updated snapshot: full/atkd/ccl_only complete; LLD branches near 250; stable small gains, RLD still weak"
+v3_paper_pair_boxdist_20260609,full,done_or_unknown,400,0.787642,0.525314,1.74843,0.555925,0.307602,2026-06-09 20:29,"updated snapshot: full/atkd/ccl_only complete; LLD branches near 250; stable small gains, RLD still weak"

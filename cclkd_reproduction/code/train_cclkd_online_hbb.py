@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import math
 import sys
 from copy import deepcopy
@@ -22,7 +23,7 @@ for root in (SHARED_ROOT, YOLO_ROOT):
 from d2ad_obb.paired_dataset import PairedOBBDataset  # noqa: E402
 from train_cli_overrides import add_common_detector_train_overrides, collect_common_detector_train_overrides  # noqa: E402
 from ultralytics import YOLO  # noqa: E402
-from ultralytics.data import build_yolo_dataset  # noqa: E402
+from ultralytics.data import build_dataloader, build_yolo_dataset  # noqa: E402
 from ultralytics.data.utils import check_det_dataset  # noqa: E402
 from ultralytics.models import yolo  # noqa: E402
 from ultralytics.models.yolo.detect.train import DetectionTrainer  # noqa: E402
@@ -144,6 +145,7 @@ class CCLKDOnlineReproLoss(nn.Module):
         self.rld_mode = rld_mode
         self.roi_grid_size = int(roi_grid_size)
         self._kd_component_levels: list[torch.Tensor] | None = None
+        self._diag_accumulator = self._new_diag_accumulator()
 
     def update(self) -> None:
         for criterion in (self.student_det, self.teacher_det):
@@ -169,6 +171,19 @@ class CCLKDOnlineReproLoss(nn.Module):
         else:
             kd_components = kd_loss.detach().new_zeros(4)
         self._kd_component_levels = None
+        self._last_batch_diagnostics = {
+            "student_box_loss": float(student_items.detach().flatten()[0].cpu()) if student_items.numel() > 0 else math.nan,
+            "student_cls_loss": float(student_items.detach().flatten()[1].cpu()) if student_items.numel() > 1 else math.nan,
+            "student_dfl_loss": float(student_items.detach().flatten()[2].cpu()) if student_items.numel() > 2 else math.nan,
+            "teacher_box_loss": float(teacher_items.detach().flatten()[0].cpu()) if teacher_items.numel() > 0 else math.nan,
+            "teacher_cls_loss": float(teacher_items.detach().flatten()[1].cpu()) if teacher_items.numel() > 1 else math.nan,
+            "teacher_dfl_loss": float(teacher_items.detach().flatten()[2].cpu()) if teacher_items.numel() > 2 else math.nan,
+            "cclkd_loss": float(kd_loss.detach().cpu()),
+            "cclkd_lld_loss": float(kd_components.detach().flatten()[0].cpu()) if kd_components.numel() > 0 else math.nan,
+            "cclkd_fld_loss": float(kd_components.detach().flatten()[1].cpu()) if kd_components.numel() > 1 else math.nan,
+            "cclkd_rld_loss": float(kd_components.detach().flatten()[2].cpu()) if kd_components.numel() > 2 else math.nan,
+            "cclkd_ccl_loss": float(kd_components.detach().flatten()[3].cpu()) if kd_components.numel() > 3 else math.nan,
+        }
 
         total = student_det_loss + self.teacher_det_weight * teacher_det_loss + self.kd_weight * kd_loss
         items = torch.cat(
@@ -262,15 +277,17 @@ class CCLKDOnlineReproLoss(nn.Module):
         zero = student_map.new_zeros(())
         fg = fg_mask.bool()
         valid = fg & (target_scores.amax(dim=-1) > 0)
+        target_label = target_scores.argmax(dim=-1)
         if not valid.any():
+            self._record_cop_diagnostics(valid, valid & False, target_label, [], [])
             self._record_kd_components(zero, zero, zero, zero)
             return zero
 
         teacher_probs = teacher_scores.sigmoid()
         teacher_conf, teacher_label = teacher_probs.max(dim=-1)
-        target_label = target_scores.argmax(dim=-1)
         cop = valid & teacher_label.eq(target_label) & (teacher_conf >= self.min_confidence)
         if not cop.any():
+            self._record_cop_diagnostics(valid, cop, target_label, [], [])
             self._record_kd_components(zero, zero, zero, zero)
             return zero
 
@@ -297,6 +314,8 @@ class CCLKDOnlineReproLoss(nn.Module):
         rld = zero
         ccl = zero
         used = 0
+        neg_token_counts: list[int] = []
+        temperatures: list[float] = []
         for class_weight, class_id in zip(class_weights, classes):
             pos_idx = torch.where(cop_flat & labels.eq(class_id))[0]
             if pos_idx.numel() == 0:
@@ -309,11 +328,13 @@ class CCLKDOnlineReproLoss(nn.Module):
                 neg_idx = torch.where((~valid_flat) & (teacher_conf_flat >= self.min_confidence))[0]
             if neg_idx.numel() > self.max_tokens:
                 neg_idx = neg_idx[torch.randperm(neg_idx.numel(), device=neg_idx.device)[: self.max_tokens]]
+            neg_token_counts.append(int(neg_idx.numel()))
 
             if self.formulation == "paper":
                 temperature = self._adaptive_temperature_class(teacher_probs_flat[pos_idx, class_id])
             else:
                 temperature = self._adaptive_temperature(teacher_probs_flat[pos_idx, class_id])
+            temperatures.extend([float(x) for x in temperature.detach().reshape(-1).float().cpu().tolist()])
             reg_max = student_distri_flat.shape[-1] // 4
             s_box = student_distri_flat[pos_idx].reshape(-1, 4, reg_max)
             t_box = teacher_distri_flat[pos_idx].reshape(-1, 4, reg_max)
@@ -414,10 +435,76 @@ class CCLKDOnlineReproLoss(nn.Module):
             used += 1
 
         if used == 0:
+            self._record_cop_diagnostics(valid, cop, labels.reshape_as(cop), neg_token_counts, temperatures)
             self._record_kd_components(zero, zero, zero, zero)
             return zero
+        self._record_cop_diagnostics(valid, cop, labels.reshape_as(cop), neg_token_counts, temperatures)
         self._record_kd_components(lld, fld, rld, ccl)
         return self.lld_weight * lld + self.fld_weight * fld + self.rld_weight * rld + self.ccl_weight * ccl
+
+    @staticmethod
+    def _new_diag_accumulator() -> dict[str, float]:
+        return {
+            "levels": 0.0,
+            "cop_valid_tokens": 0.0,
+            "cop_positive_tokens": 0.0,
+            "cop_class0_count": 0.0,
+            "cop_class1_count": 0.0,
+            "cop_class2_count": 0.0,
+            "neg_tokens_sum": 0.0,
+            "neg_tokens_count": 0.0,
+            "temperature_sum": 0.0,
+            "temperature_count": 0.0,
+            "temperature_min": math.nan,
+            "temperature_max": math.nan,
+        }
+
+    def _record_cop_diagnostics(
+        self,
+        valid: torch.Tensor,
+        cop: torch.Tensor,
+        labels: torch.Tensor,
+        neg_token_counts: list[int],
+        temperatures: list[float],
+    ) -> None:
+        acc = self._diag_accumulator
+        valid_detached = valid.detach()
+        cop_detached = cop.detach()
+        labels_detached = labels.detach()
+        acc["levels"] += 1.0
+        acc["cop_valid_tokens"] += float(valid_detached.sum().cpu())
+        acc["cop_positive_tokens"] += float(cop_detached.sum().cpu())
+        for class_id in range(3):
+            acc[f"cop_class{class_id}_count"] += float((cop_detached & labels_detached.eq(class_id)).sum().cpu())
+        if neg_token_counts:
+            acc["neg_tokens_sum"] += float(sum(neg_token_counts))
+            acc["neg_tokens_count"] += float(len(neg_token_counts))
+        for temperature in temperatures:
+            if not math.isfinite(temperature):
+                continue
+            acc["temperature_sum"] += float(temperature)
+            acc["temperature_count"] += 1.0
+            acc["temperature_min"] = temperature if math.isnan(acc["temperature_min"]) else min(acc["temperature_min"], temperature)
+            acc["temperature_max"] = temperature if math.isnan(acc["temperature_max"]) else max(acc["temperature_max"], temperature)
+
+    def pop_epoch_diagnostics(self) -> dict[str, float]:
+        acc = self._diag_accumulator
+        valid = acc["cop_valid_tokens"]
+        positive = acc["cop_positive_tokens"]
+        out = {
+            "cop_valid_tokens": valid,
+            "cop_positive_tokens": positive,
+            "cop_positive_ratio": positive / valid if valid > 0 else math.nan,
+            "cop_class0_count": acc["cop_class0_count"],
+            "cop_class1_count": acc["cop_class1_count"],
+            "cop_class2_count": acc["cop_class2_count"],
+            "neg_tokens_mean": acc["neg_tokens_sum"] / acc["neg_tokens_count"] if acc["neg_tokens_count"] > 0 else math.nan,
+            "temperature_mean": acc["temperature_sum"] / acc["temperature_count"] if acc["temperature_count"] > 0 else math.nan,
+            "temperature_min": acc["temperature_min"],
+            "temperature_max": acc["temperature_max"],
+        }
+        self._diag_accumulator = self._new_diag_accumulator()
+        return out
 
     def _record_kd_components(
         self,
@@ -600,6 +687,7 @@ class CCLKDOnlineHBBTrainer(DetectionTrainer):
             "rld_mode": overrides.pop("cclkd_rld_mode", "paper_instance"),
             "roi_grid_size": int(overrides.pop("cclkd_roi_grid_size", 3)),
         }
+        self.cclkd_validate_teacher_every = int(overrides.pop("cclkd_validate_teacher_every", 0))
         if self.cclkd_cfg["model_size"] not in {"n", "s"}:
             raise ValueError("CCLKDOnlineHBBTrainer requires model_size to be one of {'n', 's'}.")
         if self.cclkd_cfg["teacher_data"] is None:
@@ -610,6 +698,8 @@ class CCLKDOnlineHBBTrainer(DetectionTrainer):
             raise RuntimeError("Use one CCLKD reproduction process per GPU; this trainer does not wrap teacher DDP.")
         self.teacher_data = check_det_dataset(str(self.cclkd_cfg["teacher_data"]))
         self.teacher_model: DetectionModel | None = None
+        self._teacher_val_loader = None
+        self._last_teacher_val_metrics = {"teacher_val_map50": math.nan, "teacher_val_map": math.nan}
 
     def setup_model(self):
         ckpt = super().setup_model()
@@ -702,6 +792,18 @@ class CCLKDOnlineHBBTrainer(DetectionTrainer):
         if self.ema:
             self.ema.update(self.model)
 
+    @staticmethod
+    def _metric_value(metrics: dict, key: str) -> float:
+        value = metrics.get(key, float("nan"))
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return float("nan")
+
+    def save_metrics(self, metrics):
+        super().save_metrics(metrics)
+        self._append_cclkd_diagnostics(metrics)
+
     def get_validator(self):
         self.loss_names = (
             "s_box_loss",
@@ -722,6 +824,108 @@ class CCLKDOnlineHBBTrainer(DetectionTrainer):
             args=deepcopy(self.args),
             _callbacks=self.callbacks,
         )
+
+    def _get_teacher_val_loader(self):
+        if self._teacher_val_loader is not None:
+            return self._teacher_val_loader
+        if self.teacher_model is None:
+            return None
+        val_path = self.teacher_data.get("val")
+        if not val_path:
+            LOGGER.warning("CCLKD teacher validation requested but teacher_data has no val split.")
+            return None
+        gs = max(int(unwrap_model(self.teacher_model).stride.max()), 32)
+        dataset = build_yolo_dataset(self.args, val_path, self.args.batch, self.teacher_data, mode="val", rect=True, stride=gs)
+        self._teacher_val_loader = build_dataloader(
+            dataset,
+            batch=self.args.batch,
+            workers=self.args.workers * 2,
+            shuffle=False,
+            rank=-1,
+            drop_last=False,
+            seed=self.args.seed,
+        )
+        return self._teacher_val_loader
+
+    def _validate_teacher_if_due(self, epoch_1based: int) -> dict[str, float]:
+        every = int(self.cclkd_validate_teacher_every)
+        if every <= 0 or epoch_1based % every != 0:
+            return self._last_teacher_val_metrics
+        if self.teacher_model is None:
+            return self._last_teacher_val_metrics
+        loader = self._get_teacher_val_loader()
+        if loader is None:
+            return self._last_teacher_val_metrics
+        LOGGER.info(f"Running optional CCLKD teacher RGB validation at epoch {epoch_1based}.")
+        teacher_copy = deepcopy(unwrap_model(self.teacher_model))
+        validator = yolo.detect.DetectionValidator(
+            loader,
+            save_dir=self.save_dir / "teacher_val",
+            args=deepcopy(self.args),
+            _callbacks=self.callbacks,
+        )
+        metrics = validator(model=teacher_copy) or {}
+        teacher_metrics = {
+            "teacher_val_map50": self._metric_value(metrics, "metrics/mAP50(B)"),
+            "teacher_val_map": self._metric_value(metrics, "metrics/mAP50-95(B)"),
+        }
+        self._last_teacher_val_metrics = teacher_metrics
+        return teacher_metrics
+
+    def _append_cclkd_diagnostics(self, metrics: dict) -> None:
+        if RANK not in {-1, 0}:
+            return
+        epoch_1based = int(getattr(self, "epoch", 0)) + 1
+        criterion = getattr(unwrap_model(self.model), "criterion", None)
+        cop_diag = criterion.pop_epoch_diagnostics() if hasattr(criterion, "pop_epoch_diagnostics") else {}
+        teacher_val_metrics = self._validate_teacher_if_due(epoch_1based)
+        s_det = (
+            self._metric_value(metrics, "train/s_box_loss")
+            + self._metric_value(metrics, "train/s_cls_loss")
+            + self._metric_value(metrics, "train/s_dfl_loss")
+        )
+        kd_loss = self._metric_value(metrics, "train/cclkd_loss")
+        kd_to_student_det_ratio = (float(self.cclkd_cfg["kd_weight"]) * kd_loss / s_det) if math.isfinite(kd_loss) and math.isfinite(s_det) and s_det > 0 else math.nan
+        row = {
+            "epoch": epoch_1based,
+            "formulation": self.cclkd_cfg["formulation"],
+            "ccl_mode": self.cclkd_cfg["ccl_mode"],
+            "ccl_source": self.cclkd_cfg["ccl_source"],
+            "rld_mode": self.cclkd_cfg["rld_mode"],
+            "lld_weight": self.cclkd_cfg["lld_weight"],
+            "fld_weight": self.cclkd_cfg["fld_weight"],
+            "rld_weight": self.cclkd_cfg["rld_weight"],
+            "ccl_weight": self.cclkd_cfg["ccl_weight"],
+            "kd_weight": self.cclkd_cfg["kd_weight"],
+            "student_box_loss": self._metric_value(metrics, "train/s_box_loss"),
+            "student_cls_loss": self._metric_value(metrics, "train/s_cls_loss"),
+            "student_dfl_loss": self._metric_value(metrics, "train/s_dfl_loss"),
+            "teacher_box_loss": self._metric_value(metrics, "train/t_box_loss"),
+            "teacher_cls_loss": self._metric_value(metrics, "train/t_cls_loss"),
+            "teacher_dfl_loss": self._metric_value(metrics, "train/t_dfl_loss"),
+            "cclkd_loss": kd_loss,
+            "cclkd_lld_loss": self._metric_value(metrics, "train/cclkd_lld_loss"),
+            "cclkd_fld_loss": self._metric_value(metrics, "train/cclkd_fld_loss"),
+            "cclkd_rld_loss": self._metric_value(metrics, "train/cclkd_rld_loss"),
+            "cclkd_ccl_loss": self._metric_value(metrics, "train/cclkd_ccl_loss"),
+            "kd_to_student_det_ratio": kd_to_student_det_ratio,
+            "lld_raw_or_weighted": self._metric_value(metrics, "train/cclkd_lld_loss"),
+            "fld_raw_or_weighted": self._metric_value(metrics, "train/cclkd_fld_loss"),
+            "rld_raw_or_weighted": self._metric_value(metrics, "train/cclkd_rld_loss"),
+            "ccl_raw_or_weighted": self._metric_value(metrics, "train/cclkd_ccl_loss"),
+            "component_values_are_weighted": 1,
+            "teacher_val_map50": teacher_val_metrics.get("teacher_val_map50", math.nan),
+            "teacher_val_map": teacher_val_metrics.get("teacher_val_map", math.nan),
+            **cop_diag,
+        }
+        path = self.save_dir / "cclkd_diagnostics.csv"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        write_header = not path.exists()
+        with path.open("a", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=list(row.keys()))
+            if write_header:
+                writer.writeheader()
+            writer.writerow(row)
 
     def validate(self):
         """Validate the SAR student as a detector without accumulating online loss.
@@ -828,6 +1032,13 @@ def parse_args() -> argparse.Namespace:
         "'channel' keeps the previous F^T F channel-correlation diagnostic.",
     )
     parser.add_argument("--cclkd-roi-grid-size", type=int, default=3)
+    parser.add_argument(
+        "--cclkd-validate-teacher-every",
+        type=int,
+        default=0,
+        help="Optionally validate the online RGB teacher every N epochs and log teacher_val_map50/map. "
+        "Default 0 disables this expensive diagnostic.",
+    )
     add_common_detector_train_overrides(parser)
     return parser.parse_args()
 
@@ -879,6 +1090,7 @@ def main() -> None:
         cclkd_ccl_source=args.cclkd_ccl_source,
         cclkd_rld_mode=args.cclkd_rld_mode,
         cclkd_roi_grid_size=args.cclkd_roi_grid_size,
+        cclkd_validate_teacher_every=args.cclkd_validate_teacher_every,
     )
     train_kwargs.update(collect_common_detector_train_overrides(args))
     model.train(**train_kwargs)
