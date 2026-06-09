@@ -1,6 +1,6 @@
 # OGSOD LADD 正式主线训练规范
 
-最后更新：2026-06-04
+最后更新：2026-06-09
 
 本文档记录当前 OGSOD 上 LADD 的正式主线设置。后续 LADD 主实验、多 seed、多容量扩展应优先按本规范启动；不符合本规范的实验必须标注为消融或诊断。
 
@@ -131,17 +131,20 @@ YOLO11n seed0/123 的坏 run 权重没有明显 NaN/Inf，但 `last.pt` 的 BN
 FREEZE_BN_STATS=1
 ```
 
-含义：训练时冻结 BN running mean/var，保留 BN affine 参数梯度。90 服务器已完成
-两个关键验证：
+含义：训练时冻结 BN running mean/var，保留 BN affine 参数梯度。当前已完成
+三个 YOLO11n 关键验证：
 
 | Run | best AP50-95 | last AP50-95 | 相对 SAR baseline |
 |---|---:|---:|---:|
 | YOLO11n seed0 cap2 BN-freeze | 0.57276@793 | 0.57254 | +0.01622 |
+| YOLO11n seed42 cap2 BN-freeze | 0.57615@400 | 0.57295 | +0.01821 |
 | YOLO11n seed123 cap2 BN-freeze | 0.57269@779 | 0.57219 | +0.01141 |
 
-这说明 BN-freeze 不是早期猜测，而是当前最可信的 B 阶段稳定修正。正式三 seed
-统一主线仍需补 `YOLO11n seed42 BN-freeze`；补齐前，seed42 的健康 `a2mu1e3`
-结果可作为同方法正向证据，但不是严格同协议 BN-freeze 结果。
+这说明 BN-freeze 不是早期猜测，而是当前最可信的 B 阶段稳定修正。YOLO11n
+已经形成 seed0/42/123 三 seed 正向证据，可以作为当前主线冻结候选。需要注意的是，
+YOLO11s seed0 的 BN-freeze 跑满后 best 为 `0.63388@263`，但 last 退到
+`0.61759`，低于 SAR baseline `0.62897`；因此 BN-freeze 对 s 容量没有完全解决
+后期退化，s 应作为单独容量诊断，而不是反向阻塞 n 主线。
 
 ## 7. Cap2 反坍缩设置
 
@@ -172,15 +175,15 @@ A 阶段 reach/rec/d_neg 的历史诊断图如下。旧 rank loss 会把 `d_neg`
 
 ## 9. 当前完成状态
 
-截至 2026-06-04 23:20：
+截至 2026-06-09：
 
 - 旧 `close_mosaic=100` 800ep LADD 已完整跑通，但不符合当前 no-mosaic 主线；
 - formal no-mosaic `YOLO11n seed0` original/cap2 已完整跑完 B；
 - cap2 版本是当前主线，original 版本是消融；
 - `YOLO11n cap2 seed42` 已完整跑完 B，best AP50-95 为 `0.57420`；
 - `YOLO11n cap2 seed123` 旧 B 出现 NaN/Inf，`bstable1e3` 跑满但后期退化；
-- `YOLO11n cap2 seed0/123 BN-freeze` 已完整跑完 B，分别为 `0.57276@793` 与 `0.57269@779`；
-- `YOLO11s cap2 seed0` 在 90 上跑到 epoch 608，best `0.63551@605`，未满 800；
+- `YOLO11n cap2 seed0/42/123 BN-freeze` 已完整跑完 B，分别为 `0.57276@793`、`0.57615@400` 与 `0.57269@779`；
+- `YOLO11s cap2 seed0` 在 90 上跑到 epoch 608，best `0.63551@605`，未满 800；双卡 4090 BN-freeze 版本跑满，best `0.63388@263`，last `0.61759`，仍有后期退化；
 - `YOLO11m cap2 seed0` B 阶段异常，暂不纳入主线。
 
 当前 seed0 结果：
@@ -190,6 +193,7 @@ A 阶段 reach/rec/d_neg 的历史诊断图如下。旧 rank loss 会把 `d_neg`
 | YOLO11n original seed0 | 0.57821 | +0.02167 | 29.4% |
 | YOLO11n cap2 seed0 | 0.57662 | +0.02008 | 27.3% |
 | YOLO11n cap2 seed0 BN-freeze | 0.57276 | +0.01622 | 22.0% |
+| YOLO11n cap2 seed42 BN-freeze | 0.57615 | +0.01821 | 26.5% |
 | YOLO11n cap2 seed123 BN-freeze | 0.57269 | +0.01141 | 16.8% |
 
 完整状态以 [EXPERIMENT_PLAN_CN.md](EXPERIMENT_PLAN_CN.md) 为准。

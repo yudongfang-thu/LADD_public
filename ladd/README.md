@@ -25,11 +25,11 @@ cap2：移除 reach rank loss 中反平行方向的奖励，修正几何目标�
 
 详见 `results/LADD_RESULTS_CN.md`
 
-崩溃与修复结论已经收敛进 `results/LADD_RESULTS_CN.md` 和 `../docs/experiments/LADD_MAINLINE_STANDARD_CN.md`；原始诊断包不随精简 public 分支发布。
+崩溃与修复结论已经收敛进 `results/LADD_RESULTS_CN.md` 和 `../docs/experiments/LADD_MAINLINE_STANDARD_CN.md`；当前主线稳定性证据包见 `results/mainline_stability_20260609/`。
 
 | Model | seed0 | seed42 | vs baseline |
 |---|---|---:|---:|
 | YOLO11n cap2 `a2mu1e3` | 0.57662@725 | 0.57420@735 | +0.016-0.020 |
-| YOLO11n cap2 BN-freeze | 0.57276@793 | 待补 | seed123 0.57269@779 |
-| YOLO11s cap2 | 0.63551@605 | — | seed0 +0.00654，未满 800 |
+| YOLO11n cap2 BN-freeze | 0.57276@793 | 0.57615@400 | seed123 0.57269@779 |
+| YOLO11s cap2 | 0.63551@605 | — | seed0 BN-freeze best 0.63388@263，但 last 退化 |
 | YOLO11m cap2 | 0.59796@1 | — | 异常，不进主表 |

@@ -1,6 +1,6 @@
 # LADD 文档入口
 
-最后更新：2026-06-03
+最后更新：2026-06-09
 
 ## 快速导航
 
@@ -12,6 +12,7 @@
 | 对比方法实现复核 | [../comparison/IMPLEMENTATION_REVIEW_CN.md](../comparison/IMPLEMENTATION_REVIEW_CN.md) |
 | Baseline 规范与状态 | [experiments/BASELINE_STANDARD_CN.md](experiments/BASELINE_STANDARD_CN.md) |
 | LADD 主线规范 | [experiments/LADD_MAINLINE_STANDARD_CN.md](experiments/LADD_MAINLINE_STANDARD_CN.md) |
+| LADD 主线稳定性诊断归档 | [../ladd/results/mainline_stability_20260609/README_CN.md](../ladd/results/mainline_stability_20260609/README_CN.md) |
 | 对比实验 | [experiments/COMPARISON_EXPERIMENTS_CN.md](experiments/COMPARISON_EXPERIMENTS_CN.md) |
 | CCLKD 原文复现 | [../cclkd_reproduction/README.md](../cclkd_reproduction/README.md) |
 | 消融计划 | [experiments/ABLATION_PLAN_CN.md](experiments/ABLATION_PLAN_CN.md) |
@@ -29,6 +30,6 @@
 ## 当前状态摘要
 
 1. 正式 OGSOD 协议：`imgsz=256, 800ep, cos_lr, full no-mosaic, default Albumentations`
-2. LADD 主线：A2 稳定修正 + cap2，YOLO11n 三 seed 在跑
+2. LADD 主线：A2/B 温和学习率 + cap2 + B BN-freeze；YOLO11n BN-freeze 三 seed 已形成正向证据
 3. 对比实验：当前只保留 FGD/LD/HalluciDet-style/CCLKD 四方法；CCLKD 先走独立原文复现目录，FGD/LD 修复前结果作废
-4. 服务器记录：公开分支只保留结果摘要和代码；原始日志、run 目录、权重和连接信息均不发布
+4. 服务器记录：公开分支保留结果摘要、关键 `results.csv`/`args.yaml` 证据和代码；权重与连接信息不发布

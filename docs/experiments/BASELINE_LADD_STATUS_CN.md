@@ -81,8 +81,10 @@ A2/B 使用 MuSGD lr0=0.001 no warmup
 | YOLO11n cap2 | 42 | 4090D r2 | 800 | 0.55222 | 0.57191@420 | +0.01397 | 跑满但后期退化，跨机器 sanity |
 | YOLO11n cap2 | 123 | 90 `bstable1e3` | 800 | 0.52875 | 0.56161@165 | +0.00033 | 能防 NaN，但后期退化，不作为主线 |
 | YOLO11n cap2 | 0 | 90 BN-freeze | 800 | 0.57254 | 0.57276@793 | +0.01622 | 完成，稳定候选 |
+| YOLO11n cap2 | 42 | 双卡 4090 BN-freeze | 800 | 0.57295 | 0.57615@400 | +0.01821 | 完成，补齐 BN-freeze seed42 |
 | YOLO11n cap2 | 123 | 90 BN-freeze | 800 | 0.57219 | 0.57269@779 | +0.01141 | 完成，修复 seed123 退化 |
 | YOLO11s cap2 | 0 | 90 `a2mu1e3` | 608 | 0.63527 | 0.63551@605 | +0.00654 | 未满 800，但已有正向收益 |
+| YOLO11s cap2 | 0 | 双卡 4090 BN-freeze | 800 | 0.61759 | 0.63388@263 | +0.00491 best / -0.01138 last | 跑满；best 正向但后期退化 |
 | YOLO11s cap2 | 0 | 4090D r2 | 800 | 0.58962 | 0.61787@570 | -0.01110 | 跑满但低于 baseline |
 | YOLO11s cap2 | 42 | 4090D r2 | 800 | 0.58895 | 0.60838@638 | -0.02041 | 跑满但低于 baseline |
 | YOLO11s cap2 | 123 | 4090D r2 | 800 | 0.58143 | 0.60849@513 | -0.01408 | 跑满但低于 baseline |
@@ -90,9 +92,9 @@ A2/B 使用 MuSGD lr0=0.001 no warmup
 
 ## 5. 当前判断
 
-YOLO11n 是目前最稳的主线证据：seed0 和 seed42 的 `a2mu1e3` 已经完成且分别提升约 +2.0 和 +1.6 个 AP，说明 LADD 在蒸馏空间最大的 n 容量上确实有效。seed123 的旧 B 和 `bstable1e3` 证明只降低学习率不能解决后期退化；BN-freeze 版本已经跑满 seed0/123，并将 seed123 修复到 `0.57269@779`，相对 SAR baseline 提升 +0.01141。当前最合理的统一主线候选是 `cap2 + A2/B MuSGD 1e-3 + B FREEZE_BN_STATS=1`。
+YOLO11n 是目前最稳的主线证据：seed0 和 seed42 的 `a2mu1e3` 已经完成且分别提升约 +2.0 和 +1.6 个 AP，说明 LADD 在蒸馏空间最大的 n 容量上确实有效。seed123 的旧 B 和 `bstable1e3` 证明只降低学习率不能解决后期退化；BN-freeze 版本已经跑满 seed0/42/123，并将 seed123 修复到 `0.57269@779`。当前最合理的统一主线候选是 `cap2 + A2/B MuSGD 1e-3 + B FREEZE_BN_STATS=1`。
 
-YOLO11s 的 baseline 三 seed 已齐。90 上 seed0 的 LADD 跑到 epoch 608，best `0.63551@605`，相对 SAR baseline 0.62897 有 +0.00654，方向是正的；4090D 上 s 三 seed 已跑满但全部低于 baseline，需要复核协议/实现差异，不能作为主线证据。
+YOLO11s 的 baseline 三 seed 已齐。90 上 seed0 的 LADD 跑到 epoch 608，best `0.63551@605`，相对 SAR baseline 0.62897 有 +0.00654，方向是正的；双卡 4090 的 seed0 BN-freeze 跑满后 best `0.63388@263`，但 last `0.61759`，说明 s 的后期退化没有被 BN-freeze 完全解决。4090D 上 s 三 seed 已跑满但全部低于 baseline，需要复核协议/实现差异，不能作为主线证据。
 
 YOLO11m/l seed0 baseline 已齐，但 m 的 LADD 当前异常，l 尚未启动。下一阶段应优先保持 n/s 主线和当前受控对比方法跑完 seed0，再补 n 三 seed闭环，最后扩展到 m/l。
 
@@ -100,8 +102,8 @@ YOLO11m/l seed0 baseline 已齐，但 m 的 LADD 当前异常，l 尚未启动�
 
 当前阶段目标不是一次性铺满所有容量，而是先保证：
 
-1. 补 YOLO11n seed42 BN-freeze，使当前稳定主线候选形成严格三 seed 同协议闭环。
-2. YOLO11s LADD 至少 seed0 在 public 最终代码上跑满，并确认 4090D/90 协议差异。
+1. 以 YOLO11n seed0/42/123 BN-freeze 作为当前主线冻结候选，整理消融队列。
+2. YOLO11s LADD 单独排查后期退化，并确认 4090D/90/双卡 4090 的协议差异。
 3. FGD、LD、HalluciDet-style 先完成 smoke，再至少在 YOLO11n seed0 闭环；CCLKD 需先 smoke online teacher-student trainer 并完成原文条件复现。
 4. 无效旧结果不进入 controlled main table，原始归档数据不随精简 public 分支发布。
 

@@ -124,8 +124,8 @@ B_WARMUP_BIAS_LR=0.001
 
 | Model | seed0 | seed42 | seed123 |
 |---|---:|---:|---:|
-| YOLO11n cap2 | 0.57662 ✅ | 0.57420 ✅ | B 稳定重跑中，best 0.56089@139/144 |
-| YOLO11s cap2 | B 阶段运行中，best 0.60675@0/362 | — | — |
+| YOLO11n cap2 BN-freeze | 0.57276 ✅ | 0.57615 ✅ | 0.57269 ✅ |
+| YOLO11s cap2 | seed0 BN-freeze best 0.63388@263，last 0.61759 | — | — |
 | YOLO11m cap2 | A2 阶段运行中，best 0.64011@20/26 | — | — |
 
 补充说明：
@@ -136,8 +136,8 @@ B_WARMUP_BIAS_LR=0.001
 - 塌缩排查结论：YOLO11n seed0/123 坏 run 权重无 NaN/Inf，但 `last.pt` 的 BN `running_mean/running_var` 被污染；seed0 BN max running_var 到 1726，seed123 到 1333，而健康 seed42 约 47.7。已新增 `--freeze-bn-stats` / `FREEZE_BN_STATS=1`，训练时冻结 BN running stats 但保留 BN affine 参数梯度。
 - 90 GPU7 已启动 YOLO11n seed0/123 B 修正版：`formal_nomosaic_yolo11n_cap2_s0_bnfreeze1e3_90_gpu7`、`formal_nomosaic_yolo11n_cap2_s123_bnfreeze1e3_90_gpu7`，均从 `a2mu1e3_a2_e50` best 启动，`MuSGD lr0=0.001 no warmup + FREEZE_BN_STATS=1`，已进入 epoch 1。
 - 5 类错误配置只影响更早一批已作废的双卡诊断；90 上 YOLO11n seed123 旧 B 崩溃、`bstable1e3` 后期退化、`bnfreeze lr=0.005` 退化均发生在 3 类正确配置下。
-- 当前有效 LADD 候选为 `cap2 + A2/B MuSGD lr=0.001 + B FREEZE_BN_STATS=1`。YOLO11n seed0/123 BN-freeze 已完成且正向；双卡 YOLO11n seed42 BN-freeze 正在跑，当前 best 约 `0.57615@400`，已对齐旧无 BN 版本。
-- YOLO11s/m 当前数值仅为中途 best，不进入最终主表。
+- 当前有效 LADD 候选为 `cap2 + A2/B MuSGD lr=0.001 + B FREEZE_BN_STATS=1`。YOLO11n seed0/42/123 BN-freeze 已完成且正向；seed42 双卡 4090 版本 best `0.57615@400`，last `0.57295`。
+- YOLO11s seed0 BN-freeze 在双卡 4090 跑满，best `0.63388@263` 但 last `0.61759`，低于 SAR baseline `0.62897`；说明 s 容量的后期退化还没有被 BN-freeze 完全解决。YOLO11m 当前异常，不进入最终主表。
 
 ### 2.2 待完成（暂不启动）
 
@@ -145,9 +145,8 @@ LADD 主线已冻结，以下为方法冻结后待办清单，不在本波次执
 
 | 优先级 | 实验 | 前置 |
 |---|---:|---|
-| P0 | 等 90 上 11n cap2 seed123 稳定 B 重跑完成（已有 run 自然完成） | — |
-| P0 | 11n cap2 三 seed 闭环，使用 A2/B 温和修正 + BN freeze | n baseline 已齐，待解冻后启动 |
-| P0 | YOLO11s cap2 seed0 B 或全链重跑 | s baseline 已齐 |
+| P0 | 11n cap2 BN-freeze 三 seed结果归档与复核 | n baseline 已齐，已完成三 seed |
+| P0 | YOLO11s cap2 seed0 后期退化排查或全链重跑 | s baseline 已齐 |
 | P0 | YOLO11m cap2 seed0 | m seed0 SAR/RGB 已齐 |
 | P1 | YOLO11s cap2 seed42,123 | s baseline 三 seed 齐 |
 | P1 | YOLO11m cap2 seed42,123 | 需先补 m seed42,123 SAR/RGB baseline |
@@ -158,8 +157,8 @@ LADD 主线已冻结，以下为方法冻结后待办清单，不在本波次执
 
 | Model | SAR baseline | LADD cap2 | Delta |
 |---|---:|---:|---:|
-| YOLO11n | 0.55859 ± 0.00216 | 2/3 done: 0.57531 | 2/3 done: +0.01804 |
-| YOLO11s | 0.62779 ± 0.00289 | B running | TBD |
+| YOLO11n | 0.55859 ± 0.00216 | BN-freeze 3 seed: 0.57387 | +0.01528 |
+| YOLO11s | 0.62779 ± 0.00289 | seed0 BN-freeze best 0.63388, last 0.61759 | best 正向但 last 退化 |
 | YOLO11m | 0.65580 | A2 running | TBD |
 | YOLO11l | 0.65427 | not started | TBD |
 
