@@ -16,6 +16,8 @@
 | 对比实验 | [experiments/COMPARISON_EXPERIMENTS_CN.md](experiments/COMPARISON_EXPERIMENTS_CN.md) |
 | CCLKD 原文复现 | [../cclkd_reproduction/README.md](../cclkd_reproduction/README.md) |
 | 消融计划 | [experiments/ABLATION_PLAN_CN.md](experiments/ABLATION_PLAN_CN.md) |
+| LADD LR/BN/schedule 诊断计划 | [experiments/LADD_LR_BN_DIAGNOSTIC_PLAN_20260609_CN.md](experiments/LADD_LR_BN_DIAGNOSTIC_PLAN_20260609_CN.md) |
+| LADD LR/BN/schedule 诊断 smoke 记录 | [experiments/LADD_LR_BN_DIAGNOSTIC_SMOKE_20260609_CN.md](experiments/LADD_LR_BN_DIAGNOSTIC_SMOKE_20260609_CN.md) |
 | LADD 方法概述 | [method/METHOD_OVERVIEW_CN.md](method/METHOD_OVERVIEW_CN.md) |
 | 相关工作 | [literature/RELATED_WORK_CN.md](literature/RELATED_WORK_CN.md) |
 

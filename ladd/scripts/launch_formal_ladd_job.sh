@@ -19,6 +19,7 @@ Variants:
 
 Optional:
   RUN_TAG_SUFFIX=_a2lr1e3  # append a suffix to avoid overwriting prior runs
+  EPOCHS_B=400             # diagnostic override; defaults preserve formal protocol
 EOF
 }
 
@@ -76,9 +77,16 @@ CHAIN_LOG_DIR="logs/formal_nomosaic_20260528/ladd/${RUN_TAG}_gpu${GPU_ID}"
 LOG_DIR="logs/formal_nomosaic_20260528/ladd"
 OUTER_LOG="${LOG_DIR}/${RUN_TAG}_gpu${GPU_ID}.outer.log"
 PID_PATH="${LOG_DIR}/${RUN_TAG}_gpu${GPU_ID}.pid"
+EPOCHS_A1_VALUE="${EPOCHS_A1:-10}"
+EPOCHS_A2_VALUE="${EPOCHS_A2:-50}"
+EPOCHS_B_VALUE="${EPOCHS_B:-800}"
+PATIENCE_A_VALUE="${PATIENCE_A:-200}"
+PATIENCE_B_VALUE="${PATIENCE_B:-${EPOCHS_B_VALUE}}"
+SAVE_PERIOD_VALUE="${SAVE_PERIOD:-100}"
+B_CLOSE_AT_EPOCH_VALUE="${B_CLOSE_AT_EPOCH:-${EPOCHS_B_VALUE}}"
 mkdir -p "$PROJECT_DIR" "$CHAIN_LOG_DIR" "$LOG_DIR"
 
-if [[ -e "${PROJECT_DIR}/ladd_hbb_ogsod11${SIZE}_${RUN_TAG}_b_e800_b${BATCH_SIZE}_s${SEED}_gpu${GPU_ID}" && "${EXIST_OK:-0}" != "1" ]]; then
+if [[ -e "${PROJECT_DIR}/ladd_hbb_ogsod11${SIZE}_${RUN_TAG}_b_e${EPOCHS_B_VALUE}_b${BATCH_SIZE}_s${SEED}_gpu${GPU_ID}" && "${EXIST_OK:-0}" != "1" ]]; then
   echo "A likely final B run directory already exists under $PROJECT_DIR" >&2
   echo "Set EXIST_OK=1 only if intentional." >&2
   exit 1
@@ -96,16 +104,16 @@ cmd=(
   "BATCH_SIZE=${BATCH_SIZE}"
   "WORKERS=8"
   "IMGSZ=256"
-  "EPOCHS_A1=10"
-  "EPOCHS_A2=50"
-  "EPOCHS_B=800"
-  "PATIENCE_A=200"
-  "PATIENCE_B=800"
+  "EPOCHS_A1=${EPOCHS_A1_VALUE}"
+  "EPOCHS_A2=${EPOCHS_A2_VALUE}"
+  "EPOCHS_B=${EPOCHS_B_VALUE}"
+  "PATIENCE_A=${PATIENCE_A_VALUE}"
+  "PATIENCE_B=${PATIENCE_B_VALUE}"
   "PROJECT_DIR=${PROJECT_DIR}"
   "CHAIN_LOG_DIR=${CHAIN_LOG_DIR}"
   "MOSAIC=0.0"
   "A_CLOSE_MOSAIC=0"
-  "B_CLOSE_AT_EPOCH=800"
+  "B_CLOSE_AT_EPOCH=${B_CLOSE_AT_EPOCH_VALUE}"
   "MIXUP=0.0"
   "CUTMIX=0.0"
   "DEGREES=0.0"
@@ -118,7 +126,7 @@ cmd=(
   "HSV_S=0.0"
   "HSV_V=0.0"
   "ERASING=0.0"
-  "SAVE_PERIOD=100"
+  "SAVE_PERIOD=${SAVE_PERIOD_VALUE}"
   "USE_FG_MASK_FOR_REACH=1"
   "USE_FG_MASK_FOR_REC=0"
   "RANK_D_NEG_CAP=${RANK_D_NEG_CAP}"
@@ -131,7 +139,8 @@ for optional_env in \
   A1_OPTIMIZER A1_LR0 A1_LRF A1_COS_LR A1_WARMUP_EPOCHS A1_WARMUP_BIAS_LR A1_WARMUP_MOMENTUM A1_DET_LOSS_SCALE \
   A2_OPTIMIZER A2_LR0 A2_LRF A2_COS_LR A2_WARMUP_EPOCHS A2_WARMUP_BIAS_LR A2_WARMUP_MOMENTUM A2_DET_LOSS_SCALE \
   A1_FREEZE_BN_STATS A2_FREEZE_BN_STATS B_FREEZE_BN_STATS \
-  B_OPTIMIZER B_LR0 B_LRF B_WARMUP_EPOCHS B_WARMUP_BIAS_LR B_WARMUP_MOMENTUM; do
+  B_OPTIMIZER B_LR0 B_LRF B_COS_LR B_WARMUP_EPOCHS B_WARMUP_BIAS_LR B_WARMUP_MOMENTUM \
+  B_FREEZE_BN_AFTER_EPOCH LADD_DIAG_LOG_BN LADD_DIAG_LOG_GRAD LADD_DIAG_LOG_EVERY; do
   if [[ -n "${!optional_env:-}" ]]; then
     cmd+=("${optional_env}=${!optional_env}")
   fi

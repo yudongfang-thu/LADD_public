@@ -24,7 +24,8 @@ Defaults:
 Common overrides:
   GPU_ID, SEED, PROJECT_DIR, CHAIN_LOG_DIR, EPOCHS_A1, EPOCHS_A2, EPOCHS_B,
   BATCH_SIZE, WORKERS, PATIENCE_B, RANK_D_NEG_CAP, LAMBDA_ANTI_COLLAPSE,
-  ANTI_COLLAPSE_FLOOR, A1_/A2_/B_ optimizer overrides, EXIST_OK=1
+  ANTI_COLLAPSE_FLOOR, A1_/A2_/B_ optimizer overrides, B_FREEZE_BN_AFTER_EPOCH,
+  LADD_DIAG_LOG_BN, LADD_DIAG_LOG_GRAD, LADD_DIAG_LOG_EVERY, EXIST_OK=1
 EOF
 }
 
@@ -70,7 +71,11 @@ manifest="${CHAIN_LOG_DIR}/manifest.txt"
   echo "epochs_a2=${EPOCHS_A2}"
   echo "epochs_b=${EPOCHS_B}"
   echo "a2_schedule=optimizer=${A2_OPTIMIZER:-MuSGD}, lr0=${A2_LR0:-0.001}, lrf=${A2_LRF:-0.01}, warmup_epochs=${A2_WARMUP_EPOCHS:-0}, warmup_bias_lr=${A2_WARMUP_BIAS_LR:-0.001}"
-  echo "b_schedule=optimizer=${B_OPTIMIZER:-MuSGD}, cos_lr=True, lr0=${B_LR0:-0.001}, lrf=${B_LRF:-0.01}, warmup_epochs=${B_WARMUP_EPOCHS:-0}, warmup_bias_lr=${B_WARMUP_BIAS_LR:-0.001}, close_at_epoch=${B_CLOSE_AT_EPOCH:-${EPOCHS_B}}"
+  echo "b_schedule=optimizer=${B_OPTIMIZER:-MuSGD}, cos_lr=${B_COS_LR:-1}, lr0=${B_LR0:-0.001}, lrf=${B_LRF:-0.01}, warmup_epochs=${B_WARMUP_EPOCHS:-0}, warmup_bias_lr=${B_WARMUP_BIAS_LR:-0.001}, close_at_epoch=${B_CLOSE_AT_EPOCH:-${EPOCHS_B}}"
+  echo "b_freeze_bn_after_epoch=${B_FREEZE_BN_AFTER_EPOCH:--1}"
+  echo "ladd_diag_log_bn=${LADD_DIAG_LOG_BN:-1}"
+  echo "ladd_diag_log_grad=${LADD_DIAG_LOG_GRAD:-0}"
+  echo "ladd_diag_log_every=${LADD_DIAG_LOG_EVERY:-1}"
   echo "rank_d_neg_cap=${RANK_D_NEG_CAP:-4.0}"
   echo "lambda_anti_collapse=${LAMBDA_ANTI_COLLAPSE:-0.0}"
   echo "anti_collapse_floor=${ANTI_COLLAPSE_FLOOR:-0.0}"
@@ -125,7 +130,7 @@ run_phase() {
 
   if [[ "$phase" == "b" ]]; then
     env_args+=(
-      COS_LR=1
+      COS_LR="${B_COS_LR:-1}"
       OPTIMIZER="${B_OPTIMIZER:-MuSGD}"
       LR0="${B_LR0:-0.001}"
       LRF="${B_LRF:-0.01}"
@@ -133,6 +138,7 @@ run_phase() {
       WARMUP_BIAS_LR="${B_WARMUP_BIAS_LR:-0.001}"
       CLOSE_AT_EPOCH="${B_CLOSE_AT_EPOCH:-${EPOCHS_B}}"
       SAVE_PERIOD="${SAVE_PERIOD:-100}"
+      FREEZE_BN_AFTER_EPOCH="${B_FREEZE_BN_AFTER_EPOCH:--1}"
     )
     phase_prefix="B"
   else
@@ -170,6 +176,11 @@ run_phase() {
   [[ -n "${!phase_warmup_momentum_var:-}" ]] && env_args+=(WARMUP_MOMENTUM="${!phase_warmup_momentum_var}")
   [[ -n "${!phase_det_loss_scale_var:-}" ]] && env_args+=(DET_LOSS_SCALE="${!phase_det_loss_scale_var}")
   [[ -n "${!phase_freeze_bn_stats_var:-}" ]] && env_args+=(FREEZE_BN_STATS="${!phase_freeze_bn_stats_var}")
+  env_args+=(
+    LADD_DIAG_LOG_BN="${LADD_DIAG_LOG_BN:-1}"
+    LADD_DIAG_LOG_GRAD="${LADD_DIAG_LOG_GRAD:-0}"
+    LADD_DIAG_LOG_EVERY="${LADD_DIAG_LOG_EVERY:-1}"
+  )
 
   env "${env_args[@]}" scripts/ogsod_public/run_ladd_phase.sh hbb "$phase" "$RUN_TAG"
   local actual_run_dir

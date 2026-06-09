@@ -17,6 +17,8 @@
 | LADD 主线稳定性诊断归档 | [../../ladd/results/mainline_stability_20260609/README_CN.md](../../ladd/results/mainline_stability_20260609/README_CN.md) |
 | 对比实验计划与实现 | [COMPARISON_EXPERIMENTS_CN.md](COMPARISON_EXPERIMENTS_CN.md) |
 | 消融实验计划 | [ABLATION_PLAN_CN.md](ABLATION_PLAN_CN.md) |
+| LADD LR/BN/schedule 诊断计划 | [LADD_LR_BN_DIAGNOSTIC_PLAN_20260609_CN.md](LADD_LR_BN_DIAGNOSTIC_PLAN_20260609_CN.md) |
+| LADD LR/BN/schedule 诊断 smoke 记录 | [LADD_LR_BN_DIAGNOSTIC_SMOKE_20260609_CN.md](LADD_LR_BN_DIAGNOSTIC_SMOKE_20260609_CN.md) |
 | LADD 方法概述 | [../method/METHOD_OVERVIEW_CN.md](../method/METHOD_OVERVIEW_CN.md) |
 
 ## 当前正式主线

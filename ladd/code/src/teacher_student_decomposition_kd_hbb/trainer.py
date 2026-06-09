@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import csv
 from copy import copy, deepcopy
+import math
 import json
 
 import torch
@@ -176,7 +178,12 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(DetectionTrainer):
         self.diagnostic_cfg = {
             "validate_before_train": bool(overrides.pop("validate_before_train", False)),
             "freeze_bn_stats": bool(overrides.pop("freeze_bn_stats", False)),
+            "freeze_bn_after_epoch": int(overrides.pop("freeze_bn_after_epoch", -1)),
+            "ladd_diag_log_bn": int(overrides.pop("ladd_diag_log_bn", 1)) > 0,
+            "ladd_diag_log_grad": int(overrides.pop("ladd_diag_log_grad", 0)) > 0,
+            "ladd_diag_log_every": max(int(overrides.pop("ladd_diag_log_every", 1)), 1),
         }
+        self._last_grad_norms = None
         if self.tskd_cfg["teacher_data"] is None:
             raise ValueError("HBB LADD trainer requires 'teacher_data'.")
         overrides["task"] = "detect"
@@ -913,8 +920,7 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
         )
         self._maybe_reset_student_from_scratch_for_phase_b()
         self._apply_manual_phase(announce=True)
-        if self.diagnostic_cfg.get("freeze_bn_stats", False) and RANK in {-1, 0}:
-            LOGGER.info("freeze_bn_stats=True: BatchNorm running_mean/running_var updates are disabled during training.")
+        self._log_bn_stats_strategy()
         self._run_initial_validation_snapshot()
 
     def validate(self):
@@ -951,7 +957,196 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             train_residual_aux = self.explore_cfg["student_branch_mode"] == "split" and self.nrrl_cfg["residual_aux_mode"] == "fg"
             model.student_r_aux_decoder.train(train_residual_aux)
             model.student_r_fg_heads.train(train_residual_aux)
+        if self._should_freeze_bn_stats():
+            self._set_bn_stats_eval(model)
+
+    def optimizer_step(self):
+        if not self.diagnostic_cfg.get("ladd_diag_log_grad", False):
+            return super().optimizer_step()
+        self.scaler.unscale_(self.optimizer)
+        self._last_grad_norms = self._collect_grad_norms()
+        torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=10.0)
+        self.scaler.step(self.optimizer)
+        self.scaler.update()
+        self.optimizer.zero_grad()
+        if self.ema:
+            self.ema.update(self.model)
+
+    def save_metrics(self, metrics):
+        super().save_metrics(metrics)
+        self._append_ladd_diagnostics(metrics)
+
+    @staticmethod
+    def _set_bn_stats_eval(model):
+        for module in model.modules():
+            if isinstance(module, torch.nn.modules.batchnorm._BatchNorm):
+                module.eval()
+                for parameter in module.parameters(recurse=False):
+                    parameter.requires_grad_(True)
+
+    def _bn_stats_mode_label(self) -> str:
         if self.diagnostic_cfg.get("freeze_bn_stats", False):
+            return "always_freeze"
+        freeze_after = int(self.diagnostic_cfg.get("freeze_bn_after_epoch", -1))
+        if self.manual_phase_cfg.get("phase") == "b" and freeze_after >= 0:
+            return f"delayed_freeze@{freeze_after}"
+        return "normal"
+
+    def _should_freeze_bn_stats(self) -> bool:
+        if self.diagnostic_cfg.get("freeze_bn_stats", False):
+            return True
+        freeze_after = int(self.diagnostic_cfg.get("freeze_bn_after_epoch", -1))
+        if self.manual_phase_cfg.get("phase") != "b" or freeze_after < 0:
+            return False
+        return int(getattr(self, "epoch", 0)) >= freeze_after
+
+    def _log_bn_stats_strategy(self) -> None:
+        if RANK not in {-1, 0}:
+            return
+        freeze_after = int(self.diagnostic_cfg.get("freeze_bn_after_epoch", -1))
+        if self.diagnostic_cfg.get("freeze_bn_stats", False):
+            if freeze_after >= 0:
+                LOGGER.warning("B_FREEZE_BN_STATS=1 overrides B_FREEZE_BN_AFTER_EPOCH.")
+            LOGGER.info("bn_stats_mode=always_freeze")
+        elif self.manual_phase_cfg.get("phase") == "b" and freeze_after >= 0:
+            LOGGER.info(f"bn_stats_mode=delayed_freeze@{freeze_after}")
+        else:
+            LOGGER.info("bn_stats_mode=normal")
+
+    def _collect_bn_stats(self) -> dict[str, float | int]:
+        if not self.diagnostic_cfg.get("ladd_diag_log_bn", True):
+            nan = float("nan")
+            return {
+                "bn_running_var_max": nan,
+                "bn_running_var_mean": nan,
+                "bn_running_var_p95": nan,
+                "bn_running_mean_abs_max": nan,
+                "bn_num_layers": 0,
+            }
+        model = unwrap_model(self.model)
+        running_vars = []
+        running_means = []
+        num_layers = 0
+        with torch.no_grad():
             for module in model.modules():
-                if isinstance(module, (torch.nn.BatchNorm1d, torch.nn.BatchNorm2d, torch.nn.BatchNorm3d)):
-                    module.eval()
+                if not isinstance(module, torch.nn.modules.batchnorm._BatchNorm):
+                    continue
+                if module.running_var is None or module.running_mean is None:
+                    continue
+                num_layers += 1
+                running_vars.append(module.running_var.detach().float().flatten().cpu())
+                running_means.append(module.running_mean.detach().float().abs().flatten().cpu())
+        if not running_vars:
+            nan = float("nan")
+            return {
+                "bn_running_var_max": nan,
+                "bn_running_var_mean": nan,
+                "bn_running_var_p95": nan,
+                "bn_running_mean_abs_max": nan,
+                "bn_num_layers": 0,
+            }
+        var = torch.cat(running_vars)
+        mean_abs = torch.cat(running_means)
+        return {
+            "bn_running_var_max": float(var.max().item()),
+            "bn_running_var_mean": float(var.mean().item()),
+            "bn_running_var_p95": float(torch.quantile(var, 0.95).item()),
+            "bn_running_mean_abs_max": float(mean_abs.max().item()),
+            "bn_num_layers": int(num_layers),
+        }
+
+    def _collect_grad_norms(self) -> dict[str, float]:
+        groups = {
+            "total": [],
+            "backbone": [],
+            "neck": [],
+            "head": [],
+        }
+        model = unwrap_model(self.model)
+        for name, parameter in model.named_parameters():
+            grad = parameter.grad
+            if grad is None:
+                continue
+            norm = grad.detach().float().norm(2)
+            groups["total"].append(norm)
+            lname = name.lower()
+            if "backbone" in lname:
+                groups["backbone"].append(norm)
+            elif "neck" in lname:
+                groups["neck"].append(norm)
+            elif "head" in lname or "detect" in lname or ".dfl" in lname:
+                groups["head"].append(norm)
+
+        def combine(values):
+            if not values:
+                return float("nan")
+            stacked = torch.stack(values)
+            return float(torch.sqrt(torch.sum(stacked * stacked)).item())
+
+        return {
+            "grad_norm_total": combine(groups["total"]),
+            "grad_norm_backbone": combine(groups["backbone"]),
+            "grad_norm_neck": combine(groups["neck"]),
+            "grad_norm_head": combine(groups["head"]),
+        }
+
+    @staticmethod
+    def _metric_value(metrics: dict, key: str) -> float:
+        value = metrics.get(key, float("nan"))
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return float("nan")
+
+    @staticmethod
+    def _has_nonfinite(values) -> bool:
+        for value in values:
+            try:
+                if not math.isfinite(float(value)):
+                    return True
+            except (TypeError, ValueError):
+                return True
+        return False
+
+    def _append_ladd_diagnostics(self, metrics: dict) -> None:
+        if RANK not in {-1, 0}:
+            return
+        every = int(self.diagnostic_cfg.get("ladd_diag_log_every", 1))
+        epoch_1based = int(getattr(self, "epoch", 0)) + 1
+        if epoch_1based != 1 and epoch_1based % every != 0 and epoch_1based != int(self.epochs):
+            return
+        bn_stats = self._collect_bn_stats()
+        grad_stats = self._last_grad_norms if self.diagnostic_cfg.get("ladd_diag_log_grad", False) else None
+        if grad_stats is None:
+            nan = float("nan")
+            grad_stats = {
+                "grad_norm_total": nan,
+                "grad_norm_backbone": nan,
+                "grad_norm_neck": nan,
+                "grad_norm_head": nan,
+            }
+        row = {
+            "epoch": epoch_1based,
+            "stage": self.manual_phase_cfg.get("phase", ""),
+            "lr_pg0": self._metric_value(metrics, "lr/pg0"),
+            "lr_pg1": self._metric_value(metrics, "lr/pg1"),
+            "lr_pg2": self._metric_value(metrics, "lr/pg2"),
+            "train_box_loss": self._metric_value(metrics, "train/box_loss"),
+            "train_cls_loss": self._metric_value(metrics, "train/cls_loss"),
+            "train_dfl_loss": self._metric_value(metrics, "train/dfl_loss"),
+            "kd_loss": self._metric_value(metrics, "train/kd_loss"),
+            "reach_match_loss": self._metric_value(metrics, "train/reach_match_loss"),
+            "reach_rank_loss": self._metric_value(metrics, "train/reach_rank_loss"),
+            **bn_stats,
+            "bn_stats_mode": self._bn_stats_mode_label(),
+            "nan_or_inf_detected": int(self._has_nonfinite(list(metrics.values()) + list(bn_stats.values()))),
+            **grad_stats,
+        }
+        path = self.save_dir / "ladd_diagnostics.csv"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        write_header = not path.exists()
+        with path.open("a", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=list(row.keys()))
+            if write_header:
+                writer.writeheader()
+            writer.writerow(row)

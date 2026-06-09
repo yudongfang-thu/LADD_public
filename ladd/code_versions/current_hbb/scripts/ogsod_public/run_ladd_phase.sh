@@ -25,6 +25,10 @@ Detector schedule overrides:
   WARMUP_MOMENTUM, SAVE_PERIOD, CLOSE_MOSAIC, CLOSE_AT_EPOCH,
   MOSAIC, MIXUP, CUTMIX, HSV_H, HSV_S, HSV_V, ERASING
 
+LADD diagnostics:
+  FREEZE_BN_STATS=1, FREEZE_BN_AFTER_EPOCH=200,
+  LADD_DIAG_LOG_BN=1, LADD_DIAG_LOG_GRAD=0, LADD_DIAG_LOG_EVERY=1
+
 Reach anti-collapse overrides:
   RANK_D_NEG_CAP, LAMBDA_ANTI_COLLAPSE, ANTI_COLLAPSE_FLOOR
 
@@ -251,6 +255,10 @@ mkdir -p "$LOG_DIR"
   echo "warmup_bias_lr=${WARMUP_BIAS_LR:-}"
   echo "warmup_momentum=${WARMUP_MOMENTUM:-}"
   echo "freeze_bn_stats=${FREEZE_BN_STATS:-0}"
+  echo "freeze_bn_after_epoch=${FREEZE_BN_AFTER_EPOCH:--1}"
+  echo "ladd_diag_log_bn=${LADD_DIAG_LOG_BN:-1}"
+  echo "ladd_diag_log_grad=${LADD_DIAG_LOG_GRAD:-0}"
+  echo "ladd_diag_log_every=${LADD_DIAG_LOG_EVERY:-1}"
   echo "close_at_epoch=${CLOSE_AT_EPOCH:-}"
   echo "close_mosaic=${RESOLVED_CLOSE_MOSAIC}"
   echo "student_branch_mode=${STUDENT_BRANCH_MODE}"
@@ -292,6 +300,10 @@ cmd=(
   --phase-detect-mode "$PHASE_DETECT_MODE"
   --det-loss-scale "$DET_LOSS_SCALE"
   --phase-stop-metric "${PHASE_STOP_METRIC:-default}"
+  --freeze-bn-after-epoch "${FREEZE_BN_AFTER_EPOCH:--1}"
+  --ladd-diag-log-bn "${LADD_DIAG_LOG_BN:-1}"
+  --ladd-diag-log-grad "${LADD_DIAG_LOG_GRAD:-0}"
+  --ladd-diag-log-every "${LADD_DIAG_LOG_EVERY:-1}"
   --reach-target-mode "$REACH_TARGET_MODE"
   --kd-target-mode "$KD_TARGET_MODE"
   --lambda-rec "$LAMBDA_REC"

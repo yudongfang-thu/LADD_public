@@ -53,6 +53,28 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Keep BatchNorm layers in eval mode during training so running_mean/running_var are not updated.",
     )
+    parser.add_argument(
+        "--freeze-bn-after-epoch",
+        type=int,
+        default=-1,
+        help=(
+            "Delayed BatchNorm stats freeze for B-phase diagnostics. -1 disables delayed freeze; "
+            "N keeps BN stats normal for zero-based epochs < N and freezes from epoch N onward."
+        ),
+    )
+    parser.add_argument("--ladd-diag-log-bn", type=int, default=1, help="Write BN stats to ladd_diagnostics.csv.")
+    parser.add_argument(
+        "--ladd-diag-log-grad",
+        type=int,
+        default=0,
+        help="Also record gradient norms in ladd_diagnostics.csv. Disabled by default to avoid overhead.",
+    )
+    parser.add_argument(
+        "--ladd-diag-log-every",
+        type=int,
+        default=1,
+        help="Record LADD diagnostics every N epochs. Defaults to every epoch.",
+    )
 
     parser.add_argument("--lambda-rec", type=float, default=0.1)
     parser.add_argument("--lambda-sep", type=float, default=0.05)
@@ -170,6 +192,10 @@ def main() -> None:
         phase_stop_metric=args.phase_stop_metric,
         strict_batch_size=args.strict_batch_size,
         freeze_bn_stats=args.freeze_bn_stats,
+        freeze_bn_after_epoch=args.freeze_bn_after_epoch,
+        ladd_diag_log_bn=args.ladd_diag_log_bn,
+        ladd_diag_log_grad=args.ladd_diag_log_grad,
+        ladd_diag_log_every=args.ladd_diag_log_every,
         data=str(args.data.resolve()),
         teacher_data=str(args.teacher_data.resolve()),
         teacher_weights=teacher_weights,
