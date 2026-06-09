@@ -266,6 +266,11 @@ mkdir -p "$LOG_DIR"
   echo "ladd_grad_clip_norm=${LADD_GRAD_CLIP_NORM:-0.0}"
   echo "ladd_assert_phase_freeze=${LADD_ASSERT_PHASE_FREEZE:-0}"
   echo "ladd_diag_log_every=${LADD_DIAG_LOG_EVERY:-1}"
+  echo "alpha_kd=${ALPHA_KD}"
+  echo "lambda_reach=${LAMBDA_REACH}"
+  echo "lambda_match_inner=${LAMBDA_MATCH_INNER}"
+  echo "lambda_rank_inner=${LAMBDA_RANK_INNER}"
+  echo "lambda_residual_aux=${LAMBDA_RESIDUAL_AUX}"
   echo "close_at_epoch=${CLOSE_AT_EPOCH:-}"
   echo "close_mosaic=${RESOLVED_CLOSE_MOSAIC}"
   echo "student_branch_mode=${STUDENT_BRANCH_MODE}"
@@ -311,7 +316,6 @@ cmd=(
   --ladd-diag-log-bn "${LADD_DIAG_LOG_BN:-1}"
   --ladd-diag-log-grad "${LADD_DIAG_LOG_GRAD:-0}"
   --ladd-grad-clip-norm "${LADD_GRAD_CLIP_NORM:-0.0}"
-  --ladd-assert-phase-freeze "${LADD_ASSERT_PHASE_FREEZE:-0}"
   --ladd-diag-log-every "${LADD_DIAG_LOG_EVERY:-1}"
   --reach-target-mode "$REACH_TARGET_MODE"
   --kd-target-mode "$KD_TARGET_MODE"
@@ -355,6 +359,10 @@ cmd=(
   --seed "$SEED"
   --deterministic
 )
+
+if [[ "${LADD_ASSERT_PHASE_FREEZE:-0}" == "1" ]]; then
+  cmd+=(--ladd-assert-phase-freeze)
+fi
 
 if [[ "$TASK" == "hbb" ]]; then
   cmd+=(

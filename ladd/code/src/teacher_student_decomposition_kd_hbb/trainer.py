@@ -181,12 +181,12 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(DetectionTrainer):
             "freeze_bn_after_epoch": int(overrides.pop("freeze_bn_after_epoch", -1)),
             "ladd_diag_log_bn": int(overrides.pop("ladd_diag_log_bn", 1)) > 0,
             "ladd_diag_log_grad": int(overrides.pop("ladd_diag_log_grad", 0)) > 0,
-            "ladd_grad_clip_norm": float(overrides.pop("ladd_grad_clip_norm", 0.0)),
+            "ladd_grad_clip_norm": max(float(overrides.pop("ladd_grad_clip_norm", 0.0)), 0.0),
             "ladd_assert_phase_freeze": int(overrides.pop("ladd_assert_phase_freeze", 0)) > 0,
             "ladd_diag_log_every": max(int(overrides.pop("ladd_diag_log_every", 1)), 1),
         }
         self._last_grad_norms = None
-        self._phase_freeze_asserted = False
+        self._phase_freeze_assert_logged_contexts = set()
         self._phase_training_state_logged = False
         if self.tskd_cfg["teacher_data"] is None:
             raise ValueError("HBB LADD trainer requires 'teacher_data'.")
@@ -927,7 +927,7 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
         if self._should_freeze_bn_stats():
             self._set_bn_stats_eval(unwrap_model(self.model))
         self._log_phase_training_state()
-        self._assert_phase_freeze_once()
+        self._assert_b_phase_frozen_modules(unwrap_model(self.model), context="after_apply_manual_phase")
         self._log_bn_stats_strategy()
         self._run_initial_validation_snapshot()
 
@@ -967,15 +967,19 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             model.student_r_fg_heads.train(train_residual_aux)
         if self._should_freeze_bn_stats():
             self._set_bn_stats_eval(model)
-        self._assert_phase_freeze_once()
+        self._assert_b_phase_frozen_modules(model, context="after_model_train_and_bn_freeze")
 
     def optimizer_step(self):
+        log_grad = bool(self.diagnostic_cfg.get("ladd_diag_log_grad", False))
+        grad_clip_norm = float(self.diagnostic_cfg.get("ladd_grad_clip_norm", 0.0) or 0.0)
+        if not log_grad and grad_clip_norm <= 0.0:
+            return super().optimizer_step()
+
         self.scaler.unscale_(self.optimizer)
-        if self.diagnostic_cfg.get("ladd_diag_log_grad", False):
+        if log_grad:
             self._last_grad_norms = self._collect_grad_norms()
         else:
             self._last_grad_norms = None
-        grad_clip_norm = float(self.diagnostic_cfg.get("ladd_grad_clip_norm", 0.0) or 0.0)
         if grad_clip_norm > 0.0:
             torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=grad_clip_norm)
         self.scaler.step(self.optimizer)
@@ -1024,34 +1028,47 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             f"freeze_bn_after_epoch={int(self.diagnostic_cfg.get('freeze_bn_after_epoch', -1))} "
             f"ladd_assert_phase_freeze={bool(self.diagnostic_cfg.get('ladd_assert_phase_freeze', False))} "
             f"ladd_diag_log_grad={bool(self.diagnostic_cfg.get('ladd_diag_log_grad', False))} "
-            f"grad_clipping={'ON' if grad_clip_norm > 0.0 else 'OFF'} "
+            f"ladd_grad_clip={'ON' if grad_clip_norm > 0.0 else 'OFF'} "
             f"ladd_grad_clip_norm={grad_clip_norm}"
         )
 
-    def _assert_phase_freeze_once(self) -> None:
-        if self._phase_freeze_asserted:
-            return
+    def _assert_modules_frozen(self, model, module_names: tuple[str, ...], *, context: str) -> None:
         if not self.diagnostic_cfg.get("ladd_assert_phase_freeze", False):
             return
         if self.manual_phase_cfg.get("phase") != "b":
             return
-        self._phase_freeze_asserted = True
-        model = unwrap_model(self.model)
-        frozen_module_names = ("teacher_decomposition", "student_reachability", "teacher_task_heads")
-        for module_name in frozen_module_names:
+        missing = []
+        violations = []
+        checked = []
+        for module_name in module_names:
             module = getattr(model, module_name, None)
             if module is None:
-                if RANK in {-1, 0}:
-                    LOGGER.warning(f"ladd_assert_phase_freeze: phase=b module '{module_name}' not found; skipping.")
+                missing.append(module_name)
                 continue
-            for parameter_name, parameter in module.named_parameters():
+            checked.append(module_name)
+            for parameter_name, parameter in module.named_parameters(recurse=True):
                 if parameter.requires_grad:
-                    raise RuntimeError(
-                        "ladd_assert_phase_freeze failed: "
-                        f"phase=b module={module_name} parameter={parameter_name} requires_grad=True"
-                    )
+                    violations.append(f"{module_name}.{parameter_name}")
+        if missing and RANK in {-1, 0} and context not in self._phase_freeze_assert_logged_contexts:
+            LOGGER.warning(f"[LADD phase-freeze assert] context={context}: missing modules: {missing}")
+        if violations:
+            preview = ", ".join(violations[:20])
+            extra = "" if len(violations) <= 20 else f" ... (+{len(violations) - 20} more)"
+            raise RuntimeError(
+                "[LADD phase-freeze assert] B phase frozen modules have trainable parameters "
+                f"after {context}: {preview}{extra}"
+            )
         if RANK in {-1, 0}:
-            LOGGER.info("ladd_assert_phase_freeze: phase=b frozen module checks passed.")
+            if context not in self._phase_freeze_assert_logged_contexts:
+                LOGGER.info(f"[LADD phase-freeze assert] PASS context={context} checked={checked}")
+        self._phase_freeze_assert_logged_contexts.add(context)
+
+    def _assert_b_phase_frozen_modules(self, model, *, context: str) -> None:
+        self._assert_modules_frozen(
+            model,
+            ("teacher_decomposition", "student_reachability", "teacher_task_heads"),
+            context=context,
+        )
 
     def _bn_stats_mode_label(self) -> str:
         if self.diagnostic_cfg.get("freeze_bn_stats", False):

@@ -77,8 +77,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--ladd-assert-phase-freeze",
-        type=int,
-        default=0,
+        action="store_true",
         help="Assert B-phase frozen LADD modules remain requires_grad=False.",
     )
     parser.add_argument(

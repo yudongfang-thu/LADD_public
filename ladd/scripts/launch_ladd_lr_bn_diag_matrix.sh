@@ -67,6 +67,8 @@ run_row() {
     "RUN_TAG_SUFFIX=_diag_${tag}"
     "LADD_DIAG_LOG_BN=1"
     "LADD_DIAG_LOG_GRAD=0"
+    "LADD_GRAD_CLIP_NORM=0.0"
+    "LADD_ASSERT_PHASE_FREEZE=1"
     "$@"
   )
   local cmd=(env "${envs[@]}" bash ladd/scripts/launch_formal_ladd_job.sh cap2 "$SIZE" "$SEED" "$GPU_ID")
