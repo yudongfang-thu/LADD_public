@@ -11,6 +11,7 @@ No checkpoint weights are included; only `results.csv`, compact summaries, and s
 |v0_initial_paper_ablation|v0 initial paper-formulation ablation|before 9bc1b33; launched from the first paper-formulation implementation|
 |v1_ccl_anchorfix|v1 CCL anchor-direction fix|9bc1b33 Fix paper CCL anchor direction|
 |v2_rld_patmfix|v2 RLD and PATM alignment fix|bf73697 Align CCLKD PATM and RLD losses|
+|v3_paper_pair_boxdist_20260609|v3 paper-pair CCL + per-side DFL box-distribution snapshot|current 2026-06-09 implementation snapshot; stable but small gain, under audit|
 
 ## Top-Level Files
 
@@ -21,4 +22,4 @@ No checkpoint weights are included; only `results.csv`, compact summaries, and s
 
 ## Validity Rule
 
-Use `v2_rld_patmfix` for current RLD/ATKD/full CCLKD claims, `v1_ccl_anchorfix` for CCL-only after anchor correction, and only the LLD/LLD+FLD curves from `v0_initial_paper_ablation` as still-valid early diagnostic curves. Other v0/v1 rows are preserved as evidence of the implementation audit, not as final results.
+Use `v3_paper_pair_boxdist_20260609` as the latest debugging snapshot for the current paper-pair/box-distribution implementation. It shows stable but small positive gains and should be treated as evidence for further audit, not as a final CCLKD claim. Older v0/v1/v2 rows are preserved as implementation-history evidence and should not be mixed into final comparisons without checking their version notes.
