@@ -1,0 +1,1 @@
+run_dir,tag,modality,model,init,batch,seed,yolov5_ref,params_m,epochs_recorded,best_epoch,best_ap50,best_ap,last_epoch,last_ap50,last_ap,drop_best_to_last,oil_tank_ap50,bridge_ap50,harbor_ap50,class_name_order,target_ap50,target_ap,delta_to_target_ap50,delta_to_target_ap,pass_baseline_threshold,results_path
