@@ -20,6 +20,7 @@ Variants:
 Optional:
   RUN_TAG_SUFFIX=_a2lr1e3  # append a suffix to avoid overwriting prior runs
   EPOCHS_B=400             # diagnostic override; defaults preserve formal protocol
+  LADD_CHAIN_SCRIPT=...     # explicit path to run_hbb_ladd_converged_chain.sh
 EOF
 }
 
@@ -84,7 +85,14 @@ PATIENCE_A_VALUE="${PATIENCE_A:-200}"
 PATIENCE_B_VALUE="${PATIENCE_B:-${EPOCHS_B_VALUE}}"
 SAVE_PERIOD_VALUE="${SAVE_PERIOD:-100}"
 B_CLOSE_AT_EPOCH_VALUE="${B_CLOSE_AT_EPOCH:-${EPOCHS_B_VALUE}}"
+CHAIN_SCRIPT="${LADD_CHAIN_SCRIPT:-scripts/ogsod_public/run_hbb_ladd_converged_chain.sh}"
 mkdir -p "$PROJECT_DIR" "$CHAIN_LOG_DIR" "$LOG_DIR"
+
+if [[ ! -f "$CHAIN_SCRIPT" ]]; then
+  echo "Missing LADD chain script: $CHAIN_SCRIPT" >&2
+  echo "Set LADD_CHAIN_SCRIPT=/path/to/run_hbb_ladd_converged_chain.sh or restore repo-root scripts/ogsod_public." >&2
+  exit 1
+fi
 
 if [[ -e "${PROJECT_DIR}/ladd_hbb_ogsod11${SIZE}_${RUN_TAG}_b_e${EPOCHS_B_VALUE}_b${BATCH_SIZE}_s${SEED}_gpu${GPU_ID}" && "${EXIST_OK:-0}" != "1" ]]; then
   echo "A likely final B run directory already exists under $PROJECT_DIR" >&2
@@ -147,7 +155,7 @@ for optional_env in \
 done
 
 cmd+=(
-  scripts/ogsod_public/run_hbb_ladd_converged_chain.sh
+  "$CHAIN_SCRIPT"
   "$RUN_TAG"
 )
 

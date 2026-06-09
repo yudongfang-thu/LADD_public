@@ -1139,6 +1139,7 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             "reach_rank_loss": self._metric_value(metrics, "train/reach_rank_loss"),
             **bn_stats,
             "bn_stats_mode": self._bn_stats_mode_label(),
+            "bn_stats_frozen_this_epoch": int(self._should_freeze_bn_stats()),
             "nan_or_inf_detected": int(self._has_nonfinite(list(metrics.values()) + list(bn_stats.values()))),
             **grad_stats,
         }

@@ -12,8 +12,16 @@ Defaults:
   DRY_RUN=1
   LAUNCH=0
 
-Set LAUNCH=1 to call ladd/scripts/launch_formal_ladd_job.sh for each row.
-Each row still uses the formal cap2 launcher and a unique RUN_TAG_SUFFIX.
+Recommended use:
+  Keep DRY_RUN=1 and copy one printed command manually.
+
+Safety:
+  LAUNCH=1 is not recommended because launch_formal_ladd_job.sh starts each job
+  with nohup in the background and returns immediately. A matrix launch can put
+  many jobs on the same GPU.
+
+  To batch-launch the whole matrix anyway, explicitly set:
+    ALLOW_MATRIX_PARALLEL_LAUNCH=1
 EOF
 }
 
@@ -43,6 +51,10 @@ LAUNCH="${LAUNCH:-0}"
 MATRIX_DRY_RUN="${DRY_RUN:-1}"
 if [[ "$LAUNCH" == "1" && -z "${DRY_RUN+x}" ]]; then
   MATRIX_DRY_RUN=0
+fi
+if [[ "$LAUNCH" == "1" && "${ALLOW_MATRIX_PARALLEL_LAUNCH:-0}" != "1" ]]; then
+  echo "Refusing to launch the whole diagnostic matrix because launch_formal_ladd_job.sh starts jobs with nohup in background. Use DRY_RUN=1 and copy one command manually, or set ALLOW_MATRIX_PARALLEL_LAUNCH=1 if you really want this." >&2
+  exit 1
 fi
 
 run_row() {

@@ -116,6 +116,15 @@ def value_is_nonfinite(value: Any) -> bool:
     return not math.isnan(number) and not math.isfinite(number)
 
 
+def first_float(mapping: dict[str, str], keys: list[str]) -> float:
+    for key in keys:
+        if key in mapping:
+            value = to_float(mapping.get(key))
+            if math.isfinite(value):
+                return value
+    return math.nan
+
+
 def find_results(roots: list[Path]) -> list[Path]:
     seen: set[Path] = set()
     results: list[Path] = []
@@ -141,6 +150,12 @@ def summarize_one(results_path: Path) -> dict[str, Any]:
         ap_key = "metrics/mAP50-95"
     if rows and math.isnan(to_float(get_value(rows[-1], ap50_key))):
         ap50_key = "metrics/mAP50"
+
+    rows_by_epoch = {to_int(get_value(row, "epoch")): row for row in rows}
+
+    def metric_at(target_epoch: int, key: str) -> float:
+        row = rows_by_epoch.get(target_epoch)
+        return to_float(get_value(row, key)) if row is not None else math.nan
 
     best = max(rows, key=lambda r: to_float(get_value(r, ap_key)), default={})
     last = rows[-1] if rows else {}
@@ -169,6 +184,11 @@ def summarize_one(results_path: Path) -> dict[str, Any]:
 
     freeze_bn_after = args.get("freeze_bn_after_epoch", args.get("b_freeze_bn_after_epoch", ""))
     freeze_bn_stats = boolish(args.get("freeze_bn_stats", ""))
+    baseline_ap = first_float(args, ["sar_baseline_ap", "baseline_ap"])
+    teacher_ap = first_float(args, ["rgb_teacher_ap", "teacher_ap"])
+    delta_vs_baseline = best_ap - baseline_ap if math.isfinite(best_ap) and math.isfinite(baseline_ap) else math.nan
+    gap_denominator = teacher_ap - baseline_ap if math.isfinite(teacher_ap) and math.isfinite(baseline_ap) else math.nan
+    teacher_gap_recovery = delta_vs_baseline / gap_denominator if math.isfinite(delta_vs_baseline) and math.isfinite(gap_denominator) and gap_denominator > 0 else math.nan
 
     return {
         "run_dir": str(run_dir),
@@ -184,6 +204,18 @@ def summarize_one(results_path: Path) -> dict[str, Any]:
         "last_ap50": last_ap50,
         "last_ap": last_ap,
         "drop_best_to_last": best_ap - last_ap if math.isfinite(best_ap) and math.isfinite(last_ap) else math.nan,
+        "ap_at_200": metric_at(200, ap_key),
+        "ap_at_300": metric_at(300, ap_key),
+        "ap_at_400": metric_at(400, ap_key),
+        "ap_at_800": metric_at(800, ap_key),
+        "ap50_at_200": metric_at(200, ap50_key),
+        "ap50_at_300": metric_at(300, ap50_key),
+        "ap50_at_400": metric_at(400, ap50_key),
+        "ap50_at_800": metric_at(800, ap50_key),
+        "baseline_ap": baseline_ap,
+        "teacher_ap": teacher_ap,
+        "delta_vs_baseline": delta_vs_baseline,
+        "teacher_gap_recovery": teacher_gap_recovery,
         "lr0": args.get("lr0", ""),
         "lrf": args.get("lrf", ""),
         "cos_lr": boolish(args.get("cos_lr", "")),
@@ -213,6 +245,18 @@ FIELDS = [
     "last_ap50",
     "last_ap",
     "drop_best_to_last",
+    "ap_at_200",
+    "ap_at_300",
+    "ap_at_400",
+    "ap_at_800",
+    "ap50_at_200",
+    "ap50_at_300",
+    "ap50_at_400",
+    "ap50_at_800",
+    "baseline_ap",
+    "teacher_ap",
+    "delta_vs_baseline",
+    "teacher_gap_recovery",
     "lr0",
     "lrf",
     "cos_lr",
@@ -303,6 +347,17 @@ def write_markdown(path: Path, rows: list[dict[str, Any]]) -> None:
         md_table(sorted(rows, key=lambda r: to_float(r.get("bn_running_var_max_global")), reverse=True), cols),
         "## NaN / Inf Runs",
         md_table([r for r in rows if str(r.get("nan_or_inf_any")) == "1"], cols),
+        "## AP At Milestones",
+        md_table(
+            sorted(rows, key=lambda r: to_float(r.get("best_ap")), reverse=True),
+            ["run_tag", "best_ap", "last_ap", "ap_at_200", "ap_at_300", "ap_at_400", "ap_at_800"],
+            limit=200,
+        ),
+        "## Gap Recovery Top 20",
+        md_table(
+            sorted(rows, key=lambda r: to_float(r.get("teacher_gap_recovery")), reverse=True),
+            ["run_tag", "baseline_ap", "teacher_ap", "best_ap", "delta_vs_baseline", "teacher_gap_recovery"],
+        ),
         "## Configuration Group Means",
         md_table(
             sorted(group_rows, key=lambda r: to_float(r.get("mean_best_ap")), reverse=True),
