@@ -25,6 +25,10 @@ LADD (Learnability-Aware Decomposition Distillation) — RGB-guided SAR object d
 
 No checkpoint weights (`.pt`/`.pth`) are included; they're in `.gitignore`.
 
+## GitHub sync convention
+
+When committing and pushing experiment/code updates to GitHub, use a descriptive commit message with a title and body. The body should summarize the change scope, key evidence/results, validation performed, and explicitly note whether checkpoint weights or other large artifacts were excluded.
+
 ## Python path
 
 Training scripts in `ladd/code/` and `baseline/code/` inject `shared/` onto `sys.path` so the vendored `ultralytics` and shared modules are resolvable:

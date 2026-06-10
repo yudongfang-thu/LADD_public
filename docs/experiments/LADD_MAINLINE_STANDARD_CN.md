@@ -186,6 +186,8 @@ A 阶段 reach/rec/d_neg 的历史诊断图如下。旧 rank loss 会把 `d_neg`
 - `YOLO11s cap2 seed0` 在 90 上跑到 epoch 608，best `0.63551@605`，未满 800；双卡 4090 BN-freeze 版本跑满，best `0.63388@263`，last `0.61759`，仍有后期退化；
 - `YOLO11m cap2 seed0` B 阶段异常，暂不纳入主线。
 
+旧 `mosaic=1.0, close_mosaic=700` 收敛主线的 90 服务器原始轻量证据已补充归档：[`LADD_MOSAIC90_MAINLINE_EVIDENCE_20260528_CN.md`](LADD_MOSAIC90_MAINLINE_EVIDENCE_20260528_CN.md)。该证据说明 LADD 在开 mosaic 后关闭的旧收敛协议下可以稳定完成 B 阶段，不应把 no-mosaic/H1 退化直接解释成方法机制必然崩溃。
+
 当前 seed0 结果：
 
 | 实验 | best AP50-95 | 相对 SAR baseline | gap 覆盖 |

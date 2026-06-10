@@ -14,6 +14,7 @@
 | CCLKD 原文协议复现 | [../../cclkd_reproduction/README.md](../../cclkd_reproduction/README.md) |
 | Baseline 训练规范与当前状态 | [BASELINE_STANDARD_CN.md](BASELINE_STANDARD_CN.md) |
 | LADD 主线规范与状态 | [LADD_MAINLINE_STANDARD_CN.md](LADD_MAINLINE_STANDARD_CN.md) |
+| LADD 90 服务器 mosaic/close@100 主线证据 | [LADD_MOSAIC90_MAINLINE_EVIDENCE_20260528_CN.md](LADD_MOSAIC90_MAINLINE_EVIDENCE_20260528_CN.md) |
 | LADD 主线稳定性诊断归档 | [../../ladd/results/mainline_stability_20260609/README_CN.md](../../ladd/results/mainline_stability_20260609/README_CN.md) |
 | 对比实验计划与实现 | [COMPARISON_EXPERIMENTS_CN.md](COMPARISON_EXPERIMENTS_CN.md) |
 | 消融实验计划 | [ABLATION_PLAN_CN.md](ABLATION_PLAN_CN.md) |
