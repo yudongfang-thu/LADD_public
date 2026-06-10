@@ -1,5 +1,18 @@
 # CCLKD Full Regression Snapshot, 2026-06-10
 
+## Current Decision
+
+The current YOLOv5x `current_full` run should be stopped.
+
+It is systematically below the SAR baseline from epoch 0 to 114. This is
+treated as an implementation/protocol regression of the current proxy trainer,
+not evidence against the original CCLKD paper.
+
+Next, run only the minimal stop-loss diagnostics:
+
+- D0: `det_only_same_trainer`
+- D1: `two_branch_no_kd`
+
 Snapshot time: `Wed Jun 10 12:52:42 CST 2026`
 
 This directory contains a compact evidence package for the current YOLOv5-X

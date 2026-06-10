@@ -8,8 +8,11 @@ Usage:
     <batch> <seed> <gpu_id> <tag>
 
 Example:
-  LAUNCH=1 DRY_RUN=0 bash cclkd_reproduction/yolov5_sanity/scripts/launch_yolov5_cclkd_full.sh \
+  LAUNCH=1 DRY_RUN=0 CCLKD_YOLOV5_MODE=current_full bash cclkd_reproduction/yolov5_sanity/scripts/launch_yolov5_cclkd_full.sh \
     64 0 1 cclkd_full_yolov5x_b64_s0
+
+Environment:
+  CCLKD_YOLOV5_MODE  current_full|det_only_same_trainer|two_branch_no_kd (default: current_full)
 EOF
 }
 
@@ -35,11 +38,19 @@ LAUNCH="${LAUNCH:-0}"
 WAIT_FOR_GPU="${WAIT_FOR_GPU:-0}"
 MIN_FREE_MB="${MIN_FREE_MB:-22000}"
 POLL_SECONDS="${POLL_SECONDS:-120}"
+CCLKD_YOLOV5_MODE="${CCLKD_YOLOV5_MODE:-current_full}"
+case "$CCLKD_YOLOV5_MODE" in
+  current_full|det_only_same_trainer|two_branch_no_kd) ;;
+  *)
+    echo "Invalid CCLKD_YOLOV5_MODE: $CCLKD_YOLOV5_MODE" >&2
+    exit 2
+    ;;
+esac
 
 SANITY_DIR="$REPO_ROOT/cclkd_reproduction/yolov5_sanity"
 YOLOV5_DIR="$REPO_ROOT/external/yolov5"
 PROJECT="$SANITY_DIR/results/runs"
-RUN_NAME="yolov5x_online_cclkd_full_b${BATCH}_s${SEED}_${TAG}"
+RUN_NAME="yolov5x_${CCLKD_YOLOV5_MODE}_b${BATCH}_s${SEED}_${TAG}"
 RUN_DIR="$PROJECT/$RUN_NAME"
 HYP="$SANITY_DIR/configs/hyp_cold_ogsod.yaml"
 SAR_DATA="${SAR_DATA:-$REPO_ROOT/configs/datasets/ogsod_hbb_sar.yaml}"
@@ -66,6 +77,7 @@ CMD=(
   --workers 4
   --seed "$SEED"
   --save-period 100
+  --mode "$CCLKD_YOLOV5_MODE"
   --exist-ok
 )
 
@@ -94,6 +106,7 @@ mkdir -p "$RUN_DIR"
   echo "tag=$TAG"
   echo "model=yolov5x"
   echo "experiment=online_cclkd_full"
+  echo "mode=$CCLKD_YOLOV5_MODE"
   echo "student_modality=sar"
   echo "teacher_modality=rgb"
   echo "batch=$BATCH"
@@ -101,7 +114,7 @@ mkdir -p "$RUN_DIR"
   echo "gpu_id=$GPU_ID"
   echo "wait_for_gpu=$WAIT_FOR_GPU"
   echo "min_free_mb=$MIN_FREE_MB"
-  echo "note=YOLOv5-adapted CCLKD full; uses paired SAR/RGB augmentations and online trainable RGB teacher."
+  echo "note=YOLOv5-adapted CCLKD audit launcher; current_full is not a verified CCLKD reproduction."
 } > "$RUN_DIR/run_meta.txt"
 {
   printf 'cd %q\n' "$REPO_ROOT"
@@ -130,6 +143,6 @@ chmod +x "$RUN_DIR/command.sh"
   echo $! > "$RUN_DIR/pid.txt"
 )
 
-echo "Started YOLOv5x online CCLKD full launcher: $RUN_NAME"
+echo "Started YOLOv5x CCLKD audit launcher: $RUN_NAME"
 echo "PID: $(cat "$RUN_DIR/pid.txt")"
 echo "Log: $RUN_DIR/nohup.log"

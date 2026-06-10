@@ -26,6 +26,8 @@ YOLOV5_DIR = REPO_ROOT / "external" / "yolov5"
 if str(YOLOV5_DIR) not in sys.path:
     sys.path.insert(0, str(YOLOV5_DIR))
 
+MODES = ("det_only_same_trainer", "two_branch_no_kd", "current_full")
+
 import val as validate  # noqa: E402
 from models.experimental import attempt_load  # noqa: E402
 from models.yolo import Model  # noqa: E402
@@ -239,6 +241,8 @@ def train(hyp, opt, device, callbacks):
     weights_dir = save_dir / "weights"
     weights_dir.mkdir(parents=True, exist_ok=True)
     last, best = weights_dir / "last.pt", weights_dir / "best.pt"
+    use_teacher = opt.mode in {"two_branch_no_kd", "current_full"}
+    use_kd = opt.mode == "current_full"
 
     with open(hyp, errors="ignore") as f:
         hyp = yaml.safe_load(f)
@@ -247,29 +251,59 @@ def train(hyp, opt, device, callbacks):
     yaml_save(save_dir / "opt.yaml", vars(opt))
 
     data_dict = check_dataset(opt.data)
-    teacher_dict = check_dataset(opt.teacher_data)
     train_path, val_path = data_dict["train"], data_dict["val"]
-    teacher_train_path = teacher_dict["train"]
+    teacher_train_path = None
+    if use_teacher:
+        teacher_dict = check_dataset(opt.teacher_data)
+        teacher_train_path = teacher_dict["train"]
     nc = int(data_dict["nc"])
     names = data_dict["names"]
 
     model = load_yolov5_model(opt.weights, opt.cfg, nc, hyp, device)
-    teacher = load_yolov5_model(opt.teacher_weights, opt.cfg, nc, hyp, device)
-    for p in teacher.parameters():
-        p.requires_grad_(True)
+    teacher = None
+    if use_teacher:
+        teacher = load_yolov5_model(opt.teacher_weights, opt.cfg, nc, hyp, device)
+        for p in teacher.parameters():
+            p.requires_grad_(True)
     amp = bool(opt.amp)
 
     gs = max(int(model.stride.max()), 32)
     imgsz = check_img_size(opt.imgsz, gs, floor=gs * 2)
-    train_loader, dataset = create_paired_dataloader(
-        train_path, teacher_train_path, imgsz, opt.batch_size, gs, hyp, opt.workers, shuffle=True
-    )
+    if use_teacher:
+        train_loader, dataset = create_paired_dataloader(
+            train_path, teacher_train_path, imgsz, opt.batch_size, gs, hyp, opt.workers, shuffle=True
+        )
+        anchor_dataset = dataset.sar
+    else:
+        train_loader, dataset = create_dataloader(
+            train_path,
+            imgsz,
+            opt.batch_size,
+            gs,
+            False,
+            hyp=hyp,
+            augment=True,
+            cache=False,
+            rect=False,
+            rank=-1,
+            workers=opt.workers,
+            image_weights=False,
+            quad=False,
+            prefix=colorstr("train: "),
+            shuffle=True,
+            seed=opt.seed,
+        )
+        anchor_dataset = dataset
     labels = np.concatenate(dataset.labels, 0)
-    model.nc = teacher.nc = nc
-    model.hyp = teacher.hyp = hyp
-    model.names = teacher.names = names
+    model.nc = nc
+    model.hyp = hyp
+    model.names = names
     model.class_weights = labels_to_class_weights(dataset.labels, nc).to(device) * nc
-    teacher.class_weights = model.class_weights
+    if teacher is not None:
+        teacher.nc = nc
+        teacher.hyp = hyp
+        teacher.names = names
+        teacher.class_weights = model.class_weights
 
     val_loader = create_dataloader(
         val_path,
@@ -286,21 +320,22 @@ def train(hyp, opt, device, callbacks):
         prefix=colorstr("val: "),
     )[0]
     if not opt.noautoanchor:
-        check_anchors(dataset.sar, model=model, thr=hyp["anchor_t"], imgsz=imgsz)
+        check_anchors(anchor_dataset, model=model, thr=hyp["anchor_t"], imgsz=imgsz)
         model.half().float()
-        teacher.half().float()
+        if teacher is not None:
+            teacher.half().float()
 
     nbs = 64
     accumulate = max(round(nbs / opt.batch_size), 1)
     hyp["weight_decay"] *= opt.batch_size * accumulate / nbs
-    joint = nn.ModuleList([model, teacher])
-    optimizer = smart_optimizer(joint, opt.optimizer, hyp["lr0"], hyp["momentum"], hyp["weight_decay"])
+    optim_model = nn.ModuleList([model, teacher]) if teacher is not None else model
+    optimizer = smart_optimizer(optim_model, opt.optimizer, hyp["lr0"], hyp["momentum"], hyp["weight_decay"])
     lf = one_cycle(1, hyp["lrf"], opt.epochs) if opt.cos_lr else lambda x: (1 - x / opt.epochs) * (1.0 - hyp["lrf"]) + hyp["lrf"]
     scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lf)
     ema = ModelEMA(model)
     scaler = torch.cuda.amp.GradScaler(enabled=amp)
     compute_student_loss = ComputeLoss(model)
-    compute_teacher_loss = ComputeLoss(teacher)
+    compute_teacher_loss = ComputeLoss(teacher) if teacher is not None else None
     stopper = EarlyStopping(patience=opt.patience)
     best_fitness, maps = 0.0, np.zeros(nc)
     results = (0, 0, 0, 0, 0, 0, 0)
@@ -309,25 +344,34 @@ def train(hyp, opt, device, callbacks):
     last_opt_step = -1
     t0 = time.time()
 
-    if opt.kd_warmup_epochs:
+    if use_kd and opt.kd_warmup_epochs:
         LOGGER.info(f"Using KD warmup: {opt.kd_warmup_epochs} epochs")
+    if opt.mode == "current_full":
+        LOGGER.warning("current_full is under audit and is not a verified CCLKD reproduction.")
     LOGGER.info(
-        f"YOLOv5x online CCLKD full: SAR student + RGB teacher, batch={opt.batch_size}, imgsz={imgsz}, amp={amp}"
+        f"YOLOv5x CCLKD audit mode={opt.mode}, use_teacher={use_teacher}, use_kd={use_kd}, "
+        f"batch={opt.batch_size}, imgsz={imgsz}, amp={amp}"
     )
     LOGGER.info(f"Logging results to {colorstr('bold', save_dir)}")
 
     for epoch in range(opt.epochs):
         callbacks.run("on_train_epoch_start")
         model.train()
-        teacher.train()
+        if teacher is not None:
+            teacher.train()
         mloss = torch.zeros(10, device=device)
         pbar = tqdm(enumerate(train_loader), total=nb, bar_format=TQDM_BAR_FORMAT)
         LOGGER.info(("\n" + "%11s" * 12) % ("Epoch", "GPU_mem", "s_box", "s_obj", "s_cls", "t_box", "t_obj", "t_cls", "kd", "lld", "fld", "ccl"))
         optimizer.zero_grad()
-        for i, (imgs, teacher_imgs, targets, paths, _shapes) in pbar:
+        for i, batch in pbar:
             ni = i + nb * epoch
+            if use_teacher:
+                imgs, teacher_imgs, targets, paths, _shapes = batch
+                teacher_imgs = teacher_imgs.to(device, non_blocking=True).float() / 255
+            else:
+                imgs, targets, paths, _shapes = batch
+                teacher_imgs = None
             imgs = imgs.to(device, non_blocking=True).float() / 255
-            teacher_imgs = teacher_imgs.to(device, non_blocking=True).float() / 255
             targets = targets.to(device)
 
             if ni <= nw:
@@ -340,18 +384,26 @@ def train(hyp, opt, device, callbacks):
 
             with torch.cuda.amp.autocast(amp):
                 student_preds = model(imgs)
-                teacher_preds = teacher(teacher_imgs)
                 student_det, student_items = compute_student_loss(student_preds, targets)
-                teacher_det, teacher_items = compute_teacher_loss(teacher_preds, targets)
-                kd_loss, kd_items = cclkd_full_loss(student_preds, teacher_preds, targets, compute_student_loss)
-                kd_scale = opt.kd_weight * min(1.0, epoch / max(float(opt.kd_warmup_epochs), 1.0))
-                loss = student_det + opt.teacher_det_weight * teacher_det + kd_scale * kd_loss
+                teacher_items = torch.zeros(3, device=device)
+                kd_loss = student_det.new_zeros(())
+                kd_items = torch.zeros(4, device=device)
+                loss = student_det
+                if use_teacher:
+                    teacher_preds = teacher(teacher_imgs)
+                    teacher_det, teacher_items = compute_teacher_loss(teacher_preds, targets)
+                    loss = loss + opt.teacher_det_weight * teacher_det
+                    if use_kd:
+                        kd_loss, kd_items = cclkd_full_loss(student_preds, teacher_preds, targets, compute_student_loss)
+                        kd_scale = opt.kd_weight * min(1.0, epoch / max(float(opt.kd_warmup_epochs), 1.0))
+                        loss = loss + kd_scale * kd_loss
 
             scaler.scale(loss).backward()
             if ni - last_opt_step >= accumulate:
                 scaler.unscale_(optimizer)
                 torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=10.0)
-                torch.nn.utils.clip_grad_norm_(teacher.parameters(), max_norm=10.0)
+                if teacher is not None:
+                    torch.nn.utils.clip_grad_norm_(teacher.parameters(), max_norm=10.0)
                 scaler.step(optimizer)
                 scaler.update()
                 optimizer.zero_grad()
@@ -392,11 +444,12 @@ def train(hyp, opt, device, callbacks):
             "model": deepcopy(de_parallel(model)).half(),
             "ema": deepcopy(ema.ema).half(),
             "updates": ema.updates,
-            "teacher": deepcopy(de_parallel(teacher)).half(),
             "optimizer": optimizer.state_dict(),
             "opt": vars(opt),
             "date": datetime.now().isoformat(),
         }
+        if teacher is not None:
+            ckpt["teacher"] = deepcopy(de_parallel(teacher)).half()
         torch.save(ckpt, last)
         if best_fitness == fi:
             torch.save(ckpt, best)
@@ -444,6 +497,7 @@ def parse_args():
     parser.add_argument("--teacher-det-weight", type=float, default=1.0)
     parser.add_argument("--kd-weight", type=float, default=1.0)
     parser.add_argument("--kd-warmup-epochs", type=int, default=3)
+    parser.add_argument("--mode", choices=MODES, default="current_full")
     parser.add_argument("--amp", action="store_true", default=True)
     return parser.parse_args()
 
