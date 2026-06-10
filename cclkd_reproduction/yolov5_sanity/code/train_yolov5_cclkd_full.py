@@ -328,6 +328,12 @@ def train(hyp, opt, device, callbacks):
             "raw_proxy_full/current_full is a legacy regression mode and is blocked by default. "
             "Use --allow-raw-proxy only for historical debugging. Use paper_full for CCLKD reproduction."
         )
+    if use_paper_kd and torch.are_deterministic_algorithms_enabled():
+        LOGGER.warning(
+            "paper_* CCLKD uses grid_sample for FLD; switching deterministic algorithms to warn_only "
+            "because CUDA grid_sample backward has no deterministic implementation in this PyTorch build."
+        )
+        torch.use_deterministic_algorithms(True, warn_only=True)
     default_atkd_weight, default_ccl_weight = default_paper_weights(mode)
     atkd_weight = default_atkd_weight if opt.atkd_weight is None else float(opt.atkd_weight)
     ccl_weight = default_ccl_weight if opt.ccl_weight is None else float(opt.ccl_weight)
