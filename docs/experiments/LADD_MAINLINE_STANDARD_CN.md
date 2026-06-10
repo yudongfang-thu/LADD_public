@@ -146,6 +146,8 @@ YOLO11s seed0 的 BN-freeze 跑满后 best 为 `0.63388@263`，但 last 退到
 `0.61759`，低于 SAR baseline `0.62897`；因此 BN-freeze 对 s 容量没有完全解决
 后期退化，s 应作为单独容量诊断，而不是反向阻塞 n 主线。
 
+后期曲线补充分析见 [LADD_LATE_DEGRADATION_CURVE_ANALYSIS_20260610_CN.md](LADD_LATE_DEGRADATION_CURVE_ANALYSIS_20260610_CN.md)：s 退化 run 的 train/KD loss 继续下降，但 `val/cls_loss` 和 `val/box_loss` 后期上升，更像 late overfit / 泛化退化，而不是优化数值崩溃。
+
 ## 7. Cap2 反坍缩设置
 
 正式主线使用 cap2：

@@ -1,0 +1,28 @@
+LADD late degradation curve analysis log
+Generated from local lightweight result artifacts on 2026-06-10.
+No checkpoint weights are read or copied.
+
+Inputs:
+- h1_s_b400_degrade: docs/experiments/ladd_h1_diag_20260610_artifacts/h1_s_b400/results.csv
+- h1_n_b100_smoke: docs/experiments/ladd_h1_diag_20260610_artifacts/h1_n_b100/results.csv
+- bnfreeze_s_b800_degrade: ladd/results/mainline_stability_20260609/remote_4090dual/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11n_formal_nomosaic_yolo11s_cap2_s0_bnfreeze1e3_public4090dual_final_v2_b_e800_b64_s0_gpu1/results.csv
+- bnfreeze_n_b800_mild: ladd/results/mainline_stability_20260609/remote_4090dual/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11n/cap2/ladd_hbb_ogsod11n_formal_nomosaic_yolo11n_cap2_s42_bnfreeze1e3_public4090dual_final_v2_b_e800_b64_s42_gpu0/results.csv
+- old90_cap2_s0_stable: docs/experiments/ladd_mosaic90_20260528_artifacts/ladd_b_runs/ladd_hbb_ogsod11n_ladd800r2_cap2_s0_b_e800_b64_s0_gpu4/results.csv
+- old90_cap2_s42_stable: docs/experiments/ladd_mosaic90_20260528_artifacts/ladd_b_runs/ladd_hbb_ogsod11n_ladd800r2_cap2_s42_b_e800_b64_s42_gpu3/results.csv
+- old90_cap2_s123_stable: docs/experiments/ladd_mosaic90_20260528_artifacts/ladd_b_runs/ladd_hbb_ogsod11n_ladd800r2_cap2_s123_b_e800_b64_s123_gpu5/results.csv
+- h1_s_b400 diagnostics: docs/experiments/ladd_h1_diag_20260610_artifacts/h1_s_b400/ladd_diagnostics.csv
+
+Run summary:
+h1_s_b400_degrade: best 0.63127@216, last 0.62036@400, drop -0.01091, last100 slope/100ep -0.00564
+h1_n_b100_smoke: best 0.55872@100, last 0.55872@100, drop +0.00000, last100 slope/100ep +0.05275
+bnfreeze_s_b800_degrade: best 0.63388@263, last 0.61759@800, drop -0.01629, last100 slope/100ep -0.00005
+bnfreeze_n_b800_mild: best 0.57615@400, last 0.57295@800, drop -0.00320, last100 slope/100ep +0.00088
+old90_cap2_s0_stable: best 0.56841@798, last 0.56792@800, drop -0.00049, last100 slope/100ep +0.00100
+old90_cap2_s42_stable: best 0.56799@750, last 0.56044@800, drop -0.00755, last100 slope/100ep -0.00138
+old90_cap2_s123_stable: best 0.56163@800, last 0.56163@800, drop +0.00000, last100 slope/100ep +0.00081
+
+Interpretation notes:
+- Degrading no-mosaic s runs keep reducing train box/cls and KD losses after the best epoch.
+- The late window increases are concentrated in validation cls loss and, more mildly, validation box loss.
+- H1 s b400 diagnostics show no NaN/Inf flag and constant frozen BN running stats.
+- Old server-90 mosaic/close@100 cap2 runs do not show the same late validation-loss drift.

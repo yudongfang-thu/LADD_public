@@ -1,0 +1,12 @@
+run,source_diagnostics_csv,requested_epoch,nearest_epoch,kd_loss,reach_match_loss,reach_rank_loss,bn_running_var_max,bn_running_var_mean,bn_running_var_p95,bn_running_mean_abs_max,grad_norm_total,nan_or_inf_detected
+h1_s_b400_degrade,docs/experiments/ladd_h1_diag_20260610_artifacts/h1_s_b400/ladd_diagnostics.csv,1,1,1.13078,0,0,155.75,1.1527643,5.6607475,20.984375,99.882462,0
+h1_s_b400_degrade,docs/experiments/ladd_h1_diag_20260610_artifacts/h1_s_b400/ladd_diagnostics.csv,2,2,0.3146,0,0,155.75,1.1527643,5.6607475,20.984375,65.165718,0
+h1_s_b400_degrade,docs/experiments/ladd_h1_diag_20260610_artifacts/h1_s_b400/ladd_diagnostics.csv,10,10,0.1994,0,0,155.75,1.1527643,5.6607475,20.984375,71.402916,0
+h1_s_b400_degrade,docs/experiments/ladd_h1_diag_20260610_artifacts/h1_s_b400/ladd_diagnostics.csv,50,50,0.14962,0,0,155.75,1.1527643,5.6607475,20.984375,92.246803,0
+h1_s_b400_degrade,docs/experiments/ladd_h1_diag_20260610_artifacts/h1_s_b400/ladd_diagnostics.csv,100,100,0.13228,0,0,155.75,1.1527643,5.6607475,20.984375,145.2991,0
+h1_s_b400_degrade,docs/experiments/ladd_h1_diag_20260610_artifacts/h1_s_b400/ladd_diagnostics.csv,200,200,0.114,0,0,155.75,1.1527643,5.6607475,20.984375,121.62463,0
+h1_s_b400_degrade,docs/experiments/ladd_h1_diag_20260610_artifacts/h1_s_b400/ladd_diagnostics.csv,216,216,0.11093,0,0,155.75,1.1527643,5.6607475,20.984375,76.294739,0
+h1_s_b400_degrade,docs/experiments/ladd_h1_diag_20260610_artifacts/h1_s_b400/ladd_diagnostics.csv,263,263,0.10416,0,0,155.75,1.1527643,5.6607475,20.984375,96.751213,0
+h1_s_b400_degrade,docs/experiments/ladd_h1_diag_20260610_artifacts/h1_s_b400/ladd_diagnostics.csv,300,300,0.10195,0,0,155.75,1.1527643,5.6607475,20.984375,128.74089,0
+h1_s_b400_degrade,docs/experiments/ladd_h1_diag_20260610_artifacts/h1_s_b400/ladd_diagnostics.csv,350,350,0.09896,0,0,155.75,1.1527643,5.6607475,20.984375,128.67859,0
+h1_s_b400_degrade,docs/experiments/ladd_h1_diag_20260610_artifacts/h1_s_b400/ladd_diagnostics.csv,400,400,0.09803,0,0,155.75,1.1527643,5.6607475,20.984375,103.46351,0

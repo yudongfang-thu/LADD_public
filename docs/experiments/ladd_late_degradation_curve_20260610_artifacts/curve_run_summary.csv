@@ -1,0 +1,8 @@
+run,source_results_csv,rows,best_epoch,best_ap50_95,last_epoch,last_ap50_95,last_minus_best,last100_ap_slope_per100_epoch
+h1_s_b400_degrade,docs/experiments/ladd_h1_diag_20260610_artifacts/h1_s_b400/results.csv,400,216,0.63127,400,0.62036,-0.01091,-0.00564
+h1_n_b100_smoke,docs/experiments/ladd_h1_diag_20260610_artifacts/h1_n_b100/results.csv,100,100,0.55872,100,0.55872,+0.00000,+0.05275
+bnfreeze_s_b800_degrade,ladd/results/mainline_stability_20260609/remote_4090dual/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11n_formal_nomosaic_yolo11s_cap2_s0_bnfreeze1e3_public4090dual_final_v2_b_e800_b64_s0_gpu1/results.csv,800,263,0.63388,800,0.61759,-0.01629,-0.00005
+bnfreeze_n_b800_mild,ladd/results/mainline_stability_20260609/remote_4090dual/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11n/cap2/ladd_hbb_ogsod11n_formal_nomosaic_yolo11n_cap2_s42_bnfreeze1e3_public4090dual_final_v2_b_e800_b64_s42_gpu0/results.csv,800,400,0.57615,800,0.57295,-0.00320,+0.00088
+old90_cap2_s0_stable,docs/experiments/ladd_mosaic90_20260528_artifacts/ladd_b_runs/ladd_hbb_ogsod11n_ladd800r2_cap2_s0_b_e800_b64_s0_gpu4/results.csv,800,798,0.56841,800,0.56792,-0.00049,+0.00100
+old90_cap2_s42_stable,docs/experiments/ladd_mosaic90_20260528_artifacts/ladd_b_runs/ladd_hbb_ogsod11n_ladd800r2_cap2_s42_b_e800_b64_s42_gpu3/results.csv,800,750,0.56799,800,0.56044,-0.00755,-0.00138
+old90_cap2_s123_stable,docs/experiments/ladd_mosaic90_20260528_artifacts/ladd_b_runs/ladd_hbb_ogsod11n_ladd800r2_cap2_s123_b_e800_b64_s123_gpu5/results.csv,800,800,0.56163,800,0.56163,+0.00000,+0.00081

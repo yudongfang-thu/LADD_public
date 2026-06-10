@@ -58,3 +58,5 @@ docs/experiments/ladd_h1_diag_20260610_artifacts/
 当前 H1 更像是“实现污染修复后，n 保持健康，但 s 仍有 late degradation”的证据。它支持继续做 P2_s 定位，不支持直接宣传为最终主线。
 
 补充背景：90 服务器旧 `mosaic=1.0, close_mosaic=700` 收敛主线下，YOLO11n LADD legacy/cap2 六条 B 阶段 run 均未出现崩溃，并稳定高于同协议 SAR baseline。见 [LADD_MOSAIC90_MAINLINE_EVIDENCE_20260528_CN.md](LADD_MOSAIC90_MAINLINE_EVIDENCE_20260528_CN.md)。这说明 H1/no-mosaic 下的后期退化不能简单归因于 LADD 方法本身必然不稳定。
+
+后期 loss 曲线补充分析见 [LADD_LATE_DEGRADATION_CURVE_ANALYSIS_20260610_CN.md](LADD_LATE_DEGRADATION_CURVE_ANALYSIS_20260610_CN.md)。当前读法是：退化 run 并非 loss 爆炸，而是 train/KD loss 继续下降，同时 validation loss，尤其 `val/cls_loss`，在 best epoch 后上升。
