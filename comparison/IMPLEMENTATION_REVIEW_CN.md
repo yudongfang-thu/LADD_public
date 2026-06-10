@@ -127,3 +127,30 @@ hallucinated image，再由 frozen RGB detector detection loss 反传训练；�
    旧 hallucidet 结果只能作为 `hallucidet_style_old` 参考，不能写作 HalluciDet。
 5. 第二轮复核意见响应与未采纳原因见
    [`REVIEW_FEEDBACK_RESPONSE_CN.md`](REVIEW_FEEDBACK_RESPONSE_CN.md)。
+
+## 5. 4090 服务器 smoke 记录
+
+2026-06-10 在双卡 4090 服务器 `ladd4090` 上完成 synthetic smoke。为避免污染
+服务器正式运行目录，使用本地 `git archive HEAD` 将 commit `2d5adf9` 的干净快照
+传到临时目录：
+
+```text
+ladd4090:/tmp/LADD_public_smoke_20260610
+```
+
+执行命令与结果：
+
+```bash
+python3 comparison/code/smoke_check_comparison_losses.py
+# comparison loss smoke checks passed
+
+python3 ladd/code_versions/current_hbb/tools/train_ladd_hbb.py --help | grep -E "fgd-alpha|fgd-mask-mode|ld-use-vlr|hallucidet_style"
+# 输出包含 hallucidet_style、fgd-alpha、fgd-mask-mode、ld-use-vlr
+
+bash -n comparison/code/launch_formal_from_yolo_kd_job.sh
+bash -n comparison/code/launch_formal_transfer_kd_job.sh
+bash -n ladd/code_versions/current_hbb/scripts/ogsod_public/run_ladd_phase.sh
+# 均通过，exit 0
+```
+
+本次只验证 comparison loss、CLI 参数和 launcher 语法；未启动正式训练。
