@@ -20,6 +20,10 @@ from d2ad_obb.paired_dataset import PairedOBBDataset
 
 from .loss import TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB
 from .model import TeacherStudentDecompositionKDNRRLTeacherUAuxModelHBB
+from .schedule import (
+    apply_det_only_phase_scales,
+    compute_effective_ladd_weights,
+)
 
 
 class PhaseMinEarlyStopping:
@@ -195,8 +199,16 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(DetectionTrainer):
             "ladd_grad_clip_norm": max(float(overrides.pop("ladd_grad_clip_norm", 0.0)), 0.0),
             "ladd_assert_phase_freeze": int(overrides.pop("ladd_assert_phase_freeze", 0)) > 0,
             "ladd_diag_log_every": max(int(overrides.pop("ladd_diag_log_every", 1)), 1),
+            "ladd_kd_decay_mode": str(overrides.pop("ladd_kd_decay_mode", "none")),
+            "ladd_kd_decay_start_epoch": int(overrides.pop("ladd_kd_decay_start_epoch", -1)),
+            "ladd_kd_decay_end_epoch": int(overrides.pop("ladd_kd_decay_end_epoch", -1)),
+            "ladd_kd_final_mult": float(overrides.pop("ladd_kd_final_mult", 1.0)),
+            "ladd_kd_stop_after_epoch": int(overrides.pop("ladd_kd_stop_after_epoch", -1)),
+            "ladd_b_det_only": int(overrides.pop("ladd_b_det_only", 0)) > 0,
+            "ladd_a2_det_only": int(overrides.pop("ladd_a2_det_only", 0)) > 0,
         }
         self._last_grad_norms = None
+        self._effective_ladd_weights = {}
         self._phase_freeze_assert_logged_contexts = set()
         self._phase_training_state_logged = False
         if self.tskd_cfg["teacher_data"] is None:
@@ -234,6 +246,8 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(DetectionTrainer):
         )
 
     def preprocess_batch(self, batch: dict) -> dict:
+        if hasattr(self, "manual_phase_cfg"):
+            self._refresh_effective_ladd_weights()
         batch = super().preprocess_batch(batch)
         teacher_img = batch.get("teacher_img")
         if teacher_img is not None:
@@ -649,11 +663,66 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             param.requires_grad_(requires_grad)
 
     def _set_phase_loss_scales(self, **scales: float) -> None:
+        scales = apply_det_only_phase_scales(
+            scales,
+            phase=self.manual_phase_cfg["phase"],
+            ladd_b_det_only=self.diagnostic_cfg.get("ladd_b_det_only", False),
+            ladd_a2_det_only=self.diagnostic_cfg.get("ladd_a2_det_only", False),
+        )
         model = unwrap_model(self.model)
         if getattr(model, "criterion", None) is not None:
             model.criterion.set_phase_loss_scales(**scales)
         if self.ema and getattr(self.ema.ema, "criterion", None) is not None:
             self.ema.ema.criterion.set_phase_loss_scales(**scales)
+
+    def _current_phase_epoch_1based(self) -> int:
+        return int(getattr(self, "epoch", 0)) + 1
+
+    def _base_ladd_weight_dict(self) -> dict[str, float]:
+        return {
+            "alpha_kd": float(self.tskd_cfg["alpha_kd"]),
+            "alpha_s_rec": float(self.tskd_cfg["alpha_s_rec"]),
+            "alpha_sep": float(self.tskd_cfg["alpha_sep"]),
+            "lambda_residual_aux": float(self.nrrl_cfg["lambda_residual_aux"]),
+            "lambda_reach": float(self.nrrl_cfg["lambda_reach"]),
+            "lambda_match_inner": float(self.nrrl_cfg["lambda_match_inner"]),
+            "lambda_rank_inner": float(self.nrrl_cfg["lambda_rank_inner"]),
+        }
+
+    def _compute_effective_ladd_weights(self) -> dict[str, float]:
+        return compute_effective_ladd_weights(
+            phase=self.manual_phase_cfg["phase"],
+            epoch_1based=self._current_phase_epoch_1based(),
+            base_weights=self._base_ladd_weight_dict(),
+            decay_mode=self.diagnostic_cfg.get("ladd_kd_decay_mode", "none"),
+            decay_start_epoch=int(self.diagnostic_cfg.get("ladd_kd_decay_start_epoch", -1)),
+            decay_end_epoch=int(self.diagnostic_cfg.get("ladd_kd_decay_end_epoch", -1)),
+            final_mult=float(self.diagnostic_cfg.get("ladd_kd_final_mult", 1.0)),
+            stop_after_epoch=int(self.diagnostic_cfg.get("ladd_kd_stop_after_epoch", -1)),
+            ladd_b_det_only=bool(self.diagnostic_cfg.get("ladd_b_det_only", False)),
+            ladd_a2_det_only=bool(self.diagnostic_cfg.get("ladd_a2_det_only", False)),
+        )
+
+    @staticmethod
+    def _apply_effective_weights_to_criterion(criterion, weights: dict[str, float]) -> None:
+        if criterion is None:
+            return
+        criterion.alpha_kd = float(weights["alpha_kd"])
+        criterion.alpha_s_rec = float(weights["alpha_s_rec"])
+        criterion.alpha_sep = float(weights["alpha_sep"])
+        criterion.lambda_residual_aux = float(weights["lambda_residual_aux"])
+        criterion.lambda_reach = float(weights["lambda_reach"])
+        criterion.lambda_match_inner = float(weights["lambda_match_inner"])
+        criterion.lambda_rank_inner = float(weights["lambda_rank_inner"])
+
+    def _refresh_effective_ladd_weights(self) -> dict[str, float]:
+        weights = self._compute_effective_ladd_weights()
+        self._effective_ladd_weights = weights
+        model = unwrap_model(self.model)
+        self._apply_effective_weights_to_criterion(getattr(model, "criterion", None), weights)
+        if self.ema and getattr(self.ema.ema, "criterion", None) is not None:
+            self._apply_effective_weights_to_criterion(self.ema.ema.criterion, weights)
+        return weights
 
     def _set_reachability_enabled(self, enabled: bool) -> None:
         model = unwrap_model(self.model)
@@ -948,6 +1017,7 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
         )
         self._maybe_reset_student_from_scratch_for_phase_b()
         self._apply_manual_phase(announce=True)
+        self._refresh_effective_ladd_weights()
         if self._should_freeze_bn_stats():
             self._set_bn_stats_eval(unwrap_model(self.model))
         self._log_phase_training_state()
@@ -956,6 +1026,7 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
         self._run_initial_validation_snapshot()
 
     def validate(self):
+        self._refresh_effective_ladd_weights()
         metrics = self.validator(self)
         if metrics is None:
             return None, None
@@ -1054,6 +1125,7 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
         else:
             grad_clip_label = "ULTRALYTICS_DEFAULT"
             effective_grad_clip_norm = self._DEFAULT_ULTRALYTICS_GRAD_CLIP_NORM
+        weights = self._refresh_effective_ladd_weights()
         LOGGER.info(
             "ladd_phase_diag "
             f"phase={self.manual_phase_cfg.get('phase', '')} "
@@ -1062,6 +1134,16 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             f"freeze_bn_stats={bool(self.diagnostic_cfg.get('freeze_bn_stats', False))} "
             f"freeze_bn_after_epoch={int(self.diagnostic_cfg.get('freeze_bn_after_epoch', -1))} "
             f"ladd_assert_phase_freeze={bool(self.diagnostic_cfg.get('ladd_assert_phase_freeze', False))} "
+            f"alpha_kd={float(self.tskd_cfg['alpha_kd'])} "
+            f"effective_alpha_kd={float(weights.get('alpha_kd', 0.0))} "
+            f"kd_multiplier={float(weights.get('kd_multiplier', 1.0))} "
+            f"ladd_kd_decay_mode={self.diagnostic_cfg.get('ladd_kd_decay_mode', 'none')} "
+            f"ladd_kd_decay_start_epoch={int(self.diagnostic_cfg.get('ladd_kd_decay_start_epoch', -1))} "
+            f"ladd_kd_decay_end_epoch={int(self.diagnostic_cfg.get('ladd_kd_decay_end_epoch', -1))} "
+            f"ladd_kd_final_mult={float(self.diagnostic_cfg.get('ladd_kd_final_mult', 1.0))} "
+            f"ladd_kd_stop_after_epoch={int(self.diagnostic_cfg.get('ladd_kd_stop_after_epoch', -1))} "
+            f"ladd_b_det_only={bool(self.diagnostic_cfg.get('ladd_b_det_only', False))} "
+            f"ladd_a2_det_only={bool(self.diagnostic_cfg.get('ladd_a2_det_only', False))} "
             f"ladd_diag_log_grad={bool(self.diagnostic_cfg.get('ladd_diag_log_grad', False))} "
             f"ladd_grad_clip={grad_clip_label} "
             f"ladd_grad_clip_norm={grad_clip_norm} "
@@ -1237,6 +1319,7 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
         epoch_1based = int(getattr(self, "epoch", 0)) + 1
         if epoch_1based != 1 and epoch_1based % every != 0 and epoch_1based != int(self.epochs):
             return
+        weights = self._refresh_effective_ladd_weights()
         bn_stats = self._collect_bn_stats()
         grad_stats = self._last_grad_norms if self.diagnostic_cfg.get("ladd_diag_log_grad", False) else None
         if grad_stats is None:
@@ -1264,6 +1347,21 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             "bn_stats_frozen_this_epoch": int(self._should_freeze_bn_stats()),
             "nan_or_inf_detected": int(self._has_nonfinite(list(metrics.values()) + list(bn_stats.values()))),
             **grad_stats,
+            "effective_alpha_kd": float(weights.get("alpha_kd", 0.0)),
+            "kd_multiplier": float(weights.get("kd_multiplier", 1.0)),
+            "ladd_kd_decay_mode": self.diagnostic_cfg.get("ladd_kd_decay_mode", "none"),
+            "ladd_kd_decay_start_epoch": int(self.diagnostic_cfg.get("ladd_kd_decay_start_epoch", -1)),
+            "ladd_kd_decay_end_epoch": int(self.diagnostic_cfg.get("ladd_kd_decay_end_epoch", -1)),
+            "ladd_kd_final_mult": float(self.diagnostic_cfg.get("ladd_kd_final_mult", 1.0)),
+            "ladd_kd_stop_after_epoch": int(self.diagnostic_cfg.get("ladd_kd_stop_after_epoch", -1)),
+            "ladd_b_det_only": int(self.diagnostic_cfg.get("ladd_b_det_only", False)),
+            "ladd_a2_det_only": int(self.diagnostic_cfg.get("ladd_a2_det_only", False)),
+            "effective_alpha_s_rec": float(weights.get("alpha_s_rec", 0.0)),
+            "effective_alpha_sep": float(weights.get("alpha_sep", 0.0)),
+            "effective_lambda_residual_aux": float(weights.get("lambda_residual_aux", 0.0)),
+            "effective_lambda_reach": float(weights.get("lambda_reach", 0.0)),
+            "effective_lambda_match_inner": float(weights.get("lambda_match_inner", 0.0)),
+            "effective_lambda_rank_inner": float(weights.get("lambda_rank_inner", 0.0)),
         }
         path = self.save_dir / "ladd_diagnostics.csv"
         path.parent.mkdir(parents=True, exist_ok=True)

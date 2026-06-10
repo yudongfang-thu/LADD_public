@@ -87,6 +87,21 @@ def parse_args() -> argparse.Namespace:
         default=1,
         help="Record LADD diagnostics every N epochs. Defaults to every epoch.",
     )
+    parser.add_argument("--ladd-kd-decay-mode", choices=("none", "linear", "cosine", "step"), default="none")
+    parser.add_argument("--ladd-kd-decay-start-epoch", type=int, default=-1)
+    parser.add_argument("--ladd-kd-decay-end-epoch", type=int, default=-1)
+    parser.add_argument("--ladd-kd-final-mult", type=float, default=1.0)
+    parser.add_argument("--ladd-kd-stop-after-epoch", type=int, default=-1)
+    parser.add_argument(
+        "--ladd-b-det-only",
+        action="store_true",
+        help="In B phase, keep trainability unchanged but disable all non-detection LADD losses.",
+    )
+    parser.add_argument(
+        "--ladd-a2-det-only",
+        action="store_true",
+        help="In A2 phase, keep trainability unchanged but disable all non-detection LADD losses.",
+    )
 
     parser.add_argument("--lambda-rec", type=float, default=0.1)
     parser.add_argument("--lambda-sep", type=float, default=0.05)
@@ -222,6 +237,13 @@ def main() -> None:
         ladd_grad_clip_norm=args.ladd_grad_clip_norm,
         ladd_assert_phase_freeze=args.ladd_assert_phase_freeze,
         ladd_diag_log_every=args.ladd_diag_log_every,
+        ladd_kd_decay_mode=args.ladd_kd_decay_mode,
+        ladd_kd_decay_start_epoch=args.ladd_kd_decay_start_epoch,
+        ladd_kd_decay_end_epoch=args.ladd_kd_decay_end_epoch,
+        ladd_kd_final_mult=args.ladd_kd_final_mult,
+        ladd_kd_stop_after_epoch=args.ladd_kd_stop_after_epoch,
+        ladd_b_det_only=int(bool(args.ladd_b_det_only)),
+        ladd_a2_det_only=int(bool(args.ladd_a2_det_only)),
         data=str(args.data.resolve()),
         teacher_data=str(args.teacher_data.resolve()),
         teacher_weights=teacher_weights,

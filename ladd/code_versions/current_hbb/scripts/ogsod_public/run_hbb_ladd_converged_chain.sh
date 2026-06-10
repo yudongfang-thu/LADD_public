@@ -26,7 +26,9 @@ Common overrides:
   BATCH_SIZE, WORKERS, PATIENCE_B, RANK_D_NEG_CAP, LAMBDA_ANTI_COLLAPSE,
   ANTI_COLLAPSE_FLOOR, A1_/A2_/B_ optimizer overrides, B_FREEZE_BN_AFTER_EPOCH,
   LADD_DIAG_LOG_BN, LADD_DIAG_LOG_GRAD, LADD_GRAD_CLIP_NORM,
-  LADD_ASSERT_PHASE_FREEZE, LADD_DIAG_LOG_EVERY, LADD_CHAIN_PHASES, EXIST_OK=1
+  LADD_ASSERT_PHASE_FREEZE, LADD_DIAG_LOG_EVERY, LADD_CHAIN_PHASES, EXIST_OK=1,
+  LADD_KD_DECAY_MODE, LADD_KD_DECAY_START_EPOCH, LADD_KD_DECAY_END_EPOCH,
+  LADD_KD_FINAL_MULT, LADD_KD_STOP_AFTER_EPOCH, LADD_B_DET_ONLY, LADD_A2_DET_ONLY
 EOF
 }
 
@@ -97,6 +99,13 @@ manifest="${CHAIN_LOG_DIR}/manifest.txt"
   echo "ladd_grad_clip_norm=${LADD_GRAD_CLIP_NORM:-0.0}"
   echo "ladd_assert_phase_freeze=${LADD_ASSERT_PHASE_FREEZE:-0}"
   echo "ladd_diag_log_every=${LADD_DIAG_LOG_EVERY:-1}"
+  echo "ladd_kd_decay_mode=${LADD_KD_DECAY_MODE:-none}"
+  echo "ladd_kd_decay_start_epoch=${LADD_KD_DECAY_START_EPOCH:--1}"
+  echo "ladd_kd_decay_end_epoch=${LADD_KD_DECAY_END_EPOCH:--1}"
+  echo "ladd_kd_final_mult=${LADD_KD_FINAL_MULT:-1.0}"
+  echo "ladd_kd_stop_after_epoch=${LADD_KD_STOP_AFTER_EPOCH:--1}"
+  echo "ladd_b_det_only=${LADD_B_DET_ONLY:-0}"
+  echo "ladd_a2_det_only=${LADD_A2_DET_ONLY:-0}"
   echo "rank_d_neg_cap=${RANK_D_NEG_CAP:-4.0}"
   echo "lambda_anti_collapse=${LAMBDA_ANTI_COLLAPSE:-0.0}"
   echo "anti_collapse_floor=${ANTI_COLLAPSE_FLOOR:-0.0}"
@@ -211,6 +220,13 @@ run_phase() {
     LADD_GRAD_CLIP_NORM="${LADD_GRAD_CLIP_NORM:-0.0}"
     LADD_ASSERT_PHASE_FREEZE="${LADD_ASSERT_PHASE_FREEZE:-0}"
     LADD_DIAG_LOG_EVERY="${LADD_DIAG_LOG_EVERY:-1}"
+    LADD_KD_DECAY_MODE="${LADD_KD_DECAY_MODE:-none}"
+    LADD_KD_DECAY_START_EPOCH="${LADD_KD_DECAY_START_EPOCH:--1}"
+    LADD_KD_DECAY_END_EPOCH="${LADD_KD_DECAY_END_EPOCH:--1}"
+    LADD_KD_FINAL_MULT="${LADD_KD_FINAL_MULT:-1.0}"
+    LADD_KD_STOP_AFTER_EPOCH="${LADD_KD_STOP_AFTER_EPOCH:--1}"
+    LADD_B_DET_ONLY="${LADD_B_DET_ONLY:-0}"
+    LADD_A2_DET_ONLY="${LADD_A2_DET_ONLY:-0}"
   )
 
   env "${env_args[@]}" ladd/code_versions/current_hbb/scripts/ogsod_public/run_ladd_phase.sh hbb "$phase" "$RUN_TAG"

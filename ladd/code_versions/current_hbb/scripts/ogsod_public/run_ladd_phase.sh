@@ -29,6 +29,9 @@ LADD diagnostics:
   FREEZE_BN_STATS=1, FREEZE_BN_AFTER_EPOCH=200,
   LADD_DIAG_LOG_BN=1, LADD_DIAG_LOG_GRAD=0, LADD_GRAD_CLIP_NORM=0.0,
   LADD_ASSERT_PHASE_FREEZE=0, LADD_DIAG_LOG_EVERY=1
+  LADD_KD_DECAY_MODE=none|linear|cosine|step,
+  LADD_KD_DECAY_START_EPOCH, LADD_KD_DECAY_END_EPOCH, LADD_KD_FINAL_MULT,
+  LADD_KD_STOP_AFTER_EPOCH, LADD_B_DET_ONLY=1, LADD_A2_DET_ONLY=1
 
 Reach anti-collapse overrides:
   RANK_D_NEG_CAP, LAMBDA_ANTI_COLLAPSE, ANTI_COLLAPSE_FLOOR
@@ -271,6 +274,13 @@ mkdir -p "$LOG_DIR"
   echo "ladd_grad_clip_norm=${LADD_GRAD_CLIP_NORM:-0.0}"
   echo "ladd_assert_phase_freeze=${LADD_ASSERT_PHASE_FREEZE:-0}"
   echo "ladd_diag_log_every=${LADD_DIAG_LOG_EVERY:-1}"
+  echo "ladd_kd_decay_mode=${LADD_KD_DECAY_MODE:-none}"
+  echo "ladd_kd_decay_start_epoch=${LADD_KD_DECAY_START_EPOCH:--1}"
+  echo "ladd_kd_decay_end_epoch=${LADD_KD_DECAY_END_EPOCH:--1}"
+  echo "ladd_kd_final_mult=${LADD_KD_FINAL_MULT:-1.0}"
+  echo "ladd_kd_stop_after_epoch=${LADD_KD_STOP_AFTER_EPOCH:--1}"
+  echo "ladd_b_det_only=${LADD_B_DET_ONLY:-0}"
+  echo "ladd_a2_det_only=${LADD_A2_DET_ONLY:-0}"
   echo "alpha_kd=${ALPHA_KD}"
   echo "lambda_reach=${LAMBDA_REACH}"
   echo "lambda_match_inner=${LAMBDA_MATCH_INNER}"
@@ -337,6 +347,11 @@ cmd=(
   --ladd-diag-log-grad "${LADD_DIAG_LOG_GRAD:-0}"
   --ladd-grad-clip-norm "${LADD_GRAD_CLIP_NORM:-0.0}"
   --ladd-diag-log-every "${LADD_DIAG_LOG_EVERY:-1}"
+  --ladd-kd-decay-mode "${LADD_KD_DECAY_MODE:-none}"
+  --ladd-kd-decay-start-epoch "${LADD_KD_DECAY_START_EPOCH:--1}"
+  --ladd-kd-decay-end-epoch "${LADD_KD_DECAY_END_EPOCH:--1}"
+  --ladd-kd-final-mult "${LADD_KD_FINAL_MULT:-1.0}"
+  --ladd-kd-stop-after-epoch "${LADD_KD_STOP_AFTER_EPOCH:--1}"
   --reach-target-mode "$REACH_TARGET_MODE"
   --kd-target-mode "$KD_TARGET_MODE"
   --lambda-rec "$LAMBDA_REC"
@@ -471,6 +486,12 @@ if [[ "$VALIDATE_BEFORE_TRAIN" == "1" ]]; then
 fi
 if [[ "${FREEZE_BN_STATS:-0}" == "1" ]]; then
   cmd+=(--freeze-bn-stats)
+fi
+if [[ "${LADD_B_DET_ONLY:-0}" == "1" ]]; then
+  cmd+=(--ladd-b-det-only)
+fi
+if [[ "${LADD_A2_DET_ONLY:-0}" == "1" ]]; then
+  cmd+=(--ladd-a2-det-only)
 fi
 if [[ "$EXIST_OK" == "1" ]]; then
   cmd+=(--exist-ok)
