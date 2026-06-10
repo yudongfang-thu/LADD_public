@@ -385,7 +385,6 @@ def train(hyp, opt, device, callbacks):
             quad=False,
             prefix=colorstr("train: "),
             shuffle=True,
-            seed=opt.seed,
         )
         anchor_dataset = dataset
     labels = np.concatenate(dataset.labels, 0)
