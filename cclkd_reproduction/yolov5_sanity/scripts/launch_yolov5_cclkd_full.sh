@@ -14,6 +14,12 @@ Example:
 Environment:
   CCLKD_YOLOV5_MODE    det_only_same_trainer|two_branch_no_kd|raw_proxy_full|paper_atkd_only|paper_ccl_only|paper_full|current_full (default: paper_full)
   CCLKD_YOLOV5_COS_LR  1 to append --cos-lr, 0 otherwise (default: 0)
+  CCLKD_YOLOV5_KD_WEIGHT           outer KD scale (default: 1.0)
+  CCLKD_YOLOV5_ATKD_WEIGHT         optional ATKD weight override
+  CCLKD_YOLOV5_CCL_WEIGHT          optional CCL weight override
+  CCLKD_YOLOV5_KD_WARMUP_EPOCHS    KD warmup epochs (default: 3)
+  CCLKD_YOLOV5_TEACHER_DET_WEIGHT  teacher detection loss weight (default: 1.0)
+  ALLOW_RAW_PROXY      1 to allow raw_proxy_full/current_full (default: 0)
   SMOKE_EPOCHS         override epochs for smoke-only runs
   MAX_TRAIN_BATCHES    limit train batches per epoch, -1 disables (default: -1)
   SKIP_VAL             1 to skip validation for smoke-only runs (default: 0)
@@ -44,6 +50,12 @@ MIN_FREE_MB="${MIN_FREE_MB:-22000}"
 POLL_SECONDS="${POLL_SECONDS:-120}"
 CCLKD_YOLOV5_MODE="${CCLKD_YOLOV5_MODE:-paper_full}"
 CCLKD_YOLOV5_COS_LR="${CCLKD_YOLOV5_COS_LR:-0}"
+CCLKD_YOLOV5_KD_WEIGHT="${CCLKD_YOLOV5_KD_WEIGHT:-1.0}"
+CCLKD_YOLOV5_ATKD_WEIGHT="${CCLKD_YOLOV5_ATKD_WEIGHT:-}"
+CCLKD_YOLOV5_CCL_WEIGHT="${CCLKD_YOLOV5_CCL_WEIGHT:-}"
+CCLKD_YOLOV5_KD_WARMUP_EPOCHS="${CCLKD_YOLOV5_KD_WARMUP_EPOCHS:-3}"
+CCLKD_YOLOV5_TEACHER_DET_WEIGHT="${CCLKD_YOLOV5_TEACHER_DET_WEIGHT:-1.0}"
+ALLOW_RAW_PROXY="${ALLOW_RAW_PROXY:-0}"
 EPOCHS="${SMOKE_EPOCHS:-400}"
 MAX_TRAIN_BATCHES="${MAX_TRAIN_BATCHES:--1}"
 SKIP_VAL="${SKIP_VAL:-0}"
@@ -56,9 +68,15 @@ case "$CCLKD_YOLOV5_MODE" in
 esac
 case "$CCLKD_YOLOV5_COS_LR" in 0|1) ;; *) echo "Invalid CCLKD_YOLOV5_COS_LR: $CCLKD_YOLOV5_COS_LR" >&2; exit 2 ;; esac
 case "$SKIP_VAL" in 0|1) ;; *) echo "Invalid SKIP_VAL: $SKIP_VAL" >&2; exit 2 ;; esac
+case "$ALLOW_RAW_PROXY" in 0|1) ;; *) echo "Invalid ALLOW_RAW_PROXY: $ALLOW_RAW_PROXY" >&2; exit 2 ;; esac
 
-if [[ "$CCLKD_YOLOV5_MODE" == "current_full" ]]; then
-  echo "WARNING: current_full is legacy raw_proxy_full and is not a verified CCLKD implementation." >&2
+if [[ "$CCLKD_YOLOV5_MODE" == "current_full" || "$CCLKD_YOLOV5_MODE" == "raw_proxy_full" ]]; then
+  if [[ "$ALLOW_RAW_PROXY" != "1" ]]; then
+    echo "ERROR: $CCLKD_YOLOV5_MODE is a legacy raw proxy mode and is blocked by default." >&2
+    echo "Set ALLOW_RAW_PROXY=1 only for historical debugging. Use paper_full for CCLKD reproduction." >&2
+    exit 2
+  fi
+  echo "WARNING: $CCLKD_YOLOV5_MODE is legacy raw_proxy_full and is not a verified CCLKD implementation." >&2
 fi
 
 SANITY_DIR="$REPO_ROOT/cclkd_reproduction/yolov5_sanity"
@@ -90,6 +108,9 @@ CMD=(
   --workers 4
   --seed "$SEED"
   --save-period 100
+  --teacher-det-weight "$CCLKD_YOLOV5_TEACHER_DET_WEIGHT"
+  --kd-weight "$CCLKD_YOLOV5_KD_WEIGHT"
+  --kd-warmup-epochs "$CCLKD_YOLOV5_KD_WARMUP_EPOCHS"
   --mode "$CCLKD_YOLOV5_MODE"
   --max-train-batches "$MAX_TRAIN_BATCHES"
   --exist-ok
@@ -97,6 +118,15 @@ CMD=(
 
 if [[ "$CCLKD_YOLOV5_COS_LR" == "1" ]]; then
   CMD+=(--cos-lr)
+fi
+if [[ -n "$CCLKD_YOLOV5_ATKD_WEIGHT" ]]; then
+  CMD+=(--atkd-weight "$CCLKD_YOLOV5_ATKD_WEIGHT")
+fi
+if [[ -n "$CCLKD_YOLOV5_CCL_WEIGHT" ]]; then
+  CMD+=(--ccl-weight "$CCLKD_YOLOV5_CCL_WEIGHT")
+fi
+if [[ "$ALLOW_RAW_PROXY" == "1" ]]; then
+  CMD+=(--allow-raw-proxy)
 fi
 if [[ "$SKIP_VAL" == "1" ]]; then
   CMD+=(--skip-val)
@@ -135,6 +165,12 @@ mkdir -p "$RUN_DIR"
   echo "gpu_id=$GPU_ID"
   echo "epochs=$EPOCHS"
   echo "cos_lr=$CCLKD_YOLOV5_COS_LR"
+  echo "kd_weight=$CCLKD_YOLOV5_KD_WEIGHT"
+  echo "atkd_weight=$CCLKD_YOLOV5_ATKD_WEIGHT"
+  echo "ccl_weight=$CCLKD_YOLOV5_CCL_WEIGHT"
+  echo "kd_warmup_epochs=$CCLKD_YOLOV5_KD_WARMUP_EPOCHS"
+  echo "teacher_det_weight=$CCLKD_YOLOV5_TEACHER_DET_WEIGHT"
+  echo "allow_raw_proxy=$ALLOW_RAW_PROXY"
   echo "max_train_batches=$MAX_TRAIN_BATCHES"
   echo "skip_val=$SKIP_VAL"
   echo "wait_for_gpu=$WAIT_FOR_GPU"

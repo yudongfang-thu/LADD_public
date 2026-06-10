@@ -53,6 +53,13 @@ DIAG_FIELDS = (
     "rld_loss",
     "ccl_loss",
     "kd_to_student_det_ratio",
+    "atkd_weight",
+    "ccl_weight",
+    "atkd_loss",
+    "weighted_atkd_loss",
+    "weighted_ccl_loss",
+    "kd_scale",
+    "weighted_kd_to_student_det_ratio",
     "cop_valid_candidates",
     "cop_positive_candidates",
     "cop_positive_ratio",
@@ -107,6 +114,16 @@ from utils.torch_utils import (  # noqa: E402
 
 def effective_mode(mode: str) -> str:
     return "raw_proxy_full" if mode == "current_full" else mode
+
+
+def default_paper_weights(mode: str) -> tuple[float, float]:
+    if mode == "paper_atkd_only":
+        return 1.0, 0.0
+    if mode == "paper_ccl_only":
+        return 0.0, 1.0
+    if mode == "paper_full":
+        return 1.0, 1.0
+    return 0.0, 0.0
 
 
 class PairedYoloV5Dataset(torch.utils.data.Dataset):
@@ -281,6 +298,9 @@ def update_diag_sums(diag_sums: dict[str, float], diag: dict, student_det, kd_lo
             continue
         if key == "kd_to_student_det_ratio":
             value = float((kd_loss.detach() / student_det.detach().abs().clamp_min(1e-12)).item())
+        elif key == "weighted_kd_to_student_det_ratio":
+            kd_scale = float(diag.get("kd_scale", 0.0))
+            value = float((kd_scale * kd_loss.detach() / student_det.detach().abs().clamp_min(1e-12)).item())
         elif key in diag:
             value = diag[key]
         else:
@@ -303,6 +323,14 @@ def train(hyp, opt, device, callbacks):
     use_teacher = mode != "det_only_same_trainer"
     use_kd = mode in PAPER_MODES or mode in RAW_PROXY_MODES
     use_paper_kd = mode in PAPER_MODES
+    if mode == "raw_proxy_full" and not opt.allow_raw_proxy:
+        raise RuntimeError(
+            "raw_proxy_full/current_full is a legacy regression mode and is blocked by default. "
+            "Use --allow-raw-proxy only for historical debugging. Use paper_full for CCLKD reproduction."
+        )
+    default_atkd_weight, default_ccl_weight = default_paper_weights(mode)
+    atkd_weight = default_atkd_weight if opt.atkd_weight is None else float(opt.atkd_weight)
+    ccl_weight = default_ccl_weight if opt.ccl_weight is None else float(opt.ccl_weight)
 
     with open(hyp, errors="ignore") as f:
         hyp = yaml.safe_load(f)
@@ -417,7 +445,8 @@ def train(hyp, opt, device, callbacks):
     LOGGER.info(
         f"YOLOv5x CCLKD audit mode={opt.mode}, effective_mode={mode}, use_teacher={use_teacher}, "
         f"use_kd={use_kd}, batch={opt.batch_size}, imgsz={imgsz}, amp={amp}, "
-        f"max_train_batches={opt.max_train_batches}, skip_val={opt.skip_val}"
+        f"max_train_batches={opt.max_train_batches}, skip_val={opt.skip_val}, "
+        f"atkd_weight={atkd_weight}, ccl_weight={ccl_weight}, kd_weight={opt.kd_weight}"
     )
     LOGGER.info(f"Logging results to {colorstr('bold', save_dir)}")
 
@@ -469,6 +498,7 @@ def train(hyp, opt, device, callbacks):
                 kd_loss = student_det.new_zeros(())
                 kd_items = torch.zeros(4, device=device)
                 kd_diag = {}
+                kd_scale = 0.0
                 loss = student_det
                 if use_teacher:
                     teacher_preds = teacher(teacher_imgs)
@@ -485,10 +515,13 @@ def train(hyp, opt, device, callbacks):
                                 teacher_features=teacher_feature_capture.features,
                                 mode=mode,
                                 nc=nc,
+                                atkd_weight=atkd_weight,
+                                ccl_weight=ccl_weight,
                             )
                         else:
                             kd_loss, kd_items = raw_proxy_full_loss(student_preds, teacher_preds, targets, compute_student_loss)
                         kd_scale = opt.kd_weight * min(1.0, epoch / max(float(opt.kd_warmup_epochs), 1.0))
+                        kd_diag["kd_scale"] = float(kd_scale)
                         loss = loss + kd_scale * kd_loss
 
             scaler.scale(loss).backward()
@@ -509,6 +542,7 @@ def train(hyp, opt, device, callbacks):
                 float(kd_diag.get("nan_or_inf_detected", 0.0)),
                 float((~torch.isfinite(torch.stack((loss.detach(), kd_loss.detach())))).any().item()),
             )
+            kd_diag.setdefault("kd_scale", float(kd_scale))
             update_diag_sums(diag_sums, kd_diag, student_det, kd_loss)
             diag_count += 1
             mem = f"{torch.cuda.memory_reserved() / 1E9 if torch.cuda.is_available() else 0:.3g}G"
@@ -632,7 +666,10 @@ def parse_args():
     parser.add_argument("--teacher-det-weight", type=float, default=1.0)
     parser.add_argument("--kd-weight", type=float, default=1.0)
     parser.add_argument("--kd-warmup-epochs", type=int, default=3)
+    parser.add_argument("--atkd-weight", type=float, default=None)
+    parser.add_argument("--ccl-weight", type=float, default=None)
     parser.add_argument("--mode", choices=MODES, default="paper_full")
+    parser.add_argument("--allow-raw-proxy", action="store_true")
     parser.add_argument("--max-train-batches", type=int, default=-1)
     parser.add_argument("--skip-val", action="store_true")
     parser.add_argument("--amp", action="store_true", default=True)
@@ -641,6 +678,11 @@ def parse_args():
 
 def main():
     opt = parse_args()
+    if effective_mode(opt.mode) == "raw_proxy_full" and not opt.allow_raw_proxy:
+        raise RuntimeError(
+            "raw_proxy_full/current_full is a legacy regression mode and is blocked by default. "
+            "Use --allow-raw-proxy only for historical debugging. Use paper_full for CCLKD reproduction."
+        )
     init_seeds(opt.seed + 1, deterministic=True)
     save_dir = increment_path(Path(opt.project) / opt.name, exist_ok=opt.exist_ok)
     opt.save_dir = str(save_dir)

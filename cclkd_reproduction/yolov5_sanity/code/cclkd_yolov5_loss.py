@@ -139,19 +139,28 @@ def adaptive_temperature_from_teacher_scores(
     return t_min + (t_max - t_min) * torch.sigmoid(entropy_scale * entropy)
 
 
-def _masked_distribution(values, mask, temperature):
-    weights = mask.to(values.dtype).view(-1, 1)
-    logits = (values * weights).reshape(-1) / temperature.clamp_min(1e-6)
+def _masked_distribution(values: torch.Tensor, mask: torch.Tensor, temperature: torch.Tensor) -> torch.Tensor:
+    """Return a distribution over only selected candidate-box position entries."""
+
+    selected = values[mask.bool()]
+    if selected.numel() == 0:
+        return values.new_zeros((0,))
+    logits = selected.reshape(-1) / temperature.clamp_min(1e-6)
     return F.softmax(logits, dim=0)
 
 
-def spatial_distribution_kl(student_box_probs, teacher_box_probs, mask, temperature):
+def spatial_distribution_kl(
+    student_box_probs: torch.Tensor,
+    teacher_box_probs: torch.Tensor,
+    mask: torch.Tensor,
+    temperature: torch.Tensor,
+) -> torch.Tensor:
+    mask = mask.bool()
     if mask.sum() == 0:
         return student_box_probs.new_zeros(())
-    weights = mask.to(student_box_probs.dtype).view(-1, 1)
     t = temperature.clamp_min(1e-6)
-    s_logits = (student_box_probs * weights).reshape(-1) / t
-    t_logits = (teacher_box_probs.detach() * weights).reshape(-1) / t
+    s_logits = student_box_probs[mask].reshape(-1) / t
+    t_logits = teacher_box_probs.detach()[mask].reshape(-1) / t
     return F.kl_div(F.log_softmax(s_logits, dim=0), F.softmax(t_logits, dim=0), reduction="sum") * t * t
 
 
@@ -224,12 +233,13 @@ def sample_box_features(
 
 
 def feature_kl(student_features, teacher_features, mask, temperature):
+    mask = mask.bool()
     if mask.sum() == 0 or student_features.shape[1] == 0 or teacher_features.shape[1] == 0:
         return student_features.new_zeros(())
     t = temperature.clamp_min(1e-6)
-    s = student_features[mask].reshape(-1) / t
-    tt = teacher_features[mask].detach().reshape(-1) / t
-    return F.kl_div(F.log_softmax(s, dim=0), F.softmax(tt, dim=0), reduction="sum") * t * t
+    s = student_features[mask] / t
+    tt = teacher_features.detach()[mask] / t
+    return F.kl_div(F.log_softmax(s, dim=-1), F.softmax(tt, dim=-1), reduction="batchmean") * t * t
 
 
 def relationship_loss(student_features, teacher_features, mask, temperature):
@@ -253,10 +263,23 @@ def contrastive_loss(student_box_probs, teacher_box_probs, pos_mask, neg_mask, t
     return -F.log_softmax(logits, dim=0)[0]
 
 
-def _zero_outputs(device_tensor, nc: int, student_feature_levels: int, teacher_feature_levels: int, mode: str):
+def _zero_outputs(
+    device_tensor,
+    nc: int,
+    student_feature_levels: int,
+    teacher_feature_levels: int,
+    mode: str,
+    atkd_weight: float = 0.0,
+    ccl_weight: float = 0.0,
+):
     zero = device_tensor.new_zeros(())
     diagnostics = {
         "mode": mode,
+        "atkd_weight": float(atkd_weight),
+        "ccl_weight": float(ccl_weight),
+        "atkd_loss": 0.0,
+        "weighted_atkd_loss": 0.0,
+        "weighted_ccl_loss": 0.0,
         "cop_valid_candidates": 0.0,
         "cop_positive_candidates": 0.0,
         "cop_positive_ratio": 0.0,
@@ -289,13 +312,23 @@ def cclkd_paper_loss(
     entropy_scale: float = 5.0,
     contrastive_temperature: float = 0.1,
     roi_grid_size: int = 3,
+    atkd_weight: float = 1.0,
+    ccl_weight: float = 1.0,
 ):
     candidates = collect_yolov5_positive_candidates(student_preds, targets, student_loss)
     teacher_vectors = positive_vectors(teacher_preds, candidates.indices).detach()
     student_feature_levels = len(student_features)
     teacher_feature_levels = len(teacher_features)
     if candidates.vectors.numel() == 0:
-        return _zero_outputs(student_preds[0], nc, student_feature_levels, teacher_feature_levels, mode)
+        return _zero_outputs(
+            student_preds[0],
+            nc,
+            student_feature_levels,
+            teacher_feature_levels,
+            mode,
+            atkd_weight=atkd_weight,
+            ccl_weight=ccl_weight,
+        )
 
     cop = build_teacher_cop(teacher_vectors, candidates.labels, nc)
     valid_mask = cop["valid_mask"]
@@ -330,8 +363,8 @@ def cclkd_paper_loss(
     ccl_terms = []
     neg_counts = []
 
-    include_atkd = mode in {"paper_atkd_only", "paper_full"}
-    include_ccl = mode in {"paper_ccl_only", "paper_full"}
+    include_atkd = atkd_weight != 0.0
+    include_ccl = ccl_weight != 0.0
     safe_labels = candidates.labels.clamp(min=0, max=max(nc - 1, 0))
 
     for cls in range(nc):
@@ -372,7 +405,10 @@ def cclkd_paper_loss(
         weights = weights / weights.sum().clamp_min(1e-6)
         ccl = torch.stack(ccl_terms).mul(weights.to(ccl_terms[0].device)).sum()
 
-    total = lld + fld + rld + ccl
+    atkd = lld + fld + rld
+    weighted_atkd = float(atkd_weight) * atkd
+    weighted_ccl = float(ccl_weight) * ccl
+    total = weighted_atkd + weighted_ccl
     temp_tensor = torch.stack(temperatures) if temperatures else candidates.vectors.new_zeros(1)
     finite_tensors = torch.stack((total.detach(), lld.detach(), fld.detach(), rld.detach(), ccl.detach()))
     nan_or_inf = float((~torch.isfinite(finite_tensors)).any().item())
@@ -381,6 +417,11 @@ def cclkd_paper_loss(
     valid_count = float(valid_mask.sum().detach().item())
     diagnostics = {
         "mode": mode,
+        "atkd_weight": float(atkd_weight),
+        "ccl_weight": float(ccl_weight),
+        "atkd_loss": float(atkd.detach().item()),
+        "weighted_atkd_loss": float(weighted_atkd.detach().item()),
+        "weighted_ccl_loss": float(weighted_ccl.detach().item()),
         "cop_valid_candidates": valid_count,
         "cop_positive_candidates": positive_count,
         "cop_positive_ratio": positive_count / max(valid_count, 1.0),
