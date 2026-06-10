@@ -4,7 +4,7 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  comparison/code/launch_formal_from_yolo_kd_job.sh <fgd|ld|hallucidet> <n|s|m|l|x> <seed> <gpu_id>
+  comparison/code/launch_formal_from_yolo_kd_job.sh <fgd|ld|hallucidet_style> <n|s|m|l|x> <seed> <gpu_id>
 
 Runs a from-YOLO-pretrain KD comparison under the formal OGSOD HBB protocol:
   student init = yolo11<size>.pt
@@ -31,7 +31,11 @@ SEED="${3:-}"
 GPU_ID="${4:-}"
 
 case "$METHOD" in
-  fgd|ld|hallucidet) ;;
+  fgd|ld|hallucidet_style) ;;
+  hallucidet)
+    echo "Use hallucidet_style for the current feature/response/margin portable baseline. Strict HalluciDet is not implemented in this launcher." >&2
+    exit 2
+    ;;
   cclkd)
     echo "CCLKD is an online teacher-student method; use cclkd_reproduction/ and the future online launcher." >&2
     exit 2
@@ -64,16 +68,17 @@ PRETRAIN="yolo11${SIZE}.pt"
 RGB_RUN="rgb_yolo11${SIZE}_hbb_800ep_cos_nomosaic_albu_b${BATCH_SIZE}_s${SEED}"
 RGB_TEACHER="${BASE_ROOT}/baselines/rgb/${RGB_RUN}/weights/best.pt"
 
-if [[ ! -f "$PRETRAIN" ]]; then
+if [[ "${DRY_RUN:-0}" != "1" && ! -f "$PRETRAIN" ]]; then
   echo "Missing YOLO pretrain checkpoint: $PRETRAIN" >&2
   exit 1
 fi
-if [[ ! -f "$RGB_TEACHER" ]]; then
+if [[ "${DRY_RUN:-0}" != "1" && ! -f "$RGB_TEACHER" ]]; then
   echo "Missing formal RGB teacher best.pt: $RGB_TEACHER" >&2
   exit 1
 fi
 
-RUN_TAG="formal_nomosaic_yolo11${SIZE}_${METHOD}_from_yolo_s${SEED}${RUN_TAG_SUFFIX:-}"
+COMPARISON_IMPL_VERSION="${COMPARISON_IMPL_VERSION:-v2_20260610}"
+RUN_TAG="formal_nomosaic_yolo11${SIZE}_${METHOD}_${COMPARISON_IMPL_VERSION}_from_yolo_s${SEED}${RUN_TAG_SUFFIX:-}"
 PROJECT_DIR="${BASE_ROOT}/comparisons/from_yolo_pretrain/yolo11${SIZE}/${METHOD}"
 LOG_DIR="logs/formal_nomosaic_20260528/comparisons/from_yolo_pretrain"
 PHASE_LOG_DIR="${LOG_DIR}/${RUN_TAG}_gpu${GPU_ID}"
@@ -148,15 +153,28 @@ cmd=(
 case "$METHOD" in
   fgd)
     cmd+=(
-      "FGD_BG_WEIGHT=${FGD_BG_WEIGHT:-0.25}"
-      "FGD_RELATION_WEIGHT=${FGD_RELATION_WEIGHT:-0.1}"
+      "FGD_ALPHA=${FGD_ALPHA:-1.0}"
+      "FGD_BETA=${FGD_BETA:-0.5}"
+      "FGD_GAMMA=${FGD_GAMMA:-1.0}"
+      "FGD_LAMBDA=${FGD_LAMBDA:-${FGD_RELATION_WEIGHT:-0.0}}"
       "FGD_TEMPERATURE=${FGD_TEMPERATURE:-0.5}"
+      "FGD_MASK_MODE=${FGD_MASK_MODE:-gt_box}"
+      "FGD_BG_NORM=${FGD_BG_NORM:-1}"
     )
     ;;
   ld)
-    cmd+=("LD_TEMPERATURE=${LD_TEMPERATURE:-10.0}")
+    cmd+=(
+      "LD_TEMPERATURE=${LD_TEMPERATURE:-10.0}"
+      "LD_USE_VLR=${LD_USE_VLR:-1}"
+      "LD_QUALITY_POWER=${LD_QUALITY_POWER:-1.0}"
+      "LD_MIN_VLR_WEIGHT=${LD_MIN_VLR_WEIGHT:-0.0}"
+      "LD_VLR_TOPK=${LD_VLR_TOPK:-0}"
+      "LD_VLR_WEIGHT=${LD_VLR_WEIGHT:-1.0}"
+      "LD_MAIN_WEIGHT=${LD_MAIN_WEIGHT:-1.0}"
+      "LD_ALLOW_EMPTY_VLR=${LD_ALLOW_EMPTY_VLR:-1}"
+    )
     ;;
-  hallucidet)
+  hallucidet_style)
     cmd+=(
       "HALLUCIDET_BG_WEIGHT=${HALLUCIDET_BG_WEIGHT:-0.05}"
       "HALLUCIDET_RESPONSE_WEIGHT=${HALLUCIDET_RESPONSE_WEIGHT:-0.5}"

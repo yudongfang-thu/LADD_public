@@ -23,16 +23,18 @@ trainer 中用 `--comparison-kd-profile` 切换。严格实现边界见
 
 | 方法 | 启动 profile | 核心函数/逻辑 | 当前说明 |
 |---|---|---|---|
-| FGD-style | `--comparison-kd-profile fgd` | `TSKDDetectionLossHBB._fgd_style_loss()` | 官方 softmax attention 形式 + GT fg/bg weighting + batch relation 近似 |
-| LD | `--comparison-kd-profile ld` | `_ld_style_loss()` | foreground YOLO DFL regression-distribution KL；错形直接失败 |
+| FGD-style | `--comparison-kd-profile fgd` | `TSKDDetectionLossHBB._fgd_style_loss()` | fg/bg feature + attention mask；GT-box mask 默认启用；official trainable global relation 默认不启用 |
+| LD | `--comparison-kd-profile ld` | `_ld_style_loss()` | foreground/main YOLO DFL KL + teacher-quality VLR-style candidate LD；错形直接失败 |
 | CCLKD | `launch_formal_online_cclkd_job.sh` / `train_cclkd_online_hbb.py` | online teacher detection loss + SAR student detection loss + CCLKD loss | COP + localization-only LLD + FLD-MSE + RLD feature-correlation + CCL；原文复现见 `../cclkd_reproduction/` |
-| HalluciDet-style | `--comparison-kd-profile hallucidet` | `_hallucidet_style_loss()` | privileged RGB-to-SAR hallucination idea 的轻量移植 |
+| HalluciDet-style | `--comparison-kd-profile hallucidet_style` | `_hallucidet_style_loss()` | privileged RGB teacher feature/response/margin baseline；不是 strict HalluciDet |
 
 当前 public 对比方法只发布上述四项；其他历史候选不作为当前代码映射的一部分。
 
 ## 3. 代码新鲜度
 
-2026-06-04 已修复 LD/FGD 语义。2026-06-05 CCLKD loss 级实现已修正，并补齐
+2026-06-04 已修复 LD/FGD 语义。2026-06-10 FGD/LD 进一步更新为
+FGD-YOLO focal+attention-mask adaptation 与 LD-YOLO main+VLR-style adaptation，
+并将 HalluciDet portable baseline profile 改名为 `hallucidet_style`。2026-06-05 CCLKD loss 级实现已修正，并补齐
 `cclkd_reproduction/code/` online teacher-student 复现入口；当前仍等待 GPU smoke。
 `ladd/code/` 与
 `ladd/code_versions/current_hbb/` 应保持字节一致；任何实验启动前先执行同步检查。

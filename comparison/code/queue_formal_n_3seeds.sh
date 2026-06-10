@@ -4,7 +4,7 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  comparison/code/queue_formal_n_3seeds.sh <fgd|ld|hallucidet> <gpu_id>
+  comparison/code/queue_formal_n_3seeds.sh <fgd|ld|hallucidet_style> <gpu_id>
 
 Runs YOLO11n seeds 0, 42, and 123 serially for one frozen comparison method.
 CCLKD is intentionally excluded here because it requires online teacher-student
@@ -26,7 +26,11 @@ fi
 METHOD="${1:-}"
 GPU_ID="${2:-}"
 case "$METHOD" in
-  fgd|ld|hallucidet) ;;
+  fgd|ld|hallucidet_style) ;;
+  hallucidet)
+    echo "Use hallucidet_style for the current feature/response/margin portable baseline. Strict HalluciDet is not implemented in this queue." >&2
+    exit 2
+    ;;
   *) usage >&2; exit 1 ;;
 esac
 if [[ -z "$GPU_ID" ]]; then
@@ -37,6 +41,7 @@ fi
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT_DIR"
 
+COMPARISON_IMPL_VERSION="${COMPARISON_IMPL_VERSION:-v2_20260610}"
 SUFFIX="${RUN_TAG_SUFFIX:-_public4090_final_v1}"
 POLL_SECONDS="${QUEUE_POLL_SECONDS:-60}"
 QUEUE_LOG_DIR="logs/formal_nomosaic_20260528/comparisons/queues"
@@ -47,7 +52,7 @@ exec > >(tee -a "$QUEUE_LOG") 2>&1
 echo "[$(date '+%F %T')] queue start method=${METHOD} gpu=${GPU_ID} suffix=${SUFFIX}"
 
 for seed in 0 42 123; do
-  run_tag="formal_nomosaic_yolo11n_${METHOD}_from_yolo_s${seed}${SUFFIX}"
+  run_tag="formal_nomosaic_yolo11n_${METHOD}_${COMPARISON_IMPL_VERSION}_from_yolo_s${seed}${SUFFIX}"
   pid_path="logs/formal_nomosaic_20260528/comparisons/from_yolo_pretrain/${run_tag}_gpu${GPU_ID}.pid"
   outer_log="logs/formal_nomosaic_20260528/comparisons/from_yolo_pretrain/${run_tag}_gpu${GPU_ID}.outer.log"
 

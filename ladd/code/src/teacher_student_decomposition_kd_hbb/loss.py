@@ -5,6 +5,7 @@ from typing import Any
 import torch
 import torch.nn.functional as F
 
+from ultralytics.utils import LOGGER
 from ultralytics.utils.loss import v8DetectionLoss
 from ultralytics.utils.tal import make_anchors
 
@@ -39,6 +40,19 @@ def _decorrelation_loss(x: torch.Tensor, y: torch.Tensor, eps: float = 1e-6) -> 
     y = y / (y.std(dim=0, keepdim=True, unbiased=False) + eps)
     corr = (x.transpose(0, 1) @ y) / x.shape[0]
     return corr.pow(2).mean()
+
+
+def _pairwise_iou_xyxy(boxes1: torch.Tensor, boxes2: torch.Tensor, eps: float = 1e-7) -> torch.Tensor:
+    """Pairwise IoU for xyxy boxes in the same coordinate unit."""
+    if boxes1.numel() == 0 or boxes2.numel() == 0:
+        return boxes1.new_zeros((boxes1.shape[0], boxes2.shape[0]))
+    lt = torch.maximum(boxes1[:, None, :2], boxes2[None, :, :2])
+    rb = torch.minimum(boxes1[:, None, 2:], boxes2[None, :, 2:])
+    wh = (rb - lt).clamp_min(0)
+    inter = wh[..., 0] * wh[..., 1]
+    area1 = (boxes1[:, 2] - boxes1[:, 0]).clamp_min(0) * (boxes1[:, 3] - boxes1[:, 1]).clamp_min(0)
+    area2 = (boxes2[:, 2] - boxes2[:, 0]).clamp_min(0) * (boxes2[:, 3] - boxes2[:, 1]).clamp_min(0)
+    return inter / (area1[:, None] + area2[None, :] - inter).clamp_min(eps)
 
 
 def _contrastive_alignment_loss(student: torch.Tensor, teacher: torch.Tensor, temperature: float = 0.20) -> torch.Tensor:
@@ -215,10 +229,21 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         comparison_kd_profile: str = "none",
         profile_kd_weight: float = 1.0,
         profile_kd_replace_base: bool = False,
-        fgd_bg_weight: float = 0.25,
-        fgd_relation_weight: float = 0.1,
+        fgd_alpha: float = 1.0,
+        fgd_beta: float = 0.5,
+        fgd_gamma: float = 1.0,
+        fgd_lambda: float = 0.0,
         fgd_temperature: float = 0.5,
+        fgd_mask_mode: str = "gt_box",
+        fgd_bg_norm: bool = True,
         ld_temperature: float = 10.0,
+        ld_use_vlr: bool = True,
+        ld_quality_power: float = 1.0,
+        ld_min_vlr_weight: float = 0.0,
+        ld_vlr_topk: int = 0,
+        ld_vlr_weight: float = 1.0,
+        ld_main_weight: float = 1.0,
+        ld_allow_empty_vlr: bool = True,
         cclkd_base_temperature: float = 2.0,
         cclkd_contrastive_temperature: float = 0.1,
         cclkd_feat_weight: float = 1.0,
@@ -272,10 +297,22 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         self.comparison_kd_profile = self._validate_comparison_kd_profile(comparison_kd_profile)
         self.profile_kd_weight = float(profile_kd_weight)
         self.profile_kd_replace_base = bool(profile_kd_replace_base)
-        self.fgd_bg_weight = float(fgd_bg_weight)
-        self.fgd_relation_weight = float(fgd_relation_weight)
+        self.fgd_alpha = float(fgd_alpha)
+        self.fgd_beta = float(fgd_beta)
+        self.fgd_gamma = float(fgd_gamma)
+        self.fgd_lambda = max(float(fgd_lambda), 0.0)
         self.fgd_temperature = max(float(fgd_temperature), 1e-6)
+        self.fgd_mask_mode = self._validate_fgd_mask_mode(fgd_mask_mode)
+        self.fgd_bg_norm = bool(fgd_bg_norm)
         self.ld_temperature = max(float(ld_temperature), 1e-6)
+        self.ld_use_vlr = bool(ld_use_vlr)
+        self.ld_quality_power = max(float(ld_quality_power), 0.0)
+        self.ld_min_vlr_weight = max(float(ld_min_vlr_weight), 0.0)
+        self.ld_vlr_topk = max(int(ld_vlr_topk), 0)
+        self.ld_vlr_weight = max(float(ld_vlr_weight), 0.0)
+        self.ld_main_weight = max(float(ld_main_weight), 0.0)
+        self.ld_allow_empty_vlr = bool(ld_allow_empty_vlr)
+        self._ld_warned_missing_teacher_scores = False
         self.cclkd_base_temperature = max(float(cclkd_base_temperature), 1e-6)
         self.cclkd_contrastive_temperature = max(float(cclkd_contrastive_temperature), 1e-6)
         self.cclkd_feat_weight = max(float(cclkd_feat_weight), 0.0)
@@ -445,12 +482,18 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
 
     @staticmethod
     def _validate_comparison_kd_profile(mode: str) -> str:
-        if mode not in {"none", "fgd", "ld", "cclkd", "hallucidet"}:
+        if mode not in {"none", "fgd", "ld", "cclkd", "hallucidet_style"}:
             raise ValueError(
                 "comparison_kd_profile must be one of "
-                "{'none', 'fgd', 'ld', 'cclkd', 'hallucidet'}, got "
+                "{'none', 'fgd', 'ld', 'cclkd', 'hallucidet_style'}, got "
                 f"{mode!r}."
             )
+        return mode
+
+    @staticmethod
+    def _validate_fgd_mask_mode(mode: str) -> str:
+        if mode not in {"gt_box", "assigner"}:
+            raise ValueError(f"fgd_mask_mode must be 'gt_box' or 'assigner', got {mode!r}.")
         return mode
 
     def set_phase_loss_scales(self, **scales: float) -> None:
@@ -510,6 +553,9 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         target_scores_sum = target_scores.sum().clamp(min=1.0)
         loss[1] = self.bce(pred_scores, target_scores.to(dtype)).sum() / target_scores_sum
 
+        # `gt_bboxes` stays in input-image pixel xyxy coordinates for FGD
+        # GT-box masks. `target_bboxes` is converted below to stride units for
+        # the normal YOLO bbox/DFL loss and for LD candidate-region IoU logic.
         if fg_mask.sum():
             target_bboxes /= stride_tensor
             loss[0], loss[2] = self.bbox_loss(
@@ -532,6 +578,13 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
             target_scores_sum,
             pred_distri,
             pred_scores,
+            anchor_points,
+            stride_tensor,
+            target_bboxes,
+            pred_bboxes,
+            gt_bboxes,
+            mask_gt,
+            imgsz,
         )
         loss[4:] = torch.stack(extra_losses[:11])
 
@@ -897,46 +950,156 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
             return mse_term + contrastive_loss
         return mse_term
 
+    @staticmethod
+    def _fgd_get_attention(feat: torch.Tensor, temp: float) -> tuple[torch.Tensor, torch.Tensor]:
+        """Official FGD-style spatial/channel attention from absolute feature response."""
+        bsz, channels, height, width = feat.shape
+        value = feat.abs()
+        spatial = value.mean(dim=1).reshape(bsz, -1)
+        spatial = F.softmax(spatial / max(float(temp), 1e-6), dim=1).reshape(bsz, height, width) * (height * width)
+        channel = value.mean(dim=(2, 3))
+        channel = F.softmax(channel / max(float(temp), 1e-6), dim=1) * channels
+        return spatial, channel
+
+    def _build_fgd_assigner_masks(self, fg_mask: torch.Tensor, height: int, width: int, dtype: torch.dtype) -> tuple[torch.Tensor, torch.Tensor]:
+        bsz = fg_mask.shape[0]
+        mask_fg = fg_mask.reshape(bsz, height, width).to(dtype)
+        mask_bg = torch.where(mask_fg > 0, torch.zeros_like(mask_fg), torch.ones_like(mask_fg))
+        if self.fgd_bg_norm:
+            bg_sum = mask_bg.flatten(1).sum(dim=1).clamp_min(1e-6).view(bsz, 1, 1)
+            mask_bg = mask_bg / bg_sum
+        return mask_fg, mask_bg
+
+    def _build_fgd_gt_box_masks(
+        self,
+        gt_bboxes: torch.Tensor | None,
+        mask_gt: torch.Tensor | None,
+        output_size: tuple[int, int],
+        imgsz: torch.Tensor | None,
+        dtype: torch.dtype,
+        device: torch.device,
+        bsz: int,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Build FGD foreground/background masks from pixel xyxy GT boxes.
+
+        `v8DetectionLoss.preprocess()` converts dataset xywh labels to pixel
+        xyxy coordinates using `imgsz`; these pixel boxes are projected to the
+        current feature grid and filled with 1 / projected_box_area, matching
+        the official FGD mask convention more closely than assigner tokens.
+        """
+        height, width = output_size
+        mask_fg = torch.zeros((bsz, height, width), device=device, dtype=dtype)
+        if gt_bboxes is None or mask_gt is None or imgsz is None:
+            mask_bg = torch.ones_like(mask_fg)
+        else:
+            if gt_bboxes.dim() != 3 or gt_bboxes.shape[-1] < 4:
+                raise RuntimeError(f"FGD gt_box mask expects gt_bboxes [B, M, 4], got {tuple(gt_bboxes.shape)}.")
+            if mask_gt.shape[:2] != gt_bboxes.shape[:2]:
+                raise RuntimeError(
+                    f"FGD gt_box mask expects mask_gt shape compatible with gt_bboxes, got "
+                    f"mask_gt={tuple(mask_gt.shape)} gt_bboxes={tuple(gt_bboxes.shape)}."
+                )
+            img_h = float(imgsz[0].detach().item())
+            img_w = float(imgsz[1].detach().item())
+            if img_h <= 0 or img_w <= 0:
+                raise RuntimeError(f"FGD gt_box mask received invalid imgsz={tuple(imgsz.shape)} values.")
+            valid = mask_gt.squeeze(-1).bool()
+            for b in range(bsz):
+                boxes = gt_bboxes[b, valid[b], :4]
+                if boxes.numel() == 0:
+                    continue
+                boxes = boxes.to(device=device, dtype=dtype)
+                x1 = torch.floor((boxes[:, 0] / img_w * width).clamp(0, width - 1)).long()
+                y1 = torch.floor((boxes[:, 1] / img_h * height).clamp(0, height - 1)).long()
+                x2 = torch.ceil((boxes[:, 2] / img_w * width).clamp(0, width - 1)).long()
+                y2 = torch.ceil((boxes[:, 3] / img_h * height).clamp(0, height - 1)).long()
+                for j in range(boxes.shape[0]):
+                    if x2[j] < x1[j] or y2[j] < y1[j]:
+                        continue
+                    area = float((x2[j] - x1[j] + 1) * (y2[j] - y1[j] + 1))
+                    value = mask_fg.new_tensor(1.0 / max(area, 1.0))
+                    region = mask_fg[b, y1[j] : y2[j] + 1, x1[j] : x2[j] + 1]
+                    mask_fg[b, y1[j] : y2[j] + 1, x1[j] : x2[j] + 1] = torch.maximum(region, value)
+            mask_bg = torch.where(mask_fg > 0, torch.zeros_like(mask_fg), torch.ones_like(mask_fg))
+        if self.fgd_bg_norm:
+            bg_sum = mask_bg.flatten(1).sum(dim=1).clamp_min(1e-6).view(bsz, 1, 1)
+            mask_bg = mask_bg / bg_sum
+        return mask_fg, mask_bg
+
+    @staticmethod
+    def _fgd_batch_relation_legacy_loss(student_map: torch.Tensor, teacher_map: torch.Tensor) -> torch.Tensor:
+        """Legacy batch-wise relation approximation; disabled by default.
+
+        This is not the official FGD trainable global context relation module.
+        It remains opt-in through `fgd_lambda` only for ablation continuity.
+        """
+        bsz, channels, _, _ = student_map.shape
+        if bsz <= 1:
+            return student_map.new_zeros(())
+        student_flat = student_map.permute(0, 2, 3, 1).reshape(bsz, -1, channels)
+        teacher_flat = teacher_map.detach().permute(0, 2, 3, 1).reshape(bsz, -1, channels)
+        student_global = F.normalize(student_flat.mean(dim=1), dim=-1, eps=1e-6)
+        teacher_global = F.normalize(teacher_flat.mean(dim=1), dim=-1, eps=1e-6)
+        return F.mse_loss(student_global @ student_global.transpose(0, 1), teacher_global @ teacher_global.transpose(0, 1))
+
     def _fgd_style_loss(
         self,
         student_map: torch.Tensor,
         teacher_map: torch.Tensor,
-        fg_mask: torch.Tensor,
+        assigner_fg_mask: torch.Tensor,
+        gt_bboxes: torch.Tensor | None = None,
+        mask_gt: torch.Tensor | None = None,
+        imgsz: torch.Tensor | None = None,
     ) -> torch.Tensor:
-        """Teacher-attention-weighted FGD-style feature and relation KD."""
-        bsz, channels, height, width = student_map.shape
-        student_flat = student_map.permute(0, 2, 3, 1).reshape(bsz, -1, channels)
-        teacher_flat = teacher_map.detach().permute(0, 2, 3, 1).reshape(bsz, -1, channels)
+        """FGD-YOLO adaptation: focal fg/bg feature loss + attention mask loss."""
+        if student_map.shape != teacher_map.shape:
+            raise RuntimeError(
+                "FGD requires matching student/teacher feature maps; explicit model-owned align conv is not implemented, got "
+                f"student={tuple(student_map.shape)} teacher={tuple(teacher_map.shape)}."
+            )
+        bsz, _, height, width = student_map.shape
+        teacher_map = teacher_map.detach()
+        s_t, c_t = self._fgd_get_attention(teacher_map, self.fgd_temperature)
+        s_s, c_s = self._fgd_get_attention(student_map, self.fgd_temperature)
+        if self.fgd_mask_mode == "gt_box":
+            mask_fg, mask_bg = self._build_fgd_gt_box_masks(
+                gt_bboxes, mask_gt, (height, width), imgsz, student_map.dtype, student_map.device, bsz
+            )
+        else:
+            mask_fg, mask_bg = self._build_fgd_assigner_masks(assigner_fg_mask, height, width, student_map.dtype)
 
-        # FGD combines teacher-derived attention with GT foreground/background
-        # separation. The legacy profile only implemented the latter.
-        spatial_att = teacher_map.detach().abs().mean(dim=1).reshape(bsz, -1)
-        spatial_att = F.softmax(spatial_att / self.fgd_temperature, dim=1) * (height * width)
-        channel_att = teacher_map.detach().abs().mean(dim=(2, 3))
-        channel_att = F.softmax(channel_att / self.fgd_temperature, dim=1) * channels
-        fg = fg_mask.reshape(bsz, -1).bool()
-        region_weight = torch.full_like(spatial_att, self.fgd_bg_weight)
-        region_weight = torch.where(fg, torch.ones_like(region_weight), region_weight)
-        token_weight = spatial_att * region_weight
-        token_loss = ((student_flat - teacher_flat).pow(2) * channel_att.unsqueeze(1)).mean(dim=-1)
-        feat_loss = (token_loss * token_weight).sum() / token_weight.sum().clamp_min(1e-6)
-
-        relation_loss = student_map.new_zeros(())
-        if bsz > 1 and self.fgd_relation_weight > 0:
-            student_global = F.normalize(student_flat.mean(dim=1), dim=-1, eps=1e-6)
-            teacher_global = F.normalize(teacher_flat.mean(dim=1), dim=-1, eps=1e-6)
-            student_rel = student_global @ student_global.transpose(0, 1)
-            teacher_rel = teacher_global @ teacher_global.transpose(0, 1)
-            relation_loss = F.mse_loss(student_rel, teacher_rel)
-        return feat_loss + self.fgd_relation_weight * relation_loss
+        s_t_sqrt = s_t.clamp_min(0).sqrt().unsqueeze(1)
+        c_t_sqrt = c_t.clamp_min(0).sqrt().view(bsz, -1, 1, 1)
+        fea_t = teacher_map * s_t_sqrt * c_t_sqrt
+        fea_s = student_map * s_t_sqrt * c_t_sqrt
+        fg_w = mask_fg.clamp_min(0).sqrt().unsqueeze(1)
+        bg_w = mask_bg.clamp_min(0).sqrt().unsqueeze(1)
+        fg_loss = F.mse_loss(fea_s * fg_w, fea_t * fg_w, reduction="sum") / max(bsz, 1)
+        bg_loss = F.mse_loss(fea_s * bg_w, fea_t * bg_w, reduction="sum") / max(bsz, 1)
+        mask_loss = (c_s - c_t).abs().sum() / max(bsz, 1) + (s_s - s_t).abs().sum() / max(bsz, 1)
+        relation_loss = (
+            self._fgd_batch_relation_legacy_loss(student_map, teacher_map) if self.fgd_lambda > 0 else student_map.new_zeros(())
+        )
+        return (
+            self.fgd_alpha * fg_loss
+            + self.fgd_beta * bg_loss
+            + self.fgd_gamma * mask_loss
+            + self.fgd_lambda * relation_loss
+        )
 
     def _ld_style_loss(
         self,
         student_distri: torch.Tensor | None,
         teacher_distri: torch.Tensor | None,
         fg_mask: torch.Tensor,
+        target_scores: torch.Tensor,
+        teacher_scores: torch.Tensor | None,
+        teacher_bboxes: torch.Tensor | None = None,
+        gt_bboxes: torch.Tensor | None = None,
+        mask_gt: torch.Tensor | None = None,
+        level_stride_tensor: torch.Tensor | None = None,
     ) -> torch.Tensor:
-        """Localization Distillation on foreground YOLO DFL regression logits."""
+        """Localization Distillation on YOLO DFL logits with main + VLR-style regions."""
         if student_distri is None or teacher_distri is None:
             raise RuntimeError("LD requires raw student and teacher DFL logits; received a missing distribution tensor.")
         if student_distri.shape != teacher_distri.shape:
@@ -946,17 +1109,95 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
             )
         if student_distri.numel() == 0 or student_distri.shape[-1] % 4 != 0:
             raise RuntimeError(f"LD received an invalid DFL-logit shape: {tuple(student_distri.shape)}.")
-        if not fg_mask.any():
-            return student_distri.new_zeros(())
+        if target_scores.shape[:2] != student_distri.shape[:2]:
+            raise RuntimeError(
+                f"LD requires target_scores [B, N, C] aligned with DFL logits, got "
+                f"target_scores={tuple(target_scores.shape)} logits={tuple(student_distri.shape)}."
+            )
 
         temperature = self.ld_temperature
         reg_max = student_distri.shape[-1] // 4
         fg = fg_mask.reshape(student_distri.shape[:2]).bool()
-        s = student_distri[fg].reshape(-1, 4, reg_max)
-        t = teacher_distri.detach()[fg].reshape(-1, 4, reg_max)
-        s_log_prob = F.log_softmax(s / temperature, dim=-1)
-        t_prob = F.softmax(t / temperature, dim=-1)
-        return F.kl_div(s_log_prob, t_prob, reduction="batchmean") * (temperature**2)
+        zero = student_distri.new_zeros(())
+
+        def weighted_dfl_kl(mask: torch.Tensor, weights: torch.Tensor) -> torch.Tensor:
+            if not mask.any():
+                return zero
+            s = student_distri[mask].reshape(-1, 4, reg_max)
+            t = teacher_distri.detach()[mask].reshape(-1, 4, reg_max)
+            kl = F.kl_div(
+                F.log_softmax(s / temperature, dim=-1),
+                F.softmax(t / temperature, dim=-1),
+                reduction="none",
+            ).mean(dim=-1) * (temperature**2)
+            per_anchor = kl.mean(dim=-1)
+            w = weights[mask].to(per_anchor.dtype).clamp_min(0)
+            return (per_anchor * w).sum() / w.sum().clamp_min(1e-6)
+
+        assigned_cls = target_scores.argmax(dim=-1)
+        target_quality = target_scores.amax(dim=-1).clamp_min(0)
+        if teacher_scores is not None and teacher_scores.shape[:2] == student_distri.shape[:2]:
+            gather_idx = assigned_cls.clamp(0, teacher_scores.shape[-1] - 1).unsqueeze(-1)
+            teacher_assigned_conf = teacher_scores.detach().sigmoid().gather(-1, gather_idx).squeeze(-1)
+            teacher_any_conf = teacher_scores.detach().sigmoid().amax(dim=-1)
+        else:
+            if not self._ld_warned_missing_teacher_scores:
+                LOGGER.warning("LD did not receive aligned teacher class logits; falling back to target_scores for main weights.")
+                self._ld_warned_missing_teacher_scores = True
+            teacher_assigned_conf = torch.ones_like(target_quality)
+            teacher_any_conf = torch.zeros_like(target_quality)
+
+        main_weights = (target_quality * teacher_assigned_conf).clamp_min(0)
+        if self.ld_quality_power != 1.0:
+            main_weights = main_weights.pow(self.ld_quality_power)
+        main_loss = weighted_dfl_kl(fg, main_weights) if fg.any() else zero
+
+        vlr_loss = zero
+        if self.ld_use_vlr and self.ld_vlr_weight > 0:
+            vlr_weights = teacher_any_conf.clone()
+            if teacher_bboxes is not None and gt_bboxes is not None and mask_gt is not None and level_stride_tensor is not None:
+                if teacher_bboxes.shape[:2] != fg.shape:
+                    raise RuntimeError(
+                        f"LD VLR teacher_bboxes must align with logits, got teacher_bboxes={tuple(teacher_bboxes.shape)} "
+                        f"logits={tuple(student_distri.shape)}."
+                    )
+                if gt_bboxes.dim() != 3 or gt_bboxes.shape[-1] < 4 or mask_gt.shape[:2] != gt_bboxes.shape[:2]:
+                    raise RuntimeError(
+                        f"LD VLR expects gt_bboxes [B, M, 4] and compatible mask_gt, got "
+                        f"gt_bboxes={tuple(gt_bboxes.shape)} mask_gt={tuple(mask_gt.shape)}."
+                    )
+                stride = level_stride_tensor.reshape(1, -1, 1).to(teacher_bboxes.dtype)
+                teacher_boxes_px = teacher_bboxes.detach() * stride
+                iou_weights = torch.zeros_like(vlr_weights)
+                valid_gt = mask_gt.squeeze(-1).bool()
+                for b in range(student_distri.shape[0]):
+                    boxes_gt = gt_bboxes[b, valid_gt[b], :4].to(device=student_distri.device, dtype=teacher_boxes_px.dtype)
+                    if boxes_gt.numel() == 0:
+                        continue
+                    ious = _pairwise_iou_xyxy(teacher_boxes_px[b], boxes_gt)
+                    iou_weights[b] = ious.max(dim=1).values
+                if teacher_scores is not None:
+                    vlr_weights = vlr_weights * iou_weights
+                else:
+                    vlr_weights = iou_weights
+
+            vlr_mask = (~fg) & (vlr_weights > self.ld_min_vlr_weight)
+            if self.ld_vlr_topk > 0 and vlr_mask.any():
+                topk_mask = torch.zeros_like(vlr_mask)
+                for b in range(vlr_mask.shape[0]):
+                    idx = torch.where(vlr_mask[b])[0]
+                    if idx.numel() == 0:
+                        continue
+                    k = min(int(self.ld_vlr_topk), idx.numel())
+                    selected = idx[torch.topk(vlr_weights[b, idx], k=k, largest=True, sorted=False).indices]
+                    topk_mask[b, selected] = True
+                vlr_mask = topk_mask
+            if vlr_mask.any():
+                vlr_loss = weighted_dfl_kl(vlr_mask, vlr_weights)
+            elif not self.ld_allow_empty_vlr:
+                raise RuntimeError("LD VLR found no candidate anchors and ld_allow_empty_vlr=False.")
+
+        return self.ld_main_weight * main_loss + self.ld_vlr_weight * vlr_loss
 
     def _cclkd_style_loss(
         self,
@@ -1183,13 +1424,31 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         teacher_distri: torch.Tensor | None,
         student_scores: torch.Tensor | None,
         teacher_scores: torch.Tensor | None,
+        anchor_points: torch.Tensor | None = None,
+        stride_tensor: torch.Tensor | None = None,
+        target_bboxes: torch.Tensor | None = None,
+        student_bboxes: torch.Tensor | None = None,
+        teacher_bboxes: torch.Tensor | None = None,
+        gt_bboxes: torch.Tensor | None = None,
+        mask_gt: torch.Tensor | None = None,
+        imgsz: torch.Tensor | None = None,
     ) -> torch.Tensor:
         if self.comparison_kd_profile == "none" or self.profile_kd_weight <= 0:
             return student_map.new_zeros(())
         if self.comparison_kd_profile == "fgd":
-            return self._fgd_style_loss(student_map, teacher_map, fg_mask)
+            return self._fgd_style_loss(student_map, teacher_map, fg_mask, gt_bboxes=gt_bboxes, mask_gt=mask_gt, imgsz=imgsz)
         if self.comparison_kd_profile == "ld":
-            return self._ld_style_loss(student_distri, teacher_distri, fg_mask)
+            return self._ld_style_loss(
+                student_distri,
+                teacher_distri,
+                fg_mask,
+                target_scores,
+                teacher_scores,
+                teacher_bboxes=teacher_bboxes,
+                gt_bboxes=gt_bboxes,
+                mask_gt=mask_gt,
+                level_stride_tensor=stride_tensor,
+            )
         if self.comparison_kd_profile == "cclkd":
             return self._cclkd_style_loss(
                 student_map,
@@ -1201,7 +1460,7 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
                 student_scores,
                 teacher_scores,
             )
-        if self.comparison_kd_profile == "hallucidet":
+        if self.comparison_kd_profile == "hallucidet_style":
             return self._hallucidet_style_loss(student_map, teacher_map, fg_mask, student_scores, teacher_scores)
         raise AssertionError(f"Unexpected comparison_kd_profile: {self.comparison_kd_profile}")
 
@@ -1703,6 +1962,13 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         target_scores_sum: torch.Tensor,
         student_pred_distri: torch.Tensor,
         student_pred_scores: torch.Tensor,
+        anchor_points: torch.Tensor,
+        stride_tensor: torch.Tensor,
+        target_bboxes: torch.Tensor,
+        student_pred_bboxes: torch.Tensor,
+        gt_bboxes: torch.Tensor,
+        mask_gt: torch.Tensor,
+        imgsz: torch.Tensor,
     ) -> tuple[torch.Tensor, ...]:
         zero = torch.zeros((), device=self.device)
         # Clear cached per-level feature lists up front so any early return
@@ -1754,6 +2020,12 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
                 f"raw_teacher_boxes={raw_shape}, student={tuple(student_pred_distri.shape)}. "
                 "The teacher eval forward must return (decoded_predictions, raw_predictions_dict)."
             )
+        teacher_pred_bboxes = None
+        if self.comparison_kd_profile == "ld" and isinstance(teacher_distri_all, torch.Tensor):
+            # Decoded boxes are in the same stride/grid unit as `anchor_points`.
+            # Per-level LD converts them to pixel xyxy via `stride_tensor` only
+            # when comparing to pixel-space GT boxes for VLR-style weights.
+            teacher_pred_bboxes = self.bbox_decode(anchor_points, teacher_distri_all)
         teacher_scores_all = teacher_preds.get("scores")
         if isinstance(teacher_scores_all, torch.Tensor) and teacher_scores_all.dim() == 3:
             if teacher_scores_all.shape[1] == student_pred_scores.shape[-1]:
@@ -1895,6 +2167,15 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
                 if isinstance(teacher_distri_all, torch.Tensor)
                 else None
             )
+            level_anchor_points = anchor_points[offset : offset + n_tokens].to(z_t.dtype)
+            level_stride_tensor = stride_tensor[offset : offset + n_tokens].to(z_t.dtype)
+            level_target_bboxes = target_bboxes[:, offset : offset + n_tokens].to(z_t.dtype)
+            level_student_bboxes = student_pred_bboxes[:, offset : offset + n_tokens].to(z_t.dtype)
+            level_teacher_bboxes = (
+                teacher_pred_bboxes[:, offset : offset + n_tokens].to(z_t.dtype)
+                if isinstance(teacher_pred_bboxes, torch.Tensor)
+                else None
+            )
             level_student_scores = student_pred_scores[:, offset : offset + n_tokens].to(z_t.dtype)
             level_teacher_scores = (
                 teacher_scores_all[:, offset : offset + n_tokens].to(z_t.dtype)
@@ -1994,6 +2275,28 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
                     rank_gap_mean = rank_gap_mean + level_gap
                     reach_levels += 1
 
+            if self.comparison_kd_profile != "none" and self.profile_kd_weight > 0:
+                level_profile_loss = self._compute_profile_kd_loss(
+                    z_s_kd_map,
+                    target_z_t_map.detach() if self.kd_target_mode == "detach" else target_z_t_map,
+                    level_fg_mask,
+                    level_target_scores,
+                    level_student_distri,
+                    level_teacher_distri,
+                    level_student_scores,
+                    level_teacher_scores,
+                    level_anchor_points,
+                    level_stride_tensor,
+                    level_target_bboxes,
+                    level_student_bboxes,
+                    level_teacher_bboxes,
+                    gt_bboxes.to(z_t.dtype),
+                    mask_gt,
+                    imgsz.to(z_t.dtype),
+                )
+                profile_kd_loss = profile_kd_loss + level_profile_loss
+                profile_levels += 1
+
             if not level_fg_mask.any():
                 all_levels += 1
                 continue
@@ -2062,19 +2365,6 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
                     level_target_scores_pos,
                     kd_pos_weights,
                 )
-            if self.comparison_kd_profile != "none" and self.profile_kd_weight > 0:
-                level_profile_loss = self._compute_profile_kd_loss(
-                    z_s_kd_map,
-                    target_z_t_map.detach() if self.kd_target_mode == "detach" else target_z_t_map,
-                    level_fg_mask,
-                    level_target_scores,
-                    level_student_distri,
-                    level_teacher_distri,
-                    level_student_scores,
-                    level_teacher_scores,
-                )
-                profile_kd_loss = profile_kd_loss + level_profile_loss
-                profile_levels += 1
             if student_branch_split:
                 student_sep_loss = student_sep_loss + _decorrelation_loss(z_s_pos, r_s_pos)
 

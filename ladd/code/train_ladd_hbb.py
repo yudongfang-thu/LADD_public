@@ -143,13 +143,13 @@ def parse_args() -> argparse.Namespace:
 
     parser.add_argument(
         "--comparison-kd-profile",
-        choices=("none", "fgd", "ld", "cclkd", "hallucidet"),
+        choices=("none", "fgd", "ld", "cclkd", "hallucidet_style"),
         default="none",
         help=(
             "Portable comparison KD profile for OGSOD HBB. "
             "fgd and ld are generic detector KD transfers; "
-            "cclkd and hallucidet are cross-modal/privileged-modality transfers; "
-            "hallucidet is a task-driven privileged-modality hallucination transfer."
+            "cclkd and hallucidet_style are cross-modal/privileged-modality transfers; "
+            "hallucidet_style is a portable feature/response/margin baseline, not strict HalluciDet."
         ),
     )
     parser.add_argument("--profile-kd-weight", type=float, default=1.0)
@@ -158,10 +158,22 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Use the selected comparison profile instead of the base feature-KD term inside kd_loss.",
     )
-    parser.add_argument("--fgd-bg-weight", type=float, default=0.25)
-    parser.add_argument("--fgd-relation-weight", type=float, default=0.1)
+    parser.add_argument("--fgd-alpha", type=float, default=1.0)
+    parser.add_argument("--fgd-beta", type=float, default=0.5)
+    parser.add_argument("--fgd-gamma", type=float, default=1.0)
+    parser.add_argument("--fgd-lambda", type=float, default=0.0)
+    parser.add_argument("--fgd-relation-weight", type=float, default=None, help="Deprecated alias for --fgd-lambda.")
     parser.add_argument("--fgd-temperature", type=float, default=0.5)
+    parser.add_argument("--fgd-mask-mode", choices=("gt_box", "assigner"), default="gt_box")
+    parser.add_argument("--fgd-bg-norm", type=int, default=1)
     parser.add_argument("--ld-temperature", type=float, default=10.0)
+    parser.add_argument("--ld-use-vlr", type=int, default=1)
+    parser.add_argument("--ld-quality-power", type=float, default=1.0)
+    parser.add_argument("--ld-min-vlr-weight", type=float, default=0.0)
+    parser.add_argument("--ld-vlr-topk", type=int, default=0)
+    parser.add_argument("--ld-vlr-weight", type=float, default=1.0)
+    parser.add_argument("--ld-main-weight", type=float, default=1.0)
+    parser.add_argument("--ld-allow-empty-vlr", type=int, default=1)
     parser.add_argument("--cclkd-base-temperature", type=float, default=2.0)
     parser.add_argument("--cclkd-contrastive-temperature", type=float, default=0.1)
     parser.add_argument("--cclkd-feat-weight", type=float, default=1.0)
@@ -278,10 +290,21 @@ def main() -> None:
         comparison_kd_profile=args.comparison_kd_profile,
         profile_kd_weight=args.profile_kd_weight,
         profile_kd_replace_base=int(bool(args.profile_kd_replace_base)),
-        fgd_bg_weight=args.fgd_bg_weight,
-        fgd_relation_weight=args.fgd_relation_weight,
+        fgd_alpha=args.fgd_alpha,
+        fgd_beta=args.fgd_beta,
+        fgd_gamma=args.fgd_gamma,
+        fgd_lambda=args.fgd_lambda if args.fgd_relation_weight is None else args.fgd_relation_weight,
         fgd_temperature=args.fgd_temperature,
+        fgd_mask_mode=args.fgd_mask_mode,
+        fgd_bg_norm=int(bool(args.fgd_bg_norm)),
         ld_temperature=args.ld_temperature,
+        ld_use_vlr=int(bool(args.ld_use_vlr)),
+        ld_quality_power=args.ld_quality_power,
+        ld_min_vlr_weight=args.ld_min_vlr_weight,
+        ld_vlr_topk=args.ld_vlr_topk,
+        ld_vlr_weight=args.ld_vlr_weight,
+        ld_main_weight=args.ld_main_weight,
+        ld_allow_empty_vlr=int(bool(args.ld_allow_empty_vlr)),
         cclkd_base_temperature=args.cclkd_base_temperature,
         cclkd_contrastive_temperature=args.cclkd_contrastive_temperature,
         cclkd_feat_weight=args.cclkd_feat_weight,

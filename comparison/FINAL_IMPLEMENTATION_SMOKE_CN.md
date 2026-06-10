@@ -31,7 +31,7 @@
 | FGD-style | `fgd` | 1.38700 | 是 | 是 | 均生成 | 通过 |
 | LD | `ld` | 1.05935 | 是 | 是 | 均生成 | 通过 |
 | CCLKD-style | `cclkd` | 5.49214 | 是 | 是 | 均生成 | 通过 |
-| HalluciDet-style | `hallucidet` | 0.82760 | 是 | 是 | 均生成 | 通过 |
+| HalluciDet-style | `hallucidet`（旧名，已废弃；当前为 `hallucidet_style`） | 0.82760 | 是 | 是 | 均生成 | 历史 smoke，仅可作旧实现参考 |
 
 统一验收条件：
 

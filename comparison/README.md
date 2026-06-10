@@ -11,17 +11,20 @@
 
 | 方法 | 来源 | 类型 | 代码位置 |
 |---|---|---|---|
-| FGD-style | CVPR 2022 | teacher-attention weighted feature KD | `../ladd/code/src/.../loss.py` - `fgd` profile |
-| LD | CVPR 2022 / TPAMI 2023 | DFL localization KD | 同上 - `ld` profile |
+| FGD-style | CVPR 2022 | fg/bg feature + attention mask KD | `../ladd/code/src/.../loss.py` - `fgd` profile |
+| LD | CVPR 2022 / TPAMI 2023 | DFL localization KD + VLR-style candidate KD | 同上 - `ld` profile |
 | CCLKD | GIS 2026 | 跨模态类别约束 KD | `../ladd/code/src/.../loss.py` - `cclkd` profile；原文复现入口见 [`../cclkd_reproduction/`](../cclkd_reproduction/) |
-| HalluciDet-style | WACV 2024 inspiration | 跨模态 privileged KD | 同上 - `hallucidet` profile |
+| HalluciDet-style | WACV 2024 inspiration | 跨模态 privileged KD | 同上 - `hallucidet_style` profile |
 
 `comparison/` 只保留上述四个正式方法。其他历史候选不再随当前 public 分支作为
 对比方法发布。
 
 ## 当前结论
 
-FGD/LD 在 2026-06-04 修复了实现语义，修复前结果不能代表当前实现，必须重跑。
+FGD/LD 在 2026-06-04 修复了实现语义，并在 2026-06-10 更新为
+FGD-YOLO focal+attention-mask adaptation 与 LD-YOLO main+VLR-style adaptation；
+此前结果不能代表当前实现，必须重跑。
 CCLKD 在 2026-06-05 修正 loss 级 LLD/FLD/RLD，但当前 frozen-teacher trainer
 不符合原文 online 方法定义。CCLKD 原文复现入口见 [`../cclkd_reproduction/`](../cclkd_reproduction/)，与受控对比分离。
-双卡 4090 旧结果因 `nc=5` yaml 错误作废。当前阶段是人工复核，不启动 CCLKD 正式实验。
+旧 `hallucidet` 运行只能作为 `hallucidet_style_old` 参考，不能写作 HalluciDet
+official reproduction。双卡 4090 旧结果因 `nc=5` yaml 错误作废。当前阶段是人工复核，不启动 CCLKD 正式实验。

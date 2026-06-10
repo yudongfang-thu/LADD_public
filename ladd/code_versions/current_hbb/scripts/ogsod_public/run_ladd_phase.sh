@@ -61,7 +61,12 @@ if [[ "$TASK" == "obb" && ( "$PHASE" == "b1" || "$PHASE" == "b2" ) ]]; then
   exit 1
 fi
 
-ROOT_DIR="$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if ROOT_DIR="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel 2>/dev/null)"; then
+  :
+else
+  ROOT_DIR="$(cd "$SCRIPT_DIR/../../../../.." && pwd)"
+fi
 cd "$ROOT_DIR"
 
 case "$PHASE" in
@@ -278,6 +283,21 @@ mkdir -p "$LOG_DIR"
   echo "comparison_kd_profile=${COMPARISON_KD_PROFILE:-none}"
   echo "profile_kd_weight=${PROFILE_KD_WEIGHT:-1.0}"
   echo "profile_kd_replace_base=${PROFILE_KD_REPLACE_BASE:-0}"
+  echo "fgd_alpha=${FGD_ALPHA:-1.0}"
+  echo "fgd_beta=${FGD_BETA:-0.5}"
+  echo "fgd_gamma=${FGD_GAMMA:-1.0}"
+  echo "fgd_lambda=${FGD_LAMBDA:-${FGD_RELATION_WEIGHT:-0.0}}"
+  echo "fgd_temperature=${FGD_TEMPERATURE:-0.5}"
+  echo "fgd_mask_mode=${FGD_MASK_MODE:-gt_box}"
+  echo "fgd_bg_norm=${FGD_BG_NORM:-1}"
+  echo "ld_temperature=${LD_TEMPERATURE:-10.0}"
+  echo "ld_use_vlr=${LD_USE_VLR:-1}"
+  echo "ld_quality_power=${LD_QUALITY_POWER:-1.0}"
+  echo "ld_min_vlr_weight=${LD_MIN_VLR_WEIGHT:-0.0}"
+  echo "ld_vlr_topk=${LD_VLR_TOPK:-0}"
+  echo "ld_vlr_weight=${LD_VLR_WEIGHT:-1.0}"
+  echo "ld_main_weight=${LD_MAIN_WEIGHT:-1.0}"
+  echo "ld_allow_empty_vlr=${LD_ALLOW_EMPTY_VLR:-1}"
   echo "cclkd_base_temperature=${CCLKD_BASE_TEMPERATURE:-2.0}"
   echo "cclkd_contrastive_temperature=${CCLKD_CONTRASTIVE_TEMPERATURE:-0.1}"
   echo "cclkd_feat_weight=${CCLKD_FEAT_WEIGHT:-1.0}"
@@ -366,13 +386,24 @@ fi
 
 if [[ "$TASK" == "hbb" ]]; then
   cmd+=(
-    --comparison-kd-profile "${COMPARISON_KD_PROFILE:-none}"
-    --profile-kd-weight "${PROFILE_KD_WEIGHT:-1.0}"
-    --fgd-bg-weight "${FGD_BG_WEIGHT:-0.25}"
-    --fgd-relation-weight "${FGD_RELATION_WEIGHT:-0.1}"
-    --fgd-temperature "${FGD_TEMPERATURE:-0.5}"
-    --ld-temperature "${LD_TEMPERATURE:-10.0}"
-    --cclkd-base-temperature "${CCLKD_BASE_TEMPERATURE:-2.0}"
+	    --comparison-kd-profile "${COMPARISON_KD_PROFILE:-none}"
+	    --profile-kd-weight "${PROFILE_KD_WEIGHT:-1.0}"
+	    --fgd-alpha "${FGD_ALPHA:-1.0}"
+	    --fgd-beta "${FGD_BETA:-0.5}"
+	    --fgd-gamma "${FGD_GAMMA:-1.0}"
+	    --fgd-lambda "${FGD_LAMBDA:-${FGD_RELATION_WEIGHT:-0.0}}"
+	    --fgd-temperature "${FGD_TEMPERATURE:-0.5}"
+	    --fgd-mask-mode "${FGD_MASK_MODE:-gt_box}"
+	    --fgd-bg-norm "${FGD_BG_NORM:-1}"
+	    --ld-temperature "${LD_TEMPERATURE:-10.0}"
+	    --ld-use-vlr "${LD_USE_VLR:-1}"
+	    --ld-quality-power "${LD_QUALITY_POWER:-1.0}"
+	    --ld-min-vlr-weight "${LD_MIN_VLR_WEIGHT:-0.0}"
+	    --ld-vlr-topk "${LD_VLR_TOPK:-0}"
+	    --ld-vlr-weight "${LD_VLR_WEIGHT:-1.0}"
+	    --ld-main-weight "${LD_MAIN_WEIGHT:-1.0}"
+	    --ld-allow-empty-vlr "${LD_ALLOW_EMPTY_VLR:-1}"
+	    --cclkd-base-temperature "${CCLKD_BASE_TEMPERATURE:-2.0}"
     --cclkd-contrastive-temperature "${CCLKD_CONTRASTIVE_TEMPERATURE:-0.1}"
     --cclkd-feat-weight "${CCLKD_FEAT_WEIGHT:-1.0}"
     --cclkd-logit-weight "${CCLKD_LOGIT_WEIGHT:-1.0}"
