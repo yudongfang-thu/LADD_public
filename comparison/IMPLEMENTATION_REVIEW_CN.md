@@ -168,13 +168,34 @@ EPOCHS_B=20 PATIENCE_B=20 PROFILE_KD_WEIGHT=1.0 \
 comparison/code/launch_formal_transfer_kd_job.sh <method> n 0 <gpu_id>
 ```
 
-当前记录时间：2026-06-10 18:45 CST。
+当前记录时间：2026-06-10 18:54 CST。队列日志显示
+`serial runtime smoke complete`，三个方法均完成 20/20 epoch。`results.csv`
+和对应 `b.log` / outer log 已检查，未发现 NaN、OOM、shape error、
+RuntimeError 或 Traceback。
 
-| 方法 | GPU | 状态 | 关键观察 |
-|---|---:|---|---|
-| `ld` | 1 | 完成 20/20 epoch | `train/kd_loss` 有限且非零，最后一轮约 `0.00749`；未见 NaN/OOM |
-| `fgd` | 1 | 完成 20/20 epoch | `train/kd_loss` 有限，最后一轮约 `3.38704`；量级仍偏大，正式重跑前需继续评估权重尺度 |
-| `hallucidet_style` | 1 | 运行中，已写入 7 epoch CSV | `train/kd_loss` 有限，前 7 epoch 约 `0.42-0.53`；未见启动/shape/runtime 错误 |
+| 方法 | GPU | 状态 | train/kd_loss | train/box_loss | train/cls_loss | train/dfl_loss | mAP50-95(B) | 检查结论 |
+|---|---:|---|---:|---:|---:|---:|---:|---|
+| `fgd` | 1 | 完成 20/20 epoch | 3.38704 | 1.37135 | 0.72154 | 0.89573 | 0.45006 | smoke passed；KD loss 大于单项 det loss，且与三项 det loss 之和同量级，权重可能偏强，正式重跑前需继续评估 |
+| `ld` | 1 | 完成 20/20 epoch | 0.00749 | 1.12776 | 0.56678 | 0.84884 | 0.51471 | smoke passed；KD loss 有限且非零 |
+| `hallucidet_style` | 1 | 完成 20/20 epoch | 0.34971 | 1.12845 | 0.56490 | 0.84887 | 0.51491 | smoke passed；KD loss 有限且非零 |
+
+Run directories：
+
+```text
+fgd:
+runs_public/ogsod/hbb/formal_nomosaic_20260528/comparisons/transferred_kd/yolo11n/fgd/transfer_fgd_hbb_ogsod11n_formal_nomosaic_yolo11n_fgd_v2_20260610_runtime_smoke_transfer_s0_b_e20_b64_s0_gpu1
+
+ld:
+runs_public/ogsod/hbb/formal_nomosaic_20260528/comparisons/transferred_kd/yolo11n/ld/transfer_ld_hbb_ogsod11n_formal_nomosaic_yolo11n_ld_v2_20260610_runtime_smoke_transfer_s0_b_e20_b64_s0_gpu1
+
+hallucidet_style:
+runs_public/ogsod/hbb/formal_nomosaic_20260528/comparisons/transferred_kd/yolo11n/hallucidet_style/transfer_hallucidet_style_hbb_ogsod11n_formal_nomosaic_yolo11n_hallucidet_style_v2_20260610_runtime_smoke_transfer_s0_b_e20_b64_s0_gpu1
+```
+
+FGD 重点判断：最后一轮 `train/kd_loss=3.38704`，大于 `box/cls/dfl`
+任一单项 loss，略高于三项 det loss 之和 `2.98862`，但不是高几个数量级。
+因此当前结论是：FGD smoke passed but weight may be too strong。本轮只记录该判断，
+不直接修改 FGD 权重或机制。
 
 服务器 runtime 中还暴露了两个部署细节：
 
