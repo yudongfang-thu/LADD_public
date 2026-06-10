@@ -1,0 +1,11 @@
+tag=cclkd_full_yolov5x_b64_s0_gpu1
+model=yolov5x
+experiment=online_cclkd_full
+student_modality=sar
+teacher_modality=rgb
+batch=64
+seed=0
+gpu_id=1
+wait_for_gpu=1
+min_free_mb=22000
+note=YOLOv5-adapted CCLKD full; uses paired SAR/RGB augmentations and online trainable RGB teacher.

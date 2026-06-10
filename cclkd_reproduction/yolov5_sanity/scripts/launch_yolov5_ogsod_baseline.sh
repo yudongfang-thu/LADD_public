@@ -9,13 +9,13 @@ Usage:
 
 Example:
   DRY_RUN=1 bash cclkd_reproduction/yolov5_sanity/scripts/launch_yolov5_ogsod_baseline.sh \
-    sar x pretrained 64 0 0 cold_b64_pretrained
+    sar x pretrained 32 0 0 cclkd_gate_sar_x_b32_pretrained
 
 Environment:
   DRY_RUN      Print command only by default (default: 1)
   LAUNCH       Set LAUNCH=1 and DRY_RUN=0 to start one nohup job (default: 0)
-  SAR_DATA     SAR OGSOD YOLO yaml (default: shared/configs/datasets_public/ogsod1_sar_detect.yaml)
-  RGB_DATA     RGB OGSOD YOLO yaml (default: shared/configs/datasets_public/ogsod1_rgb_detect.yaml)
+  SAR_DATA     SAR OGSOD YOLO yaml (default: configs/datasets/ogsod_hbb_sar.yaml if present)
+  RGB_DATA     RGB OGSOD YOLO yaml (default: configs/datasets/ogsod_hbb_rgb.yaml if present)
   YOLOV5_REF   Metadata label recorded in run_meta.txt (default: v7.0)
   PYTHON       Python executable (default: python3)
 
@@ -67,8 +67,16 @@ PROJECT="$SANITY_DIR/results/runs"
 RUN_NAME="yolov5_${MODALITY}_${MODEL_SIZE}_${INIT}_b${BATCH}_s${SEED}_${TAG}"
 RUN_DIR="$PROJECT/$RUN_NAME"
 HYP="$SANITY_DIR/configs/hyp_cold_ogsod.yaml"
-SAR_DATA="${SAR_DATA:-$REPO_ROOT/shared/configs/datasets_public/ogsod1_sar_detect.yaml}"
-RGB_DATA="${RGB_DATA:-$REPO_ROOT/shared/configs/datasets_public/ogsod1_rgb_detect.yaml}"
+DEFAULT_SAR_DATA="$REPO_ROOT/configs/datasets/ogsod_hbb_sar.yaml"
+DEFAULT_RGB_DATA="$REPO_ROOT/configs/datasets/ogsod_hbb_rgb.yaml"
+if [[ ! -f "$DEFAULT_SAR_DATA" ]]; then
+  DEFAULT_SAR_DATA="$REPO_ROOT/shared/configs/datasets_public/ogsod1_sar_detect.yaml"
+fi
+if [[ ! -f "$DEFAULT_RGB_DATA" ]]; then
+  DEFAULT_RGB_DATA="$REPO_ROOT/shared/configs/datasets_public/ogsod1_rgb_detect.yaml"
+fi
+SAR_DATA="${SAR_DATA:-$DEFAULT_SAR_DATA}"
+RGB_DATA="${RGB_DATA:-$DEFAULT_RGB_DATA}"
 
 if [[ ! -d "$YOLOV5_DIR/.git" ]]; then
   echo "Missing YOLOv5 repository: $YOLOV5_DIR" >&2
@@ -145,7 +153,7 @@ print_command() {
 
 if [[ "$DRY_RUN" == "1" || "$LAUNCH" != "1" ]]; then
   if [[ "$MODEL_SIZE" == "x6" ]]; then
-    echo "[diagnostic only] yolov5x6 is not the primary CoLD Table I baseline."
+    echo "[diagnostic only] yolov5x6 is not part of the primary CCLKD reproduction gate."
   fi
   print_command
   exit 0
@@ -220,7 +228,7 @@ YOLOV5_COMMIT="$(git -C "$YOLOV5_DIR" rev-parse HEAD)"
   echo "supports_exist_ok=$SUPPORTS_EXIST_OK"
   if [[ "$MODEL_SIZE" == "x6" ]]; then
     echo "diagnostic_only=1"
-    echo "diagnostic_note=yolov5x6 is only for the 139.99M parameter inconsistency, not the primary CoLD baseline."
+    echo "diagnostic_note=yolov5x6 is only for the 139.99M parameter inconsistency, not the primary CCLKD reproduction gate."
   else
     echo "diagnostic_only=0"
   fi

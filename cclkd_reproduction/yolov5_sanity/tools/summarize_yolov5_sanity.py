@@ -206,11 +206,11 @@ def summarize_run(run_dir: Path) -> dict[str, str]:
 
 def markdown(rows: list[dict[str, str]]) -> str:
     lines = [
-        "# YOLOv5 Sanity Summary",
+        "# YOLOv5-X CCLKD Gate Summary",
         "",
         "## Baseline Target Reminder",
         "",
-        "- YOLOv5 CSPDarkNet-X / YOLOv5x target: 86.23M params, AP50 80.9, AP 46.3.",
+        "- YOLOv5-X CCLKD Table 5 baseline target: about 86M params, AP50 80.9, AP 46.3.",
         "- Loose pass threshold: AP50 >= 78 and AP >= 44.",
         "",
         "## Best AP Ranking",
@@ -255,7 +255,7 @@ def markdown(rows: list[dict[str, str]]) -> str:
     any_low = any(row.get("pass_baseline_threshold") == "False" for row in rows)
     if any_low:
         lines.append(
-            "- Do not proceed to CCLKD/CMDistill reproduction. Check data split, class mapping, anchors, augmentation, YOLOv5 version, and evaluation protocol first."
+            "- Do not proceed to CCLKD full / ATKD / CCL interpretation. Check data split, class mapping, anchors, augmentation, YOLOv5 version, and evaluation protocol first."
         )
     pretrained = [r for r in rows if r.get("init") == "pretrained" and to_float(r.get("best_ap")) is not None]
     scratch = [r for r in rows if r.get("init") == "scratch" and to_float(r.get("best_ap")) is not None]

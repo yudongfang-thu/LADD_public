@@ -1,10 +1,22 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# WARNING:
+# This launcher is a YOLO11 extension/adaptation launcher.
+# It is not the original YOLOv5-based CCLKD Table 4/5/12 reproduction target.
+# For strict CCLKD main-result reproduction, use the YOLOv5-X reproduction gate
+# and the future YOLOv5 CCLKD trainer.
+
 usage() {
   cat <<'EOF'
 Usage:
   cclkd_reproduction/code/launch_cclkd_paper_repro_job.sh <n|s> <seed> <gpu_id>
+
+WARNING:
+  This launcher is a YOLO11 extension/adaptation launcher.
+  It is not the original YOLOv5-based CCLKD Table 4/5/12 reproduction target.
+  For strict CCLKD main-result reproduction, use the YOLOv5-X reproduction gate
+  and the future YOLOv5 CCLKD trainer.
 
 Required environment:
   STUDENT_DATA      SAR OGSOD HBB yaml, nc=3
@@ -31,7 +43,7 @@ MODEL_SIZE="${1:?missing model size n|s}"
 SEED="${2:?missing seed}"
 GPU_ID="${3:?missing gpu id}"
 if [[ "$MODEL_SIZE" != "n" && "$MODEL_SIZE" != "s" ]]; then
-  echo "CCLKD paper reproduction only allows YOLO11n or YOLO11s." >&2
+  echo "This YOLO11 extension launcher only allows YOLO11n or YOLO11s." >&2
   exit 2
 fi
 
@@ -75,7 +87,7 @@ fi
   --online-trainer \
   "${ALLOW_FLAG[@]}"
 
-RUN_NAME="cclkd_paper_repro_yolo11${MODEL_SIZE}_${CCLKD_FORMULATION}_s${SEED}_400ep_online"
+RUN_NAME="cclkd_yolo11_extension_yolo11${MODEL_SIZE}_${CCLKD_FORMULATION}_s${SEED}_400ep_online"
 mkdir -p "$REPO_ROOT/logs/cclkd_reproduction"
 
 exec "$PYTHON" "$SCRIPT_DIR/train_cclkd_online_hbb.py" \

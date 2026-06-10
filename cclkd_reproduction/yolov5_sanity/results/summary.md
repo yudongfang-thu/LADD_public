@@ -1,8 +1,8 @@
-# YOLOv5 Sanity Summary
+# YOLOv5-X CCLKD Gate Summary
 
 ## Baseline Target Reminder
 
-- YOLOv5 CSPDarkNet-X / YOLOv5x target: 86.23M params, AP50 80.9, AP 46.3.
+- YOLOv5-X CCLKD Table 5 baseline target: about 86M params, AP50 80.9, AP 46.3.
 - Loose pass threshold: AP50 >= 78 and AP >= 44.
 
 ## Best AP Ranking

@@ -18,7 +18,7 @@ except Exception:  # pragma: no cover - runtime fallback for minimal envs
 
 IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff", ".webp"}
 EXPECTED_NC = 3
-EXPECTED_COLD_NAMES = ["oil_tank", "bridge", "harbor"]
+EXPECTED_PAPER_NAMES = ["oil_tank", "bridge", "harbor"]
 PAPER_TRAIN = 14665
 PAPER_TEST = 3666
 KNOWN_ALT_SPLIT = (14664, 3667)
@@ -243,9 +243,9 @@ def check_one(yaml_path: Path, output_dir: Path, fallback_modality: str) -> tupl
         errors.append(f"nc must be 3, got {nc}")
     if len(names) != EXPECTED_NC:
         warnings.append(f"names should contain 3 classes, got {names}")
-    if names != EXPECTED_COLD_NAMES:
+    if names != EXPECTED_PAPER_NAMES:
         warnings.append(
-            "Class order differs from CoLD table order Oil Tank / Bridge / Harbor. "
+            "Class order differs from the CCLKD/shared table order Oil Tank / Bridge / Harbor. "
             f"YAML order is: {names}. Use mapping Oil Tank -> storage_tank, Bridge -> bridge, Harbor -> harbor when reporting per-class AP."
         )
 
@@ -293,7 +293,7 @@ def check_one(yaml_path: Path, output_dir: Path, fallback_modality: str) -> tupl
         "root": str(root),
         "nc": nc,
         "names": names,
-        "class_mapping_for_cold": {
+        "class_mapping_for_paper_table": {
             "Oil Tank": "storage_tank",
             "Bridge": "bridge",
             "Harbor": "harbor",
@@ -342,8 +342,8 @@ def render_markdown(report: dict[str, Any]) -> str:
     lines.extend(["", "## Instance Counts", "", "| class id/name | instances |", "|---|---:|"])
     for name, count in report["instance_counts_by_name"].items():
         lines.append(f"| {name} | {count} |")
-    lines.extend(["", "## CoLD Class Mapping", ""])
-    for paper_name, yaml_name in report["class_mapping_for_cold"].items():
+    lines.extend(["", "## Paper Table Class Mapping", ""])
+    for paper_name, yaml_name in report["class_mapping_for_paper_table"].items():
         lines.append(f"- {paper_name} -> `{yaml_name}`")
     if report["warnings"]:
         lines.extend(["", "## Warnings", ""])

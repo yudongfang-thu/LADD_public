@@ -20,7 +20,7 @@
 | class id/name | instances |
 |---|---:|
 
-## CoLD Class Mapping
+## Paper Table Class Mapping
 
 - Oil Tank -> `storage_tank`
 - Bridge -> `bridge`
@@ -28,7 +28,7 @@
 
 ## Warnings
 
-- Class order differs from CoLD table order Oil Tank / Bridge / Harbor. YAML order is: ['bridge', 'harbor', 'storage_tank']. Use mapping Oil Tank -> storage_tank, Bridge -> bridge, Harbor -> harbor when reporting per-class AP.
+- Class order differs from the CCLKD/shared table order Oil Tank / Bridge / Harbor. YAML order is: ['bridge', 'harbor', 'storage_tank']. Use mapping Oil Tank -> storage_tank, Bridge -> bridge, Harbor -> harbor when reporting per-class AP.
 - Image split path does not exist: /path/to/OGSOD-1.0/sar/images/train
 - Image split path does not exist: /path/to/OGSOD-1.0/sar/images/test
 - Image split path does not exist: /path/to/OGSOD-1.0/sar/images/test

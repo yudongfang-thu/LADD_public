@@ -8,7 +8,7 @@
     "harbor",
     "storage_tank"
   ],
-  "class_mapping_for_cold": {
+  "class_mapping_for_paper_table": {
     "Oil Tank": "storage_tank",
     "Bridge": "bridge",
     "Harbor": "harbor"
@@ -53,7 +53,7 @@
     "test": 3666
   },
   "warnings": [
-    "Class order differs from CoLD table order Oil Tank / Bridge / Harbor. YAML order is: ['bridge', 'harbor', 'storage_tank']. Use mapping Oil Tank -> storage_tank, Bridge -> bridge, Harbor -> harbor when reporting per-class AP.",
+    "Class order differs from the CCLKD/shared table order Oil Tank / Bridge / Harbor. YAML order is: ['bridge', 'harbor', 'storage_tank']. Use mapping Oil Tank -> storage_tank, Bridge -> bridge, Harbor -> harbor when reporting per-class AP.",
     "Image split path does not exist: /path/to/OGSOD-1.0/rgb/images/train",
     "Image split path does not exist: /path/to/OGSOD-1.0/rgb/images/test",
     "Image split path does not exist: /path/to/OGSOD-1.0/rgb/images/test",
