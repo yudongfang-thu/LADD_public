@@ -617,6 +617,10 @@ def train(hyp, opt, device, callbacks):
             float(diag_row.get("ccl_loss", 0.0) or 0.0),
         )
 
+        if student_feature_capture is not None:
+            student_feature_capture.clear()
+        if teacher_feature_capture is not None:
+            teacher_feature_capture.clear()
         ckpt = {
             "epoch": epoch,
             "best_fitness": best_fitness,
