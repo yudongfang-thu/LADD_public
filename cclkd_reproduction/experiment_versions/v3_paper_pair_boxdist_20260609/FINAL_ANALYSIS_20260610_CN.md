@@ -1,6 +1,39 @@
-# CCLKD v3 loss component summary
+# YOLO11n CCLKD v3 paper-pair boxdist 完整消融结果（final）
 
-快照：2026-06-10 09:26 CST。完整数据见 `loss_component_summary.csv` 和 `results/*.csv`。
+快照时间：2026-06-10 09:26 CST
+服务器：`ladd4090`
+协议：LADD baseline protocol，`imgsz=256`，`epochs=400`，`batch=64`，no mosaic，seed 0。
+CCLKD 配置：`formulation=paper`，`ccl_mode=paper_pair`，`ccl_source=box_distribution`，`rld_mode=paper_instance`。
+
+SAR YOLO11n baseline 400ep reference：AP50=0.77497，AP50-95=0.51546。
+
+## Final ranking at epoch 400
+
+| rank | variant | last epoch | last AP50 | last AP | delta AP vs SAR baseline | best epoch | best AP |
+|---:|---|---:|---:|---:|---:|---:|---:|
+| 1 | lld_fld | 400 | 0.79701 | 0.53073 | 0.01527 | 400 | 0.53073 |
+| 2 | lld_fld_rld | 400 | 0.79541 | 0.52793 | 0.01247 | 400 | 0.52793 |
+| 3 | lld | 400 | 0.79417 | 0.52762 | 0.01216 | 399 | 0.52774 |
+| 4 | full | 400 | 0.78764 | 0.52531 | 0.00985 | 400 | 0.52531 |
+| 5 | atkd | 400 | 0.78892 | 0.52487 | 0.00941 | 399 | 0.52500 |
+| 6 | ccl_only | 400 | 0.78560 | 0.52055 | 0.00509 | 400 | 0.52055 |
+
+## Matched-epoch AP50-95 trend
+
+| epoch | baseline AP | lld | lld_fld | lld_fld_rld | ccl_only | atkd | full |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 50 | 0.286510 | 0.309260 | 0.308923 | 0.308279 | 0.301498 | 0.309049 | 0.307602 |
+| 100 | 0.351810 | 0.366566 | 0.370489 | 0.367061 | 0.360463 | 0.366721 | 0.369415 |
+| 150 | 0.381410 | 0.397343 | 0.401291 | 0.397772 | 0.393371 | 0.398739 | 0.400819 |
+| 200 | 0.415590 | 0.431651 | 0.435608 | 0.429893 | 0.429273 | 0.430931 | 0.433895 |
+| 250 | 0.447980 | 0.468237 | 0.465710 | 0.460387 | 0.459055 | 0.461998 | 0.465338 |
+| 300 | 0.475690 | 0.495005 | 0.493139 | 0.489941 | 0.486651 | 0.490579 | 0.492990 |
+| 350 | 0.501100 | 0.516356 | 0.517819 | 0.513490 | 0.508547 | 0.512768 | 0.514404 |
+| 400 | 0.515460 | 0.527620 | 0.530729 | 0.527932 | 0.520551 | 0.524869 | 0.525314 |
+
+## Loss component checkpoints
+
+完整逐 epoch 训练/验证曲线在 `results/*.csv`；下表只列关键 checkpoint。
 
 | variant | epoch | s_box | s_cls | s_dfl | kd | lld | fld | rld | ccl | AP |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
@@ -34,3 +67,20 @@
 | full | 200 | 1.514890 | 0.795850 | 0.920530 | 2.321940 | 1.695720 | 0.100070 | 0.001350 | 0.524800 | 0.433895 |
 | full | 300 | 1.222990 | 0.616380 | 0.860350 | 1.858150 | 1.289480 | 0.080460 | 0.001170 | 0.487040 | 0.492990 |
 | full | 400 | 1.050910 | 0.526880 | 0.832860 | 1.748430 | 1.186900 | 0.069850 | 0.000970 | 0.490710 | 0.525314 |
+
+## 简要结论
+
+1. 六个 YOLO11n CCLKD paper-pair boxdist 消融均已完整跑到 400 epoch，没有发现未完成进程或 NaN 崩溃记录。
+2. 相比同协议 SAR baseline，六组在 400 epoch 都是正增益；最大增益来自 `lld_fld`：AP50-95 从 0.51546 到 0.53073，提升 0.01527。
+3. 组件关系不符合“full 必然最高”的预期：`full` 只比 `atkd` 高 0.00044 AP，但低于 `lld_fld` 0.00542 AP。
+4. `RLD` 没有干净正贡献：`lld_fld_rld` 低于 `lld_fld` 0.00280 AP，说明当前协议下 RLD 可能被强 baseline/低分辨率/YOLO11 DFL 表征弱化，或者 paper formulation 在 YOLO11 上仍存在尺度不匹配。
+5. `CCL only` 有稳定小正增益（+0.00509 AP），说明 CCL 方向不是完全无效；但 `full-atkd` 增益很小，CCL 与 ATKD 的互补性弱。
+6. 当前结果更适合作为“CCLKD 在 LADD 强协议下的受控复现/诊断”证据，不适合直接宣称复现了原文 YOLOv5-X 绝对收益。
+
+## 文件说明
+
+- `results/*_results.csv`：六条 run 的完整 400 epoch Ultralytics results，包含 detection loss、teacher/student loss 和 CCLKD component loss。
+- `args/*_args.yaml`：每条 run 的训练参数快照。
+- `milestone_comparison.csv`：50/100/150/200/250/300/350/400 epoch 与 SAR baseline 的同 epoch 对比。
+- `loss_component_summary.csv`：关键 epoch 的 student/teacher detection loss 和 CCLKD LLD/FLD/RLD/CCL loss。
+- `raw_runs/log_tail_*_20260610_0926.txt`：每条 run 的最终日志尾部，用于核查训练结束状态。
