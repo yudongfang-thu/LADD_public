@@ -546,7 +546,11 @@ def train(hyp, opt, device, callbacks):
             mloss = (mloss * i + display_items) / (i + 1)
             kd_diag["nan_or_inf_detected"] = max(
                 float(kd_diag.get("nan_or_inf_detected", 0.0)),
-                float((~torch.isfinite(torch.stack((loss.detach(), kd_loss.detach())))).any().item()),
+                float(
+                    (~torch.isfinite(torch.cat((loss.detach().reshape(-1), kd_loss.detach().reshape(-1)))))
+                    .any()
+                    .item()
+                ),
             )
             kd_diag.setdefault("kd_scale", float(kd_scale))
             update_diag_sums(diag_sums, kd_diag, student_det, kd_loss)
