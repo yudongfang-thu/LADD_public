@@ -47,6 +47,8 @@ VLR 是 YOLO 适配，不是官方 region selector 的逐行复现。
 Teacher 虽处于 eval 模式，但当前 Ultralytics Detect head 会返回
 `(decoded_predictions, raw_predictions_dict)`，本实现从第二项提取原始 DFL
 logits。当前增加了 fail-fast 检查，并使用独立 `ld_temperature=10.0`。
+默认 `ld_main_weight=0.25`、`ld_vlr_weight=0.25`，对齐官方 LD loss weight
+量级，同时保持 `ld_use_vlr=1`。
 
 ### FGD
 
@@ -63,6 +65,9 @@ logits。当前增加了 fail-fast 检查，并使用独立 `ld_temperature=10.0
 
 因此正式写作应使用 `FGD-style` 或 `FGD-YOLO adaptation`，并注明
 `focal + attention mask implemented; official trainable global relation disabled by default`。
+默认内部权重按官方量级设置：`fgd_alpha=0.001`、`fgd_beta=0.0005`、
+`fgd_gamma=0.001`、`fgd_lambda=0.0`。其中 `fgd_lambda` 保持为 0，因为当前未实现
+official trainable global relation，不能默认打开 legacy batch relation。
 
 ### CCLKD paper-structured reimplementation
 

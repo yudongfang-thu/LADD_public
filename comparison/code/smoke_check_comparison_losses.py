@@ -31,9 +31,9 @@ def make_loss(**overrides):
         TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB
     )
     defaults = {
-        "fgd_alpha": 1.0,
-        "fgd_beta": 0.5,
-        "fgd_gamma": 1.0,
+        "fgd_alpha": 0.001,
+        "fgd_beta": 0.0005,
+        "fgd_gamma": 0.001,
         "fgd_lambda": 0.0,
         "fgd_temperature": 0.5,
         "fgd_mask_mode": "gt_box",
@@ -43,8 +43,8 @@ def make_loss(**overrides):
         "ld_quality_power": 1.0,
         "ld_min_vlr_weight": 0.0,
         "ld_vlr_topk": 0,
-        "ld_vlr_weight": 1.0,
-        "ld_main_weight": 1.0,
+        "ld_vlr_weight": 0.25,
+        "ld_main_weight": 0.25,
         "ld_allow_empty_vlr": True,
         "_ld_warned_missing_teacher_scores": False,
     }

@@ -153,9 +153,9 @@ cmd=(
 case "$METHOD" in
   fgd)
     cmd+=(
-      "FGD_ALPHA=${FGD_ALPHA:-1.0}"
-      "FGD_BETA=${FGD_BETA:-0.5}"
-      "FGD_GAMMA=${FGD_GAMMA:-1.0}"
+      "FGD_ALPHA=${FGD_ALPHA:-0.001}"
+      "FGD_BETA=${FGD_BETA:-0.0005}"
+      "FGD_GAMMA=${FGD_GAMMA:-0.001}"
       "FGD_LAMBDA=${FGD_LAMBDA:-${FGD_RELATION_WEIGHT:-0.0}}"
       "FGD_TEMPERATURE=${FGD_TEMPERATURE:-0.5}"
       "FGD_MASK_MODE=${FGD_MASK_MODE:-gt_box}"
@@ -169,8 +169,8 @@ case "$METHOD" in
       "LD_QUALITY_POWER=${LD_QUALITY_POWER:-1.0}"
       "LD_MIN_VLR_WEIGHT=${LD_MIN_VLR_WEIGHT:-0.0}"
       "LD_VLR_TOPK=${LD_VLR_TOPK:-0}"
-      "LD_VLR_WEIGHT=${LD_VLR_WEIGHT:-1.0}"
-      "LD_MAIN_WEIGHT=${LD_MAIN_WEIGHT:-1.0}"
+      "LD_VLR_WEIGHT=${LD_VLR_WEIGHT:-0.25}"
+      "LD_MAIN_WEIGHT=${LD_MAIN_WEIGHT:-0.25}"
       "LD_ALLOW_EMPTY_VLR=${LD_ALLOW_EMPTY_VLR:-1}"
     )
     ;;

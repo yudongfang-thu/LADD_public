@@ -158,9 +158,9 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Use the selected comparison profile instead of the base feature-KD term inside kd_loss.",
     )
-    parser.add_argument("--fgd-alpha", type=float, default=1.0)
-    parser.add_argument("--fgd-beta", type=float, default=0.5)
-    parser.add_argument("--fgd-gamma", type=float, default=1.0)
+    parser.add_argument("--fgd-alpha", type=float, default=0.001)
+    parser.add_argument("--fgd-beta", type=float, default=0.0005)
+    parser.add_argument("--fgd-gamma", type=float, default=0.001)
     parser.add_argument("--fgd-lambda", type=float, default=0.0)
     parser.add_argument("--fgd-relation-weight", type=float, default=None, help="Deprecated alias for --fgd-lambda.")
     parser.add_argument("--fgd-temperature", type=float, default=0.5)
@@ -171,8 +171,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--ld-quality-power", type=float, default=1.0)
     parser.add_argument("--ld-min-vlr-weight", type=float, default=0.0)
     parser.add_argument("--ld-vlr-topk", type=int, default=0)
-    parser.add_argument("--ld-vlr-weight", type=float, default=1.0)
-    parser.add_argument("--ld-main-weight", type=float, default=1.0)
+    parser.add_argument("--ld-vlr-weight", type=float, default=0.25)
+    parser.add_argument("--ld-main-weight", type=float, default=0.25)
     parser.add_argument("--ld-allow-empty-vlr", type=int, default=1)
     parser.add_argument("--cclkd-base-temperature", type=float, default=2.0)
     parser.add_argument("--cclkd-contrastive-temperature", type=float, default=0.1)
