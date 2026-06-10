@@ -1,0 +1,91 @@
+2026-06-10 02:13:32 watchdog_start repo=/root/shared-nvme/LADD_public gpu=1 interval=1800s min_free_mb=22000
+2026-06-10 02:13:32 status gpu1_free_mb=15697 launcher_alive=yes train_pids=165947 epoch=none results_age_s=999999999
+2026-06-10 02:13:32 WARN training results stale but process alive; not killing active process
+2026-06-10 02:14:08 watchdog_start repo=/root/shared-nvme/LADD_public gpu=1 interval=1800s min_free_mb=22000
+2026-06-10 02:14:08 status gpu1_free_mb=15697 launcher_alive=yes train_pids=none epoch=none results_age_s=999999999
+2026-06-10 02:44:08 status gpu1_free_mb=19884 launcher_alive=yes train_pids=none epoch=none results_age_s=999999999
+2026-06-10 03:14:08 status gpu1_free_mb=24080 launcher_alive=no train_pids=none epoch=none results_age_s=999999999
+2026-06-10 03:14:08 ACTION restart_or_start_launcher gpu=1 min_free_mb=22000
+Started YOLOv5x online CCLKD full launcher: yolov5x_online_cclkd_full_b64_s0_cclkd_full_yolov5x_b64_s0_gpu1
+PID: 170805
+Log: /root/shared-nvme/LADD_public/cclkd_reproduction/yolov5_sanity/results/runs/yolov5x_online_cclkd_full_b64_s0_cclkd_full_yolov5x_b64_s0_gpu1/nohup.log
+2026-06-10 03:44:08 status gpu1_free_mb=24080 launcher_alive=no train_pids=none epoch=none results_age_s=999999999
+2026-06-10 03:44:08 ACTION restart_or_start_launcher gpu=1 min_free_mb=22000
+Started YOLOv5x online CCLKD full launcher: yolov5x_online_cclkd_full_b64_s0_cclkd_full_yolov5x_b64_s0_gpu1
+PID: 171093
+Log: /root/shared-nvme/LADD_public/cclkd_reproduction/yolov5_sanity/results/runs/yolov5x_online_cclkd_full_b64_s0_cclkd_full_yolov5x_b64_s0_gpu1/nohup.log
+2026-06-10 04:14:09 status gpu1_free_mb=24080 launcher_alive=no train_pids=none epoch=none results_age_s=999999999
+2026-06-10 04:14:09 ACTION restart_or_start_launcher gpu=1 min_free_mb=22000
+Started YOLOv5x online CCLKD full launcher: yolov5x_online_cclkd_full_b64_s0_cclkd_full_yolov5x_b64_s0_gpu1
+PID: 171374
+Log: /root/shared-nvme/LADD_public/cclkd_reproduction/yolov5_sanity/results/runs/yolov5x_online_cclkd_full_b64_s0_cclkd_full_yolov5x_b64_s0_gpu1/nohup.log
+2026-06-10 04:44:09 status gpu1_free_mb=24080 launcher_alive=no train_pids=none epoch=none results_age_s=999999999
+2026-06-10 04:44:09 ACTION restart_or_start_launcher gpu=1 min_free_mb=22000
+Started YOLOv5x online CCLKD full launcher: yolov5x_online_cclkd_full_b64_s0_cclkd_full_yolov5x_b64_s0_gpu1
+PID: 172186
+Log: /root/shared-nvme/LADD_public/cclkd_reproduction/yolov5_sanity/results/runs/yolov5x_online_cclkd_full_b64_s0_cclkd_full_yolov5x_b64_s0_gpu1/nohup.log
+2026-06-10 05:14:09 status gpu1_free_mb=24080 launcher_alive=no train_pids=none epoch=none results_age_s=999999999
+2026-06-10 05:14:09 ACTION restart_or_start_launcher gpu=1 min_free_mb=22000
+Started YOLOv5x online CCLKD full launcher: yolov5x_online_cclkd_full_b64_s0_cclkd_full_yolov5x_b64_s0_gpu1
+PID: 172425
+Log: /root/shared-nvme/LADD_public/cclkd_reproduction/yolov5_sanity/results/runs/yolov5x_online_cclkd_full_b64_s0_cclkd_full_yolov5x_b64_s0_gpu1/nohup.log
+2026-06-10 05:44:09 status gpu1_free_mb=24080 launcher_alive=no train_pids=none epoch=none results_age_s=999999999
+2026-06-10 05:44:09 ACTION restart_or_start_launcher gpu=1 min_free_mb=22000
+Started YOLOv5x online CCLKD full launcher: yolov5x_online_cclkd_full_b64_s0_cclkd_full_yolov5x_b64_s0_gpu1
+PID: 172635
+Log: /root/shared-nvme/LADD_public/cclkd_reproduction/yolov5_sanity/results/runs/yolov5x_online_cclkd_full_b64_s0_cclkd_full_yolov5x_b64_s0_gpu1/nohup.log
+2026-06-10 06:14:09 status gpu1_free_mb=24080 launcher_alive=no train_pids=none epoch=none results_age_s=999999999
+2026-06-10 06:14:09 ACTION restart_or_start_launcher gpu=1 min_free_mb=22000
+Started YOLOv5x online CCLKD full launcher: yolov5x_online_cclkd_full_b64_s0_cclkd_full_yolov5x_b64_s0_gpu1
+PID: 172788
+Log: /root/shared-nvme/LADD_public/cclkd_reproduction/yolov5_sanity/results/runs/yolov5x_online_cclkd_full_b64_s0_cclkd_full_yolov5x_b64_s0_gpu1/nohup.log
+2026-06-10 06:44:09 status gpu1_free_mb=24080 launcher_alive=no train_pids=none epoch=none results_age_s=999999999
+2026-06-10 06:44:09 ACTION restart_or_start_launcher gpu=1 min_free_mb=22000
+Started YOLOv5x online CCLKD full launcher: yolov5x_online_cclkd_full_b64_s0_cclkd_full_yolov5x_b64_s0_gpu1
+PID: 173142
+Log: /root/shared-nvme/LADD_public/cclkd_reproduction/yolov5_sanity/results/runs/yolov5x_online_cclkd_full_b64_s0_cclkd_full_yolov5x_b64_s0_gpu1/nohup.log
+2026-06-10 07:14:10 status gpu1_free_mb=24080 launcher_alive=no train_pids=none epoch=none results_age_s=999999999
+2026-06-10 07:14:10 ACTION restart_or_start_launcher gpu=1 min_free_mb=22000
+Started YOLOv5x online CCLKD full launcher: yolov5x_online_cclkd_full_b64_s0_cclkd_full_yolov5x_b64_s0_gpu1
+PID: 173352
+Log: /root/shared-nvme/LADD_public/cclkd_reproduction/yolov5_sanity/results/runs/yolov5x_online_cclkd_full_b64_s0_cclkd_full_yolov5x_b64_s0_gpu1/nohup.log
+2026-06-10 07:44:10 status gpu1_free_mb=24080 launcher_alive=no train_pids=none epoch=none results_age_s=999999999
+2026-06-10 07:44:10 ACTION restart_or_start_launcher gpu=1 min_free_mb=22000
+Started YOLOv5x online CCLKD full launcher: yolov5x_online_cclkd_full_b64_s0_cclkd_full_yolov5x_b64_s0_gpu1
+PID: 173511
+Log: /root/shared-nvme/LADD_public/cclkd_reproduction/yolov5_sanity/results/runs/yolov5x_online_cclkd_full_b64_s0_cclkd_full_yolov5x_b64_s0_gpu1/nohup.log
+2026-06-10 08:14:10 status gpu1_free_mb=24080 launcher_alive=no train_pids=none epoch=none results_age_s=999999999
+2026-06-10 08:14:10 ACTION restart_or_start_launcher gpu=1 min_free_mb=22000
+Started YOLOv5x online CCLKD full launcher: yolov5x_online_cclkd_full_b64_s0_cclkd_full_yolov5x_b64_s0_gpu1
+PID: 173813
+Log: /root/shared-nvme/LADD_public/cclkd_reproduction/yolov5_sanity/results/runs/yolov5x_online_cclkd_full_b64_s0_cclkd_full_yolov5x_b64_s0_gpu1/nohup.log
+2026-06-10 08:44:10 status gpu1_free_mb=24080 launcher_alive=no train_pids=none epoch=none results_age_s=999999999
+2026-06-10 08:44:10 ACTION restart_or_start_launcher gpu=1 min_free_mb=22000
+Started YOLOv5x online CCLKD full launcher: yolov5x_online_cclkd_full_b64_s0_cclkd_full_yolov5x_b64_s0_gpu1
+PID: 174086
+Log: /root/shared-nvme/LADD_public/cclkd_reproduction/yolov5_sanity/results/runs/yolov5x_online_cclkd_full_b64_s0_cclkd_full_yolov5x_b64_s0_gpu1/nohup.log
+2026-06-10 09:14:10 status gpu1_free_mb=24080 launcher_alive=no train_pids=none epoch=none results_age_s=999999999
+2026-06-10 09:14:10 ACTION restart_or_start_launcher gpu=1 min_free_mb=22000
+Started YOLOv5x online CCLKD full launcher: yolov5x_online_cclkd_full_b64_s0_cclkd_full_yolov5x_b64_s0_gpu1
+PID: 174473
+Log: /root/shared-nvme/LADD_public/cclkd_reproduction/yolov5_sanity/results/runs/yolov5x_online_cclkd_full_b64_s0_cclkd_full_yolov5x_b64_s0_gpu1/nohup.log
+2026-06-10 09:44:11 status gpu1_free_mb=4842 launcher_alive=yes train_pids=175032 epoch=13 results_age_s=34
+2026-06-10 10:14:11 status gpu1_free_mb=4770 launcher_alive=yes train_pids=175032 epoch=28 results_age_s=47
+2026-06-10 10:44:11 status gpu1_free_mb=4770 launcher_alive=yes train_pids=175032 epoch=44 results_age_s=33
+2026-06-10 11:14:11 status gpu1_free_mb=4770 launcher_alive=yes train_pids=175032 epoch=60 results_age_s=38
+2026-06-10 11:44:12 status gpu1_free_mb=4770 launcher_alive=yes train_pids=175032 epoch=76 results_age_s=79
+2026-06-10 12:14:12 status gpu1_free_mb=4770 launcher_alive=yes train_pids=175032 epoch=93 results_age_s=37
+2026-06-10 12:44:12 status gpu1_free_mb=4770 launcher_alive=yes train_pids=175032 epoch=109 results_age_s=60
+2026-06-10 13:14:12 status gpu1_free_mb=4770 launcher_alive=yes train_pids=175032 epoch=126 results_age_s=10
+2026-06-10 13:44:12 status gpu1_free_mb=4770 launcher_alive=yes train_pids=175032 epoch=142 results_age_s=15
+2026-06-10 14:14:13 status gpu1_free_mb=4770 launcher_alive=yes train_pids=175032 epoch=158 results_age_s=51
+2026-06-10 14:44:13 status gpu1_free_mb=24080 launcher_alive=no train_pids=none epoch=168 results_age_s=739
+2026-06-10 14:44:13 ACTION restart_or_start_launcher gpu=1 min_free_mb=22000
+Started YOLOv5x online CCLKD full launcher: yolov5x_online_cclkd_full_b64_s0_cclkd_full_yolov5x_b64_s0_gpu1
+PID: 182557
+Log: /root/shared-nvme/LADD_public/cclkd_reproduction/yolov5_sanity/results/runs/yolov5x_online_cclkd_full_b64_s0_cclkd_full_yolov5x_b64_s0_gpu1/nohup.log
+2026-06-10 15:14:13 status gpu1_free_mb=4840 launcher_alive=yes train_pids=182566 epoch=13 results_age_s=106
+2026-06-10 15:44:14 status gpu1_free_mb=4840 launcher_alive=yes train_pids=182566 epoch=29 results_age_s=88
+2026-06-10 16:14:14 status gpu1_free_mb=4772 launcher_alive=yes train_pids=182566 epoch=46 results_age_s=47
+2026-06-10 16:44:14 status gpu1_free_mb=4772 launcher_alive=yes train_pids=182566 epoch=62 results_age_s=3
+2026-06-10 17:14:15 status gpu1_free_mb=4772 launcher_alive=yes train_pids=182566 epoch=77 results_age_s=88

@@ -1,6 +1,6 @@
 # LADD H1 主线诊断计划
 
-最后更新：2026-06-09
+最后更新：2026-06-10
 
 ## 1. 当前问题
 
@@ -85,6 +85,17 @@ SERVER_TAG=<server_name> GPU_ID=<gpu_id> DRY_RUN=0 RUN_SET=p1 \
 
 ## 6. 结果汇总
 
+2026-06-10 已完成部分 P1 与对照诊断，见：
+
+- [LADD_H1_DIAG_RESULTS_20260610_CN.md](LADD_H1_DIAG_RESULTS_20260610_CN.md)
+- [ladd_h1_diag_20260610_artifacts/](ladd_h1_diag_20260610_artifacts/)
+
+当前读法：
+
+- `diag_h1_n_seed0_b100_smoke` 通过，说明 H1 修复没有破坏 YOLO11n。
+- `diag_h1_s_seed0_b400` best 高于 SAR baseline，但 last 明显退化，H1 仍不能冻结为 s 主线。
+- 不考虑 m 时，下一步应人工决定是否进入 `P2_s` 的 KD 强度诊断。
+
 P1 结果出来后运行：
 
 ```bash
@@ -100,6 +111,6 @@ python tools/summarize_ladd_diag_runs.py \
 
 - 不混用 4090D 的 invalid 或疑似协议错误结果作为主线证据。
 - 不改 dataset yaml、imgsz、augmentation、YOLO 版本、teacher/student 配对协议。
-- 不提交 raw logs、checkpoints、runs、wandb、tensorboard event。
+- 不提交 checkpoints、`runs_public/` 整目录、wandb、tensorboard event；只提交筛选后的轻量 logs/results 证据。
 - 所有结果必须记录 git commit SHA 和 server/GPU 信息。
 - H1 不能直接宣传为最终主线，只能作为下一轮诊断候选。

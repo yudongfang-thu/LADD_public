@@ -36,7 +36,12 @@ if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
 fi
 
 RUN_TAG="${1:-converged800_ladd_$(date +%Y%m%d_%H%M%S)}"
-ROOT_DIR="$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if ROOT_DIR="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel 2>/dev/null)"; then
+  :
+else
+  ROOT_DIR="$(cd "$SCRIPT_DIR/../../../../.." && pwd)"
+fi
 cd "$ROOT_DIR"
 
 : "${SAR_BASELINE:?Set SAR_BASELINE to the converged SAR baseline checkpoint.}"

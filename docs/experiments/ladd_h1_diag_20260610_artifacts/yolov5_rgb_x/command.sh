@@ -1,0 +1,2 @@
+cd /root/shared-nvme/LADD_public/external/yolov5
+/root/shared-nvme/LADD_public/.venv_yolov5/bin/python train.py --img 256 --epochs 400 --batch-size 64 --data /root/shared-nvme/LADD_public/configs/datasets/ogsod_hbb_rgb.yaml --hyp /root/shared-nvme/LADD_public/cclkd_reproduction/yolov5_sanity/configs/hyp_cold_ogsod.yaml --device 0 --project /root/shared-nvme/LADD_public/cclkd_reproduction/yolov5_sanity/results/runs --name yolov5_rgb_x_pretrained_b64_s0_cclkd_gate_rgb_x_b64_pretrained_clean_gpu0 --weights yolov5x.pt --optimizer SGD --seed 0 --exist-ok

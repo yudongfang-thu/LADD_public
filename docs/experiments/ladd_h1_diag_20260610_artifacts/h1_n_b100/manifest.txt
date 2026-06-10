@@ -1,0 +1,36 @@
+git_commit=unknown
+server_tag=shared_nvme_gpu0
+task=hbb
+chain=a1,a2,b
+run_tag=formal_nomosaic_yolo11n_cap2_s0_diag_h1_n_s0_b100_smoke
+sar_baseline=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/sar/sar_yolo11n_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt
+rgb_teacher=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/rgb/rgb_yolo11n_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt
+seed=0
+gpu_id=0
+imgsz=256
+batch_size=64
+epochs_a1=10
+epochs_a2=50
+epochs_b=100
+a2_schedule=optimizer=MuSGD, lr0=0.001, lrf=0.01, warmup_epochs=0, warmup_bias_lr=0.001
+b_schedule=optimizer=MuSGD, cos_lr=1, lr0=0.001, lrf=0.01, warmup_epochs=0, warmup_bias_lr=0.001, close_at_epoch=100
+alpha_kd=1.0
+alpha_s_rec=0.1
+alpha_sep=0.05
+lambda_reach=1.0
+lambda_match_inner=1.0
+lambda_rank_inner=1.0
+lambda_residual_aux=0.25
+residual_aux_mode=energy
+b_freeze_bn_after_epoch=0
+ladd_diag_log_bn=1
+ladd_diag_log_grad=1
+ladd_grad_clip_norm=0.0
+ladd_assert_phase_freeze=1
+ladd_diag_log_every=1
+rank_d_neg_cap=2.0
+lambda_anti_collapse=0.0
+anti_collapse_floor=0.0
+a1=/root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11n/cap2/ladd_hbb_ogsod11n_formal_nomosaic_yolo11n_cap2_s0_diag_h1_n_s0_b100_smoke_a1_e10_b64_s0_gpu0
+a2=/root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11n/cap2/ladd_hbb_ogsod11n_formal_nomosaic_yolo11n_cap2_s0_diag_h1_n_s0_b100_smoke_a2_e50_b64_s0_gpu0
+b=/root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11n/cap2/ladd_hbb_ogsod11n_formal_nomosaic_yolo11n_cap2_s0_diag_h1_n_s0_b100_smoke_b_e100_b64_s0_gpu0
