@@ -131,7 +131,7 @@ hallucinated image，再由 frozen RGB detector detection loss 反传训练；�
 ## 5. 4090 服务器 smoke 记录
 
 2026-06-10 在双卡 4090 服务器 `ladd4090` 上完成 synthetic smoke。为避免污染
-服务器正式运行目录，使用本地 `git archive HEAD` 将 commit `2d5adf9` 的干净快照
+服务器正式运行目录，使用本地 `git archive HEAD` 将 commit `8027757` 的干净快照
 传到临时目录：
 
 ```text
@@ -154,3 +154,34 @@ bash -n ladd/code_versions/current_hbb/scripts/ogsod_public/run_ladd_phase.sh
 ```
 
 本次只验证 comparison loss、CLI 参数和 launcher 语法；未启动正式训练。
+
+### 5.1 4090 runtime smoke 进度
+
+2026-06-10 进一步在 `ladd4090:/root/shared-nvme/LADD_public` 上启动 20 epoch
+runtime smoke。用户原始命令指定 GPU0/GPU1/GPU2；实际服务器只有 GPU0/GPU1，
+且 GPU0 被已有任务占用、GPU2 不存在，因此本次将 `fgd`、`ld`、`hallucidet_style`
+改为 GPU1 串行执行。命令统一使用：
+
+```bash
+COMPARISON_IMPL_VERSION=v2_20260610_runtime_smoke \
+EPOCHS_B=20 PATIENCE_B=20 PROFILE_KD_WEIGHT=1.0 \
+comparison/code/launch_formal_transfer_kd_job.sh <method> n 0 <gpu_id>
+```
+
+当前记录时间：2026-06-10 18:45 CST。
+
+| 方法 | GPU | 状态 | 关键观察 |
+|---|---:|---|---|
+| `ld` | 1 | 完成 20/20 epoch | `train/kd_loss` 有限且非零，最后一轮约 `0.00749`；未见 NaN/OOM |
+| `fgd` | 1 | 完成 20/20 epoch | `train/kd_loss` 有限，最后一轮约 `3.38704`；量级仍偏大，正式重跑前需继续评估权重尺度 |
+| `hallucidet_style` | 1 | 运行中，已写入 7 epoch CSV | `train/kd_loss` 有限，前 7 epoch 约 `0.42-0.53`；未见启动/shape/runtime 错误 |
+
+服务器 runtime 中还暴露了两个部署细节：
+
+1. comparison launcher 经根目录 `scripts/ogsod_public/run_ladd_phase.sh` symlink
+   调用 phase 脚本时，服务器布局下可能误判 repo root。当前 launcher 已改为显式调用
+   `ladd/code_versions/current_hbb/scripts/ogsod_public/run_ladd_phase.sh`。
+2. `run_ladd_phase.sh` 在训练结束后尝试调用
+   `/root/shared-nvme/LADD_public/tools/summarize_tskd_results.py`，该 public
+   runtime 中不存在该汇总脚本。该错误发生在训练完成后，`results.csv` 和 run
+   directory 已正常生成；本轮只记录该环境问题，不修改 LADD phase 主线脚本。

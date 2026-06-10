@@ -185,7 +185,7 @@ case "$METHOD" in
     ;;
 esac
 
-cmd+=(scripts/ogsod_public/run_ladd_phase.sh hbb b "$RUN_TAG")
+cmd+=(ladd/code_versions/current_hbb/scripts/ogsod_public/run_ladd_phase.sh hbb b "$RUN_TAG")
 
 echo "[$(date '+%F %T')] Launching formal transferred KD ${METHOD} yolo11${SIZE} seed=${SEED} gpu=${GPU_ID}"
 echo "sar_baseline=${SAR_BASELINE}"
