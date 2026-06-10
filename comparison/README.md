@@ -3,6 +3,8 @@
 同类检测 KD 方法在 OGSOD formal 协议下的受控对比。训练入口均在
 `../ladd/code/train_ladd_hbb.py`，实现是统一的 KD profile 系统。实现边界与
 本次修复见 [`IMPLEMENTATION_REVIEW_CN.md`](IMPLEMENTATION_REVIEW_CN.md)。
+非 CCLKD 对比方法的独立审查见
+[`NON_CCLKD_IMPLEMENTATION_AUDIT_CN.md`](NON_CCLKD_IMPLEMENTATION_AUDIT_CN.md)。
 第二、三轮外部复核意见的逐条响应及官方证据见
 [`REVIEW_FEEDBACK_RESPONSE_CN.md`](REVIEW_FEEDBACK_RESPONSE_CN.md)。
 旧 smoke 记录已降级为历史说明；双卡 4090 部分已因 `nc=5` yaml 错误作废。
