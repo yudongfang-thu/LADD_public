@@ -1062,6 +1062,7 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             model.student_r_fg_heads.train(train_residual_aux)
         if self._should_freeze_bn_stats():
             self._set_bn_stats_eval(model)
+        self._refresh_effective_ladd_weights()
         self._assert_b_phase_frozen_modules(model, context="after_model_train_and_bn_freeze")
 
     def optimizer_step(self):

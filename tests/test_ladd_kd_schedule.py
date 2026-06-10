@@ -112,3 +112,30 @@ def test_a2_det_only_zeroes_non_detection_weights_and_scales():
     assert scales["match"] == 0.0
     assert scales["unmatch"] == 0.0
     assert scales["task"] == 0.0
+
+
+def test_model_train_refreshes_effective_weights_before_phase_assert():
+    paths = [
+        ROOT / "ladd" / "code" / "src" / "teacher_student_decomposition_kd_hbb" / "trainer.py",
+        ROOT
+        / "ladd"
+        / "code_versions"
+        / "current_hbb"
+        / "src"
+        / "teacher_student_decomposition_kd_hbb"
+        / "trainer.py",
+    ]
+    for path in paths:
+        text = path.read_text(encoding="utf-8")
+        start = text.find("    def _model_train(self):")
+        end = text.find("    def optimizer_step(self):", start)
+        assert start >= 0, path
+        assert end >= 0, path
+        model_train = text[start:end]
+        refresh_idx = model_train.find("self._refresh_effective_ladd_weights()")
+        assert_idx = model_train.find(
+            'self._assert_b_phase_frozen_modules(model, context="after_model_train_and_bn_freeze")'
+        )
+        assert refresh_idx >= 0, path
+        assert assert_idx >= 0, path
+        assert refresh_idx < assert_idx, path
