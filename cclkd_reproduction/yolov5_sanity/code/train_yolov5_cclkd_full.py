@@ -645,7 +645,10 @@ def train(hyp, opt, device, callbacks):
     LOGGER.info(f"\n{epoch + 1} epochs completed in {(time.time() - t0) / 3600:.3f} hours.")
     for f in (last, best):
         if f.exists():
-            strip_optimizer(f)
+            try:
+                strip_optimizer(f)
+            except Exception as exc:
+                LOGGER.warning(f"Could not strip optimizer from {f}: {exc}")
     torch.cuda.empty_cache()
     return results
 
