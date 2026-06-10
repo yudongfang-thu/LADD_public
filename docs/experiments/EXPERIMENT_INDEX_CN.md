@@ -1,6 +1,6 @@
 # 实验记录索引
 
-最后更新：2026-06-09
+最后更新：2026-06-11
 
 本文档是当前实验状态的入口。当前 public 分支只保留主线代码、正式对比方法和关键摘要。
 
@@ -22,6 +22,7 @@
 | LADD LR/BN/schedule 诊断计划 | [LADD_LR_BN_DIAGNOSTIC_PLAN_20260609_CN.md](LADD_LR_BN_DIAGNOSTIC_PLAN_20260609_CN.md) |
 | LADD LR/BN/schedule 诊断 smoke 记录 | [LADD_LR_BN_DIAGNOSTIC_SMOKE_20260609_CN.md](LADD_LR_BN_DIAGNOSTIC_SMOKE_20260609_CN.md) |
 | LADD capacity-aware KD 诊断计划 | [LADD_CAPACITY_AWARE_KD_DIAG_PLAN_20260610_CN.md](LADD_CAPACITY_AWARE_KD_DIAG_PLAN_20260610_CN.md) |
+| LADD capacity-aware KD 已启动实验 | [LADD_CAPACITY_KD_ACTIVE_RUNS_20260611_CN.md](LADD_CAPACITY_KD_ACTIVE_RUNS_20260611_CN.md) |
 | LADD 方法概述 | [../method/METHOD_OVERVIEW_CN.md](../method/METHOD_OVERVIEW_CN.md) |
 
 ## 当前正式主线
