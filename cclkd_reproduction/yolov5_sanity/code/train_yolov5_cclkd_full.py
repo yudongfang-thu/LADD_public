@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import math
 import os
 import random
@@ -26,9 +27,50 @@ YOLOV5_DIR = REPO_ROOT / "external" / "yolov5"
 if str(YOLOV5_DIR) not in sys.path:
     sys.path.insert(0, str(YOLOV5_DIR))
 
-MODES = ("det_only_same_trainer", "two_branch_no_kd", "current_full")
+MODES = (
+    "det_only_same_trainer",
+    "two_branch_no_kd",
+    "raw_proxy_full",
+    "paper_atkd_only",
+    "paper_ccl_only",
+    "paper_full",
+    "current_full",
+)
+PAPER_MODES = {"paper_atkd_only", "paper_ccl_only", "paper_full"}
+RAW_PROXY_MODES = {"raw_proxy_full", "current_full"}
+DIAG_FIELDS = (
+    "epoch",
+    "mode",
+    "student_box_loss",
+    "student_obj_loss",
+    "student_cls_loss",
+    "teacher_box_loss",
+    "teacher_obj_loss",
+    "teacher_cls_loss",
+    "kd_total_loss",
+    "lld_loss",
+    "fld_loss",
+    "rld_loss",
+    "ccl_loss",
+    "kd_to_student_det_ratio",
+    "cop_valid_candidates",
+    "cop_positive_candidates",
+    "cop_positive_ratio",
+    "cop_class0_count",
+    "cop_class1_count",
+    "cop_class2_count",
+    "neg_candidates_mean",
+    "temperature_mean",
+    "temperature_min",
+    "temperature_max",
+    "feature_capture_ok",
+    "student_feature_levels",
+    "teacher_feature_levels",
+    "nan_or_inf_detected",
+)
 
 import val as validate  # noqa: E402
+from cclkd_yolov5_loss import YoloV5FeatureCapture, cclkd_paper_loss, positive_vectors  # noqa: E402
 from models.experimental import attempt_load  # noqa: E402
 from models.yolo import Model  # noqa: E402
 from utils.autoanchor import check_anchors  # noqa: E402
@@ -61,6 +103,10 @@ from utils.torch_utils import (  # noqa: E402
     select_device,
     smart_optimizer,
 )
+
+
+def effective_mode(mode: str) -> str:
+    return "raw_proxy_full" if mode == "current_full" else mode
 
 
 class PairedYoloV5Dataset(torch.utils.data.Dataset):
@@ -169,24 +215,8 @@ def load_yolov5_model(weights: str, cfg: str, nc: int, hyp: dict, device: torch.
     return model
 
 
-def positive_vectors(preds, indices):
-    out = []
-    for level, pi in enumerate(preds):
-        b, a, gj, gi = indices[level]
-        if b.numel():
-            out.append(pi[b, a, gj, gi])
-    if out:
-        return torch.cat(out, 0)
-    return preds[0].new_zeros((0, preds[0].shape[-1]))
-
-
-def cclkd_full_loss(student_preds, teacher_preds, targets, student_loss: ComputeLoss):
-    """YOLOv5-adapted CCLKD full loss.
-
-    YOLOv5 has anchor logits rather than YOLO11 DFL logits, so this keeps the
-    full signal family but maps it to raw YOLOv5 prediction vectors:
-    localization KD, foreground/class KD, relation KD, and class-contrastive KD.
-    """
+def raw_proxy_full_loss(student_preds, teacher_preds, targets, student_loss: ComputeLoss):
+    """Legacy raw YOLOv5 head-vector proxy kept only for regression snapshots."""
 
     with torch.no_grad():
         tcls, _tbox, indices, _anchors = student_loss.build_targets(student_preds, targets)
@@ -236,13 +266,43 @@ def cclkd_full_loss(student_preds, teacher_preds, targets, student_loss: Compute
     return total, torch.stack((lld.detach(), fld.detach(), rld.detach(), ccl.detach()))
 
 
+def write_diagnostics_csv(path: Path, row: dict):
+    new_file = not path.exists()
+    with path.open("a", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=DIAG_FIELDS)
+        if new_file:
+            writer.writeheader()
+        writer.writerow({k: row.get(k, "") for k in DIAG_FIELDS})
+
+
+def update_diag_sums(diag_sums: dict[str, float], diag: dict, student_det, kd_loss):
+    for key in DIAG_FIELDS:
+        if key in {"epoch", "mode"}:
+            continue
+        if key == "kd_to_student_det_ratio":
+            value = float((kd_loss.detach() / student_det.detach().abs().clamp_min(1e-12)).item())
+        elif key in diag:
+            value = diag[key]
+        else:
+            continue
+        try:
+            if key == "nan_or_inf_detected":
+                diag_sums[key] = max(diag_sums.get(key, 0.0), float(value))
+            else:
+                diag_sums[key] = diag_sums.get(key, 0.0) + float(value)
+        except (TypeError, ValueError):
+            continue
+
+
 def train(hyp, opt, device, callbacks):
     save_dir = Path(opt.save_dir)
     weights_dir = save_dir / "weights"
     weights_dir.mkdir(parents=True, exist_ok=True)
     last, best = weights_dir / "last.pt", weights_dir / "best.pt"
-    use_teacher = opt.mode in {"two_branch_no_kd", "current_full"}
-    use_kd = opt.mode == "current_full"
+    mode = effective_mode(opt.mode)
+    use_teacher = mode != "det_only_same_trainer"
+    use_kd = mode in PAPER_MODES or mode in RAW_PROXY_MODES
+    use_paper_kd = mode in PAPER_MODES
 
     with open(hyp, errors="ignore") as f:
         hyp = yaml.safe_load(f)
@@ -336,6 +396,8 @@ def train(hyp, opt, device, callbacks):
     scaler = torch.cuda.amp.GradScaler(enabled=amp)
     compute_student_loss = ComputeLoss(model)
     compute_teacher_loss = ComputeLoss(teacher) if teacher is not None else None
+    student_feature_capture = YoloV5FeatureCapture(model).install() if use_paper_kd else None
+    teacher_feature_capture = YoloV5FeatureCapture(teacher).install() if use_paper_kd and teacher is not None else None
     stopper = EarlyStopping(patience=opt.patience)
     best_fitness, maps = 0.0, np.zeros(nc)
     results = (0, 0, 0, 0, 0, 0, 0)
@@ -347,10 +409,15 @@ def train(hyp, opt, device, callbacks):
     if use_kd and opt.kd_warmup_epochs:
         LOGGER.info(f"Using KD warmup: {opt.kd_warmup_epochs} epochs")
     if opt.mode == "current_full":
-        LOGGER.warning("current_full is under audit and is not a verified CCLKD reproduction.")
+        LOGGER.warning("current_full is legacy raw_proxy_full and is not a verified CCLKD implementation.")
+    if mode == "raw_proxy_full":
+        LOGGER.warning("raw_proxy_full uses the old YOLOv5 head-vector proxy; use paper_full for CCLKD-style audits.")
+    if opt.skip_val:
+        LOGGER.warning("skip_val=True: validation is disabled for smoke-only execution.")
     LOGGER.info(
-        f"YOLOv5x CCLKD audit mode={opt.mode}, use_teacher={use_teacher}, use_kd={use_kd}, "
-        f"batch={opt.batch_size}, imgsz={imgsz}, amp={amp}"
+        f"YOLOv5x CCLKD audit mode={opt.mode}, effective_mode={mode}, use_teacher={use_teacher}, "
+        f"use_kd={use_kd}, batch={opt.batch_size}, imgsz={imgsz}, amp={amp}, "
+        f"max_train_batches={opt.max_train_batches}, skip_val={opt.skip_val}"
     )
     LOGGER.info(f"Logging results to {colorstr('bold', save_dir)}")
 
@@ -359,11 +426,19 @@ def train(hyp, opt, device, callbacks):
         model.train()
         if teacher is not None:
             teacher.train()
-        mloss = torch.zeros(10, device=device)
-        pbar = tqdm(enumerate(train_loader), total=nb, bar_format=TQDM_BAR_FORMAT)
-        LOGGER.info(("\n" + "%11s" * 12) % ("Epoch", "GPU_mem", "s_box", "s_obj", "s_cls", "t_box", "t_obj", "t_cls", "kd", "lld", "fld", "ccl"))
+        mloss = torch.zeros(11, device=device)
+        epoch_nb = min(nb, opt.max_train_batches) if opt.max_train_batches > 0 else nb
+        pbar = tqdm(enumerate(train_loader), total=epoch_nb, bar_format=TQDM_BAR_FORMAT)
+        LOGGER.info(
+            ("\n" + "%11s" * 13)
+            % ("Epoch", "GPU_mem", "s_box", "s_obj", "s_cls", "t_box", "t_obj", "t_cls", "kd", "lld", "fld", "rld", "ccl")
+        )
         optimizer.zero_grad()
+        diag_sums: dict[str, float] = {}
+        diag_count = 0
         for i, batch in pbar:
+            if opt.max_train_batches > 0 and i >= opt.max_train_batches:
+                break
             ni = i + nb * epoch
             if use_teacher:
                 imgs, teacher_imgs, targets, paths, _shapes = batch
@@ -373,6 +448,11 @@ def train(hyp, opt, device, callbacks):
                 teacher_imgs = None
             imgs = imgs.to(device, non_blocking=True).float() / 255
             targets = targets.to(device)
+
+            if student_feature_capture is not None:
+                student_feature_capture.clear()
+            if teacher_feature_capture is not None:
+                teacher_feature_capture.clear()
 
             if ni <= nw:
                 xi = [0, nw]
@@ -388,13 +468,26 @@ def train(hyp, opt, device, callbacks):
                 teacher_items = torch.zeros(3, device=device)
                 kd_loss = student_det.new_zeros(())
                 kd_items = torch.zeros(4, device=device)
+                kd_diag = {}
                 loss = student_det
                 if use_teacher:
                     teacher_preds = teacher(teacher_imgs)
                     teacher_det, teacher_items = compute_teacher_loss(teacher_preds, targets)
                     loss = loss + opt.teacher_det_weight * teacher_det
                     if use_kd:
-                        kd_loss, kd_items = cclkd_full_loss(student_preds, teacher_preds, targets, compute_student_loss)
+                        if use_paper_kd:
+                            kd_loss, kd_items, kd_diag = cclkd_paper_loss(
+                                student_preds=student_preds,
+                                teacher_preds=teacher_preds,
+                                targets=targets,
+                                student_loss=compute_student_loss,
+                                student_features=student_feature_capture.features,
+                                teacher_features=teacher_feature_capture.features,
+                                mode=mode,
+                                nc=nc,
+                            )
+                        else:
+                            kd_loss, kd_items = raw_proxy_full_loss(student_preds, teacher_preds, targets, compute_student_loss)
                         kd_scale = opt.kd_weight * min(1.0, epoch / max(float(opt.kd_warmup_epochs), 1.0))
                         loss = loss + kd_scale * kd_loss
 
@@ -410,33 +503,75 @@ def train(hyp, opt, device, callbacks):
                 ema.update(model)
                 last_opt_step = ni
 
-            display_items = torch.cat((student_items, teacher_items, kd_loss.detach().view(1), kd_items[[0, 1, 3]]))
+            display_items = torch.cat((student_items, teacher_items, kd_loss.detach().view(1), kd_items))
             mloss = (mloss * i + display_items) / (i + 1)
+            kd_diag["nan_or_inf_detected"] = max(
+                float(kd_diag.get("nan_or_inf_detected", 0.0)),
+                float((~torch.isfinite(torch.stack((loss.detach(), kd_loss.detach())))).any().item()),
+            )
+            update_diag_sums(diag_sums, kd_diag, student_det, kd_loss)
+            diag_count += 1
             mem = f"{torch.cuda.memory_reserved() / 1E9 if torch.cuda.is_available() else 0:.3g}G"
-            pbar.set_description(("%11s" * 2 + "%11.4g" * 10) % (f"{epoch}/{opt.epochs - 1}", mem, *mloss))
+            pbar.set_description(("%11s" * 2 + "%11.4g" * 11) % (f"{epoch}/{opt.epochs - 1}", mem, *mloss))
 
         scheduler.step()
         ema.update_attr(model, include=["yaml", "nc", "hyp", "names", "stride", "class_weights"])
         final_epoch = epoch + 1 == opt.epochs
-        results, maps, _ = validate.run(
-            data_dict,
-            batch_size=opt.batch_size * 2,
-            imgsz=imgsz,
-            half=amp,
-            model=ema.ema,
-            single_cls=False,
-            dataloader=val_loader,
-            save_dir=save_dir,
-            plots=False,
-            callbacks=callbacks,
-            compute_loss=compute_student_loss,
-        )
+        if opt.skip_val:
+            results, maps = (0, 0, 0, 0, 0, 0, 0), np.zeros(nc)
+        else:
+            results, maps, _ = validate.run(
+                data_dict,
+                batch_size=opt.batch_size * 2,
+                imgsz=imgsz,
+                half=amp,
+                model=ema.ema,
+                single_cls=False,
+                dataloader=val_loader,
+                save_dir=save_dir,
+                plots=False,
+                callbacks=callbacks,
+                compute_loss=compute_student_loss,
+            )
         fi = fitness(np.array(results).reshape(1, -1))
         if fi > best_fitness:
             best_fitness = fi
         stop = stopper(epoch=epoch, fitness=fi)
         log_vals = list(mloss[:3]) + list(results) + [g["lr"] for g in optimizer.param_groups]
         callbacks.run("on_fit_epoch_end", log_vals, epoch, best_fitness, fi)
+
+        avg_diag = {
+            k: (v if k == "nan_or_inf_detected" else v / max(diag_count, 1))
+            for k, v in diag_sums.items()
+        }
+        diag_row = {
+            "epoch": epoch,
+            "mode": mode,
+            "student_box_loss": float(mloss[0].item()),
+            "student_obj_loss": float(mloss[1].item()),
+            "student_cls_loss": float(mloss[2].item()),
+            "teacher_box_loss": float(mloss[3].item()),
+            "teacher_obj_loss": float(mloss[4].item()),
+            "teacher_cls_loss": float(mloss[5].item()),
+            "kd_total_loss": float(mloss[6].item()),
+            "lld_loss": float(mloss[7].item()),
+            "fld_loss": float(mloss[8].item()),
+            "rld_loss": float(mloss[9].item()),
+            "ccl_loss": float(mloss[10].item()),
+        }
+        diag_row.update(avg_diag)
+        write_diagnostics_csv(save_dir / "cclkd_yolov5_diagnostics.csv", diag_row)
+        LOGGER.info(
+            "diagnostics: mode=%s cop_positive_ratio=%.4g kd_to_student_det_ratio=%.4g "
+            "lld=%.4g fld=%.4g rld=%.4g ccl=%.4g",
+            mode,
+            float(diag_row.get("cop_positive_ratio", 0.0) or 0.0),
+            float(diag_row.get("kd_to_student_det_ratio", 0.0) or 0.0),
+            float(diag_row.get("lld_loss", 0.0) or 0.0),
+            float(diag_row.get("fld_loss", 0.0) or 0.0),
+            float(diag_row.get("rld_loss", 0.0) or 0.0),
+            float(diag_row.get("ccl_loss", 0.0) or 0.0),
+        )
 
         ckpt = {
             "epoch": epoch,
@@ -497,7 +632,9 @@ def parse_args():
     parser.add_argument("--teacher-det-weight", type=float, default=1.0)
     parser.add_argument("--kd-weight", type=float, default=1.0)
     parser.add_argument("--kd-warmup-epochs", type=int, default=3)
-    parser.add_argument("--mode", choices=MODES, default="current_full")
+    parser.add_argument("--mode", choices=MODES, default="paper_full")
+    parser.add_argument("--max-train-batches", type=int, default=-1)
+    parser.add_argument("--skip-val", action="store_true")
     parser.add_argument("--amp", action="store_true", default=True)
     return parser.parse_args()
 

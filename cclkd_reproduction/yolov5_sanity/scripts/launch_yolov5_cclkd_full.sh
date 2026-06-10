@@ -8,11 +8,15 @@ Usage:
     <batch> <seed> <gpu_id> <tag>
 
 Example:
-  LAUNCH=1 DRY_RUN=0 CCLKD_YOLOV5_MODE=current_full bash cclkd_reproduction/yolov5_sanity/scripts/launch_yolov5_cclkd_full.sh \
+  LAUNCH=1 DRY_RUN=0 CCLKD_YOLOV5_MODE=paper_full bash cclkd_reproduction/yolov5_sanity/scripts/launch_yolov5_cclkd_full.sh \
     64 0 1 cclkd_full_yolov5x_b64_s0
 
 Environment:
-  CCLKD_YOLOV5_MODE  current_full|det_only_same_trainer|two_branch_no_kd (default: current_full)
+  CCLKD_YOLOV5_MODE    det_only_same_trainer|two_branch_no_kd|raw_proxy_full|paper_atkd_only|paper_ccl_only|paper_full|current_full (default: paper_full)
+  CCLKD_YOLOV5_COS_LR  1 to append --cos-lr, 0 otherwise (default: 0)
+  SMOKE_EPOCHS         override epochs for smoke-only runs
+  MAX_TRAIN_BATCHES    limit train batches per epoch, -1 disables (default: -1)
+  SKIP_VAL             1 to skip validation for smoke-only runs (default: 0)
 EOF
 }
 
@@ -38,14 +42,24 @@ LAUNCH="${LAUNCH:-0}"
 WAIT_FOR_GPU="${WAIT_FOR_GPU:-0}"
 MIN_FREE_MB="${MIN_FREE_MB:-22000}"
 POLL_SECONDS="${POLL_SECONDS:-120}"
-CCLKD_YOLOV5_MODE="${CCLKD_YOLOV5_MODE:-current_full}"
+CCLKD_YOLOV5_MODE="${CCLKD_YOLOV5_MODE:-paper_full}"
+CCLKD_YOLOV5_COS_LR="${CCLKD_YOLOV5_COS_LR:-0}"
+EPOCHS="${SMOKE_EPOCHS:-400}"
+MAX_TRAIN_BATCHES="${MAX_TRAIN_BATCHES:--1}"
+SKIP_VAL="${SKIP_VAL:-0}"
 case "$CCLKD_YOLOV5_MODE" in
-  current_full|det_only_same_trainer|two_branch_no_kd) ;;
+  det_only_same_trainer|two_branch_no_kd|raw_proxy_full|paper_atkd_only|paper_ccl_only|paper_full|current_full) ;;
   *)
     echo "Invalid CCLKD_YOLOV5_MODE: $CCLKD_YOLOV5_MODE" >&2
     exit 2
     ;;
 esac
+case "$CCLKD_YOLOV5_COS_LR" in 0|1) ;; *) echo "Invalid CCLKD_YOLOV5_COS_LR: $CCLKD_YOLOV5_COS_LR" >&2; exit 2 ;; esac
+case "$SKIP_VAL" in 0|1) ;; *) echo "Invalid SKIP_VAL: $SKIP_VAL" >&2; exit 2 ;; esac
+
+if [[ "$CCLKD_YOLOV5_MODE" == "current_full" ]]; then
+  echo "WARNING: current_full is legacy raw_proxy_full and is not a verified CCLKD implementation." >&2
+fi
 
 SANITY_DIR="$REPO_ROOT/cclkd_reproduction/yolov5_sanity"
 YOLOV5_DIR="$REPO_ROOT/external/yolov5"
@@ -61,7 +75,7 @@ TRAIN_SCRIPT="$SANITY_DIR/code/train_yolov5_cclkd_full.py"
 CMD=(
   "$PYTHON" "$TRAIN_SCRIPT"
   --img 256
-  --epochs 400
+  --epochs "$EPOCHS"
   --batch-size "$BATCH"
   --data "$SAR_DATA"
   --teacher-data "$RGB_DATA"
@@ -72,14 +86,21 @@ CMD=(
   --weights "$WEIGHTS"
   --teacher-weights "$WEIGHTS"
   --optimizer SGD
-  --cos-lr
   --patience 400
   --workers 4
   --seed "$SEED"
   --save-period 100
   --mode "$CCLKD_YOLOV5_MODE"
+  --max-train-batches "$MAX_TRAIN_BATCHES"
   --exist-ok
 )
+
+if [[ "$CCLKD_YOLOV5_COS_LR" == "1" ]]; then
+  CMD+=(--cos-lr)
+fi
+if [[ "$SKIP_VAL" == "1" ]]; then
+  CMD+=(--skip-val)
+fi
 
 print_command() {
   printf 'cd %q && ' "$REPO_ROOT"
@@ -112,6 +133,10 @@ mkdir -p "$RUN_DIR"
   echo "batch=$BATCH"
   echo "seed=$SEED"
   echo "gpu_id=$GPU_ID"
+  echo "epochs=$EPOCHS"
+  echo "cos_lr=$CCLKD_YOLOV5_COS_LR"
+  echo "max_train_batches=$MAX_TRAIN_BATCHES"
+  echo "skip_val=$SKIP_VAL"
   echo "wait_for_gpu=$WAIT_FOR_GPU"
   echo "min_free_mb=$MIN_FREE_MB"
   echo "note=YOLOv5-adapted CCLKD audit launcher; current_full is not a verified CCLKD reproduction."

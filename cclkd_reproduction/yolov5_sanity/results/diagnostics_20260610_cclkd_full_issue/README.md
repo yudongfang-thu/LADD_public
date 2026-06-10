@@ -13,6 +13,16 @@ Next, run only the minimal stop-loss diagnostics:
 - D0: `det_only_same_trainer`
 - D1: `two_branch_no_kd`
 
+Implementation note after the 2026-06-10 audit patch:
+
+- `current_full` is retained only as a legacy alias for `raw_proxy_full`.
+- The raw proxy is not the default and is not treated as a verified CCLKD
+  reproduction.
+- True CCLKD-style YOLOv5 audit entry points are `paper_atkd_only`,
+  `paper_ccl_only`, and `paper_full`.
+- Formal `paper_*` runs should wait until D0/D1 show that the custom trainer and
+  two-branch setup are not already causing the regression.
+
 Snapshot time: `Wed Jun 10 12:52:42 CST 2026`
 
 This directory contains a compact evidence package for the current YOLOv5-X
