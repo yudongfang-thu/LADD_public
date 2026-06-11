@@ -7,6 +7,8 @@
 [`NON_CCLKD_IMPLEMENTATION_AUDIT_CN.md`](NON_CCLKD_IMPLEMENTATION_AUDIT_CN.md)。
 第二、三轮外部复核意见的逐条响应及官方证据见
 [`REVIEW_FEEDBACK_RESPONSE_CN.md`](REVIEW_FEEDBACK_RESPONSE_CN.md)。
+2026-06-11 formal transfer 恢复、平台期与早停状态见
+[`FORMAL_TRANSFER_STATUS_20260611_CN.md`](FORMAL_TRANSFER_STATUS_20260611_CN.md)。
 旧 smoke 记录已降级为历史说明；双卡 4090 部分已因 `nc=5` yaml 错误作废。
 
 | 方法 | 来源 | 类型 | 代码位置 |

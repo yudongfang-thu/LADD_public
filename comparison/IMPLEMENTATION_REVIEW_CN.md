@@ -206,3 +206,24 @@ FGD 重点判断：最后一轮 `train/kd_loss=3.38704`，大于 `box/cls/dfl`
    `/root/shared-nvme/LADD_public/tools/summarize_tskd_results.py`，该 public
    runtime 中不存在该汇总脚本。该错误发生在训练完成后，`results.csv` 和 run
    directory 已正常生成；本轮只记录该环境问题，不修改 LADD phase 主线脚本。
+
+### 5.2 formal transfer 恢复与平台期记录
+
+2026-06-11 在 `ladd4090` 上恢复并继续 `fgd`、`ld`、`hallucidet_style`
+的 YOLO11n/s seed0 formal transfer run。共享盘曾触发 `Disk quota exceeded`，
+导致少量 epoch 出现 `results.csv` 已写入但 `last.pt` 未更新的孤儿记录；恢复时
+按 checkpoint epoch 对齐 CSV，并将恢复日志转写到 `/tmp/ladd_resume_logs/`。
+
+截至 2026-06-11 21:07 CST：
+
+- `n_hallucidet_style` 与 `s_hallucidet_style` 已完成 800/800 epoch。
+- 两条 HalluciDet-style 均未早停；`args.yaml` 为 `epochs=800`、`patience=800`。
+- `n_hallucidet_style` 最后 50 epoch 基本平台，best 0.57365@785，final
+  0.57239@800。
+- `s_hallucidet_style` 在 0.64310@639 达到 best，之后轻微退化到
+  final 0.63124@800；正式汇总应使用 `best.pt` 对应指标。
+- `ld` 两条仍在运行但已接近平台：`n_ld` 0.57035@640，`s_ld` 0.64390@612。
+- `fgd` 两条仍在运行且较慢；曲线远低于早期 best，需要在结果表中单独标注。
+
+详见轻量记录：
+[`FORMAL_TRANSFER_STATUS_20260611_CN.md`](FORMAL_TRANSFER_STATUS_20260611_CN.md)。
