@@ -190,7 +190,7 @@ if [[ "${DRY_RUN:-0}" == "1" ]]; then
   exit 0
 fi
 
-nohup "${cmd[@]}" > "$OUTER_LOG" 2>&1 &
+setsid nohup "${cmd[@]}" </dev/null > "$OUTER_LOG" 2>&1 &
 pid=$!
 echo "$pid" > "$PID_PATH"
 echo "Launched pid=${pid}; log=${OUTER_LOG}; pid_file=${PID_PATH}"

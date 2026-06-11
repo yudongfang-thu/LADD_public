@@ -147,9 +147,13 @@ cmd=(
   "HSV_S=0.0"
   "HSV_V=0.0"
   "ERASING=0.0"
-  "SAVE_PERIOD=100"
+  "SAVE_PERIOD=${SAVE_PERIOD:-100}"
   "EXIST_OK=${EXIST_OK:-0}"
 )
+
+if [[ -n "${RESUME_FROM:-}" ]]; then
+  cmd+=("RESUME_FROM=${RESUME_FROM}")
+fi
 
 case "$METHOD" in
   fgd)

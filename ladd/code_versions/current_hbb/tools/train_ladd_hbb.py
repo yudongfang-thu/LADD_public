@@ -40,6 +40,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--project", type=Path, default=REPO_ROOT / "runs_public" / "ogsod" / "hbb" / "ladd")
     parser.add_argument("--name", default="ogsod_hbb_ladd_phase")
     parser.add_argument("--exist-ok", action="store_true")
+    parser.add_argument("--resume", type=Path, default=None, help="Resume training from an Ultralytics last.pt checkpoint.")
     parser.add_argument("--validate-before-train", action="store_true")
 
     parser.add_argument("--phase-detect-mode", choices=("auto", "raw", "fused", "mimic", "recon"), default="raw")
@@ -258,6 +259,7 @@ def main() -> None:
         project=str(args.project.resolve()),
         name=args.name,
         exist_ok=args.exist_ok,
+        resume=str(require_existing_file(args.resume, "--resume")) if args.resume is not None else None,
         validate_before_train=args.validate_before_train,
         lambda_rec=args.lambda_rec,
         lambda_sep=args.lambda_sep,

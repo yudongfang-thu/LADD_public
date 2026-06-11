@@ -4,6 +4,8 @@
 
 本文只记录已启动实验的配置、路径和当前运行状态，不作为最终结果结论。最终判据仍以 `B400` 或 `m A2 probe` 完成后的 `results.csv`、`ladd_diagnostics.csv` 和 summary 工具输出为准。
 
+最新状态：`2026-06-11 20:20:25 CST`，两条 YOLO11s alpha sweep 已跑满 B400；`s B det-only r2` 已完成 A1/A2 并进入 B 阶段。最新结果入口见 [LADD_CAPACITY_KD_DIAG_RESULTS_20260611_CN.md](LADD_CAPACITY_KD_DIAG_RESULTS_20260611_CN.md)。
+
 ## 1. 代码版本
 
 远端实验运行目录：
@@ -36,14 +38,14 @@ GPU1 后续不建议再继续叠加 LADD 任务，除非有已有任务结束或
 
 | 优先级 | 实验 | GPU | 状态 | 目的 |
 |---|---|---:|---|---|
-| P1 | `s alpha_kd=0.5 B400` | 0 | B 运行中 | 判断 YOLO11s late degradation 是否来自 KD 强度过大 |
+| P1 | `s alpha_kd=0.5 B400` | 0/1 | B400 已完成 | 判断 YOLO11s late degradation 是否来自 KD 强度过大 |
 | P1 | `m A2 probe, B=1` | 1 | 已完成 | 判断 YOLO11m 是否在 A2 阶段已经低于 baseline |
-| P2 | `s alpha_kd=0.25 B400` | 1 | B 运行中 | 与 `alpha_kd=0.5` 构成 KD 强度对照 |
-| P2 | `s B det-only B400` | 1 | A1 运行中 | 判断无 KD/aux 时 B 长训练是否仍退化 |
+| P2 | `s alpha_kd=0.25 B400` | 1 | B400 已完成 | 与 `alpha_kd=0.5` 构成 KD 强度对照 |
+| P2 | `s B det-only B400` | 0 | B 运行中 | 判断无 KD/aux 时 B 长训练是否仍退化 |
 
 虽然 `s alpha_kd=0.25` 在原计划中属于 P2，但用户明确要求在 1 卡再加一个任务，因此已在 GPU1 启动。该实验应与 `s alpha_kd=0.5` 一起解释，不能单独作为容量结论。
 
-2026-06-11 11:52 CST，按用户要求继续启动 P2 剩余项 `s B det-only B400`。该项与两个 alpha sweep run 配合解释，用于区分 B 长训练自身退化和 KD/aux 负迁移。
+2026-06-11 11:52 CST 曾启动第一版 `s B det-only B400`，随后因会话/资源中断需要重新排布。2026-06-11 16:03 CST 在 GPU0 启动 `r2` 链，A1 于 16:14 完成，A2 于 18:05 完成，随后进入 B400。该项与两个 alpha sweep run 配合解释，用于区分 B 长训练自身退化和 KD/aux 负迁移；但注意 `LADD_A2_DET_ONLY=0`，因此 B 阶段继承的是正常 A2 checkpoint。
 
 ## 4. 运行明细
 
@@ -207,13 +209,13 @@ last=0.62901
 Run tag：
 
 ```text
-formal_nomosaic_yolo11s_cap2_s0_diag_capkd_s_s0_bdetonly_b400
+formal_nomosaic_yolo11s_cap2_s0_diag_capkd_s_s0_bdetonly_b400_r2
 ```
 
 关键配置：
 
 ```text
-gpu_id=1
+gpu_id=0
 seed=0
 batch_size=64
 epochs_a1=10
@@ -232,23 +234,23 @@ effective_grad_clip_norm=10.0
 日志目录：
 
 ```text
-/root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_diag_capkd_s_s0_bdetonly_b400_gpu1
+/root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_diag_capkd_s_s0_bdetonly_b400_r2_gpu0
 ```
 
-当前进程快照：
+2026-06-11 20:20 CST 快照：
 
 ```text
-chain_pid=203197
-current_phase=a1
-a1_train_pid=203217
+A1 complete: best=0.62878, last=0.62878
+A2 complete: best=0.62400, last=0.62400
+B running: epoch=74/400, best=0.62244@68, last=0.62191
 ```
 
-AMP 已通过并进入 A1。2026-06-11 11:56 CST 快照：
+注意：该有效 run 是 `r2`。第一版 `formal_nomosaic_yolo11s_cap2_s0_diag_capkd_s_s0_bdetonly_b400` 在早前调度中断后不作为当前有效证据。`r2` 只设置 `LADD_B_DET_ONLY=1`，`LADD_A2_DET_ONLY=0`，因此 B 阶段继承的是正常 A2 后的 checkpoint。
+
+证据包路径：
 
 ```text
-A1 epoch=3/10
-best=0.62878@3
-last=0.62878
+ladd/results/capacity_kd_20260611/bdetonly_b400_r2/
 ```
 
 ## 5. 后续读取建议

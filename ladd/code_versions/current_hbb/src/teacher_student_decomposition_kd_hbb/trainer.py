@@ -4,15 +4,20 @@ import csv
 from copy import copy, deepcopy
 import math
 import json
+from pathlib import Path
 
 import torch
 
 from ultralytics import YOLO
+from ultralytics.cfg import get_cfg
 from ultralytics.data import build_yolo_dataset
 from ultralytics.data.utils import check_det_dataset
 from ultralytics.models import yolo
 from ultralytics.models.yolo.detect.train import DetectionTrainer
-from ultralytics.utils import DEFAULT_CFG, LOGGER, RANK
+from ultralytics.nn.tasks import load_checkpoint
+from ultralytics.utils import DEFAULT_CFG, DEFAULT_CFG_DICT, LOGGER, RANK
+from ultralytics.utils.checks import check_file
+from ultralytics.utils.files import get_latest_run
 from ultralytics.utils.torch_utils import unwrap_model
 
 from d2ad_obb.aug_policy import apply_unified_paired_aug_policy
@@ -58,6 +63,53 @@ class PhaseMinEarlyStopping:
 
 class TeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(DetectionTrainer):
     """TSKD trainer with current residual-energy mainline plus teacher-side u_t controls."""
+
+    def check_resume(self, overrides):
+        """Resume from Ultralytics checkpoints while ignoring saved HBB custom trainer keys."""
+        resume = self.args.resume
+        if resume:
+            try:
+                exists = isinstance(resume, (str, Path)) and Path(resume).exists()
+                last = Path(check_file(resume) if exists else get_latest_run())
+                ckpt_args = dict(load_checkpoint(last)[0].args)
+                if not isinstance(ckpt_args.get("data"), dict) and not Path(ckpt_args.get("data", "")).exists():
+                    ckpt_args["data"] = self.args.data
+
+                dropped = sorted(k for k in ckpt_args if k not in DEFAULT_CFG_DICT)
+                if dropped:
+                    LOGGER.info(
+                        "HBB resume: ignoring checkpoint-only custom args not in Ultralytics DEFAULT_CFG: "
+                        + ", ".join(dropped)
+                    )
+                ckpt_args = {k: v for k, v in ckpt_args.items() if k in DEFAULT_CFG_DICT}
+                self.args = get_cfg(ckpt_args)
+                self.args.model = self.args.resume = str(last)
+                for k in (
+                    "imgsz",
+                    "batch",
+                    "device",
+                    "close_mosaic",
+                    "augmentations",
+                    "save_period",
+                    "workers",
+                    "cache",
+                    "patience",
+                    "project",
+                    "name",
+                    "exist_ok",
+                    "time",
+                    "freeze",
+                    "val",
+                    "plots",
+                ):
+                    if k in overrides:
+                        setattr(self.args, k, overrides[k])
+            except Exception as e:
+                raise FileNotFoundError(
+                    "Resume checkpoint not found or is not compatible. "
+                    "Please pass a valid checkpoint to --resume, e.g. path/to/last.pt"
+                ) from e
+        self.resume = resume
 
     def __init__(self, cfg=DEFAULT_CFG, overrides: dict | None = None, _callbacks: dict | None = None):
         overrides = {} if overrides is None else dict(overrides)

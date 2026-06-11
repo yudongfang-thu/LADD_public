@@ -257,6 +257,7 @@ mkdir -p "$LOG_DIR"
   echo "teacher_data_cfg=${TEACHER_DATA_CFG}"
   echo "project_dir=${PROJECT_DIR}"
   echo "run_name=${RUN_NAME}"
+  echo "resume_from=${RESUME_FROM:-}"
   echo "seed=${SEED}"
   echo "epochs=${EPOCHS}"
   echo "batch_size=${BATCH_SIZE}"
@@ -495,6 +496,10 @@ if [[ "${LADD_A2_DET_ONLY:-0}" == "1" ]]; then
 fi
 if [[ "$EXIST_OK" == "1" ]]; then
   cmd+=(--exist-ok)
+fi
+if [[ -n "${RESUME_FROM:-}" ]]; then
+  require_file "$RESUME_FROM" "resume checkpoint"
+  cmd+=(--resume "$RESUME_FROM")
 fi
 if [[ "${FORCE_STUDENT_REC:-0}" == "1" && "$TASK" == "hbb" ]]; then
   cmd+=(--force-student-rec)

@@ -1,0 +1,17 @@
+### logs/formal_nomosaic_20260528/ladd/resume_alpha0p5_r2_20260611.outer.log
+Transferred 706/499 items from pretrained weights
+Resuming training /root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_capkd_s_s0_alphaKD0p5_b400_b_e400_b64_s0_gpu0/weights/last.pt from epoch 290 to 400 total epochs
+ladd_phase_diag phase=b trainable_params=12536281/23919080 bn_eval=81/81 freeze_bn_stats=True freeze_bn_after_epoch=-1 ladd_assert_phase_freeze=True alpha_kd=0.5 effective_alpha_kd=0.5 kd_multiplier=1.0 ladd_kd_decay_mode=none ladd_kd_decay_start_epoch=-1 ladd_kd_decay_end_epoch=-1 ladd_kd_final_mult=1.0 ladd_kd_stop_after_epoch=-1 ladd_b_det_only=False ladd_a2_det_only=False ladd_diag_log_grad=False ladd_grad_clip=ULTRALYTICS_DEFAULT ladd_grad_clip_norm=0.0 effective_grad_clip_norm=10.0
+Starting training for 400 epochs...
+Optimizer stripped from /root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_capkd_s_s0_alphaKD0p5_b400_b_e400_b64_s0_gpu0/weights/last.pt, 48.4MB
+Optimizer stripped from /root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_capkd_s_s0_alphaKD0p5_b400_b_e400_b64_s0_gpu0/weights/best.pt, 48.4MB
+Results saved to /root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_capkd_s_s0_alphaKD0p5_b400_b_e400_b64_s0_gpu0
+
+### logs/formal_nomosaic_20260528/ladd/resume_alpha0p25_r2_20260611.outer.log
+Transferred 706/499 items from pretrained weights
+Resuming training /root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_capkd_s_s0_alphaKD0p25_b400_b_e400_b64_s0_gpu1/weights/last.pt from epoch 272 to 400 total epochs
+ladd_phase_diag phase=b trainable_params=12536281/23919080 bn_eval=81/81 freeze_bn_stats=True freeze_bn_after_epoch=-1 ladd_assert_phase_freeze=True alpha_kd=0.25 effective_alpha_kd=0.25 kd_multiplier=1.0 ladd_kd_decay_mode=none ladd_kd_decay_start_epoch=-1 ladd_kd_decay_end_epoch=-1 ladd_kd_final_mult=1.0 ladd_kd_stop_after_epoch=-1 ladd_b_det_only=False ladd_a2_det_only=False ladd_diag_log_grad=False ladd_grad_clip=ULTRALYTICS_DEFAULT ladd_grad_clip_norm=0.0 effective_grad_clip_norm=10.0
+Starting training for 400 epochs...
+Optimizer stripped from /root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_capkd_s_s0_alphaKD0p25_b400_b_e400_b64_s0_gpu1/weights/last.pt, 48.4MB
+Optimizer stripped from /root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_capkd_s_s0_alphaKD0p25_b400_b_e400_b64_s0_gpu1/weights/best.pt, 48.4MB
+Results saved to /root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_capkd_s_s0_alphaKD0p25_b400_b_e400_b64_s0_gpu1
