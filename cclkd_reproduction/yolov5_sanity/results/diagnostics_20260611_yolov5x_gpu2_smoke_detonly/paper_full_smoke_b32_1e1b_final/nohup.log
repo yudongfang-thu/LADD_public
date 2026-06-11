@@ -1,0 +1,109 @@
+[34m[1mClearML: [0mrun 'pip install clearml' to automatically track, visualize and remotely train YOLOv5 🚀 in ClearML
+[34m[1mComet: [0mrun 'pip install comet_ml' to automatically track and visualize YOLOv5 🚀 runs in Comet
+[34m[1mTensorBoard: [0mStart with 'tensorboard --logdir /mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/results/runs', view at http://localhost:6006/
+YOLOv5 🚀 v7.0-0-g915bbf29 Python-3.10.12 torch-2.10.0+cu128 CUDA:2 (NVIDIA GeForce RTX 3090, 24124MiB)
+
+paper_* CCLKD uses grid_sample for FLD; switching deterministic algorithms to warn_only because CUDA grid_sample backward has no deterministic implementation in this PyTorch build.
+[34m[1mhyperparameters: [0mlr0=0.01, lrf=0.01, momentum=0.937, weight_decay=0.0005, warmup_epochs=3.0, warmup_momentum=0.8, warmup_bias_lr=0.1, box=0.05, cls=0.3, cls_pw=1.0, obj=0.7, obj_pw=1.0, iou_t=0.2, anchor_t=4.0, fl_gamma=0.0, hsv_h=0.015, hsv_s=0.7, hsv_v=0.4, degrees=0.0, translate=0.1, scale=0.9, shear=0.0, perspective=0.0, flipud=0.0, fliplr=0.5, mosaic=1.0, mixup=0.1, copy_paste=0.1
+Overriding model.yaml nc=80 with nc=3
+
+                 from  n    params  module                                  arguments                     
+  0                -1  1      8800  models.common.Conv                      [3, 80, 6, 2, 2]              
+  1                -1  1    115520  models.common.Conv                      [80, 160, 3, 2]               
+  2                -1  4    309120  models.common.C3                        [160, 160, 4]                 
+  3                -1  1    461440  models.common.Conv                      [160, 320, 3, 2]              
+  4                -1  8   2259200  models.common.C3                        [320, 320, 8]                 
+  5                -1  1   1844480  models.common.Conv                      [320, 640, 3, 2]              
+  6                -1 12  13125120  models.common.C3                        [640, 640, 12]                
+  7                -1  1   7375360  models.common.Conv                      [640, 1280, 3, 2]             
+  8                -1  4  19676160  models.common.C3                        [1280, 1280, 4]               
+  9                -1  1   4099840  models.common.SPPF                      [1280, 1280, 5]               
+ 10                -1  1    820480  models.common.Conv                      [1280, 640, 1, 1]             
+ 11                -1  1         0  torch.nn.modules.upsampling.Upsample    [None, 2, 'nearest']          
+ 12           [-1, 6]  1         0  models.common.Concat                    [1]                           
+ 13                -1  4   5332480  models.common.C3                        [1280, 640, 4, False]         
+ 14                -1  1    205440  models.common.Conv                      [640, 320, 1, 1]              
+ 15                -1  1         0  torch.nn.modules.upsampling.Upsample    [None, 2, 'nearest']          
+ 16           [-1, 4]  1         0  models.common.Concat                    [1]                           
+ 17                -1  4   1335040  models.common.C3                        [640, 320, 4, False]          
+ 18                -1  1    922240  models.common.Conv                      [320, 320, 3, 2]              
+ 19          [-1, 14]  1         0  models.common.Concat                    [1]                           
+ 20                -1  4   4922880  models.common.C3                        [640, 640, 4, False]          
+ 21                -1  1   3687680  models.common.Conv                      [640, 640, 3, 2]              
+ 22          [-1, 10]  1         0  models.common.Concat                    [1]                           
+ 23                -1  4  19676160  models.common.C3                        [1280, 1280, 4, False]        
+ 24      [17, 20, 23]  1     53832  models.yolo.Detect                      [3, [[10, 13, 16, 30, 33, 23], [30, 61, 62, 45, 59, 119], [116, 90, 156, 198, 373, 326]], [320, 640, 1280]]
+Model summary: 445 layers, 86231272 parameters, 86231272 gradients, 204.7 GFLOPs
+
+Transferred 739/745 items from /mnt/dataY/ydf/projects/LADD_public/external/yolov5/yolov5x.pt
+Overriding model.yaml nc=80 with nc=3
+
+                 from  n    params  module                                  arguments                     
+  0                -1  1      8800  models.common.Conv                      [3, 80, 6, 2, 2]              
+  1                -1  1    115520  models.common.Conv                      [80, 160, 3, 2]               
+  2                -1  4    309120  models.common.C3                        [160, 160, 4]                 
+  3                -1  1    461440  models.common.Conv                      [160, 320, 3, 2]              
+  4                -1  8   2259200  models.common.C3                        [320, 320, 8]                 
+  5                -1  1   1844480  models.common.Conv                      [320, 640, 3, 2]              
+  6                -1 12  13125120  models.common.C3                        [640, 640, 12]                
+  7                -1  1   7375360  models.common.Conv                      [640, 1280, 3, 2]             
+  8                -1  4  19676160  models.common.C3                        [1280, 1280, 4]               
+  9                -1  1   4099840  models.common.SPPF                      [1280, 1280, 5]               
+ 10                -1  1    820480  models.common.Conv                      [1280, 640, 1, 1]             
+ 11                -1  1         0  torch.nn.modules.upsampling.Upsample    [None, 2, 'nearest']          
+ 12           [-1, 6]  1         0  models.common.Concat                    [1]                           
+ 13                -1  4   5332480  models.common.C3                        [1280, 640, 4, False]         
+ 14                -1  1    205440  models.common.Conv                      [640, 320, 1, 1]              
+ 15                -1  1         0  torch.nn.modules.upsampling.Upsample    [None, 2, 'nearest']          
+ 16           [-1, 4]  1         0  models.common.Concat                    [1]                           
+ 17                -1  4   1335040  models.common.C3                        [640, 320, 4, False]          
+ 18                -1  1    922240  models.common.Conv                      [320, 320, 3, 2]              
+ 19          [-1, 14]  1         0  models.common.Concat                    [1]                           
+ 20                -1  4   4922880  models.common.C3                        [640, 640, 4, False]          
+ 21                -1  1   3687680  models.common.Conv                      [640, 640, 3, 2]              
+ 22          [-1, 10]  1         0  models.common.Concat                    [1]                           
+ 23                -1  4  19676160  models.common.C3                        [1280, 1280, 4, False]        
+ 24      [17, 20, 23]  1     53832  models.yolo.Detect                      [3, [[10, 13, 16, 30, 33, 23], [30, 61, 62, 45, 59, 119], [116, 90, 156, 198, 373, 326]], [320, 640, 1280]]
+Model summary: 445 layers, 86231272 parameters, 86231272 gradients, 204.7 GFLOPs
+
+Transferred 739/745 items from /mnt/dataY/ydf/projects/LADD_public/external/yolov5/yolov5x.pt
+[34m[1malbumentations: [0m1 validation error for InitSchema
+size
+  Field required [type=missing, input_value={'scale': (0.8, 1.0), 'ra...: None, 'strict': False}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+train: Scanning /mnt/dataY/ydf/dataset/OGSOD/OGSOD-1.0/sar/labels/train.cache... 14664 images, 0 backgrounds, 0 corrupt: 100%|██████████| 14664/14664 00:00train: Scanning /mnt/dataY/ydf/dataset/OGSOD/OGSOD-1.0/sar/labels/train.cache... 14664 images, 0 backgrounds, 0 corrupt: 100%|██████████| 14664/14664 00:00
+[34m[1malbumentations: [0m1 validation error for InitSchema
+size
+  Field required [type=missing, input_value={'scale': (0.8, 1.0), 'ra...: None, 'strict': False}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+teacher: Scanning /mnt/dataY/ydf/dataset/OGSOD/OGSOD-1.0/rgb/labels/train.cache... 14664 images, 0 backgrounds, 0 corrupt: 100%|██████████| 14664/14664 00:00teacher: Scanning /mnt/dataY/ydf/dataset/OGSOD/OGSOD-1.0/rgb/labels/train.cache... 14664 images, 0 backgrounds, 0 corrupt: 100%|██████████| 14664/14664 00:00
+[34m[1mval: [0mScanning /mnt/dataY/ydf/dataset/OGSOD/OGSOD-1.0/sar/labels/test.cache... 3667 images, 0 backgrounds, 0 corrupt: 100%|██████████| 3667/3667 00:00[34m[1mval: [0mScanning /mnt/dataY/ydf/dataset/OGSOD/OGSOD-1.0/sar/labels/test.cache... 3667 images, 0 backgrounds, 0 corrupt: 100%|██████████| 3667/3667 00:00
+
+[34m[1mAutoAnchor: [0m2.92 anchors/target, 0.988 Best Possible Recall (BPR). Current anchors are a good fit to dataset ✅
+[34m[1moptimizer:[0m SGD(lr=0.01) with parameter groups 246 weight(decay=0.0), 252 weight(decay=0.0005), 252 bias
+/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:430: FutureWarning: `torch.cuda.amp.GradScaler(args...)` is deprecated. Please use `torch.amp.GradScaler('cuda', args...)` instead.
+  scaler = torch.cuda.amp.GradScaler(enabled=amp)
+Using KD warmup: 3 epochs
+skip_val=True: validation is disabled for smoke-only execution.
+YOLOv5x CCLKD audit mode=paper_full, effective_mode=paper_full, use_teacher=True, use_kd=True, batch=32, imgsz=256, amp=True, max_train_batches=1, skip_val=True, atkd_weight=1.0, ccl_weight=1.0, kd_weight=1.0
+Logging results to [1m/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/results/runs/yolov5x_paper_full_b32_s0_smoke_paper_full_b32_1e1b_final[0m
+  0%|          | 0/1 00:00
+      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:500: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(amp):
+        0/0      10.4G     0.1258    0.04109     0.6292     0.1268    0.04726     0.5784      1.522    0.03825     0.3782     0.4148     0.6908:   0%|          | 0/1 00:06        0/0      10.4G     0.1258    0.04109     0.6292     0.1268    0.04726     0.5784      1.522    0.03825     0.3782     0.4148     0.6908: 100%|██████████| 1/1 00:06        0/0      10.4G     0.1258    0.04109     0.6292     0.1268    0.04726     0.5784      1.522    0.03825     0.3782     0.4148     0.6908: 100%|██████████| 1/1 00:06
+diagnostics: mode=paper_full cop_positive_ratio=0.4455 kd_to_student_det_ratio=0.05975 lld=0.03825 fld=0.3782 rld=0.4148 ccl=0.6908
+
+1 epochs completed in 0.003 hours.
+Could not strip optimizer from /mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/results/runs/yolov5x_paper_full_b32_s0_smoke_paper_full_b32_1e1b_final/weights/last.pt: Weights only load failed. This file can still be loaded, to do so you have two options, [1mdo those steps only if you trust the source of the checkpoint[0m. 
+	(1) In PyTorch 2.6, we changed the default value of the `weights_only` argument in `torch.load` from `False` to `True`. Re-running `torch.load` with `weights_only` set to `False` will likely succeed, but it can result in arbitrary code execution. Do it only if you got the file from a trusted source.
+	(2) Alternatively, to load with `weights_only=True` please check the recommended steps in the following error message.
+	WeightsUnpickler error: Unsupported global: GLOBAL models.yolo.DetectionModel was not an allowed global by default. Please use `torch.serialization.add_safe_globals([models.yolo.DetectionModel])` or the `torch.serialization.safe_globals([models.yolo.DetectionModel])` context manager to allowlist this global if you trust this class/function.
+
+Check the documentation of torch.load to learn more about types accepted by default with weights_only https://pytorch.org/docs/stable/generated/torch.load.html.
+Could not strip optimizer from /mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/results/runs/yolov5x_paper_full_b32_s0_smoke_paper_full_b32_1e1b_final/weights/best.pt: Weights only load failed. This file can still be loaded, to do so you have two options, [1mdo those steps only if you trust the source of the checkpoint[0m. 
+	(1) In PyTorch 2.6, we changed the default value of the `weights_only` argument in `torch.load` from `False` to `True`. Re-running `torch.load` with `weights_only` set to `False` will likely succeed, but it can result in arbitrary code execution. Do it only if you got the file from a trusted source.
+	(2) Alternatively, to load with `weights_only=True` please check the recommended steps in the following error message.
+	WeightsUnpickler error: Unsupported global: GLOBAL models.yolo.DetectionModel was not an allowed global by default. Please use `torch.serialization.add_safe_globals([models.yolo.DetectionModel])` or the `torch.serialization.safe_globals([models.yolo.DetectionModel])` context manager to allowlist this global if you trust this class/function.
+
+Check the documentation of torch.load to learn more about types accepted by default with weights_only https://pytorch.org/docs/stable/generated/torch.load.html.

@@ -1,0 +1,24 @@
+remote_time=2026-06-12T02:04:19+08:00
+hostname=inspur-NF5468M5
+git_head=unavailable
+gpu_status
+0, NVIDIA GeForce RTX 3090, 18226, 5900, 97
+1, NVIDIA GeForce RTX 3090, 7061, 17064, 99
+2, NVIDIA GeForce RTX 3090, 21404, 2721, 99
+3, NVIDIA GeForce RTX 3090, 7062, 17063, 99
+4, NVIDIA GeForce RTX 3090, 22808, 1317, 85
+5, NVIDIA GeForce RTX 3090, 23357, 768, 100
+6, NVIDIA GeForce RTX 3090, 20393, 3732, 95
+7, NVIDIA GeForce RTX 3090, 22453, 1672, 100
+active_ladd_cclkd_processes
+paper_full_smoke_check
+# YOLOv5 CCLKD Smoke Check
+
+- run_dir: `cclkd_reproduction/yolov5_sanity/results/runs/yolov5x_paper_full_b32_s0_smoke_paper_full_b32_1e1b_final`
+- mode: `paper_full`
+- epoch: `0`
+- cop_positive_ratio: `0.44550669216061184`
+- weighted_kd_to_student_det_ratio: `0.0`
+- feature_capture_ok: `1.0`
+
+PASS: smoke diagnostics look usable.
