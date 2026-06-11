@@ -1,0 +1,6 @@
+snapshot,priority,experiment,model,phase,epoch,total_epochs,best_map,best_epoch,last_map,baseline,pass_threshold,best_gain,last_gain,last_minus_best,run_status,notes
+2026-06-11 11:56:30 CST,P1,s alpha_kd=0.5 B400,s,B,283,400,0.63074,218,0.62803,0.62897,0.62697,0.00177,-0.00094,-0.00271,running,"No OOM observed; B last remains above pass threshold but below SAR baseline."
+2026-06-11 11:56:30 CST,P2,s alpha_kd=0.25 B400,s,B,265,400,0.63027,199,0.62901,0.62897,0.62697,0.00130,0.00004,-0.00126,running,"A2 had one CUDA OOM and Ultralytics auto-reduced batch 64->32; B log has no OOM so far."
+2026-06-11 11:56:30 CST,P2,s B det-only B400,s,A1,3,10,0.62878,3,0.62878,0.62897,0.62697,-0.00019,-0.00019,0.00000,running,"Just started; manifest has ladd_b_det_only=1 and ladd_a2_det_only=0."
+2026-06-11 11:56:30 CST,P1,m A2 probe,m,A2,50,50,0.65026,10,0.63725,0.65580,0.65380,-0.00554,-0.01855,-0.01301,complete,"A2 best is below safety threshold; do not start m full B under current settings."
+2026-06-11 11:56:30 CST,P1,m A2 probe,m,B,1,1,0.62528,1,0.62528,0.65580,,-0.03052,-0.03052,0.00000,complete,"B=1 continuation confirms severe drop after damaged A2; diagnostic only."
