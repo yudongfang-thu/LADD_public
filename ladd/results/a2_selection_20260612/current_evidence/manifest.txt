@@ -1,0 +1,5 @@
+LADD A2 selection diagnostics lightweight package
+created_at=2026-06-12T16:22:53.003174
+remote_repo=/root/shared-nvme/LADD_public_p1
+git_commit=665cdb4871d9a5620befc46d93d693765779d60b
+excluded=weights/*.pt,*.pth,tensorboard events,wandb,full run directories,full large logs

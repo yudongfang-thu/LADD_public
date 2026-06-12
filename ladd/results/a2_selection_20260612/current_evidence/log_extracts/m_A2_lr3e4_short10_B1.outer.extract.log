@@ -1,0 +1,4 @@
+[2026-06-12 12:20:28] phase=a1 model=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/sar/sar_yolo11m_hbb_800ep_cos_nomosaic_albu_b32_s0/weights/best.pt
+[2026-06-12 12:44:43] phase=a2 model=/root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11m/cap2/ladd_hbb_ogsod11m_formal_nomosaic_yolo11m_cap2_s0_diag_a2select_m_s0_a2lr3e4_short10_b1_a1_e10_b32_s0_gpu1/weights/best.pt
+[2026-06-12 13:24:04] phase=b model=/root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11m/cap2/ladd_hbb_ogsod11m_formal_nomosaic_yolo11m_cap2_s0_diag_a2select_m_s0_a2lr3e4_short10_b1_a2_e10_b32_s0_gpu1/weights/best.pt
+[2026-06-12 13:28:46] Chain complete. Final model: /root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11m/cap2/ladd_hbb_ogsod11m_formal_nomosaic_yolo11m_cap2_s0_diag_a2select_m_s0_a2lr3e4_short10_b1_b_e1_b32_s0_gpu1/weights/best.pt

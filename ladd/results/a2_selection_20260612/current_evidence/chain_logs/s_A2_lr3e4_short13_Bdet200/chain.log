@@ -1,0 +1,3 @@
+[2026-06-12 12:20:28] phase=a1 model=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/sar/sar_yolo11s_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt
+[2026-06-12 12:37:33] phase=a2 model=/root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_a2select_s_s0_a2lr3e4_short13_bdetonly200_a1_e10_b64_s0_gpu0/weights/best.pt
+[2026-06-12 13:13:32] phase=b model=/root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_a2select_s_s0_a2lr3e4_short13_bdetonly200_a2_e13_b64_s0_gpu0/weights/best.pt
