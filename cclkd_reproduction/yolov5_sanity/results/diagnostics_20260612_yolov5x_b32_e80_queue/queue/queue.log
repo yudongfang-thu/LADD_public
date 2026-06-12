@@ -1,0 +1,7 @@
+[2026-06-12 02:30:44] queue start: wave1 det_only_same_trainer+two_branch_no_kd, wave2 paper_atkd_only+paper_full
+[2026-06-12 02:30:44] waiting wave1 two_branch_no_kd pid=3592989
+[2026-06-12 02:30:44] waiting wave1 det_only_same_trainer pid=3592969
+[2026-06-12 10:20:45] finished wave1 det_only_same_trainer pid=3592969
+[2026-06-12 10:55:45] finished wave1 two_branch_no_kd pid=3592989
+[2026-06-12 10:55:45] wave1 complete; launching wave2
+[2026-06-12 10:55:45] wave2 launched; queue complete

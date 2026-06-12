@@ -1,0 +1,4 @@
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+YOLOv5x CCLKD audit mode=two_branch_no_kd, effective_mode=two_branch_no_kd, use_teacher=True, use_kd=False, batch=32, imgsz=256, amp=True, max_train_batches=-1, skip_val=False, atkd_weight=0.0, ccl_weight=0.0, kd_weight=1.0
+Logging results to [1m/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/results/runs/yolov5x_two_branch_no_kd_b32_s0_twobranch_nokd_b32_e80_wave1_gpu3[0m

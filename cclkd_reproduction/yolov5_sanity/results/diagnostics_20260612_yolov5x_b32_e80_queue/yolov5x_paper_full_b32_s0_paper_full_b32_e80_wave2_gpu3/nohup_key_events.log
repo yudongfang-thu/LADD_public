@@ -1,0 +1,5 @@
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+Using KD warmup: 3 epochs
+YOLOv5x CCLKD audit mode=paper_full, effective_mode=paper_full, use_teacher=True, use_kd=True, batch=32, imgsz=256, amp=True, max_train_batches=-1, skip_val=False, atkd_weight=1.0, ccl_weight=1.0, kd_weight=1.0
+Logging results to [1m/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/results/runs/yolov5x_paper_full_b32_s0_paper_full_b32_e80_wave2_gpu3[0m
