@@ -388,6 +388,12 @@ def train(hyp, opt, device, callbacks):
         )
         anchor_dataset = dataset
     labels = np.concatenate(dataset.labels, 0)
+    # Match YOLOv5 train.py loss-gain scaling exactly once before ComputeLoss is created.
+    nl = de_parallel(model).model[-1].nl
+    hyp["box"] *= 3 / nl
+    hyp["cls"] *= nc / 80 * 3 / nl
+    hyp["obj"] *= (imgsz / 640) ** 2 * 3 / nl
+    hyp["label_smoothing"] = opt.label_smoothing
     model.nc = nc
     model.hyp = hyp
     model.names = names
@@ -677,6 +683,7 @@ def parse_args():
     parser.add_argument("--cos-lr", action="store_true")
     parser.add_argument("--patience", type=int, default=400)
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--label-smoothing", type=float, default=0.0)
     parser.add_argument("--save-period", type=int, default=100)
     parser.add_argument("--noautoanchor", action="store_true")
     parser.add_argument("--teacher-det-weight", type=float, default=1.0)
