@@ -1,0 +1,12 @@
+{
+  "atkd_vs_custom_det_ap50_gain": 0.025280000000000025,
+  "atkd_vs_custom_det_ap_gain": 0.01659000000000002,
+  "full_vs_atkd_ap50_delta": -0.008599999999999997,
+  "full_vs_atkd_ap_delta": -0.006290000000000018,
+  "full_vs_custom_det_ap50_gain": 0.016680000000000028,
+  "full_vs_custom_det_ap_gain": 0.010300000000000004,
+  "standard_vs_custom_det_ap50_gap": 0.23991999999999997,
+  "standard_vs_custom_det_ap_gap": 0.17474000000000003,
+  "two_branch_vs_det_ap50_delta": -0.008989999999999998,
+  "two_branch_vs_det_ap_delta": -0.00010999999999999899
+}

@@ -1,0 +1,19 @@
+run_name=yolov5x_standard_train_b32_s0_standard_train_b32_e80_gpu0
+model=yolov5x
+experiment=standard_yolov5_train_baseline
+mode=standard_train_py
+student_modality=sar
+batch=32
+seed=0
+gpu_id=0
+epochs=80
+img=256
+optimizer=SGD
+patience=400
+workers=4
+weights=/mnt/dataY/ydf/projects/LADD_public/external/yolov5/yolov5x.pt
+data=/mnt/dataY/ydf/projects/LADD_public/configs/datasets/ogsod_hbb_sar.yaml
+hyp=/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/configs/hyp_cold_ogsod.yaml
+note=Standard YOLOv5 train.py baseline for comparison against custom CCLKD trainer controls.
+restart_1_time=2026-06-12 12:50:35 +08
+restart_1_reason=standard_yolov5_train_py_failed_under_torch_weights_only_default; relaunched with TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1 for trusted local yolov5x.pt

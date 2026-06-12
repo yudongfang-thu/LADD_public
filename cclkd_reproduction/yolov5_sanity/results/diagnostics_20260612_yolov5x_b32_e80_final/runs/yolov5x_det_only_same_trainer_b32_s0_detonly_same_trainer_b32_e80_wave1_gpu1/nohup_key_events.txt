@@ -1,0 +1,91 @@
+35:Model summary: 445 layers, 86231272 parameters, 86231272 gradients, 204.7 GFLOPs
+37:Transferred 739/745 items from /mnt/dataY/ydf/projects/LADD_public/external/yolov5/yolov5x.pt
+46:[34m[1moptimizer:[0m SGD(lr=0.01) with parameter groups 123 weight(decay=0.0), 126 weight(decay=0.0005), 126 bias
+52:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+976:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+1900:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+2824:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+3748:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+4672:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+5596:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+6520:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+7444:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+8368:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+9292:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+10216:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+11140:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+12064:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+12988:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+13912:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+14836:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+15760:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+16684:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+17608:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+18532:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+19456:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+20380:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+21304:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+22228:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+23152:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+24076:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+25000:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+25924:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+26848:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+27772:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+28696:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+29620:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+30544:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+31468:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+32392:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+33316:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+34240:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+35164:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+36088:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+37012:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+37936:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+38860:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+39784:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+40708:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+41632:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+42556:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+43480:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+44404:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+45328:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+46252:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+47176:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+48100:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+49024:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+49948:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+50872:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+51796:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+52720:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+53644:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+54568:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+55492:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+56416:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+57340:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+58264:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+59188:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+60112:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+61036:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+61960:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+62884:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+63808:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+64732:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+65656:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+66580:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+67504:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+68428:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+69352:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+70276:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+71200:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+72124:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+73048:      Epoch    GPU_mem      s_box      s_obj      s_cls      t_box      t_obj      t_cls         kd        lld        fld        rld        ccl
+73973:Could not strip optimizer from /mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/results/runs/yolov5x_det_only_same_trainer_b32_s0_detonly_same_trainer_b32_e80_wave1_gpu1/weights/last.pt: Weights only load failed. This file can still be loaded, to do so you have two options, [1mdo those steps only if you trust the source of the checkpoint[0m.
+73974:	(1) In PyTorch 2.6, we changed the default value of the `weights_only` argument in `torch.load` from `False` to `True`. Re-running `torch.load` with `weights_only` set to `False` will likely succeed, but it can result in arbitrary code execution. Do it only if you got the file from a trusted source.
+73975:	(2) Alternatively, to load with `weights_only=True` please check the recommended steps in the following error message.
+73978:Check the documentation of torch.load to learn more about types accepted by default with weights_only https://pytorch.org/docs/stable/generated/torch.load.html.
+73979:Could not strip optimizer from /mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/results/runs/yolov5x_det_only_same_trainer_b32_s0_detonly_same_trainer_b32_e80_wave1_gpu1/weights/best.pt: Weights only load failed. This file can still be loaded, to do so you have two options, [1mdo those steps only if you trust the source of the checkpoint[0m.
+73980:	(1) In PyTorch 2.6, we changed the default value of the `weights_only` argument in `torch.load` from `False` to `True`. Re-running `torch.load` with `weights_only` set to `False` will likely succeed, but it can result in arbitrary code execution. Do it only if you got the file from a trusted source.
+73981:	(2) Alternatively, to load with `weights_only=True` please check the recommended steps in the following error message.
+73984:Check the documentation of torch.load to learn more about types accepted by default with weights_only https://pytorch.org/docs/stable/generated/torch.load.html.

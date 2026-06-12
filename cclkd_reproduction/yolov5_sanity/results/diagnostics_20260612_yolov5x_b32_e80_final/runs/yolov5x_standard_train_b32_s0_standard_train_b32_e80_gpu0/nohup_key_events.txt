@@ -1,0 +1,91 @@
+1:[34m[1mtrain: [0mweights=external/yolov5/yolov5x.pt, cfg=, data=configs/datasets/ogsod_hbb_sar.yaml, hyp=cclkd_reproduction/yolov5_sanity/configs/hyp_cold_ogsod.yaml, epochs=80, batch_size=32, imgsz=256, rect=False, resume=False, nosave=False, noval=False, noautoanchor=False, noplots=False, evolve=None, bucket=, cache=None, image_weights=False, device=0, multi_scale=False, single_cls=False, optimizer=SGD, sync_bn=False, workers=4, project=cclkd_reproduction/yolov5_sanity/results/runs, name=yolov5x_standard_train_b32_s0_standard_train_b32_e80_gpu0, exist_ok=True, quad=False, cos_lr=False, label_smoothing=0.0, patience=400, freeze=[0], save_period=100, seed=0, local_rank=-1, entity=None, upload_dataset=False, bbox_interval=-1, artifact_alias=latest
+36:Model summary: 445 layers, 86231272 parameters, 86231272 gradients, 204.7 GFLOPs
+38:Transferred 739/745 items from external/yolov5/yolov5x.pt
+44:[34m[1moptimizer:[0m SGD(lr=0.01) with parameter groups 123 weight(decay=0.0), 126 weight(decay=0.0005), 126 bias
+60:Starting training for 80 epochs...
+62:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+985:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+1908:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+2831:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+3754:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+4677:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+5600:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+6523:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+7446:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+8369:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+9292:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+10215:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+11138:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+12061:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+12984:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+13907:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+14830:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+15753:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+16676:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+17599:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+18522:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+19445:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+20368:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+21291:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+22214:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+23137:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+24060:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+24983:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+25906:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+26829:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+27752:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+28675:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+29598:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+30521:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+31444:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+32367:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+33290:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+34213:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+35136:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+36059:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+36982:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+37905:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+38828:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+39751:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+40674:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+41597:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+42520:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+43443:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+44366:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+45289:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+46212:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+47135:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+48058:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+48981:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+49904:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+50827:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+51750:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+52673:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+53596:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+54519:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+55442:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+56365:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+57288:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+58211:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+59134:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+60057:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+60980:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+61903:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+62826:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+63749:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+64672:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+65595:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+66518:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+67441:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+68364:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+69287:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+70210:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+71133:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+72056:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+72979:      Epoch    GPU_mem   box_loss   obj_loss   cls_loss  Instances       Size
+73908:Model summary: 322 layers, 86186872 parameters, 0 gradients, 203.8 GFLOPs
+73914:Results saved to [1mcclkd_reproduction/yolov5_sanity/results/runs/yolov5x_standard_train_b32_s0_standard_train_b32_e80_gpu0[0m
+73915:Traceback (most recent call last):
+73931:    ANTIALIAS = Image.Resampling.LANCZOS
+73933:    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+73934:AttributeError: module 'PIL.Image' has no attribute 'Resampling'

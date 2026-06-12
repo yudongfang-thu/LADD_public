@@ -1,0 +1,4 @@
+80636 /mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/results/runs/yolov5x_two_branch_no_kd_b32_s0_twobranch_nokd_b32_e80_wave1_gpu3/nohup.log
+-rw-rw-r-- 1 ydf ydf 16K Jun 12 10:53 /mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/results/runs/yolov5x_two_branch_no_kd_b32_s0_twobranch_nokd_b32_e80_wave1_gpu3/cclkd_yolov5_diagnostics.csv
+-rw-rw-r-- 1 ydf ydf 24M Jun 12 10:53 /mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/results/runs/yolov5x_two_branch_no_kd_b32_s0_twobranch_nokd_b32_e80_wave1_gpu3/nohup.log
+-rw-rw-r-- 1 ydf ydf 24K Jun 12 10:53 /mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/results/runs/yolov5x_two_branch_no_kd_b32_s0_twobranch_nokd_b32_e80_wave1_gpu3/results.csv

@@ -1,0 +1,4 @@
+73984 /mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/results/runs/yolov5x_det_only_same_trainer_b32_s0_detonly_same_trainer_b32_e80_wave1_gpu1/nohup.log
+-rw-rw-r-- 1 ydf ydf 13K Jun 12 10:16 /mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/results/runs/yolov5x_det_only_same_trainer_b32_s0_detonly_same_trainer_b32_e80_wave1_gpu1/cclkd_yolov5_diagnostics.csv
+-rw-rw-r-- 1 ydf ydf 24M Jun 12 10:16 /mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/results/runs/yolov5x_det_only_same_trainer_b32_s0_detonly_same_trainer_b32_e80_wave1_gpu1/nohup.log
+-rw-rw-r-- 1 ydf ydf 24K Jun 12 10:16 /mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/results/runs/yolov5x_det_only_same_trainer_b32_s0_detonly_same_trainer_b32_e80_wave1_gpu1/results.csv
