@@ -199,6 +199,7 @@ chmod +x "$RUN_DIR/command.sh"
       done
     fi
     export YOLOv5_AUTOINSTALL=false
+    export TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1
     '"$(printf '%q ' "${CMD[@]}")"'
   ' > "$RUN_DIR/nohup.log" 2>&1 &
   echo $! > "$RUN_DIR/pid.txt"
