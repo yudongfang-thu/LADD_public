@@ -1,0 +1,34 @@
+# HEAD
+[2026-06-11 01:26:56] phase=a1 model=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/sar/sar_yolo11s_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt
+[2026-06-11 01:26:56] Launching OGSOD hbb LADD phase a1: ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_capkd_s_s0_alphaKD0p25_b400_a1_e10_b64_s0_gpu1
+[2026-06-11 01:41:06] Phase a1 finished
+python3: can't open file '/root/shared-nvme/LADD_public_p1/tools/summarize_tskd_results.py': [Errno 2] No such file or directory
+[2026-06-11 01:41:06] Run directory: /root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_capkd_s_s0_alphaKD0p25_b400_a1_e10_b64_s0_gpu1
+[2026-06-11 01:41:06] phase=a2 model=/root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_capkd_s_s0_alphaKD0p25_b400_a1_e10_b64_s0_gpu1/weights/best.pt
+[2026-06-11 01:41:06] Launching OGSOD hbb LADD phase a2: ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_capkd_s_s0_alphaKD0p25_b400_a2_e50_b64_s0_gpu1
+[2026-06-11 04:13:18] Phase a2 finished
+python3: can't open file '/root/shared-nvme/LADD_public_p1/tools/summarize_tskd_results.py': [Errno 2] No such file or directory
+[2026-06-11 04:13:18] Run directory: /root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_capkd_s_s0_alphaKD0p25_b400_a2_e50_b64_s0_gpu1
+[2026-06-11 04:13:18] phase=b model=/root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_capkd_s_s0_alphaKD0p25_b400_a2_e50_b64_s0_gpu1/weights/best.pt
+[2026-06-11 04:13:18] Launching OGSOD hbb LADD phase b: ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_capkd_s_s0_alphaKD0p25_b400_b_e400_b64_s0_gpu1
+
+# KEY LINES
+[2026-06-11 01:26:56] phase=a1 model=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/sar/sar_yolo11s_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt
+[2026-06-11 01:41:06] Run directory: /root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_capkd_s_s0_alphaKD0p25_b400_a1_e10_b64_s0_gpu1
+[2026-06-11 01:41:06] phase=a2 model=/root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_capkd_s_s0_alphaKD0p25_b400_a1_e10_b64_s0_gpu1/weights/best.pt
+[2026-06-11 04:13:18] Run directory: /root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_capkd_s_s0_alphaKD0p25_b400_a2_e50_b64_s0_gpu1
+[2026-06-11 04:13:18] phase=b model=/root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_capkd_s_s0_alphaKD0p25_b400_a2_e50_b64_s0_gpu1/weights/best.pt
+
+# TAIL
+[2026-06-11 01:26:56] phase=a1 model=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/sar/sar_yolo11s_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt
+[2026-06-11 01:26:56] Launching OGSOD hbb LADD phase a1: ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_capkd_s_s0_alphaKD0p25_b400_a1_e10_b64_s0_gpu1
+[2026-06-11 01:41:06] Phase a1 finished
+python3: can't open file '/root/shared-nvme/LADD_public_p1/tools/summarize_tskd_results.py': [Errno 2] No such file or directory
+[2026-06-11 01:41:06] Run directory: /root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_capkd_s_s0_alphaKD0p25_b400_a1_e10_b64_s0_gpu1
+[2026-06-11 01:41:06] phase=a2 model=/root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_capkd_s_s0_alphaKD0p25_b400_a1_e10_b64_s0_gpu1/weights/best.pt
+[2026-06-11 01:41:06] Launching OGSOD hbb LADD phase a2: ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_capkd_s_s0_alphaKD0p25_b400_a2_e50_b64_s0_gpu1
+[2026-06-11 04:13:18] Phase a2 finished
+python3: can't open file '/root/shared-nvme/LADD_public_p1/tools/summarize_tskd_results.py': [Errno 2] No such file or directory
+[2026-06-11 04:13:18] Run directory: /root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_capkd_s_s0_alphaKD0p25_b400_a2_e50_b64_s0_gpu1
+[2026-06-11 04:13:18] phase=b model=/root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_capkd_s_s0_alphaKD0p25_b400_a2_e50_b64_s0_gpu1/weights/best.pt
+[2026-06-11 04:13:18] Launching OGSOD hbb LADD phase b: ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_capkd_s_s0_alphaKD0p25_b400_b_e400_b64_s0_gpu1

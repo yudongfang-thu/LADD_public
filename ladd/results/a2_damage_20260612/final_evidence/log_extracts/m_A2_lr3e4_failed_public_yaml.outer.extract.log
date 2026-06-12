@@ -1,0 +1,93 @@
+# HEAD
+[2026-06-12 02:52:04] phase=a1 model=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/sar/sar_yolo11m_hbb_800ep_cos_nomosaic_albu_b32_s0/weights/best.pt
+[2026-06-12 02:52:04] Launching OGSOD hbb LADD phase a1: ladd_hbb_ogsod11m_formal_nomosaic_yolo11m_cap2_s0_diag_a2damage_m_s0_a2lr3e4_b1_a1_e10_b32_s0_gpu1
+[2026-06-12 02:52:10] Phase a1 failed with code 1
+[2026-06-12 02:52:04] command:
+ python3 ladd/code_versions/current_hbb/tools/train_ladd_hbb.py --phase a1 --model runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/sar/sar_yolo11m_hbb_800ep_cos_nomosaic_albu_b32_s0/weights/best.pt --data shared/configs/datasets_public/ogsod1_sar_detect.yaml --teacher-data shared/configs/datasets_public/ogsod1_rgb_detect.yaml --teacher-weights runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/rgb/rgb_yolo11m_hbb_800ep_cos_nomosaic_albu_b32_s0/weights/best.pt --imgsz 256 --epochs 10 --batch 32 --workers 8 --device 1 --patience 200 --fraction 1.0 --project runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11m/cap2 --name ladd_hbb_ogsod11m_formal_nomosaic_yolo11m_cap2_s0_diag_a2damage_m_s0_a2lr3e4_b1_a1_e10_b32_s0_gpu1 --phase-detect-mode raw --det-loss-scale 0.0 --phase-stop-metric default --freeze-bn-after-epoch -1 --ladd-diag-log-bn 1 --ladd-diag-log-grad 0 --ladd-grad-clip-norm 0.0 --ladd-diag-log-every 1 --ladd-kd-decay-mode none --ladd-kd-decay-start-epoch -1 --ladd-kd-decay-end-epoch -1 --ladd-kd-final-mult 1.0 --ladd-kd-stop-after-epoch -1 --reach-target-mode coupled --kd-target-mode detach --lambda-rec 0.1 --lambda-sep 0.05 --lambda-taskL 1.0 --alpha-kd 1.0 --alpha-s-rec 0.1 --alpha-sep 0.05 --lambda-reach 1.0 --lambda-match-inner 1.0 --lambda-rank-inner 1.0 --delta 0.2 --rank-d-neg-cap 2.0 --lambda-anti-collapse 0.0 --anti-collapse-floor 0.0 --reach-input-mode adapter --student-detect-mode raw --student-branch-mode split --teacher-feature-mode decomposed --kd-weight-mode none --kd-aggregation-mode token --residual-aux-mode energy --lambda-residual-aux 0.25 --teacher-private-aux-mode energy --lambda-teacher-private-aux 0.25 --mosaic 0.0 --mixup 0.0 --cutmix 0.0 --degrees 0.0 --perspective 0.0 --translate 0.1 --scale 0.5 --fliplr 0.5 --flipud 0.0 --hsv-h 0.0 --hsv-s 0.0 --hsv-v 0.0 --erasing 0.0 --close-mosaic 0 --seed 0 --deterministic --ladd-assert-phase-freeze --comparison-kd-profile none --profile-kd-weight 1.0 --fgd-alpha 0.001 --fgd-beta 0.0005 --fgd-gamma 0.001 --fgd-lambda 0.0 --fgd-temperature 0.5 --fgd-mask-mode gt_box --fgd-bg-norm 1 --ld-temperature 10.0 --ld-use-vlr 1 --ld-quality-power 1.0 --ld-min-vlr-weight 0.0 --ld-vlr-topk 0 --ld-vlr-weight 0.25 --ld-main-weight 0.25 --ld-allow-empty-vlr 1 --cclkd-base-temperature 2.0 --cclkd-contrastive-temperature 0.1 --cclkd-feat-weight 1.0 --cclkd-logit-weight 1.0 --cclkd-contrast-weight 0.5 --cclkd-bg-weight 0.1 --cclkd-min-confidence 0.1 --cclkd-max-tokens 512 --cclkd-temperature-min 0.5 --cclkd-temperature-max 5.0 --cclkd-entropy-scale 5.0 --hallucidet-bg-weight 0.05 --hallucidet-response-weight 0.5 --hallucidet-margin-weight 0.1 --hallucidet-margin 0.2 --save-period 100 --phase-min-epochs 10 --use-mask --use-fg-mask-for-reach
+New https://pypi.org/project/ultralytics/8.4.66 available 😃 Update with 'pip install -U ultralytics'
+Ultralytics 8.4.30 🚀 Python-3.12.3 torch-2.7.0a0+7c8ec84dab.nv25.03 CUDA:1 (NVIDIA GeForce RTX 4090, 24081MiB)
+[34m[1mengine/trainer: [0magnostic_nms=False, amp=True, angle=1.0, augment=False, auto_augment=randaugment, batch=32, bgr=0.0, box=7.5, cache=False, cfg=None, classes=None, close_mosaic=0, cls=0.5, compile=False, conf=None, copy_paste=0.0, copy_paste_mode=flip, cos_lr=False, cutmix=0.0, data=/root/shared-nvme/LADD_public_p1/shared/configs/datasets_public/ogsod1_sar_detect.yaml, degrees=0.0, deterministic=True, device=1, dfl=1.5, dnn=False, dropout=0.0, dynamic=False, embed=None, end2end=None, epochs=10, erasing=0.0, exist_ok=False, fliplr=0.5, flipud=0.0, format=torchscript, fraction=1.0, freeze=None, half=False, hsv_h=0.0, hsv_s=0.0, hsv_v=0.0, imgsz=256, int8=False, iou=0.7, keras=False, kobj=1.0, line_width=None, lr0=0.01, lrf=0.01, mask_ratio=4, max_det=300, mixup=0.0, mode=train, model=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/sar/sar_yolo11m_hbb_800ep_cos_nomosaic_albu_b32_s0/weights/best.pt, momentum=0.937, mosaic=0.0, multi_scale=0.0, name=ladd_hbb_ogsod11m_formal_nomosaic_yolo11m_cap2_s0_diag_a2damage_m_s0_a2lr3e4_b1_a1_e10_b32_s0_gpu1, nbs=64, nms=False, opset=None, optimize=False, optimizer=auto, overlap_mask=True, patience=200, perspective=0.0, plots=True, pose=12.0, pretrained=True, profile=False, project=/root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11m/cap2, rect=False, resume=None, retina_masks=False, rle=1.0, save=True, save_conf=False, save_crop=False, save_dir=/root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11m/cap2/ladd_hbb_ogsod11m_formal_nomosaic_yolo11m_cap2_s0_diag_a2damage_m_s0_a2lr3e4_b1_a1_e10_b32_s0_gpu1, save_frames=False, save_json=False, save_period=100, save_txt=False, scale=0.5, seed=0, shear=0.0, show=False, show_boxes=True, show_conf=True, show_labels=True, simplify=True, single_cls=False, source=None, split=val, stream_buffer=False, strict_batch_size=False, task=detect, time=None, tracker=botsort.yaml, translate=0.1, val=True, verbose=True, vid_stride=1, visualize=False, warmup_bias_lr=0.1, warmup_epochs=3.0, warmup_momentum=0.8, weight_decay=0.0005, workers=8, workspace=None
+
+Traceback (most recent call last):
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/engine/trainer.py", line 694, in get_dataset
+    data = check_det_dataset(self.args.data)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/data/utils.py", line 477, in check_det_dataset
+    raise FileNotFoundError(m)
+FileNotFoundError: Dataset '/root/shared-nvme/LADD_public_p1/shared/configs/datasets_public/ogsod1_sar_detect.yaml' images not found, missing path '/path/to/OGSOD-1.0/sar/images/test'
+Note dataset download directory is '/root/shared-nvme/ladd/datasets'. You can update this in '/root/.config/Ultralytics/settings.json'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/root/shared-nvme/LADD_public_p1/ladd/code_versions/current_hbb/tools/train_ladd_hbb.py", line 360, in <module>
+    main()
+  File "/root/shared-nvme/LADD_public_p1/ladd/code_versions/current_hbb/tools/train_ladd_hbb.py", line 356, in main
+    model.train(**train_kwargs)
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/engine/model.py", line 783, in train
+    self.trainer = (trainer or self._smart_load("trainer"))(overrides=args, _callbacks=self.callbacks)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/ladd/code_versions/current_hbb/src/teacher_student_decomposition_kd_hbb/trainer.py", line 644, in __init__
+    super().__init__(cfg, overrides, _callbacks)
+  File "/root/shared-nvme/LADD_public_p1/ladd/code_versions/current_hbb/src/teacher_student_decomposition_kd_hbb/trainer.py", line 269, in __init__
+    super().__init__(cfg, overrides, _callbacks)
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/models/yolo/detect/train.py", line 63, in __init__
+    super().__init__(cfg, overrides, _callbacks)
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/engine/trainer.py", line 186, in __init__
+    self.data = self.get_dataset()
+                ^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/engine/trainer.py", line 698, in get_dataset
+    raise RuntimeError(emojis(f"Dataset '{clean_url(self.args.data)}' error ❌ {e}")) from e
+RuntimeError: Dataset '/root/shared-nvme/LADD_public_p1/shared/configs/datasets_public/ogsod1_sar_detect.yaml' error ❌ Dataset '/root/shared-nvme/LADD_public_p1/shared/configs/datasets_public/ogsod1_sar_detect.yaml' images not found, missing path '/path/to/OGSOD-1.0/sar/images/test'
+Note dataset download directory is '/root/shared-nvme/ladd/datasets'. You can update this in '/root/.config/Ultralytics/settings.json'
+
+# KEY LINES
+[2026-06-12 02:52:04] phase=a1 model=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/sar/sar_yolo11m_hbb_800ep_cos_nomosaic_albu_b32_s0/weights/best.pt
+[2026-06-12 02:52:10] Phase a1 failed with code 1
+Traceback (most recent call last):
+Traceback (most recent call last):
+    raise RuntimeError(emojis(f"Dataset '{clean_url(self.args.data)}' error ❌ {e}")) from e
+RuntimeError: Dataset '/root/shared-nvme/LADD_public_p1/shared/configs/datasets_public/ogsod1_sar_detect.yaml' error ❌ Dataset '/root/shared-nvme/LADD_public_p1/shared/configs/datasets_public/ogsod1_sar_detect.yaml' images not found, missing path '/path/to/OGSOD-1.0/sar/images/test'
+
+# TAIL
+[2026-06-12 02:52:04] phase=a1 model=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/sar/sar_yolo11m_hbb_800ep_cos_nomosaic_albu_b32_s0/weights/best.pt
+[2026-06-12 02:52:04] Launching OGSOD hbb LADD phase a1: ladd_hbb_ogsod11m_formal_nomosaic_yolo11m_cap2_s0_diag_a2damage_m_s0_a2lr3e4_b1_a1_e10_b32_s0_gpu1
+[2026-06-12 02:52:10] Phase a1 failed with code 1
+[2026-06-12 02:52:04] command:
+ python3 ladd/code_versions/current_hbb/tools/train_ladd_hbb.py --phase a1 --model runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/sar/sar_yolo11m_hbb_800ep_cos_nomosaic_albu_b32_s0/weights/best.pt --data shared/configs/datasets_public/ogsod1_sar_detect.yaml --teacher-data shared/configs/datasets_public/ogsod1_rgb_detect.yaml --teacher-weights runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/rgb/rgb_yolo11m_hbb_800ep_cos_nomosaic_albu_b32_s0/weights/best.pt --imgsz 256 --epochs 10 --batch 32 --workers 8 --device 1 --patience 200 --fraction 1.0 --project runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11m/cap2 --name ladd_hbb_ogsod11m_formal_nomosaic_yolo11m_cap2_s0_diag_a2damage_m_s0_a2lr3e4_b1_a1_e10_b32_s0_gpu1 --phase-detect-mode raw --det-loss-scale 0.0 --phase-stop-metric default --freeze-bn-after-epoch -1 --ladd-diag-log-bn 1 --ladd-diag-log-grad 0 --ladd-grad-clip-norm 0.0 --ladd-diag-log-every 1 --ladd-kd-decay-mode none --ladd-kd-decay-start-epoch -1 --ladd-kd-decay-end-epoch -1 --ladd-kd-final-mult 1.0 --ladd-kd-stop-after-epoch -1 --reach-target-mode coupled --kd-target-mode detach --lambda-rec 0.1 --lambda-sep 0.05 --lambda-taskL 1.0 --alpha-kd 1.0 --alpha-s-rec 0.1 --alpha-sep 0.05 --lambda-reach 1.0 --lambda-match-inner 1.0 --lambda-rank-inner 1.0 --delta 0.2 --rank-d-neg-cap 2.0 --lambda-anti-collapse 0.0 --anti-collapse-floor 0.0 --reach-input-mode adapter --student-detect-mode raw --student-branch-mode split --teacher-feature-mode decomposed --kd-weight-mode none --kd-aggregation-mode token --residual-aux-mode energy --lambda-residual-aux 0.25 --teacher-private-aux-mode energy --lambda-teacher-private-aux 0.25 --mosaic 0.0 --mixup 0.0 --cutmix 0.0 --degrees 0.0 --perspective 0.0 --translate 0.1 --scale 0.5 --fliplr 0.5 --flipud 0.0 --hsv-h 0.0 --hsv-s 0.0 --hsv-v 0.0 --erasing 0.0 --close-mosaic 0 --seed 0 --deterministic --ladd-assert-phase-freeze --comparison-kd-profile none --profile-kd-weight 1.0 --fgd-alpha 0.001 --fgd-beta 0.0005 --fgd-gamma 0.001 --fgd-lambda 0.0 --fgd-temperature 0.5 --fgd-mask-mode gt_box --fgd-bg-norm 1 --ld-temperature 10.0 --ld-use-vlr 1 --ld-quality-power 1.0 --ld-min-vlr-weight 0.0 --ld-vlr-topk 0 --ld-vlr-weight 0.25 --ld-main-weight 0.25 --ld-allow-empty-vlr 1 --cclkd-base-temperature 2.0 --cclkd-contrastive-temperature 0.1 --cclkd-feat-weight 1.0 --cclkd-logit-weight 1.0 --cclkd-contrast-weight 0.5 --cclkd-bg-weight 0.1 --cclkd-min-confidence 0.1 --cclkd-max-tokens 512 --cclkd-temperature-min 0.5 --cclkd-temperature-max 5.0 --cclkd-entropy-scale 5.0 --hallucidet-bg-weight 0.05 --hallucidet-response-weight 0.5 --hallucidet-margin-weight 0.1 --hallucidet-margin 0.2 --save-period 100 --phase-min-epochs 10 --use-mask --use-fg-mask-for-reach
+New https://pypi.org/project/ultralytics/8.4.66 available 😃 Update with 'pip install -U ultralytics'
+Ultralytics 8.4.30 🚀 Python-3.12.3 torch-2.7.0a0+7c8ec84dab.nv25.03 CUDA:1 (NVIDIA GeForce RTX 4090, 24081MiB)
+[34m[1mengine/trainer: [0magnostic_nms=False, amp=True, angle=1.0, augment=False, auto_augment=randaugment, batch=32, bgr=0.0, box=7.5, cache=False, cfg=None, classes=None, close_mosaic=0, cls=0.5, compile=False, conf=None, copy_paste=0.0, copy_paste_mode=flip, cos_lr=False, cutmix=0.0, data=/root/shared-nvme/LADD_public_p1/shared/configs/datasets_public/ogsod1_sar_detect.yaml, degrees=0.0, deterministic=True, device=1, dfl=1.5, dnn=False, dropout=0.0, dynamic=False, embed=None, end2end=None, epochs=10, erasing=0.0, exist_ok=False, fliplr=0.5, flipud=0.0, format=torchscript, fraction=1.0, freeze=None, half=False, hsv_h=0.0, hsv_s=0.0, hsv_v=0.0, imgsz=256, int8=False, iou=0.7, keras=False, kobj=1.0, line_width=None, lr0=0.01, lrf=0.01, mask_ratio=4, max_det=300, mixup=0.0, mode=train, model=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/sar/sar_yolo11m_hbb_800ep_cos_nomosaic_albu_b32_s0/weights/best.pt, momentum=0.937, mosaic=0.0, multi_scale=0.0, name=ladd_hbb_ogsod11m_formal_nomosaic_yolo11m_cap2_s0_diag_a2damage_m_s0_a2lr3e4_b1_a1_e10_b32_s0_gpu1, nbs=64, nms=False, opset=None, optimize=False, optimizer=auto, overlap_mask=True, patience=200, perspective=0.0, plots=True, pose=12.0, pretrained=True, profile=False, project=/root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11m/cap2, rect=False, resume=None, retina_masks=False, rle=1.0, save=True, save_conf=False, save_crop=False, save_dir=/root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11m/cap2/ladd_hbb_ogsod11m_formal_nomosaic_yolo11m_cap2_s0_diag_a2damage_m_s0_a2lr3e4_b1_a1_e10_b32_s0_gpu1, save_frames=False, save_json=False, save_period=100, save_txt=False, scale=0.5, seed=0, shear=0.0, show=False, show_boxes=True, show_conf=True, show_labels=True, simplify=True, single_cls=False, source=None, split=val, stream_buffer=False, strict_batch_size=False, task=detect, time=None, tracker=botsort.yaml, translate=0.1, val=True, verbose=True, vid_stride=1, visualize=False, warmup_bias_lr=0.1, warmup_epochs=3.0, warmup_momentum=0.8, weight_decay=0.0005, workers=8, workspace=None
+
+Traceback (most recent call last):
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/engine/trainer.py", line 694, in get_dataset
+    data = check_det_dataset(self.args.data)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/data/utils.py", line 477, in check_det_dataset
+    raise FileNotFoundError(m)
+FileNotFoundError: Dataset '/root/shared-nvme/LADD_public_p1/shared/configs/datasets_public/ogsod1_sar_detect.yaml' images not found, missing path '/path/to/OGSOD-1.0/sar/images/test'
+Note dataset download directory is '/root/shared-nvme/ladd/datasets'. You can update this in '/root/.config/Ultralytics/settings.json'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/root/shared-nvme/LADD_public_p1/ladd/code_versions/current_hbb/tools/train_ladd_hbb.py", line 360, in <module>
+    main()
+  File "/root/shared-nvme/LADD_public_p1/ladd/code_versions/current_hbb/tools/train_ladd_hbb.py", line 356, in main
+    model.train(**train_kwargs)
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/engine/model.py", line 783, in train
+    self.trainer = (trainer or self._smart_load("trainer"))(overrides=args, _callbacks=self.callbacks)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/ladd/code_versions/current_hbb/src/teacher_student_decomposition_kd_hbb/trainer.py", line 644, in __init__
+    super().__init__(cfg, overrides, _callbacks)
+  File "/root/shared-nvme/LADD_public_p1/ladd/code_versions/current_hbb/src/teacher_student_decomposition_kd_hbb/trainer.py", line 269, in __init__
+    super().__init__(cfg, overrides, _callbacks)
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/models/yolo/detect/train.py", line 63, in __init__
+    super().__init__(cfg, overrides, _callbacks)
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/engine/trainer.py", line 186, in __init__
+    self.data = self.get_dataset()
+                ^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/engine/trainer.py", line 698, in get_dataset
+    raise RuntimeError(emojis(f"Dataset '{clean_url(self.args.data)}' error ❌ {e}")) from e
+RuntimeError: Dataset '/root/shared-nvme/LADD_public_p1/shared/configs/datasets_public/ogsod1_sar_detect.yaml' error ❌ Dataset '/root/shared-nvme/LADD_public_p1/shared/configs/datasets_public/ogsod1_sar_detect.yaml' images not found, missing path '/path/to/OGSOD-1.0/sar/images/test'
+Note dataset download directory is '/root/shared-nvme/ladd/datasets'. You can update this in '/root/.config/Ultralytics/settings.json'

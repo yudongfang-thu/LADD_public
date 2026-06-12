@@ -1,0 +1,4 @@
+created_at=2026-06-12T11:52:32.941983
+source_repo=/root/shared-nvme/LADD_public_p1
+policy=no weights, no tensorboard events, no wandb, no full run directories
+included=results.csv,args.yaml,ladd_diagnostics.csv,chain manifests,compact log extracts

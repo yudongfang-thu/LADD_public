@@ -1,0 +1,12 @@
+# HEAD
+[2026-06-11 16:14:17] Launching OGSOD hbb LADD phase a2: ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_capkd_s_s0_bdetonly_b400_r2_a2_e50_b64_s0_gpu0
+[2026-06-11 18:05:18] Phase a2 finished
+[2026-06-11 18:05:18] Run directory: /root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_capkd_s_s0_bdetonly_b400_r2_a2_e50_b64_s0_gpu0
+
+# KEY LINES
+[2026-06-11 18:05:18] Run directory: /root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_capkd_s_s0_bdetonly_b400_r2_a2_e50_b64_s0_gpu0
+
+# TAIL
+[2026-06-11 16:14:17] Launching OGSOD hbb LADD phase a2: ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_capkd_s_s0_bdetonly_b400_r2_a2_e50_b64_s0_gpu0
+[2026-06-11 18:05:18] Phase a2 finished
+[2026-06-11 18:05:18] Run directory: /root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_capkd_s_s0_bdetonly_b400_r2_a2_e50_b64_s0_gpu0
