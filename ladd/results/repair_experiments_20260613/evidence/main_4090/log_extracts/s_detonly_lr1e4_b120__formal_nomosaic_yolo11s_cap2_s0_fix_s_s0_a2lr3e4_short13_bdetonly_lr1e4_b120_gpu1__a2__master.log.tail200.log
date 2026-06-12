@@ -1,0 +1,3 @@
+[2026-06-12 21:48:35] Launching OGSOD hbb LADD phase a2: ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_fix_s_s0_a2lr3e4_short13_bdetonly_lr1e4_b120_a2_e13_b64_s0_gpu1
+[2026-06-12 22:17:47] Phase a2 finished
+[2026-06-12 22:17:47] Run directory: /root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_fix_s_s0_a2lr3e4_short13_bdetonly_lr1e4_b120_a2_e13_b64_s0_gpu1

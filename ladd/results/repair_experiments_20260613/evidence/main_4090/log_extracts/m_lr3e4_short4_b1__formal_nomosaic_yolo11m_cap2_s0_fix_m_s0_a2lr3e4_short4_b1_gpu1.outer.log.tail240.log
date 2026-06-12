@@ -1,0 +1,16 @@
+[2026-06-12 17:21:49] phase=a1 model=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/sar/sar_yolo11m_hbb_800ep_cos_nomosaic_albu_b32_s0/weights/best.pt
+[2026-06-12 17:21:49] Launching OGSOD hbb LADD phase a1: ladd_hbb_ogsod11m_formal_nomosaic_yolo11m_cap2_s0_fix_m_s0_a2lr3e4_short4_b1_a1_e10_b32_s0_gpu1
+[2026-06-12 17:38:44] Phase a1 finished
+python3: can't open file '/root/shared-nvme/LADD_public_p1/tools/summarize_tskd_results.py': [Errno 2] No such file or directory
+[2026-06-12 17:38:44] Run directory: /root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11m/cap2/ladd_hbb_ogsod11m_formal_nomosaic_yolo11m_cap2_s0_fix_m_s0_a2lr3e4_short4_b1_a1_e10_b32_s0_gpu1
+[2026-06-12 17:38:44] phase=a2 model=/root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11m/cap2/ladd_hbb_ogsod11m_formal_nomosaic_yolo11m_cap2_s0_fix_m_s0_a2lr3e4_short4_b1_a1_e10_b32_s0_gpu1/weights/best.pt
+[2026-06-12 17:38:44] Launching OGSOD hbb LADD phase a2: ladd_hbb_ogsod11m_formal_nomosaic_yolo11m_cap2_s0_fix_m_s0_a2lr3e4_short4_b1_a2_e4_b32_s0_gpu1
+[2026-06-12 17:52:02] Phase a2 finished
+python3: can't open file '/root/shared-nvme/LADD_public_p1/tools/summarize_tskd_results.py': [Errno 2] No such file or directory
+[2026-06-12 17:52:02] Run directory: /root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11m/cap2/ladd_hbb_ogsod11m_formal_nomosaic_yolo11m_cap2_s0_fix_m_s0_a2lr3e4_short4_b1_a2_e4_b32_s0_gpu1
+[2026-06-12 17:52:02] phase=b model=/root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11m/cap2/ladd_hbb_ogsod11m_formal_nomosaic_yolo11m_cap2_s0_fix_m_s0_a2lr3e4_short4_b1_a2_e4_b32_s0_gpu1/weights/best.pt
+[2026-06-12 17:52:02] Launching OGSOD hbb LADD phase b: ladd_hbb_ogsod11m_formal_nomosaic_yolo11m_cap2_s0_fix_m_s0_a2lr3e4_short4_b1_b_e1_b32_s0_gpu1
+[2026-06-12 17:55:51] Phase b finished
+python3: can't open file '/root/shared-nvme/LADD_public_p1/tools/summarize_tskd_results.py': [Errno 2] No such file or directory
+[2026-06-12 17:55:52] Run directory: /root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11m/cap2/ladd_hbb_ogsod11m_formal_nomosaic_yolo11m_cap2_s0_fix_m_s0_a2lr3e4_short4_b1_b_e1_b32_s0_gpu1
+[2026-06-12 17:55:52] Chain complete. Final model: /root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11m/cap2/ladd_hbb_ogsod11m_formal_nomosaic_yolo11m_cap2_s0_fix_m_s0_a2lr3e4_short4_b1_b_e1_b32_s0_gpu1/weights/best.pt

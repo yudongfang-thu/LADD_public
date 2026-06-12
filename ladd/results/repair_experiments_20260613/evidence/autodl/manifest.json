@@ -1,0 +1,77 @@
+[
+  {
+    "label": "autodl_m_short4_freezebn",
+    "phase": "unknown",
+    "remote_run_dir": "/root/autodl-tmp/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11m/cap2/ladd_hbb_ogsod11m_formal_nomosaic_yolo11m_cap2_s0_fix_m_s0_a2lr3e4_short4_freezeBN_b1_autodl_retry1_a1_e10_b32_s0_gpu0",
+    "local_rel": "runs/autodl_m_short4_freezebn/unknown/ladd_hbb_ogsod11m_formal_nomosaic_yolo11m_cap2_s0_fix_m_s0_a2lr3e4_short4_freezeBN_b1_autodl_retry1_a1_e10_b32_s0_gpu0",
+    "files": [
+      "args.yaml",
+      "results.csv",
+      "ladd_diagnostics.csv"
+    ]
+  },
+  {
+    "label": "autodl_m_short4_freezebn",
+    "phase": "unknown",
+    "remote_run_dir": "/root/autodl-tmp/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11m/cap2/ladd_hbb_ogsod11m_formal_nomosaic_yolo11m_cap2_s0_fix_m_s0_a2lr3e4_short4_freezeBN_b1_autodl_retry1_a2_e4_b32_s0_gpu0",
+    "local_rel": "runs/autodl_m_short4_freezebn/unknown/ladd_hbb_ogsod11m_formal_nomosaic_yolo11m_cap2_s0_fix_m_s0_a2lr3e4_short4_freezeBN_b1_autodl_retry1_a2_e4_b32_s0_gpu0",
+    "files": [
+      "args.yaml",
+      "results.csv",
+      "ladd_diagnostics.csv"
+    ]
+  },
+  {
+    "label": "autodl_m_short4_freezebn",
+    "phase": "unknown",
+    "remote_run_dir": "/root/autodl-tmp/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11m/cap2/ladd_hbb_ogsod11m_formal_nomosaic_yolo11m_cap2_s0_fix_m_s0_a2lr3e4_short4_freezeBN_b1_autodl_retry1_b_e1_b32_s0_gpu0",
+    "local_rel": "runs/autodl_m_short4_freezebn/unknown/ladd_hbb_ogsod11m_formal_nomosaic_yolo11m_cap2_s0_fix_m_s0_a2lr3e4_short4_freezeBN_b1_autodl_retry1_b_e1_b32_s0_gpu0",
+    "files": [
+      "args.yaml",
+      "results.csv",
+      "ladd_diagnostics.csv"
+    ]
+  },
+  {
+    "label": "autodl_m_short4_duplicate",
+    "phase": "unknown",
+    "remote_run_dir": "/root/autodl-tmp/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11m/cap2/ladd_hbb_ogsod11m_formal_nomosaic_yolo11m_cap2_s0_fix_m_s0_a2lr3e4_short4_b1_autodl_retry1_a1_e10_b32_s0_gpu0",
+    "local_rel": "runs/autodl_m_short4_duplicate/unknown/ladd_hbb_ogsod11m_formal_nomosaic_yolo11m_cap2_s0_fix_m_s0_a2lr3e4_short4_b1_autodl_retry1_a1_e10_b32_s0_gpu0",
+    "files": [
+      "args.yaml",
+      "results.csv",
+      "ladd_diagnostics.csv"
+    ]
+  },
+  {
+    "label": "autodl_m_short4_duplicate",
+    "phase": "unknown",
+    "remote_run_dir": "/root/autodl-tmp/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11m/cap2/ladd_hbb_ogsod11m_formal_nomosaic_yolo11m_cap2_s0_fix_m_s0_a2lr3e4_short4_b1_autodl_retry1_a2_e4_b32_s0_gpu0",
+    "local_rel": "runs/autodl_m_short4_duplicate/unknown/ladd_hbb_ogsod11m_formal_nomosaic_yolo11m_cap2_s0_fix_m_s0_a2lr3e4_short4_b1_autodl_retry1_a2_e4_b32_s0_gpu0",
+    "files": [
+      "args.yaml",
+      "results.csv",
+      "ladd_diagnostics.csv"
+    ]
+  },
+  {
+    "label": "autodl_m_short4_duplicate",
+    "phase": "unknown",
+    "remote_run_dir": "/root/autodl-tmp/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11m/cap2/ladd_hbb_ogsod11m_formal_nomosaic_yolo11m_cap2_s0_fix_m_s0_a2lr3e4_short4_b1_autodl_retry1_b_e1_b32_s0_gpu0",
+    "local_rel": "runs/autodl_m_short4_duplicate/unknown/ladd_hbb_ogsod11m_formal_nomosaic_yolo11m_cap2_s0_fix_m_s0_a2lr3e4_short4_b1_autodl_retry1_b_e1_b32_s0_gpu0",
+    "files": [
+      "args.yaml",
+      "results.csv",
+      "ladd_diagnostics.csv"
+    ]
+  },
+  {
+    "label": "autodl_hallucidet_n_b8_terminated",
+    "phase": "train",
+    "remote_run_dir": "/root/autodl-tmp/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/comparisons/hallucidet_standalone/yolo11n/hallucidet_yolo11n_s0_800ep_img256_b8_autodl_20260613",
+    "local_rel": "runs/autodl_hallucidet_n_b8_terminated/train/hallucidet_yolo11n_s0_800ep_img256_b8_autodl_20260613",
+    "files": [
+      "results.csv"
+    ]
+  }
+]
