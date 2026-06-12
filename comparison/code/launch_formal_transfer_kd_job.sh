@@ -4,7 +4,7 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  comparison/code/launch_formal_transfer_kd_job.sh <fgd|ld|hallucidet_style> <n|s|m|l|x> <seed> <gpu_id>
+  comparison/code/launch_formal_transfer_kd_job.sh <fgd|ld> <n|s|m|l|x> <seed> <gpu_id>
 
 Runs a B-only transferred KD comparison under the formal OGSOD HBB protocol:
   OGSOD-1.0 HBB, imgsz=256, epochs=800, full no-mosaic, default Albumentations.
@@ -12,7 +12,7 @@ Runs a B-only transferred KD comparison under the formal OGSOD HBB protocol:
 These are method-style transferred baselines, not official reproductions:
   fgd    - generic detector KD, foreground/background feature weighting + relation
   ld     - generic detector KD, YOLO DFL localization-distribution KL
-  hallucidet_style - task-driven privileged-modality feature/response/margin baseline
+  HalluciDet uses the standalone comparison/hallucidet/train_hallucidet.py entry.
 
 Optional:
   RUN_TAG_SUFFIX=_debug
@@ -33,9 +33,9 @@ SEED="${3:-}"
 GPU_ID="${4:-}"
 
 case "$METHOD" in
-  fgd|ld|hallucidet_style) ;;
-  hallucidet)
-    echo "Use hallucidet_style for the current feature/response/margin portable baseline. Strict HalluciDet is not implemented in this launcher." >&2
+  fgd|ld) ;;
+  hallucidet|hallucidet_style)
+    echo "Legacy HalluciDet-style KD profile has been removed. Use comparison/hallucidet/train_hallucidet.py for the standalone HalluciDet-YOLO adaptation." >&2
     exit 2
     ;;
   cclkd)
@@ -158,10 +158,11 @@ fi
 case "$METHOD" in
   fgd)
     cmd+=(
-      "FGD_ALPHA=${FGD_ALPHA:-0.001}"
-      "FGD_BETA=${FGD_BETA:-0.0005}"
+      "FGD_ALPHA=${FGD_ALPHA:-0.0001}"
+      "FGD_BETA=${FGD_BETA:-0.00005}"
       "FGD_GAMMA=${FGD_GAMMA:-0.001}"
       "FGD_LAMBDA=${FGD_LAMBDA:-${FGD_RELATION_WEIGHT:-0.0}}"
+      "FGD_NORMALIZATION_MODE=${FGD_NORMALIZATION_MODE:-original}"
       "FGD_TEMPERATURE=${FGD_TEMPERATURE:-0.5}"
       "FGD_MASK_MODE=${FGD_MASK_MODE:-gt_box}"
       "FGD_BG_NORM=${FGD_BG_NORM:-1}"
@@ -177,14 +178,6 @@ case "$METHOD" in
       "LD_VLR_WEIGHT=${LD_VLR_WEIGHT:-0.25}"
       "LD_MAIN_WEIGHT=${LD_MAIN_WEIGHT:-0.25}"
       "LD_ALLOW_EMPTY_VLR=${LD_ALLOW_EMPTY_VLR:-1}"
-    )
-    ;;
-  hallucidet_style)
-    cmd+=(
-      "HALLUCIDET_BG_WEIGHT=${HALLUCIDET_BG_WEIGHT:-0.05}"
-      "HALLUCIDET_RESPONSE_WEIGHT=${HALLUCIDET_RESPONSE_WEIGHT:-0.5}"
-      "HALLUCIDET_MARGIN_WEIGHT=${HALLUCIDET_MARGIN_WEIGHT:-0.1}"
-      "HALLUCIDET_MARGIN=${HALLUCIDET_MARGIN:-0.2}"
     )
     ;;
 esac

@@ -158,13 +158,13 @@ def parse_args() -> argparse.Namespace:
 
     parser.add_argument(
         "--comparison-kd-profile",
-        choices=("none", "fgd", "ld", "cclkd", "hallucidet_style"),
+        choices=("none", "fgd", "ld", "cclkd"),
         default="none",
         help=(
             "Portable comparison KD profile for OGSOD HBB. "
             "fgd and ld are generic detector KD transfers; "
-            "cclkd and hallucidet_style are cross-modal/privileged-modality transfers; "
-            "hallucidet_style is a portable feature/response/margin baseline, not strict HalluciDet."
+            "cclkd is kept for existing online-comparison compatibility. "
+            "HalluciDet now uses the standalone comparison/hallucidet trainer."
         ),
     )
     parser.add_argument("--profile-kd-weight", type=float, default=1.0)
@@ -173,11 +173,12 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Use the selected comparison profile instead of the base feature-KD term inside kd_loss.",
     )
-    parser.add_argument("--fgd-alpha", type=float, default=0.001)
-    parser.add_argument("--fgd-beta", type=float, default=0.0005)
+    parser.add_argument("--fgd-alpha", type=float, default=0.0001)
+    parser.add_argument("--fgd-beta", type=float, default=0.00005)
     parser.add_argument("--fgd-gamma", type=float, default=0.001)
     parser.add_argument("--fgd-lambda", type=float, default=0.0)
     parser.add_argument("--fgd-relation-weight", type=float, default=None, help="Deprecated alias for --fgd-lambda.")
+    parser.add_argument("--fgd-normalization-mode", choices=("original", "channel_mean"), default="original")
     parser.add_argument("--fgd-temperature", type=float, default=0.5)
     parser.add_argument("--fgd-mask-mode", choices=("gt_box", "assigner"), default="gt_box")
     parser.add_argument("--fgd-bg-norm", type=int, default=1)
@@ -200,10 +201,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--cclkd-temperature-min", type=float, default=0.5)
     parser.add_argument("--cclkd-temperature-max", type=float, default=5.0)
     parser.add_argument("--cclkd-entropy-scale", type=float, default=5.0)
-    parser.add_argument("--hallucidet-bg-weight", type=float, default=0.05)
-    parser.add_argument("--hallucidet-response-weight", type=float, default=0.5)
-    parser.add_argument("--hallucidet-margin-weight", type=float, default=0.1)
-    parser.add_argument("--hallucidet-margin", type=float, default=0.2)
 
     parser.add_argument("--c-weak-nrrl-scale", type=float, default=0.0)
     parser.add_argument("--c-weak-nrrl-detach-student", action="store_true")
@@ -316,6 +313,7 @@ def main() -> None:
         fgd_beta=args.fgd_beta,
         fgd_gamma=args.fgd_gamma,
         fgd_lambda=args.fgd_lambda if args.fgd_relation_weight is None else args.fgd_relation_weight,
+        fgd_normalization_mode=args.fgd_normalization_mode,
         fgd_temperature=args.fgd_temperature,
         fgd_mask_mode=args.fgd_mask_mode,
         fgd_bg_norm=int(bool(args.fgd_bg_norm)),
@@ -338,10 +336,6 @@ def main() -> None:
         cclkd_temperature_min=args.cclkd_temperature_min,
         cclkd_temperature_max=args.cclkd_temperature_max,
         cclkd_entropy_scale=args.cclkd_entropy_scale,
-        hallucidet_bg_weight=args.hallucidet_bg_weight,
-        hallucidet_response_weight=args.hallucidet_response_weight,
-        hallucidet_margin_weight=args.hallucidet_margin_weight,
-        hallucidet_margin=args.hallucidet_margin,
         c_weak_nrrl_scale=args.c_weak_nrrl_scale,
         c_weak_nrrl_detach_student=args.c_weak_nrrl_detach_student,
         reach_c_mode=args.reach_c_mode,

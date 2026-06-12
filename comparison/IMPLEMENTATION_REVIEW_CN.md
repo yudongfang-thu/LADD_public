@@ -1,10 +1,11 @@
 # 对比方法实现复核
 
-最后更新：2026-06-10
+最后更新：2026-06-13
 
 本文档给外部老师复核当前受控对比方法的代码语义。当前正式方法为
-`FGD-style / LD / CCLKD / HalluciDet-style`。其中 FGD-style、LD、HalluciDet-style 使用
-frozen-teacher 受控对比入口；CCLKD 必须先在
+`FGD-style / LD / CCLKD / HalluciDet-YOLO adaptation`。其中 FGD-style、LD 使用
+frozen-teacher 受控对比入口；HalluciDet-YOLO adaptation 使用独立
+`comparison/hallucidet/train_hallucidet.py`；CCLKD 必须先在
 [`../cclkd_reproduction/`](../cclkd_reproduction/) 中使用 online teacher-student
 原文复现入口完成 smoke 和 400ep 复现，再回到 `comparison/` 执行统一协议对比。
 
@@ -15,7 +16,7 @@ frozen-teacher 受控对比入口；CCLKD 必须先在
 | FGD-style | fg/bg feature loss + teacher/student attention mask loss；GT-box mask 默认启用；legacy batch relation 默认关闭 | 否，属于 FGD-YOLO adaptation | 修复前结果不能代表当前实现，需重跑 |
 | LD | raw YOLO11 DFL logits 的 foreground/main LD + teacher-quality VLR-style candidate LD，shape 异常直接失败 | 可以作为 LD 的 YOLO/DFL 适配 | 旧 foreground-only / soft-logit 结果作废，需重跑 |
 | CCLKD paper-structured reimplementation | COP + entropy temperature + localization-only LLD / FLD-MSE / RLD feature-correlation / class-balanced CCL 的 YOLO11 loss 适配；online trainer 已补 | 否，需先完成原文协议 smoke/复现 | 暂不正式跑，先 smoke online 复现入口 |
-| HalluciDet-style | detection-utility guided feature/response/margin alignment，profile 名称为 `hallucidet_style` | 否，没有显式 hallucination module | 旧 `hallucidet` 名称禁用；写作时必须标注 `-style` |
+| HalluciDet-YOLO adaptation | SAR image -> hallucination network -> frozen RGB YOLO detector detection loss | 否，属于 YOLO11 adaptation，不是官方 Faster R-CNN/FCOS/RetinaNet 逐行复现 | 旧 `hallucidet_style` profile 已移除，避免干扰 |
 
 ## 2. 本次修复
 
@@ -89,20 +90,22 @@ feature 近似 candidate region feature 并承担 CCL。更关键的是，frozen
 loss 只能作为实现部件，不能作为 CCLKD 复现或正式对比结果入口；应使用
 `cclkd_reproduction/code/train_cclkd_online_hbb.py` 先做 smoke / formal。
 
-### HalluciDet-style
+### HalluciDet-YOLO adaptation
 
-当前实现没有独立 image-space hallucination pathway/module，也没有
-“SAR/IR -> hallucinated RGB/image representation -> frozen RGB detector
-detection loss”路径。它只保留训练期 RGB privileged information、特征/响应/
-margin 对齐和 SAR-only YOLO11 student 推理约束。
+旧 `hallucidet_style` feature/response/margin KD profile 已从 CLI、loss dispatch
+和 launcher 中移除，避免继续和 HalluciDet official/adaptation 口径混淆。
+当前 HalluciDet 只保留 standalone 入口：
 
-profile 名称已改为 `hallucidet_style`；旧 `hallucidet` 名称不再被 CLI 和
-launcher 接受。旧 hallucidet 运行目录或表格字段若保留，只能标为
-`hallucidet_style_old`，不能写成 HalluciDet official reproduction。若以后做
-strict HalluciDet，应单独新建入口，例如
-`comparison/hallucidet_image_reproduction/`，实现 SAR/IR image 到 3-channel
-hallucinated image，再由 frozen RGB detector detection loss 反传训练；本轮
-不混入当前 B-only frozen-teacher comparison launcher。
+```text
+SAR image -> hallucination network -> 3-channel hallucinated representation
+          -> frozen RGB YOLO11 detector -> YOLO detection loss / metrics
+```
+
+该入口训练时只更新 hallucination network，RGB detector 参数冻结；validation
+也走同一条 hallucination path。它仍是 detection-loss-only HalluciDet-YOLO11
+adaptation，不包含 RGB paired reconstruction / perceptual loss，也不是官方
+Faster R-CNN/FCOS/RetinaNet 逐行复现。旧 `hallucidet`/`hallucidet_style`
+运行目录或表格字段只能作为历史 diagnostic，不能写作 HalluciDet official result。
 
 ## 3. 代码入口
 
@@ -111,8 +114,9 @@ hallucinated image，再由 frozen RGB detector detection loss 反传训练；�
 | Profile loss 与 teacher/student 输出穿透 | `../ladd/code/src/teacher_student_decomposition_kd_hbb/loss.py` |
 | CLI 参数 | `../ladd/code/train_ladd_hbb.py` |
 | Trainer 参数传递 | `../ladd/code/src/teacher_student_decomposition_kd_hbb/trainer.py` |
-| 正式 from-YOLO frozen-teacher launcher | `code/launch_formal_from_yolo_kd_job.sh` (`fgd|ld|hallucidet_style`) |
-| 正式 transfer frozen-teacher launcher | `code/launch_formal_transfer_kd_job.sh` (`fgd|ld|hallucidet_style`) |
+| 正式 from-YOLO frozen-teacher launcher | `code/launch_formal_from_yolo_kd_job.sh` (`fgd|ld`) |
+| 正式 transfer frozen-teacher launcher | `code/launch_formal_transfer_kd_job.sh` (`fgd|ld`) |
+| Standalone HalluciDet-YOLO adaptation | `hallucidet/train_hallucidet.py` |
 | CCLKD 原文复现目录 | `../cclkd_reproduction/` |
 
 两个 launcher 是部署到完整 LADD 工作区使用的模板。Public 包刻意不包含 checkpoint、
@@ -120,11 +124,11 @@ hallucinated image，再由 frozen RGB detector detection loss 反传训练；�
 
 ## 4. 启动前检查
 
-1. 对 `fgd`/`ld`/`hallucidet_style` 分别执行 `--help`、dry-run 和短 smoke。
+1. 对 `fgd`/`ld` 分别执行 `--help`、dry-run 和短 smoke；HalluciDet 走 standalone smoke。
 2. LD smoke 必须确认 teacher/student `boxes` 都是 `[B, N, 4*reg_max]`，且 loss 非零。
 3. CCLKD 必须先 smoke online teacher-student trainer；frozen-teacher smoke 不再作为 CCLKD 通过证据。
 4. FGD 修复前结果全部作废；LD 修复前 soft-logit / foreground-only 结果全部作废；
-   旧 hallucidet 结果只能作为 `hallucidet_style_old` 参考，不能写作 HalluciDet。
+   旧 hallucidet/hallucidet_style 结果只能作为历史参考，不能写作 HalluciDet。
 5. 第二轮复核意见响应与未采纳原因见
    [`REVIEW_FEEDBACK_RESPONSE_CN.md`](REVIEW_FEEDBACK_RESPONSE_CN.md)。
 
@@ -144,8 +148,8 @@ ladd4090:/tmp/LADD_public_smoke_20260610
 python3 comparison/code/smoke_check_comparison_losses.py
 # comparison loss smoke checks passed
 
-python3 ladd/code_versions/current_hbb/tools/train_ladd_hbb.py --help | grep -E "fgd-alpha|fgd-mask-mode|ld-use-vlr|hallucidet_style"
-# 输出包含 hallucidet_style、fgd-alpha、fgd-mask-mode、ld-use-vlr
+python3 ladd/code_versions/current_hbb/tools/train_ladd_hbb.py --help | grep -E "fgd-alpha|fgd-mask-mode|ld-use-vlr"
+# 输出包含 fgd-alpha、fgd-mask-mode、ld-use-vlr；不再包含 hallucidet_style
 
 bash -n comparison/code/launch_formal_from_yolo_kd_job.sh
 bash -n comparison/code/launch_formal_transfer_kd_job.sh

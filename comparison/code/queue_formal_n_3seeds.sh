@@ -4,7 +4,7 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  comparison/code/queue_formal_n_3seeds.sh <fgd|ld|hallucidet_style> <gpu_id>
+  comparison/code/queue_formal_n_3seeds.sh <fgd|ld> <gpu_id>
 
 Runs YOLO11n seeds 0, 42, and 123 serially for one frozen comparison method.
 CCLKD is intentionally excluded here because it requires online teacher-student
@@ -26,9 +26,9 @@ fi
 METHOD="${1:-}"
 GPU_ID="${2:-}"
 case "$METHOD" in
-  fgd|ld|hallucidet_style) ;;
-  hallucidet)
-    echo "Use hallucidet_style for the current feature/response/margin portable baseline. Strict HalluciDet is not implemented in this queue." >&2
+  fgd|ld) ;;
+  hallucidet|hallucidet_style)
+    echo "Legacy HalluciDet-style KD profile has been removed. Use comparison/hallucidet/train_hallucidet.py for the standalone HalluciDet-YOLO adaptation." >&2
     exit 2
     ;;
   *) usage >&2; exit 1 ;;

@@ -99,6 +99,8 @@ class HalluciDetLoss(nn.Module):
 class HalluciDetTrainer:
     """Trainer for HalluciDet following paper's training protocol"""
 
+    PRIMARY_METRIC_KEYS = ("metrics/mAP50-95(B)", "metrics/mAP50-95", "map50_95")
+
     def __init__(
         self,
         model: HalluciDetModel,
@@ -143,7 +145,10 @@ class HalluciDetTrainer:
 
         # Training state
         self.epoch = 0
-        self.best_metric = float('inf')  # Lower is better for loss
+        self.start_epoch = 0
+        self.best_metric = float("-inf")  # Higher is better for mAP or -val/loss fallback.
+        self.best_metric_key = None
+        self._warned_metric_fallback = False
         self.save_dir = Path(self.cfg['save_dir'])
         self.results_file = self.save_dir / "results.csv"
 
@@ -266,14 +271,32 @@ class HalluciDetTrainer:
 
         return metrics
 
-    def save_checkpoint(self, path: Path, is_best: bool = False):
+    def _select_primary_metric(self, metrics: Dict[str, Any]) -> tuple[float, str]:
+        for key in self.PRIMARY_METRIC_KEYS:
+            value = metrics.get(key)
+            if value is not None:
+                return float(value), key
+        if "val/loss" not in metrics:
+            raise RuntimeError(
+                "Cannot select primary HalluciDet checkpoint metric: no mAP key or val/loss in validation metrics."
+            )
+        if not self._warned_metric_fallback:
+            LOGGER.warning(
+                "HalluciDet validation did not report mAP50-95; falling back to -val/loss for best checkpoint."
+            )
+            self._warned_metric_fallback = True
+        return -float(metrics["val/loss"]), "-val/loss"
+
+    def save_checkpoint(self, path: Path, is_best: bool = False, save_epoch: bool = False):
         """Save checkpoint"""
+        path.mkdir(parents=True, exist_ok=True)
         checkpoint = {
             'epoch': self.epoch,
             'hallucination_net_state': self.model.hallucination_net.state_dict(),
             'optimizer_state': self.optimizer.state_dict(),
             'scheduler_state': self.scheduler.state_dict(),
             'best_metric': self.best_metric,
+            'best_metric_key': self.best_metric_key,
             'cfg': self.cfg
         }
 
@@ -282,15 +305,38 @@ class HalluciDetTrainer:
         if is_best:
             torch.save(checkpoint, path / 'best.pt')
 
+        if save_epoch:
+            torch.save(checkpoint, path / f'epoch_{self.epoch:04d}.pt')
+
+    def load_checkpoint(self, checkpoint_path: str | Path):
+        """Resume hallucination-network training from a checkpoint."""
+        checkpoint_path = Path(checkpoint_path)
+        # PyTorch >=2.6 defaults torch.load(weights_only=True), which rejects
+        # the Path objects stored in our own training checkpoint cfg. Resume
+        # only loads trusted checkpoints produced by this trainer.
+        ckpt = torch.load(checkpoint_path, map_location=self.device, weights_only=False)
+        self.model.hallucination_net.load_state_dict(ckpt['hallucination_net_state'])
+        if 'optimizer_state' in ckpt:
+            self.optimizer.load_state_dict(ckpt['optimizer_state'])
+        if 'scheduler_state' in ckpt:
+            self.scheduler.load_state_dict(ckpt['scheduler_state'])
+        self.best_metric = float(ckpt.get('best_metric', float("-inf")))
+        self.best_metric_key = ckpt.get('best_metric_key')
+        self.start_epoch = int(ckpt['epoch']) + 1
+        LOGGER.info(
+            f"Resumed HalluciDet checkpoint {checkpoint_path} at epoch {ckpt['epoch']}; "
+            f"continuing from epoch {self.start_epoch}."
+        )
+
     def train(self):
         """Main training loop"""
         save_dir = self.save_dir
         save_dir.mkdir(parents=True, exist_ok=True)
 
-        print(f"Starting training for {self.cfg['epochs']} epochs...")
+        print(f"Starting training for {self.cfg['epochs']} epochs from epoch {self.start_epoch}...")
         print(f"Save directory: {save_dir}")
 
-        for epoch in range(self.cfg['epochs']):
+        for epoch in range(self.start_epoch, self.cfg['epochs']):
             self.epoch = epoch
 
             # Train
@@ -305,6 +351,9 @@ class HalluciDetTrainer:
             # Log metrics
             all_metrics = {**train_metrics, **val_metrics}
             all_metrics["epoch"] = epoch
+            primary_metric, primary_key = self._select_primary_metric(val_metrics)
+            all_metrics["primary_metric"] = primary_metric
+            all_metrics["primary_metric_key"] = primary_key
             print(f"\nEpoch {epoch}:")
             for k, v in all_metrics.items():
                 if isinstance(v, (float, int)):
@@ -314,14 +363,16 @@ class HalluciDetTrainer:
             self._append_results(all_metrics)
 
             # Save checkpoint
-            is_best = val_metrics['val/loss'] < self.best_metric if epoch > 0 else True
+            is_best = primary_metric > self.best_metric
             if is_best:
-                self.best_metric = val_metrics['val/loss']
+                self.best_metric = primary_metric
+                self.best_metric_key = primary_key
 
-            if epoch % self.cfg.get('save_period', 10) == 0 or is_best:
-                self.save_checkpoint(save_dir, is_best=is_best)
+            save_period = int(self.cfg.get('save_period', 10))
+            save_epoch = save_period > 0 and (epoch + 1) % save_period == 0
+            self.save_checkpoint(save_dir, is_best=is_best, save_epoch=save_epoch)
 
-        print(f"\nTraining completed! Best metric: {self.best_metric:.6f}")
+        print(f"\nTraining completed! Best {self.best_metric_key}: {self.best_metric:.6f}")
 
     def _append_results(self, metrics: Dict[str, Any]) -> None:
         self.save_dir.mkdir(parents=True, exist_ok=True)
@@ -420,6 +471,7 @@ def parse_args():
     parser.add_argument('--fraction', type=float, default=1.0, help='Training data fraction')
     parser.add_argument('--mosaic', type=float, default=0.0, help='Mosaic augmentation probability')
     parser.add_argument('--save-period', type=int, default=10, help='Checkpoint save period')
+    parser.add_argument('--resume', type=str, default='', help='Resume from HalluciDet checkpoint path')
     parser.add_argument('--conf', type=float, default=0.001, help='Validation confidence threshold')
     parser.add_argument('--iou', type=float, default=0.7, help='Validation NMS IoU threshold')
     parser.add_argument('--max-det', type=int, default=300, help='Validation max detections per image')
@@ -474,6 +526,8 @@ def main():
 
     # Create trainer
     trainer = HalluciDetTrainer(model, train_loader, val_loader, cfg, data, yolo_args, device)
+    if args.resume:
+        trainer.load_checkpoint(args.resume)
     trainer.train()
 
 

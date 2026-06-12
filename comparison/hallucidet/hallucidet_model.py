@@ -176,14 +176,15 @@ class HalluciDetModel(nn.Module):
     Args:
         hallucination_net: Hallucination network
         rgb_detector: Frozen RGB detector (YOLO11)
-        normalize_input: Whether to normalize input to [0, 1] range
+        normalize_input: Deprecated. Inputs are expected to use the same
+            normalization as the training dataloader.
     """
 
     def __init__(
         self,
         hallucination_net: HallucinationNetwork,
         rgb_detector: nn.Module,
-        normalize_input: bool = True
+        normalize_input: bool = False
     ):
         super().__init__()
         self.hallucination_net = hallucination_net
@@ -211,13 +212,18 @@ class HalluciDetModel(nn.Module):
             If return_hallucinated=True: (detections, hallucinated_image)
         """
         # Ensure single-channel input
+        sar_image = sar_image.float()
+        if sar_image.numel() and sar_image.max() > 1.5:
+            sar_image = sar_image / 255.0
         if sar_image.shape[1] == 3:
             # If input is 3-channel, convert to grayscale
             sar_image = 0.299 * sar_image[:, 0:1] + 0.587 * sar_image[:, 1:2] + 0.114 * sar_image[:, 2:3]
 
-        # Normalize input to [0, 1] if needed
         if self.normalize_input:
-            sar_image = (sar_image - sar_image.min()) / (sar_image.max() - sar_image.min() + 1e-8)
+            raise RuntimeError(
+                "HalluciDetModel no longer supports per-batch min-max normalization. "
+                "Normalize inputs with the dataloader path used for training."
+            )
 
         # Hallucinate
         hallucinated = self.hallucination_net(sar_image)  # [-1, 1]

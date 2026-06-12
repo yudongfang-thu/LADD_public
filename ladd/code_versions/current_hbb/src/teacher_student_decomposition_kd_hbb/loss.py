@@ -229,10 +229,11 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         comparison_kd_profile: str = "none",
         profile_kd_weight: float = 1.0,
         profile_kd_replace_base: bool = False,
-        fgd_alpha: float = 0.001,
-        fgd_beta: float = 0.0005,
+        fgd_alpha: float = 0.0001,
+        fgd_beta: float = 0.00005,
         fgd_gamma: float = 0.001,
         fgd_lambda: float = 0.0,
+        fgd_normalization_mode: str = "original",
         fgd_temperature: float = 0.5,
         fgd_mask_mode: str = "gt_box",
         fgd_bg_norm: bool = True,
@@ -255,10 +256,6 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         cclkd_temperature_min: float = 0.5,
         cclkd_temperature_max: float = 5.0,
         cclkd_entropy_scale: float = 5.0,
-        hallucidet_bg_weight: float = 0.05,
-        hallucidet_response_weight: float = 0.5,
-        hallucidet_margin_weight: float = 0.1,
-        hallucidet_margin: float = 0.2,
     ):
         super().__init__(model)
         self.lambda_recon_task = float(lambda_recon_task)
@@ -304,6 +301,7 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         self.fgd_temperature = max(float(fgd_temperature), 1e-6)
         self.fgd_mask_mode = self._validate_fgd_mask_mode(fgd_mask_mode)
         self.fgd_bg_norm = bool(fgd_bg_norm)
+        self.fgd_normalization_mode = self._validate_fgd_normalization_mode(fgd_normalization_mode)
         self.ld_temperature = max(float(ld_temperature), 1e-6)
         self.ld_use_vlr = bool(ld_use_vlr)
         self.ld_quality_power = max(float(ld_quality_power), 0.0)
@@ -324,10 +322,6 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         self.cclkd_temperature_min = max(float(cclkd_temperature_min), 1e-6)
         self.cclkd_temperature_max = max(float(cclkd_temperature_max), self.cclkd_temperature_min)
         self.cclkd_entropy_scale = max(float(cclkd_entropy_scale), 1e-6)
-        self.hallucidet_bg_weight = max(float(hallucidet_bg_weight), 0.0)
-        self.hallucidet_response_weight = max(float(hallucidet_response_weight), 0.0)
-        self.hallucidet_margin_weight = max(float(hallucidet_margin_weight), 0.0)
-        self.hallucidet_margin = float(hallucidet_margin)
         self.student_model = model
         self.teacher_model = teacher_model
         self.lambda_rec = lambda_rec
@@ -482,10 +476,10 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
 
     @staticmethod
     def _validate_comparison_kd_profile(mode: str) -> str:
-        if mode not in {"none", "fgd", "ld", "cclkd", "hallucidet_style"}:
+        if mode not in {"none", "fgd", "ld", "cclkd"}:
             raise ValueError(
                 "comparison_kd_profile must be one of "
-                "{'none', 'fgd', 'ld', 'cclkd', 'hallucidet_style'}, got "
+                "{'none', 'fgd', 'ld', 'cclkd'}, got "
                 f"{mode!r}."
             )
         return mode
@@ -494,6 +488,12 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
     def _validate_fgd_mask_mode(mode: str) -> str:
         if mode not in {"gt_box", "assigner"}:
             raise ValueError(f"fgd_mask_mode must be 'gt_box' or 'assigner', got {mode!r}.")
+        return mode
+
+    @staticmethod
+    def _validate_fgd_normalization_mode(mode: str) -> str:
+        if mode not in {"original", "channel_mean"}:
+            raise ValueError(f"fgd_normalization_mode must be 'original' or 'channel_mean', got {mode!r}.")
         return mode
 
     def set_phase_loss_scales(self, **scales: float) -> None:
@@ -990,7 +990,7 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         height, width = output_size
         mask_fg = torch.zeros((bsz, height, width), device=device, dtype=dtype)
         if gt_bboxes is None or mask_gt is None or imgsz is None:
-            mask_bg = torch.ones_like(mask_fg)
+            raise RuntimeError("FGD gt_box mask requires gt_bboxes, mask_gt, and imgsz; use fgd_mask_mode='assigner' for fallback masks.")
         else:
             if gt_bboxes.dim() != 3 or gt_bboxes.shape[-1] < 4:
                 raise RuntimeError(f"FGD gt_box mask expects gt_bboxes [B, M, 4], got {tuple(gt_bboxes.shape)}.")
@@ -1074,8 +1074,19 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         fea_s = student_map * s_t_sqrt * c_t_sqrt
         fg_w = mask_fg.clamp_min(0).sqrt().unsqueeze(1)
         bg_w = mask_bg.clamp_min(0).sqrt().unsqueeze(1)
-        fg_loss = F.mse_loss(fea_s * fg_w, fea_t * fg_w, reduction="sum") / max(bsz, 1)
-        bg_loss = F.mse_loss(fea_s * bg_w, fea_t * bg_w, reduction="sum") / max(bsz, 1)
+
+        fg_raw = F.mse_loss(fea_s * fg_w, fea_t * fg_w, reduction="sum")
+        bg_raw = F.mse_loss(fea_s * bg_w, fea_t * bg_w, reduction="sum")
+        if self.fgd_normalization_mode == "original":
+            # FGD-style mask values already encode spatial normalization.
+            fg_loss = fg_raw / max(bsz, 1)
+            bg_loss = bg_raw / max(bsz, 1)
+        else:
+            # Optional YOLO adaptation: keep spatial mask semantics, average only across channels.
+            _, channels, _, _ = student_map.shape
+            denom = max(bsz, 1) * max(channels, 1)
+            fg_loss = fg_raw / denom
+            bg_loss = bg_raw / denom
         mask_loss = (c_s - c_t).abs().sum() / max(bsz, 1) + (s_s - s_t).abs().sum() / max(bsz, 1)
         relation_loss = (
             self._fgd_batch_relation_legacy_loss(student_map, teacher_map) if self.fgd_lambda > 0 else student_map.new_zeros(())
@@ -1351,69 +1362,6 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
             return zero
         return self.cclkd_logit_weight * lld_loss + self.cclkd_feat_weight * (fld_loss + rld_loss) + self.cclkd_contrast_weight * ccl_loss
 
-    def _hallucidet_style_loss(
-        self,
-        student_map: torch.Tensor,
-        teacher_map: torch.Tensor,
-        fg_mask: torch.Tensor,
-        student_scores: torch.Tensor | None,
-        teacher_scores: torch.Tensor | None,
-    ) -> torch.Tensor:
-        """HalluciDet-style task-driven privileged-modality hallucination.
-
-        The official HalluciDet trains a hallucination pathway from the
-        deployment modality to an RGB-detector-friendly representation, guided
-        by detection utility instead of pixel reconstruction. This portable
-        YOLO profile keeps that principle without importing the Faster R-CNN
-        codebase: the SAR student backbone acts as the hallucination pathway,
-        and its object-centric features and response map are aligned to the
-        frozen RGB teacher while background reconstruction remains weak.
-        """
-        bsz, channels, height, width = student_map.shape
-        student_flat = student_map.permute(0, 2, 3, 1).reshape(bsz, -1, channels)
-        teacher_flat = teacher_map.detach().permute(0, 2, 3, 1).reshape(bsz, -1, channels)
-        fg = fg_mask.reshape(bsz, -1).bool()
-
-        student_norm = F.normalize(student_flat, dim=-1, eps=1e-6)
-        teacher_norm = F.normalize(teacher_flat, dim=-1, eps=1e-6)
-        token_loss = (student_norm - teacher_norm).pow(2).mean(dim=-1)
-        weights = torch.full_like(token_loss, self.hallucidet_bg_weight)
-
-        if (
-            teacher_scores is not None
-            and teacher_scores.shape[:2] == token_loss.shape
-            and teacher_scores.numel() > 0
-        ):
-            teacher_conf = teacher_scores.detach().sigmoid().amax(dim=-1)
-            conf_weights = teacher_conf / teacher_conf.amax(dim=1, keepdim=True).clamp_min(1e-6)
-            weights = torch.maximum(weights, conf_weights)
-        weights = torch.where(fg, torch.ones_like(weights), weights)
-        feature_loss = (token_loss * weights).sum() / weights.sum().clamp_min(1e-6)
-
-        response_loss = student_map.new_zeros(())
-        if self.hallucidet_response_weight > 0:
-            student_energy = student_map.pow(2).mean(dim=1)
-            teacher_energy = teacher_map.detach().pow(2).mean(dim=1)
-            student_energy = _standardize_map(student_energy)
-            teacher_energy = _standardize_map(teacher_energy)
-            response_weights = weights.reshape(bsz, height, width)
-            response_loss = (
-                (student_energy - teacher_energy).pow(2) * response_weights
-            ).sum() / response_weights.sum().clamp_min(1e-6)
-
-        margin_loss = student_map.new_zeros(())
-        if self.hallucidet_margin_weight > 0 and fg.any() and (~fg).any():
-            student_energy = student_map.pow(2).mean(dim=1).reshape(bsz, -1)
-            fg_energy = student_energy[fg].mean()
-            bg_energy = student_energy[~fg].mean()
-            margin_loss = F.relu(self.hallucidet_margin - fg_energy + bg_energy)
-
-        return (
-            feature_loss
-            + self.hallucidet_response_weight * response_loss
-            + self.hallucidet_margin_weight * margin_loss
-        )
-
     def _compute_profile_kd_loss(
         self,
         student_map: torch.Tensor,
@@ -1460,8 +1408,6 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
                 student_scores,
                 teacher_scores,
             )
-        if self.comparison_kd_profile == "hallucidet_style":
-            return self._hallucidet_style_loss(student_map, teacher_map, fg_mask, student_scores, teacher_scores)
         raise AssertionError(f"Unexpected comparison_kd_profile: {self.comparison_kd_profile}")
 
     def _compute_recon_task_loss(self, recon_feats, batch):

@@ -9,7 +9,9 @@ raw-prediction + v8DetectionLoss path used by train_hallucidet.py.
 from __future__ import annotations
 
 import argparse
+import csv
 import sys
+import tempfile
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -24,7 +26,7 @@ from ultralytics.cfg import get_cfg
 from ultralytics.utils import DEFAULT_CFG
 
 from comparison.hallucidet.hallucidet_model import HalluciDetModel, HallucinationNetwork
-from comparison.hallucidet.train_hallucidet import HalluciDetLoss
+from comparison.hallucidet.train_hallucidet import HalluciDetLoss, HalluciDetTrainer
 
 
 class ToyDetector(nn.Module):
@@ -111,12 +113,95 @@ def run_yolo_loss_smoke(weights: str, device: torch.device, imgsz: int, lambda_r
     return torch.isfinite(loss).item() and loss.requires_grad and hall_nonzero > 0 and detector_grads == 0
 
 
+class _ResumeSmokeModel(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.hallucination_net = HallucinationNetwork(in_channels=1, out_channels=3, base_channels=8, use_attention=True)
+
+
+class _ResumeSmokeTrainer(HalluciDetTrainer):
+    """Tiny trainer that reuses HalluciDet checkpoint/result logic without dataset or YOLO dependencies."""
+
+    def __init__(self, save_dir: Path, epochs: int, device: torch.device):
+        self.model = _ResumeSmokeModel().to(device)
+        self.train_loader = []
+        self.val_loader = []
+        self.cfg = {
+            "epochs": epochs,
+            "lr": 1e-3,
+            "save_dir": save_dir,
+            "save_period": 0,
+        }
+        self.data = {}
+        self.yolo_args = None
+        self.device = device
+        self.optimizer = torch.optim.SGD(self.model.hallucination_net.parameters(), lr=1e-3)
+        self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=1)
+        self.grad_clip = 0.0
+        self.epoch = 0
+        self.start_epoch = 0
+        self.best_metric = float("-inf")
+        self.best_metric_key = None
+        self._warned_metric_fallback = False
+        self.save_dir = Path(save_dir)
+        self.results_file = self.save_dir / "results.csv"
+
+    def train_one_epoch(self):
+        self.model.train()
+        x = torch.rand(1, 1, 32, 32, device=self.device)
+        y = self.model.hallucination_net(x)
+        loss = y.square().mean()
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+        return {
+            "train/loss": float(loss.detach()),
+            "train/cls_loss": 0.0,
+            "train/box_loss": 0.0,
+            "train/dfl_loss": 0.0,
+            "train/lr": self.optimizer.param_groups[0]["lr"],
+        }
+
+    def validate(self):
+        return {
+            "val/loss": 1.0 / (self.epoch + 1),
+            "metrics/mAP50-95(B)": float(self.epoch),
+        }
+
+
+def run_resume_smoke(device: torch.device, save_dir: str = "") -> bool:
+    with tempfile.TemporaryDirectory(prefix="hallucidet_resume_") as tmp:
+        root = Path(save_dir) if save_dir else Path(tmp)
+        root.mkdir(parents=True, exist_ok=True)
+        first = _ResumeSmokeTrainer(root, epochs=1, device=device)
+        first.train()
+        last = root / "last.pt"
+        best = root / "best.pt"
+        if not last.exists() or not best.exists():
+            print("[resume] missing last.pt or best.pt after first epoch")
+            return False
+        second = _ResumeSmokeTrainer(root, epochs=2, device=device)
+        second.load_checkpoint(last)
+        if second.start_epoch != 1:
+            print(f"[resume] expected start_epoch=1, got {second.start_epoch}")
+            return False
+        second.train()
+        rows = list(csv.DictReader((root / "results.csv").open()))
+        epochs = [int(float(row["epoch"])) for row in rows]
+        ckpt = torch.load(root / "last.pt", map_location=device, weights_only=False)
+        print(f"[resume] epochs in results.csv: {epochs}")
+        print(f"[resume] last.pt epoch: {ckpt['epoch']}")
+        return epochs == [0, 1] and int(ckpt["epoch"]) == 1 and best.exists()
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description="HalluciDet gradient smoke")
     parser.add_argument("--teacher-weights", default="", help="Optional YOLO RGB teacher weights for real loss smoke")
     parser.add_argument("--device", default="cpu", help="cpu, 0, cuda:0, etc.")
     parser.add_argument("--imgsz", type=int, default=256)
     parser.add_argument("--lambda-reg", type=float, default=1.0)
+    parser.add_argument("--resume-smoke", action="store_true", help="Run lightweight checkpoint resume smoke")
+    parser.add_argument("--resume-smoke-dir", default="", help="Optional directory for resume smoke artifacts")
     return parser.parse_args()
 
 
@@ -129,6 +214,8 @@ def main() -> int:
     ok = run_offline_smoke(device)
     if args.teacher_weights:
         ok = run_yolo_loss_smoke(args.teacher_weights, device, args.imgsz, args.lambda_reg) and ok
+    if args.resume_smoke:
+        ok = run_resume_smoke(device, args.resume_smoke_dir) and ok
     print("PASS" if ok else "FAIL")
     return 0 if ok else 1
 

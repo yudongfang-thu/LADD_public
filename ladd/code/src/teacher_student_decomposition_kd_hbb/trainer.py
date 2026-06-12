@@ -142,10 +142,11 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(DetectionTrainer):
             "comparison_kd_profile": overrides.pop("comparison_kd_profile", "none"),
             "profile_kd_weight": float(overrides.pop("profile_kd_weight", 1.0)),
             "profile_kd_replace_base": int(overrides.pop("profile_kd_replace_base", 0)) > 0,
-            "fgd_alpha": float(overrides.pop("fgd_alpha", 0.001)),
-            "fgd_beta": float(overrides.pop("fgd_beta", 0.0005)),
+            "fgd_alpha": float(overrides.pop("fgd_alpha", 0.0001)),
+            "fgd_beta": float(overrides.pop("fgd_beta", 0.00005)),
             "fgd_gamma": float(overrides.pop("fgd_gamma", 0.001)),
             "fgd_lambda": float(overrides.pop("fgd_lambda", overrides.pop("fgd_relation_weight", 0.0))),
+            "fgd_normalization_mode": str(overrides.pop("fgd_normalization_mode", "original")),
             "fgd_temperature": float(overrides.pop("fgd_temperature", 0.5)),
             "fgd_mask_mode": str(overrides.pop("fgd_mask_mode", "gt_box")),
             "fgd_bg_norm": int(overrides.pop("fgd_bg_norm", 1)) > 0,
@@ -168,10 +169,6 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(DetectionTrainer):
             "cclkd_temperature_min": float(overrides.pop("cclkd_temperature_min", 0.5)),
             "cclkd_temperature_max": float(overrides.pop("cclkd_temperature_max", 5.0)),
             "cclkd_entropy_scale": float(overrides.pop("cclkd_entropy_scale", 5.0)),
-            "hallucidet_bg_weight": float(overrides.pop("hallucidet_bg_weight", 0.05)),
-            "hallucidet_response_weight": float(overrides.pop("hallucidet_response_weight", 0.5)),
-            "hallucidet_margin_weight": float(overrides.pop("hallucidet_margin_weight", 0.1)),
-            "hallucidet_margin": float(overrides.pop("hallucidet_margin", 0.2)),
         }
         self.tskd_cfg = {
             "teacher_data": overrides.pop("teacher_data", None),
@@ -461,6 +458,7 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(DetectionTrainer):
             fgd_beta=self.dkd_cfg["fgd_beta"],
             fgd_gamma=self.dkd_cfg["fgd_gamma"],
             fgd_lambda=self.dkd_cfg["fgd_lambda"],
+            fgd_normalization_mode=self.dkd_cfg["fgd_normalization_mode"],
             fgd_temperature=self.dkd_cfg["fgd_temperature"],
             fgd_mask_mode=self.dkd_cfg["fgd_mask_mode"],
             fgd_bg_norm=self.dkd_cfg["fgd_bg_norm"],
@@ -483,10 +481,6 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(DetectionTrainer):
             cclkd_temperature_min=self.dkd_cfg["cclkd_temperature_min"],
             cclkd_temperature_max=self.dkd_cfg["cclkd_temperature_max"],
             cclkd_entropy_scale=self.dkd_cfg["cclkd_entropy_scale"],
-            hallucidet_bg_weight=self.dkd_cfg["hallucidet_bg_weight"],
-            hallucidet_response_weight=self.dkd_cfg["hallucidet_response_weight"],
-            hallucidet_margin_weight=self.dkd_cfg["hallucidet_margin_weight"],
-            hallucidet_margin=self.dkd_cfg["hallucidet_margin"],
         )
 
     @staticmethod

@@ -17,6 +17,7 @@ for root in (
     REPO_ROOT / "shared",
     REPO_ROOT / "shared" / "yolo",
     REPO_ROOT / "ladd" / "code" / "src",
+    REPO_ROOT / "ladd" / "code_versions" / "current_hbb" / "src",
 ):
     if str(root) not in sys.path:
         sys.path.insert(0, str(root))
@@ -31,10 +32,11 @@ def make_loss(**overrides):
         TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB
     )
     defaults = {
-        "fgd_alpha": 0.001,
-        "fgd_beta": 0.0005,
+        "fgd_alpha": 0.0001,
+        "fgd_beta": 0.00005,
         "fgd_gamma": 0.001,
         "fgd_lambda": 0.0,
+        "fgd_normalization_mode": "original",
         "fgd_temperature": 0.5,
         "fgd_mask_mode": "gt_box",
         "fgd_bg_norm": True,
@@ -96,6 +98,17 @@ def check_fgd():
     )
     assert torch.isfinite(loss_assigner) and loss_assigner.item() > 0
 
+    criterion_channel = make_loss(fgd_normalization_mode="channel_mean")
+    loss_channel = criterion_channel._fgd_style_loss(
+        student.detach().clone().requires_grad_(True),
+        teacher.detach().clone(),
+        assigner_fg,
+        gt_bboxes,
+        mask_gt,
+        imgsz,
+    )
+    assert torch.isfinite(loss_channel) and loss_channel.item() > 0
+
 
 def check_ld():
     torch.manual_seed(2)
@@ -153,13 +166,15 @@ def check_ld():
 
 def check_profile_names():
     validate = TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB._validate_comparison_kd_profile
-    assert validate("hallucidet_style") == "hallucidet_style"
-    try:
-        validate("hallucidet")
-    except ValueError:
-        pass
-    else:
-        raise AssertionError("legacy hallucidet profile name should fail")
+    assert validate("fgd") == "fgd"
+    assert validate("ld") == "ld"
+    for legacy in ("hallucidet", "hallucidet_style"):
+        try:
+            validate(legacy)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(f"legacy profile name should fail: {legacy}")
 
 
 def main():
