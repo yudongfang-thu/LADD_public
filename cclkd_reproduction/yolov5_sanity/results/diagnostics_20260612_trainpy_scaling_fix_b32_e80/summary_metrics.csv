@@ -1,0 +1,4 @@
+experiment,run_dir,epoch,precision,recall,ap50,ap50_95,delta_ap50_vs_trainpy,delta_ap_vs_trainpy,train_box,train_obj,train_cls,val_box,val_obj,val_cls,status
+standard_trainpy_detonly,yolov5x_trainpy_detonly_b32_s0_trainpy_detonly_b32_e80,79,0.68556,0.55647,0.57056,0.30964,0.00000,0.00000,0.046595,0.0055096,0.0011888,0.042585,0.0036771,0.000298,complete
+custom_detonly_scaled,yolov5x_det_only_same_trainer_b32_s0_detonly_scaled_fix_b32_e80,79,0.67001,0.55445,0.56807,0.30862,-0.00249,-0.00102,0.046749,0.0055165,0.0012213,0.042555,0.0036954,0.00031324,complete
+two_branch_no_kd_scaled,yolov5x_two_branch_no_kd_b32_s0_twobranch_nokd_scaled_fix_b32_e80,79,0.65638,0.56178,0.56609,0.30616,-0.00447,-0.00348,0.046519,0.0054995,0.0010357,0.042715,0.0036928,0.00035308,complete
