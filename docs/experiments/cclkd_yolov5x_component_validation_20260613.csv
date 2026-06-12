@@ -1,0 +1,10 @@
+run_key,label,phase,mode,target_epochs,latest_epoch,ap50,ap,precision,recall,delta_ap50_vs_custom_detonly,delta_ap_vs_custom_detonly,result_rows,diag_rows,feature_capture_ok,nan_or_inf_detected,cop_positive_ratio,kd_total_loss,lld_loss,fld_loss,rld_loss,ccl_loss,weighted_atkd_loss,weighted_ccl_loss,weighted_kd_to_student_det_ratio
+standard_trainpy_e80,Standard YOLOv5 train.py SAR baseline,80ep reference,train.py,80,79,0.57056,0.30964,,,0.00249,0.00102,,,,,,,,,,,,,
+custom_detonly_scaled_e80,Custom det-only scaled,80ep reference,det_only_same_trainer,80,79,0.56807,0.30862,,,0,0,,,,,,,,,,,,,
+two_branch_no_kd_scaled_e80,Two-branch no KD scaled,80ep reference,two_branch_no_kd,80,79,0.56609,0.30616,,,-0.00198,-0.00246,,,,,,,,,,,,,
+80_atkd_only,ATKD-only,80ep complete,paper_atkd_only,80,79,0.57097,0.30692,0.68201,0.55449,0.0029,-0.0017,80,80,1,0,0.99012745,0.12343694,0.0092673106,0.064268239,0.049901385,0,0.12343685,0,0.073382945
+80_ccl_only,CCL-only,80ep complete,paper_ccl_only,80,79,0.56441,0.30391,0.67521,0.55367,-0.00366,-0.00471,80,80,1,0,0.99008454,0.69395709,0,0,0,0.69395709,0,0.69395674,0.41829972
+80_paper_full,Full CCLKD,80ep complete,paper_full,80,79,0.57566,0.30965,0.68676,0.55681,0.00759,0.00103,80,80,1,0,0.99012827,0.81754267,0.0091441888,0.064657599,0.050047055,0.69369411,0.12384884,0.69369349,0.49395412
+400_paper_full_snapshot,Full CCLKD,400ep running snapshot,paper_full,400,5,0.15676,0.051559,0.55065,0.20942,-0.41131,-0.257061,6,6,1,0,0.95361946,0.94500923,0.0166886,0.10215701,0.13272086,0.69344378,0.25156608,0.69344333,0.34748931
+400_atkd_only_snapshot,ATKD-only,400ep running snapshot,paper_atkd_only,400,19,0.32452,0.12968,0.57081,0.34858,-0.24355,-0.17894,20,20,1,0,0.96894396,0.19049218,0.01464954,0.073696785,0.10214581,0,0.19049208,0,0.079429275
+400_ccl_only_snapshot,CCL-only,400ep running snapshot,paper_ccl_only,400,12,0.28832,0.11234,0.43616,0.31654,-0.27975,-0.19628,13,13,1,0,0.96836487,0.6937986,0,0,0,0.6937986,0,0.69379773,0.28212102
