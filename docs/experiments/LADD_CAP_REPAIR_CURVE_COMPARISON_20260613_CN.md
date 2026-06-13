@@ -20,17 +20,26 @@ ladd/results/ladd_cap_repair_curve_comparison_20260613/gen_curve_comparison.py
 
 图件：
 
-![s B-stage AP curves](./figures/ladd_cap_repair_curve_comparison_20260613/fig1_s_b_stage_ap_curves.png)
+![s B-stage AP curves](https://cdn.jsdelivr.net/gh/yudongfang-thu/LADD_public@main/docs/experiments/figures/ladd_cap_repair_curve_comparison_20260613/fig1_s_b_stage_ap_curves.png)
 
-![s B-stage detector losses](./figures/ladd_cap_repair_curve_comparison_20260613/fig2_s_b_stage_detector_losses.png)
+![s B-stage detector losses](https://cdn.jsdelivr.net/gh/yudongfang-thu/LADD_public@main/docs/experiments/figures/ladd_cap_repair_curve_comparison_20260613/fig2_s_b_stage_detector_losses.png)
 
-![s A2 AP and auxiliary losses](./figures/ladd_cap_repair_curve_comparison_20260613/fig3_s_a2_ap_and_aux_losses.png)
+![s A2 AP and auxiliary losses](https://cdn.jsdelivr.net/gh/yudongfang-thu/LADD_public@main/docs/experiments/figures/ladd_cap_repair_curve_comparison_20260613/fig3_s_a2_ap_and_aux_losses.png)
 
-![n B-stage AP curves](./figures/ladd_cap_repair_curve_comparison_20260613/fig4_n_b_stage_ap_curves.png)
+![n B-stage AP curves](https://cdn.jsdelivr.net/gh/yudongfang-thu/LADD_public@main/docs/experiments/figures/ladd_cap_repair_curve_comparison_20260613/fig4_n_b_stage_ap_curves.png)
 
-![m A2 AP curves](./figures/ladd_cap_repair_curve_comparison_20260613/fig5_m_a2_ap_curves.png)
+![m A2 AP curves](https://cdn.jsdelivr.net/gh/yudongfang-thu/LADD_public@main/docs/experiments/figures/ladd_cap_repair_curve_comparison_20260613/fig5_m_a2_ap_curves.png)
 
-![s B final delta](./figures/ladd_cap_repair_curve_comparison_20260613/fig6_s_b_final_delta_bar.png)
+![s B final delta](https://cdn.jsdelivr.net/gh/yudongfang-thu/LADD_public@main/docs/experiments/figures/ladd_cap_repair_curve_comparison_20260613/fig6_s_b_final_delta_bar.png)
+
+如果当前网络环境阻止 CDN 图片加载，可直接打开仓库内本地图片：
+
+- [fig1_s_b_stage_ap_curves.png](./figures/ladd_cap_repair_curve_comparison_20260613/fig1_s_b_stage_ap_curves.png)
+- [fig2_s_b_stage_detector_losses.png](./figures/ladd_cap_repair_curve_comparison_20260613/fig2_s_b_stage_detector_losses.png)
+- [fig3_s_a2_ap_and_aux_losses.png](./figures/ladd_cap_repair_curve_comparison_20260613/fig3_s_a2_ap_and_aux_losses.png)
+- [fig4_n_b_stage_ap_curves.png](./figures/ladd_cap_repair_curve_comparison_20260613/fig4_n_b_stage_ap_curves.png)
+- [fig5_m_a2_ap_curves.png](./figures/ladd_cap_repair_curve_comparison_20260613/fig5_m_a2_ap_curves.png)
+- [fig6_s_b_final_delta_bar.png](./figures/ladd_cap_repair_curve_comparison_20260613/fig6_s_b_final_delta_bar.png)
 
 ## 2. YOLO11s：B 阶段修改没有解决 late regression
 

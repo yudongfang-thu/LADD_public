@@ -479,7 +479,8 @@ def markdown_table(rows: pd.DataFrame) -> str:
 
 
 def write_report(summary: pd.DataFrame) -> None:
-    rel_fig = "./figures/ladd_cap_repair_curve_comparison_20260613"
+    rel_fig = "https://cdn.jsdelivr.net/gh/yudongfang-thu/LADD_public@main/docs/experiments/figures/ladd_cap_repair_curve_comparison_20260613"
+    local_fig = "./figures/ladd_cap_repair_curve_comparison_20260613"
     s_b = summary[summary["family"] == "s_b"]
     s_a2 = summary[summary["family"] == "s_a2"]
     n_b = summary[summary["family"] == "n_b"]
@@ -517,6 +518,15 @@ ladd/results/ladd_cap_repair_curve_comparison_20260613/gen_curve_comparison.py
 ![m A2 AP curves]({rel_fig}/fig5_m_a2_ap_curves.png)
 
 ![s B final delta]({rel_fig}/fig6_s_b_final_delta_bar.png)
+
+如果当前网络环境阻止 CDN 图片加载，可直接打开仓库内本地图片：
+
+- [fig1_s_b_stage_ap_curves.png]({local_fig}/fig1_s_b_stage_ap_curves.png)
+- [fig2_s_b_stage_detector_losses.png]({local_fig}/fig2_s_b_stage_detector_losses.png)
+- [fig3_s_a2_ap_and_aux_losses.png]({local_fig}/fig3_s_a2_ap_and_aux_losses.png)
+- [fig4_n_b_stage_ap_curves.png]({local_fig}/fig4_n_b_stage_ap_curves.png)
+- [fig5_m_a2_ap_curves.png]({local_fig}/fig5_m_a2_ap_curves.png)
+- [fig6_s_b_final_delta_bar.png]({local_fig}/fig6_s_b_final_delta_bar.png)
 
 ## 2. YOLO11s：B 阶段修改没有解决 late regression
 
