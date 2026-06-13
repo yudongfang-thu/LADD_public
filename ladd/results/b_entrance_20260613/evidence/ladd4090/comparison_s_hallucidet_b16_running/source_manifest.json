@@ -1,0 +1,18 @@
+{
+  "id": "comparison_s_hallucidet_b16_running",
+  "status": "running",
+  "server": "ladd4090",
+  "run_dir": "/root/shared-nvme/LADD_public_p1/runs_public/ogsod/hbb/formal_nomosaic_20260528/comparisons/hallucidet_standalone/yolo11s/hallucidet_yolo11s_s0_800ep_img256_b16_dual4090_20260613",
+  "source_log": "/root/shared-nvme/LADD_public/logs/formal_nomosaic_20260528/comparisons/hallucidet_standalone/hallucidet_yolo11s_s0_800ep_img256_b16_dual4090_20260613.log",
+  "copied_files": [
+    "run_files/results.csv"
+  ],
+  "excluded": [
+    "weights/*.pt",
+    "*.pth",
+    "events.out.tfevents*",
+    "wandb",
+    "full logs/full run dirs"
+  ],
+  "latest_refresh_time": "2026-06-13 23:56 CST"
+}

@@ -1,0 +1,6 @@
+HalluciDet s dual4090 log tail was not stored verbatim in this snapshot because the live log contains tqdm carriage-return progress bars that are noisy in git diffs.
+
+Source log:
+/root/shared-nvme/LADD_public/logs/formal_nomosaic_20260528/comparisons/hallucidet_standalone/hallucidet_yolo11s_s0_800ep_img256_b16_dual4090_20260613.log
+
+Latest numeric evidence is stored in run_files/results.csv. Snapshot row count: 65/800. Best mAP50-95(B): 0.18017 @ epoch 64.

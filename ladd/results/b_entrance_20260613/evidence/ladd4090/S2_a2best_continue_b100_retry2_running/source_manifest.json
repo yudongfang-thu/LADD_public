@@ -1,27 +1,20 @@
 {
-  "id": "S2_a2best_continue_b100_retry2_running",
-  "kind": "b_entrance",
-  "status": "running",
-  "tag": "bentrance_S2_a2best_continue_b100_after67b_retry2_b64_after_oom",
-  "run": "runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry2_b64_after_oom_b_e100_b64_s0_gpu1",
+  "id": "S2_a2best_continue_b100_retry2",
+  "status": "completed",
   "server": "ladd4090",
   "run_dir": "/root/shared-nvme/LADD_public_p1/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry2_b64_after_oom_b_e100_b64_s0_gpu1",
-  "exists": true,
-  "active_process_count": "27",
   "copied_files": [
-    "evidence/ladd4090/S2_a2best_continue_b100_retry2_running/run_files/args.yaml",
-    "evidence/ladd4090/S2_a2best_continue_b100_retry2_running/run_files/initial_val_metrics.json",
-    "evidence/ladd4090/S2_a2best_continue_b100_retry2_running/run_files/ladd_diagnostics.csv",
-    "evidence/ladd4090/S2_a2best_continue_b100_retry2_running/run_files/results.csv"
+    "run_files/results.csv",
+    "run_files/args.yaml",
+    "run_files/ladd_diagnostics.csv",
+    "run_files/initial_val_metrics.json"
   ],
-  "log_extract": "evidence/ladd4090/S2_a2best_continue_b100_retry2_running/log_extract.txt",
-  "source_logs": [
-    "/root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry2_b64_after_oom_gpu1.outer.log",
-    "/root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry2_b64_after_oom_gpu1/b/b.log",
-    "/root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry2_b64_after_oom_gpu1/b/manifest.txt",
-    "/root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry2_b64_after_oom_gpu1/b/master.log",
-    "/root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry2_b64_after_oom_gpu1/chain.log",
-    "/root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry2_b64_after_oom_gpu1/manifest.txt",
-    "/root/shared-nvme/LADD_public_p1/logs/manual_relaunch/bentrance_S2_a2best_continue_b100_after67b_retry2_b64_after_oom_20260613_165222.log"
-  ]
+  "excluded": [
+    "weights/*.pt",
+    "*.pth",
+    "events.out.tfevents*",
+    "wandb",
+    "full logs/full run dirs"
+  ],
+  "latest_refresh_time": "2026-06-13 23:56 CST"
 }
