@@ -1,0 +1,10 @@
+{
+  "metrics/precision(B)": 0.9308017262998461,
+  "metrics/recall(B)": 0.8636565189103508,
+  "metrics/mAP50(B)": 0.9088414198196305,
+  "metrics/mAP50-95(B)": 0.6280033813612581,
+  "fitness": 0.6280033813612581,
+  "tag": "initial_val",
+  "phase": "b",
+  "source_model": "runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/sar/sar_yolo11s_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt"
+}

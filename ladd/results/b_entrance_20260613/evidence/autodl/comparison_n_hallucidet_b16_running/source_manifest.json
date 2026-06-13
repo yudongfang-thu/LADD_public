@@ -1,0 +1,26 @@
+{
+  "name": "comparison_n_hallucidet_b16_running",
+  "status": "running",
+  "kind": "comparison",
+  "tag": "hallucidet_yolo11n_s0_800ep_img256_b16_autodl_20260613",
+  "run_dir": "runs_public/ogsod/hbb/formal_nomosaic_20260528/comparisons/hallucidet_standalone/yolo11n/hallucidet_yolo11n_s0_800ep_img256_b16_autodl_20260613",
+  "log_patterns": [
+    "logs/formal_nomosaic_20260528/comparisons/hallucidet_standalone/hallucidet_yolo11n_s0_800ep_img256_b16_autodl_20260613.cmd.sh",
+    "logs/formal_nomosaic_20260528/comparisons/hallucidet_standalone/hallucidet_yolo11n_s0_800ep_img256_b16_autodl_20260613.log"
+  ],
+  "server": "autodl",
+  "snapshot_time": "2026-06-13 19:14:30 CST",
+  "repo_commit": "",
+  "repo_status_short": "",
+  "run_dir_exists": true,
+  "copied_files": [
+    "results.csv"
+  ],
+  "excluded": [
+    "weights/*.pt",
+    "*.pth",
+    "events.out.tfevents*",
+    "wandb",
+    "full logs/full run dirs"
+  ]
+}

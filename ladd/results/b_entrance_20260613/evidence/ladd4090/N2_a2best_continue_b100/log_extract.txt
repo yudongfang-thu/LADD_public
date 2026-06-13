@@ -1,0 +1,284 @@
+log_extract_for=bentrance_N2_a2best_continue_b100_after67b
+generated_at=2026-06-13 19:11:58 CST
+
+====================================================================================================
+FILE /root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11n_cap2_s0_bentrance_N2_a2best_continue_b100_after67b_gpu1.outer.log
+[keyword_hits]
+[tail]
+[2026-06-13 13:13:01] phase=b model=runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11n/cap2/ladd_hbb_ogsod11n_formal_nomosaic_yolo11n_cap2_s0_diag_h1_n_s0_b100_smoke_a2_e50_b64_s0_gpu0/weights/best.pt
+[2026-06-13 13:13:01] Launching OGSOD hbb LADD phase b: ladd_hbb_ogsod11n_formal_nomosaic_yolo11n_cap2_s0_bentrance_N2_a2best_continue_b100_after67b_b_e100_b64_s0_gpu1
+[2026-06-13 16:23:56] Phase b finished
+python3: can't open file '/root/shared-nvme/LADD_public_p1/tools/summarize_tskd_results.py': [Errno 2] No such file or directory
+[2026-06-13 16:23:56] Run directory: /root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11n/cap2/ladd_hbb_ogsod11n_formal_nomosaic_yolo11n_cap2_s0_bentrance_N2_a2best_continue_b100_after67b_b_e100_b64_s0_gpu1
+[2026-06-13 16:23:56] Chain complete. Final model: /root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11n/cap2/ladd_hbb_ogsod11n_formal_nomosaic_yolo11n_cap2_s0_bentrance_N2_a2best_continue_b100_after67b_b_e100_b64_s0_gpu1/weights/best.pt
+
+====================================================================================================
+FILE /root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11n_cap2_s0_bentrance_N2_a2best_continue_b100_after67b_gpu1/b/actual_run_dir.txt
+[keyword_hits]
+[tail]
+/root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11n/cap2/ladd_hbb_ogsod11n_formal_nomosaic_yolo11n_cap2_s0_bentrance_N2_a2best_continue_b100_after67b_b_e100_b64_s0_gpu1
+
+====================================================================================================
+FILE /root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11n_cap2_s0_bentrance_N2_a2best_continue_b100_after67b_gpu1/b/b.log
+[keyword_hits]
+2:  python3 ladd/code_versions/current_hbb/tools/train_ladd_hbb.py --phase b --model runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11n/cap2/ladd_hbb_ogsod11n_formal_nomosaic_yolo11n_cap2_s0_diag_h1_n_s0_b100_smoke_a2_e50_b64_s0_gpu0/weights/best.pt --data /root/shared-nvme/LADD_public/configs/datasets/ogsod_hbb_sar.yaml --teacher-data /root/shared-nvme/LADD_public/configs/datasets/ogsod_hbb_rgb.yaml --teacher-weights runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/rgb/rgb_yolo11n_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt --imgsz 256 --epochs 100 --batch 64 --workers 8 --device 1 --patience 100 --fraction 1.0 --project runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11n/cap2 --name ladd_hbb_ogsod11n_formal_nomosaic_yolo11n_cap2_s0_bentrance_N2_a2best_continue_b100_after67b_b_e100_b64_s0_gpu1 --phase-detect-mode raw --det-loss-scale 1.0 --phase-stop-metric default --freeze-bn-after-epoch -1 --ladd-diag-log-bn 1 --ladd-diag-log-grad 0 --ladd-grad-clip-norm
+5: [34m[1mengine/trainer: [0magnostic_nms=False, amp=True, angle=1.0, augment=False, auto_augment=randaugment, batch=64, bgr=0.0, box=7.5, cache=False, cfg=None, classes=None, close_mosaic=0, cls=0.5, compile=False, conf=None, copy_paste=0.0, copy_paste_mode=flip, cos_lr=True, cutmix=0.0, data=/root/shared-nvme/LADD_public/configs/datasets/ogsod_hbb_sar.yaml, degrees=0.0, deterministic=True, device=1, dfl=1.5, dnn=False, dropout=0.0, dynamic=False, embed=None, end2end=None, epochs=100, erasing=0.0, exist_ok=False, fliplr=0.5, flipud=0.0, format=torchscript, fraction=1.0, freeze=None, half=False, hsv_h=0.0, hsv_s=0.0, hsv_v=0.0, imgsz=256, int8=False, iou=0.7, keras=False, kobj=1.0, line_width=None, lr0=0.001, lrf=0.01, mask_ratio=4, max_det=300, mixup=0.0, mode=train, model=runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11n/cap2/ladd_hbb_ogsod11n_formal_nomosaic_yolo11n_cap2_s0_diag_h1_n_s0_b100_smoke_a2_e50_b64_s0_gpu0/weights/best.pt, momentum=0.937, mosaic=0.0, multi_scale=
+47: ladd_phase_diag phase=b trainable_params=3369945/6222824 bn_eval=81/81 freeze_bn_stats=True freeze_bn_after_epoch=-1 ladd_assert_phase_freeze=True alpha_kd=1.0 base_alpha_kd=1.0 effective_alpha_kd=1.0 kd_multiplier=1.0 kd_warmup_active=False ladd_kd_decay_mode=none ladd_kd_decay_start_epoch=-1 ladd_kd_decay_end_epoch=-1 ladd_kd_final_mult=1.0 ladd_kd_stop_after_epoch=-1 ladd_b_det_only=False ladd_a2_det_only=False ladd_diag_log_grad=False ladd_grad_clip=ULTRALYTICS_DEFAULT ladd_grad_clip_norm=0.0 effective_grad_clip_norm=10.0
+89: Saved pre-train validation snapshot to /root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11n/cap2/ladd_hbb_ogsod11n_formal_nomosaic_yolo11n_cap2_s0_bentrance_N2_a2best_continue_b100_after67b_b_e100_b64_s0_gpu1/initial_val_metrics.json
+[tail]
+[K    100/100      2.68G     0.9066     0.4545     0.8187          0          0          0          0          0          0     0.2334   0.005619   0.001504  4.127e-06          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6508      0.282          0          0     0.4854    0.05637     0.4758     0.4729        162        256: 98% ━━━━━━━━━━━╸ 226/230 2.7it/s 1:29<1.5s
+[K    100/100      2.68G     0.9061     0.4544     0.8187          0          0          0          0          0          0      0.234   0.005618   0.001501  4.109e-06          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6506      0.282          0          0     0.4854    0.05637     0.4758     0.4729        140        256: 99% ━━━━━━━━━━━╸ 227/230 2.7it/s 1:29<1.1s
+[K    100/100      2.68G     0.9057     0.4542     0.8187          0          0          0          0          0          0     0.2336   0.005618   0.001498  4.091e-06          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6511     0.2819          0          0     0.4854    0.05637     0.4759      0.473        130        256: 99% ━━━━━━━━━━━╸ 228/230 2.6it/s 1:29<0.8s
+[K    100/100      2.68G      0.905     0.4542     0.8192          0          0          0          0          0          0     0.2348   0.005627   0.001503  4.074e-06          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6509      0.282          0          0     0.4854    0.05636     0.4761      0.473         13        256: 100% ━━━━━━━━━━━╸ 229/230 2.6it/s 1:30<0.4s
+[K    100/100      2.68G      0.905     0.4542     0.8192          0          0          0          0          0          0     0.2348   0.005627   0.001503  4.074e-06          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6509      0.282          0          0     0.4854    0.05636     0.4761      0.473         13        256: 100% ━━━━━━━━━━━━ 230/230 2.6it/s 1:30
+
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 3% ──────────── 1/29 2.0s/it 0.6s<54.8s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 7% ╸─────────── 2/29 1.1s/it 1.1s<30.2s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 10% ━─────────── 3/29 1.1it/s 1.8s<23.6s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 14% ━╸────────── 4/29 1.3it/s 2.4s<19.5s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 17% ━━────────── 5/29 1.4it/s 3.0s<17.8s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 21% ━━────────── 6/29 1.5it/s 3.6s<15.8s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 24% ━━╸───────── 7/29 1.5it/s 4.3s<15.0s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 28% ━━━───────── 8/29 1.5it/s 4.9s<14.0s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 31% ━━━╸──────── 9/29 1.5it/s 5.5s<13.0s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 34% ━━━━──────── 10/29 1.6it/s 6.1s<12.2s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 38% ━━━━╸─────── 11/29 1.6it/s 6.7s<11.1s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 41% ━━━━╸─────── 12/29 1.6it/s 7.3s<10.4s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 45% ━━━━━─────── 13/29 1.7it/s 7.9s<9.6s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 48% ━━━━━╸────── 14/29 1.7it/s 8.5s<8.8s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 52% ━━━━━━────── 15/29 1.6it/s 9.1s<8.5s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 55% ━━━━━━╸───── 16/29 1.6it/s 9.7s<7.9s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 59% ━━━━━━━───── 17/29 1.7it/s 10.3s<7.2s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 62% ━━━━━━━───── 18/29 1.7it/s 10.9s<6.6s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 66% ━━━━━━━╸──── 19/29 1.7it/s 11.5s<5.9s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 69% ━━━━━━━━──── 20/29 1.7it/s 12.1s<5.4s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 72% ━━━━━━━━╸─── 21/29 1.7it/s 12.7s<4.7s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 76% ━━━━━━━━━─── 22/29 1.6it/s 13.3s<4.2s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 79% ━━━━━━━━━╸── 23/29 1.7it/s 13.9s<3.6s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 83% ━━━━━━━━━╸── 24/29 1.7it/s 14.5s<3.0s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 86% ━━━━━━━━━━── 25/29 1.7it/s 15.1s<2.4s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 90% ━━━━━━━━━━╸─ 26/29 1.7it/s 15.7s<1.8s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 93% ━━━━━━━━━━━─ 27/29 1.7it/s 16.3s<1.2s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 97% ━━━━━━━━━━━╸ 28/29 1.6it/s 16.9s<0.6s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 100% ━━━━━━━━━━━━ 29/29 1.7it/s 17.3s
+                   all       3667       9614      0.851      0.788      0.827      0.559
+
+100 epochs completed in 3.160 hours.
+Optimizer stripped from /root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11n/cap2/ladd_hbb_ogsod11n_formal_nomosaic_yolo11n_cap2_s0_bentrance_N2_a2best_continue_b100_after67b_b_e100_b64_s0_gpu1/weights/last.pt, 12.8MB
+Optimizer stripped from /root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11n/cap2/ladd_hbb_ogsod11n_formal_nomosaic_yolo11n_cap2_s0_bentrance_N2_a2best_continue_b100_after67b_b_e100_b64_s0_gpu1/weights/best.pt, 12.8MB
+
+Validating /root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11n/cap2/ladd_hbb_ogsod11n_formal_nomosaic_yolo11n_cap2_s0_bentrance_N2_a2best_continue_b100_after67b_b_e100_b64_s0_gpu1/weights/best.pt...
+Ultralytics 8.4.30 🚀 Python-3.12.3 torch-2.7.0a0+7c8ec84dab.nv25.03 CUDA:1 (NVIDIA GeForce RTX 4090, 24081MiB)
+YOLO11n summary: 272 layers, 6,215,136 parameters, 0 gradients, 7.6 GFLOPs
+
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 3% ──────────── 1/29 3.0s/it 0.9s<1:24
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 7% ╸─────────── 2/29 2.0s/it 2.0s<53.3s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 10% ━─────────── 3/29 1.5s/it 3.0s<40.2s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 14% ━╸────────── 4/29 1.4s/it 4.1s<34.2s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 17% ━━────────── 5/29 1.2s/it 5.1s<29.1s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 21% ━━────────── 6/29 1.1s/it 5.9s<25.0s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 24% ━━╸───────── 7/29 1.0s/it 6.9s<22.7s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 28% ━━━───────── 8/29 1.0it/s 7.7s<20.4s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 31% ━━━╸──────── 9/29 1.0it/s 8.6s<19.2s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 34% ━━━━──────── 10/29 1.1it/s 9.6s<17.9s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 38% ━━━━╸─────── 11/29 1.1it/s 10.4s<16.3s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 41% ━━━━╸─────── 12/29 1.1it/s 11.3s<15.4s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 45% ━━━━━─────── 13/29 1.1it/s 12.2s<14.4s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 48% ━━━━━╸────── 14/29 1.1it/s 13.0s<13.3s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 52% ━━━━━━────── 15/29 1.1it/s 14.0s<12.6s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 55% ━━━━━━╸───── 16/29 1.1it/s 14.9s<11.9s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 59% ━━━━━━━───── 17/29 1.1it/s 15.8s<10.9s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 62% ━━━━━━━───── 18/29 1.1it/s 16.7s<9.9s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 66% ━━━━━━━╸──── 19/29 1.1it/s 17.6s<9.1s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 69% ━━━━━━━━──── 20/29 1.1it/s 18.5s<8.1s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 72% ━━━━━━━━╸─── 21/29 1.1it/s 19.4s<7.2s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 76% ━━━━━━━━━─── 22/29 1.1it/s 20.4s<6.4s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 79% ━━━━━━━━━╸── 23/29 1.1it/s 21.3s<5.5s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 83% ━━━━━━━━━╸── 24/29 1.1it/s 22.2s<4.6s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 86% ━━━━━━━━━━── 25/29 1.1it/s 23.1s<3.7s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 90% ━━━━━━━━━━╸─ 26/29 1.1it/s 24.1s<2.8s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 93% ━━━━━━━━━━━─ 27/29 1.1it/s 24.9s<1.8s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 97% ━━━━━━━━━━━╸ 28/29 1.1it/s 25.8s<0.9s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 100% ━━━━━━━━━━━━ 29/29 1.1it/s 26.4s
+                   all       3667       9614       0.85      0.789      0.827      0.559
+                bridge       3315       6389      0.908      0.886      0.932      0.567
+                harbor        331        803      0.988      0.987      0.995      0.896
+          storage_tank        153       2422      0.654      0.494      0.555      0.213
+Speed: 0.0ms preprocess, 0.1ms inference, 0.0ms loss, 1.7ms postprocess per image
+Results saved to [1m/root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11n/cap2/ladd_hbb_ogsod11n_formal_nomosaic_yolo11n_cap2_s0_bentrance_N2_a2best_continue_b100_after67b_b_e100_b64_s0_gpu1[0m
+
+====================================================================================================
+FILE /root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11n_cap2_s0_bentrance_N2_a2best_continue_b100_after67b_gpu1/b/manifest.txt
+[keyword_hits]
+21: warmup_epochs=0
+22: warmup_bias_lr=0.001
+23: warmup_momentum=
+24: freeze_bn_stats=1
+25: freeze_bn_after_epoch=-1
+36: ladd_b_det_only=0
+37: ladd_a2_det_only=0
+40: b_split_load_strict=0
+[tail]
+server_tag=shared_nvme_gpu1
+task=hbb
+phase=b
+run_tag=formal_nomosaic_yolo11n_cap2_s0_bentrance_N2_a2best_continue_b100_after67b
+model=runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11n/cap2/ladd_hbb_ogsod11n_formal_nomosaic_yolo11n_cap2_s0_diag_h1_n_s0_b100_smoke_a2_e50_b64_s0_gpu0/weights/best.pt
+sar_baseline=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/sar/sar_yolo11n_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt
+rgb_teacher=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/rgb/rgb_yolo11n_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt
+data_cfg=/root/shared-nvme/LADD_public/configs/datasets/ogsod_hbb_sar.yaml
+teacher_data_cfg=/root/shared-nvme/LADD_public/configs/datasets/ogsod_hbb_rgb.yaml
+project_dir=runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11n/cap2
+run_name=ladd_hbb_ogsod11n_formal_nomosaic_yolo11n_cap2_s0_bentrance_N2_a2best_continue_b100_after67b_b_e100_b64_s0_gpu1
+resume_from=
+seed=0
+epochs=100
+batch_size=64
+cos_lr=1
+lr0=0.001
+lrf=0.01
+optimizer=MuSGD
+warmup_epochs=0
+warmup_bias_lr=0.001
+warmup_momentum=
+freeze_bn_stats=1
+freeze_bn_after_epoch=-1
+ladd_diag_log_bn=1
+ladd_diag_log_grad=0
+ladd_grad_clip_norm=0.0
+ladd_assert_phase_freeze=1
+ladd_diag_log_every=1
+ladd_kd_decay_mode=none
+ladd_kd_decay_start_epoch=-1
+ladd_kd_decay_end_epoch=-1
+ladd_kd_final_mult=1.0
+ladd_kd_stop_after_epoch=-1
+ladd_b_det_only=0
+ladd_a2_det_only=0
+b_detector_source=
+b_decomp_source=
+b_split_load_strict=0
+b_reset_student_from_scratch=0
+b_load_student_split=0
+b_load_student_reachability=1
+b_load_student_aux=0
+alpha_kd=1.0
+lambda_reach=1.0
+lambda_match_inner=1.0
+lambda_rank_inner=1.0
+lambda_residual_aux=0.25
+close_at_epoch=100
+close_mosaic=0
+student_branch_mode=split
+alpha_s_rec=0.1
+comparison_kd_profile=none
+profile_kd_weight=1.0
+profile_kd_replace_base=0
+fgd_alpha=0.0001
+fgd_beta=0.00005
+fgd_gamma=0.001
+fgd_lambda=0.0
+fgd_normalization_mode=original
+fgd_temperature=0.5
+fgd_mask_mode=gt_box
+fgd_bg_norm=1
+ld_temperature=10.0
+ld_use_vlr=1
+ld_quality_power=1.0
+ld_min_vlr_weight=0.0
+ld_vlr_topk=0
+ld_vlr_weight=0.25
+ld_main_weight=0.25
+ld_allow_empty_vlr=1
+cclkd_base_temperature=2.0
+cclkd_contrastive_temperature=0.1
+cclkd_feat_weight=1.0
+cclkd_contrast_weight=0.5
+cclkd_bg_weight=0.1
+cclkd_min_confidence=0.1
+cclkd_temperature_min=0.5
+cclkd_temperature_max=5.0
+cclkd_entropy_scale=5.0
+
+====================================================================================================
+FILE /root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11n_cap2_s0_bentrance_N2_a2best_continue_b100_after67b_gpu1/b/master.log
+[keyword_hits]
+[tail]
+[2026-06-13 13:13:01] Launching OGSOD hbb LADD phase b: ladd_hbb_ogsod11n_formal_nomosaic_yolo11n_cap2_s0_bentrance_N2_a2best_continue_b100_after67b_b_e100_b64_s0_gpu1
+[2026-06-13 16:23:56] Phase b finished
+[2026-06-13 16:23:56] Run directory: /root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11n/cap2/ladd_hbb_ogsod11n_formal_nomosaic_yolo11n_cap2_s0_bentrance_N2_a2best_continue_b100_after67b_b_e100_b64_s0_gpu1
+
+====================================================================================================
+FILE /root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11n_cap2_s0_bentrance_N2_a2best_continue_b100_after67b_gpu1/chain.log
+[keyword_hits]
+[tail]
+[2026-06-13 13:13:01] phase=b model=runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11n/cap2/ladd_hbb_ogsod11n_formal_nomosaic_yolo11n_cap2_s0_diag_h1_n_s0_b100_smoke_a2_e50_b64_s0_gpu0/weights/best.pt
+[2026-06-13 16:23:56] Chain complete. Final model: /root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11n/cap2/ladd_hbb_ogsod11n_formal_nomosaic_yolo11n_cap2_s0_bentrance_N2_a2best_continue_b100_after67b_b_e100_b64_s0_gpu1/weights/best.pt
+
+====================================================================================================
+FILE /root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11n_cap2_s0_bentrance_N2_a2best_continue_b100_after67b_gpu1/final_model.txt
+[keyword_hits]
+[tail]
+/root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11n/cap2/ladd_hbb_ogsod11n_formal_nomosaic_yolo11n_cap2_s0_bentrance_N2_a2best_continue_b100_after67b_b_e100_b64_s0_gpu1/weights/best.pt
+
+====================================================================================================
+FILE /root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11n_cap2_s0_bentrance_N2_a2best_continue_b100_after67b_gpu1/manifest.txt
+[keyword_hits]
+16: a2_schedule=optimizer=MuSGD, lr0=0.001, lrf=0.01, warmup_epochs=0, warmup_bias_lr=0.001
+17: b_schedule=optimizer=MuSGD, cos_lr=1, lr0=0.001, lrf=0.01, warmup_epochs=0, warmup_bias_lr=0.001, close_at_epoch=100
+26: b_freeze_bn_after_epoch=-1
+37: ladd_b_det_only=0
+38: ladd_a2_det_only=0
+39: validate_before_train=1
+42: b_split_load_strict=0
+[tail]
+git_commit=67b2404579039aec2ab15babf6c49d63e359ac03
+server_tag=shared_nvme_gpu1
+task=hbb
+chain=b
+run_tag=formal_nomosaic_yolo11n_cap2_s0_bentrance_N2_a2best_continue_b100_after67b
+start_model=runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11n/cap2/ladd_hbb_ogsod11n_formal_nomosaic_yolo11n_cap2_s0_diag_h1_n_s0_b100_smoke_a2_e50_b64_s0_gpu0/weights/best.pt
+sar_baseline=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/sar/sar_yolo11n_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt
+rgb_teacher=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/rgb/rgb_yolo11n_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt
+seed=0
+gpu_id=1
+imgsz=256
+batch_size=64
+epochs_a1=10
+epochs_a2=50
+epochs_b=100
+a2_schedule=optimizer=MuSGD, lr0=0.001, lrf=0.01, warmup_epochs=0, warmup_bias_lr=0.001
+b_schedule=optimizer=MuSGD, cos_lr=1, lr0=0.001, lrf=0.01, warmup_epochs=0, warmup_bias_lr=0.001, close_at_epoch=100
+alpha_kd=1.0
+alpha_s_rec=0.1
+alpha_sep=0.05
+lambda_reach=1.0
+lambda_match_inner=1.0
+lambda_rank_inner=1.0
+lambda_residual_aux=0.25
+residual_aux_mode=energy
+b_freeze_bn_after_epoch=-1
+ladd_diag_log_bn=1
+ladd_diag_log_grad=0
+ladd_grad_clip_norm=0.0
+ladd_assert_phase_freeze=1
+ladd_diag_log_every=1
+ladd_kd_decay_mode=none
+ladd_kd_decay_start_epoch=-1
+ladd_kd_decay_end_epoch=-1
+ladd_kd_final_mult=1.0
+ladd_kd_stop_after_epoch=-1
+ladd_b_det_only=0
+ladd_a2_det_only=0
+validate_before_train=1
+b_detector_source=
+b_decomp_source=
+b_split_load_strict=0
+b_reset_student_from_scratch=0
+b_load_student_split=0
+b_load_student_reachability=1
+b_load_student_aux=0
+rank_d_neg_cap=2.0
+lambda_anti_collapse=0.0
+anti_collapse_floor=0.0
+b=/root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11n/cap2/ladd_hbb_ogsod11n_formal_nomosaic_yolo11n_cap2_s0_bentrance_N2_a2best_continue_b100_after67b_b_e100_b64_s0_gpu1

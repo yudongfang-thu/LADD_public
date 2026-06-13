@@ -1,0 +1,15 @@
+{
+  "server": "autodl",
+  "snapshot_time": "2026-06-13 19:14:30 CST",
+  "repo_commit": "",
+  "targets": [
+    "S1_basecontinue_b100_autodl",
+    "comparison_n_hallucidet_b16_running"
+  ],
+  "excluded": [
+    "weights/checkpoints",
+    "TensorBoard event files",
+    "wandb",
+    "full logs/full run dirs"
+  ]
+}

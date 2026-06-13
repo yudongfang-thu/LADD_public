@@ -1,0 +1,33 @@
+{
+  "id": "S4_base_a2last_kdramp_b120_autobatch_old",
+  "kind": "b_entrance_invalid",
+  "status": "stopped_auto_batch_after_oom",
+  "tag": "bentrance_S4_base_a2last_kdramp_b120_after67b",
+  "run": "runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_bentrance_S4_base_a2last_kdramp_b120_after67b_b_e120_b64_s0_gpu1",
+  "server": "ladd4090",
+  "run_dir": "/root/shared-nvme/LADD_public_p1/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_bentrance_S4_base_a2last_kdramp_b120_after67b_b_e120_b64_s0_gpu1",
+  "exists": true,
+  "active_process_count": "27",
+  "copied_files": [
+    "evidence/ladd4090/S4_base_a2last_kdramp_b120_autobatch_old/run_files/args.yaml",
+    "evidence/ladd4090/S4_base_a2last_kdramp_b120_autobatch_old/run_files/b_split_load_manifest.json",
+    "evidence/ladd4090/S4_base_a2last_kdramp_b120_autobatch_old/run_files/initial_val_metrics.json",
+    "evidence/ladd4090/S4_base_a2last_kdramp_b120_autobatch_old/run_files/ladd_diagnostics.csv",
+    "evidence/ladd4090/S4_base_a2last_kdramp_b120_autobatch_old/run_files/results.csv"
+  ],
+  "log_extract": "evidence/ladd4090/S4_base_a2last_kdramp_b120_autobatch_old/log_extract.txt",
+  "source_logs": [
+    "/root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S4_base_a2last_kdramp_b120_after67b_gpu1.outer.log",
+    "/root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S4_base_a2last_kdramp_b120_after67b_gpu1/b/b.log",
+    "/root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S4_base_a2last_kdramp_b120_after67b_gpu1/b/manifest.txt",
+    "/root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S4_base_a2last_kdramp_b120_after67b_gpu1/b/master.log",
+    "/root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S4_base_a2last_kdramp_b120_after67b_gpu1/chain.log",
+    "/root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S4_base_a2last_kdramp_b120_after67b_gpu1/manifest.txt",
+    "/root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S4_base_a2last_kdramp_b120_after67b_retry_strict_b64_gpu0.outer.log",
+    "/root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S4_base_a2last_kdramp_b120_after67b_retry_strict_b64_gpu0/b/b.log",
+    "/root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S4_base_a2last_kdramp_b120_after67b_retry_strict_b64_gpu0/b/manifest.txt",
+    "/root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S4_base_a2last_kdramp_b120_after67b_retry_strict_b64_gpu0/b/master.log",
+    "/root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S4_base_a2last_kdramp_b120_after67b_retry_strict_b64_gpu0/chain.log",
+    "/root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S4_base_a2last_kdramp_b120_after67b_retry_strict_b64_gpu0/manifest.txt"
+  ]
+}

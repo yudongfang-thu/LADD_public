@@ -1,0 +1,1027 @@
+log_extract_for=bentrance_S2_a2best_continue_b100_after67b
+generated_at=2026-06-13 19:12:08 CST
+
+====================================================================================================
+FILE /root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_gpu1.outer.log
+[keyword_hits]
+3: [2026-06-13 15:48:46] Phase b failed with code 1
+1088: Traceback (most recent call last):
+1145: torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 128.00 MiB. GPU 0 has a total capacity of 23.52 GiB of which 45.19 MiB is free. Process 236779 has 5.76 GiB memory in use. Process 242547 has 3.73 GiB memory in use. Process 264821 has 3.21 GiB memory in use. Process 265617 has 3.19 GiB memory in use. Including non-PyTorch memory, this process has 4.42 GiB memory in use. Process 267661 has 3.09 GiB memory in use. Of the allocated memory 3.58 GiB is allocated by PyTorch, and 318.35 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+[tail]
+[K     24/100       3.9G     0.7328     0.3665     0.7823          0          0          0          0          0          0      0.192   0.003283  0.0001726          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6818     0.2623          0          0     0.4674    0.05823     0.3717     0.4291        128        256: 0% ──────────── 0/230  0.4s
+[K     24/100       3.9G     0.7817     0.3787     0.7904          0          0          0          0          0          0     0.1782   0.003382  0.0001667          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6692     0.2622          0          0     0.4674    0.05766     0.3754     0.4281        189        256: 0% ──────────── 1/230 1.5s/it 0.9s<5:39
+[K     24/100       3.9G     0.8221     0.3829      0.803          0          0          0          0          0          0     0.1763   0.003483  0.0001592          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6544     0.2622          0          0     0.4678    0.05737     0.3766      0.428        224        256: 1% ──────────── 2/230 1.2it/s 1.3s<3:14
+[K     24/100       3.9G     0.8049      0.376     0.8054          0          0          0          0          0          0     0.1818   0.003497  0.0001501          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6562     0.2622          0          0     0.4681    0.05722     0.3777     0.4281        141        256: 1% ──────────── 3/230 1.6it/s 1.7s<2:24
+[K     24/100       3.9G     0.7839     0.3737     0.8092          0          0          0          0          0          0     0.1805    0.00351  0.0001599          0          0          0          0          0          0          0          0          0          0          0          0          0          0      0.654     0.2624          0          0      0.468    0.05728     0.3818      0.428        133        256: 2% ──────────── 4/230 1.8it/s 2.1s<2:06
+[K     24/100       3.9G     0.7782     0.3724     0.8072          0          0          0          0          0          0     0.1822   0.003548  0.0001609          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6439     0.2626          0          0     0.4683    0.05727     0.3822     0.4283        195        256: 2% ──────────── 5/230 1.9it/s 2.6s<1:59
+[K     24/100       3.9G     0.7675       0.37     0.8074          0          0          0          0          0          0     0.1793   0.003552  0.0001598          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6395     0.2627          0          0     0.4681    0.05755     0.3818     0.4284        153        256: 3% ──────────── 6/230 2.0it/s 3.0s<1:54
+[K     24/100       3.9G     0.7771     0.3747     0.8066          0          0          0          0          0          0     0.1785   0.003513  0.0001744          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6495     0.2625          0          0      0.468    0.05728     0.3787      0.428        132        256: 3% ──────────── 7/230 2.0it/s 3.5s<1:50
+[K     24/100       3.9G     0.8099     0.3837     0.8055          0          0          0          0          0          0     0.1729    0.00348  0.0001794          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6487     0.2623          0          0     0.4677    0.05732     0.3767     0.4277        197        256: 3% ──────────── 8/230 2.1it/s 4.0s<1:47
+[K     24/100       3.9G     0.7974     0.3811     0.8064          0          0          0          0          0          0     0.1754   0.003465  0.0001779          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6488     0.2622          0          0     0.4678    0.05741     0.3766      0.428        125        256: 4% ──────────── 9/230 2.1it/s 4.4s<1:45
+[K     24/100       3.9G     0.7934     0.3796     0.8047          0          0          0          0          0          0     0.1752   0.003452  0.0001793          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6487     0.2621          0          0     0.4679    0.05743     0.3769      0.428        142        256: 4% ╸─────────── 10/230 2.1it/s 4.9s<1:44
+[K     24/100       3.9G     0.7962     0.3819     0.8053          0          0          0          0          0          0     0.1755   0.003443  0.0001778          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6479     0.2619          0          0     0.4679     0.0574     0.3769      0.428        186        256: 5% ╸─────────── 11/230 2.1it/s 5.4s<1:44
+[K     24/100       3.9G     0.7909     0.3775     0.8059          0          0          0          0          0          0     0.1752   0.003432  0.0001785          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6498     0.2619          0          0     0.4678    0.05738     0.3775     0.4277        117        256: 5% ╸─────────── 12/230 2.1it/s 5.9s<1:45
+[K     24/100       3.9G     0.7827     0.3746     0.8049          0          0          0          0          0          0     0.1761   0.003425   0.000178          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6495     0.2619          0          0     0.4677    0.05742     0.3772     0.4277        106        256: 6% ╸─────────── 13/230 2.1it/s 6.4s<1:45
+[K     24/100       3.9G     0.7754     0.3739     0.8044          0          0          0          0          0          0     0.1807   0.003432  0.0001759          0          0          0          0          0          0          0          0          0          0          0          0          0          0       0.65     0.2619          0          0     0.4678    0.05744     0.3777     0.4278        162        256: 6% ╸─────────── 14/230 2.0it/s 6.9s<1:46
+[K     24/100       3.9G     0.7719     0.3736     0.8056          0          0          0          0          0          0      0.178   0.003417   0.000178          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6531     0.2619          0          0     0.4678    0.05742     0.3772     0.4278        110        256: 7% ╸─────────── 15/230 2.0it/s 7.4s<1:45
+[K     24/100       3.9G     0.7739     0.3757     0.8048          0          0          0          0          0          0     0.1796    0.00341  0.0001782          0          0          0          0          0          0          0          0          0          0          0          0          0          0      0.657     0.2619          0          0     0.4677     0.0574     0.3772     0.4276        149        256: 7% ╸─────────── 16/230 2.1it/s 7.8s<1:42
+[K     24/100       3.9G     0.7783     0.3777     0.8047          0          0          0          0          0          0     0.1812   0.003397  0.0001821          0          0          0          0          0          0          0          0          0          0          0          0          0          0      0.659      0.262          0          0     0.4676    0.05748      0.377     0.4276        132        256: 7% ╸─────────── 17/230 2.0it/s 8.3s<1:45
+[K     24/100       3.9G     0.7774     0.3781      0.806          0          0          0          0          0          0     0.1808   0.003406  0.0001822          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6579     0.2621          0          0     0.4676    0.05747     0.3773     0.4276        160        256: 8% ╸─────────── 18/230 2.0it/s 8.9s<1:48
+[K     24/100       3.9G     0.7724     0.3781     0.8076          0          0          0          0          0          0     0.1835   0.003414  0.0001829          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6575     0.2621          0          0     0.4677    0.05736     0.3776     0.4276        112        256: 8% ╸─────────── 19/230 1.9it/s 9.5s<1:53
+[K     24/100       3.9G     0.7749     0.3795     0.8082          0          0          0          0          0          0      0.184   0.003429  0.0001821          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6552     0.2622          0          0     0.4679    0.05722     0.3782     0.4275        204        256: 9% ━─────────── 20/230 1.9it/s 10.0s<1:49
+[K     24/100       3.9G     0.7749     0.3795     0.8082          0          0          0          0          0          0      0.184   0.003429  0.0001821          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6552     0.2622          0          0     0.4679    0.05722     0.3782     0.4275        204        256: 9% ━─────────── 21/230 4.6it/s 10.1s<45.1s
+Traceback (most recent call last):
+  File "/root/shared-nvme/LADD_public_p1/ladd/code_versions/current_hbb/tools/train_ladd_hbb.py", line 407, in <module>
+    main()
+  File "/root/shared-nvme/LADD_public_p1/ladd/code_versions/current_hbb/tools/train_ladd_hbb.py", line 403, in main
+    model.train(**train_kwargs)
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/engine/model.py", line 788, in train
+    self.trainer.train()
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/engine/trainer.py", line 244, in train
+    self._do_train()
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/engine/trainer.py", line 436, in _do_train
+    loss, self.loss_items = self.model(batch)
+                            ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/nn/tasks.py", line 141, in forward
+    return self.loss(x, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/nn/tasks.py", line 335, in loss
+    return self.criterion(preds, batch)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/utils/loss.py", line 463, in __call__
+    return self.loss(self.parse_output(preds), batch)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/ladd/code_versions/current_hbb/src/teacher_student_decomposition_kd_hbb/loss.py", line 573, in loss
+    extra_losses = self._compute_decomposition_losses(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/ladd/code_versions/current_hbb/src/teacher_student_decomposition_kd_hbb/loss.py", line 1946, in _compute_decomposition_losses
+    teacher_outputs = self.teacher_model(batch["teacher_img"])
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/nn/tasks.py", line 142, in forward
+    return self.predict(x, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/nn/tasks.py", line 159, in predict
+    return self._predict_once(x, profile, visualize, embed)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/nn/tasks.py", line 181, in _predict_once
+    x = m(x)  # run
+        ^^^^
+  File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/nn/modules/conv.py", line 641, in forward
+    return torch.cat(x, self.d)
+           ^^^^^^^^^^^^^^^^^^^^
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 128.00 MiB. GPU 0 has a total capacity of 23.52 GiB of which 45.19 MiB is free. Process 236779 has 5.76 GiB memory in use. Process 242547 has 3.73 GiB memory in use. Process 264821 has 3.21 GiB memory in use. Process 265617 has 3.19 GiB memory in use. Including non-PyTorch memory, this process has 4.42 GiB memory in use. Process 267661 has 3.09 GiB memory in use. Of the allocated memory 3.58 GiB is allocated by PyTorch, and 318.35 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+
+====================================================================================================
+FILE /root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_gpu1/b/b.log
+[keyword_hits]
+2:  python3 ladd/code_versions/current_hbb/tools/train_ladd_hbb.py --phase b --model runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_a2select_s_s0_a2lr3e4_short13_b1_a2_e13_b64_s0_gpu0/weights/best.pt --data /root/shared-nvme/LADD_public/configs/datasets/ogsod_hbb_sar.yaml --teacher-data /root/shared-nvme/LADD_public/configs/datasets/ogsod_hbb_rgb.yaml --teacher-weights runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/rgb/rgb_yolo11s_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt --imgsz 256 --epochs 100 --batch 64 --workers 8 --device 1 --patience 100 --fraction 1.0 --project runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2 --name ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_b_e100_b64_s0_gpu1 --phase-detect-mode raw --det-loss-scale 1.0 --phase-stop-metric default --freeze-bn-after-epoch -1 --ladd-diag-log-bn 1 --ladd-diag-log-grad 0 --ladd-
+5: [34m[1mengine/trainer: [0magnostic_nms=False, amp=True, angle=1.0, augment=False, auto_augment=randaugment, batch=64, bgr=0.0, box=7.5, cache=False, cfg=None, classes=None, close_mosaic=0, cls=0.5, compile=False, conf=None, copy_paste=0.0, copy_paste_mode=flip, cos_lr=True, cutmix=0.0, data=/root/shared-nvme/LADD_public/configs/datasets/ogsod_hbb_sar.yaml, degrees=0.0, deterministic=True, device=1, dfl=1.5, dnn=False, dropout=0.0, dynamic=False, embed=None, end2end=None, epochs=100, erasing=0.0, exist_ok=False, fliplr=0.5, flipud=0.0, format=torchscript, fraction=1.0, freeze=None, half=False, hsv_h=0.0, hsv_s=0.0, hsv_v=0.0, imgsz=256, int8=False, iou=0.7, keras=False, kobj=1.0, line_width=None, lr0=0.001, lrf=0.01, mask_ratio=4, max_det=300, mixup=0.0, mode=train, model=runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_a2select_s_s0_a2lr3e4_short13_b1_a2_e13_b64_s0_gpu0/weights/best.pt, momentum=0.937, mosaic=0.0
+47: ladd_phase_diag phase=b trainable_params=12536281/23919080 bn_eval=81/81 freeze_bn_stats=True freeze_bn_after_epoch=-1 ladd_assert_phase_freeze=True alpha_kd=1.0 base_alpha_kd=1.0 effective_alpha_kd=1.0 kd_multiplier=1.0 kd_warmup_active=False ladd_kd_decay_mode=none ladd_kd_decay_start_epoch=-1 ladd_kd_decay_end_epoch=-1 ladd_kd_final_mult=1.0 ladd_kd_stop_after_epoch=-1 ladd_b_det_only=False ladd_a2_det_only=False ladd_diag_log_grad=False ladd_grad_clip=ULTRALYTICS_DEFAULT ladd_grad_clip_norm=0.0 effective_grad_clip_norm=10.0
+89: Saved pre-train validation snapshot to /root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_b_e100_b64_s0_gpu1/initial_val_metrics.json
+6216: Traceback (most recent call last):
+6273: torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 128.00 MiB. GPU 0 has a total capacity of 23.52 GiB of which 45.19 MiB is free. Process 236779 has 5.76 GiB memory in use. Process 242547 has 3.73 GiB memory in use. Process 264821 has 3.21 GiB memory in use. Process 265617 has 3.19 GiB memory in use. Including non-PyTorch memory, this process has 4.42 GiB memory in use. Process 267661 has 3.09 GiB memory in use. Of the allocated memory 3.58 GiB is allocated by PyTorch, and 318.35 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+[tail]
+[K     24/100       3.9G     0.7328     0.3665     0.7823          0          0          0          0          0          0      0.192   0.003283  0.0001726          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6818     0.2623          0          0     0.4674    0.05823     0.3717     0.4291        128        256: 0% ──────────── 0/230  0.4s
+[K     24/100       3.9G     0.7817     0.3787     0.7904          0          0          0          0          0          0     0.1782   0.003382  0.0001667          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6692     0.2622          0          0     0.4674    0.05766     0.3754     0.4281        189        256: 0% ──────────── 1/230 1.5s/it 0.9s<5:39
+[K     24/100       3.9G     0.8221     0.3829      0.803          0          0          0          0          0          0     0.1763   0.003483  0.0001592          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6544     0.2622          0          0     0.4678    0.05737     0.3766      0.428        224        256: 1% ──────────── 2/230 1.2it/s 1.3s<3:14
+[K     24/100       3.9G     0.8049      0.376     0.8054          0          0          0          0          0          0     0.1818   0.003497  0.0001501          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6562     0.2622          0          0     0.4681    0.05722     0.3777     0.4281        141        256: 1% ──────────── 3/230 1.6it/s 1.7s<2:24
+[K     24/100       3.9G     0.7839     0.3737     0.8092          0          0          0          0          0          0     0.1805    0.00351  0.0001599          0          0          0          0          0          0          0          0          0          0          0          0          0          0      0.654     0.2624          0          0      0.468    0.05728     0.3818      0.428        133        256: 2% ──────────── 4/230 1.8it/s 2.1s<2:06
+[K     24/100       3.9G     0.7782     0.3724     0.8072          0          0          0          0          0          0     0.1822   0.003548  0.0001609          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6439     0.2626          0          0     0.4683    0.05727     0.3822     0.4283        195        256: 2% ──────────── 5/230 1.9it/s 2.6s<1:59
+[K     24/100       3.9G     0.7675       0.37     0.8074          0          0          0          0          0          0     0.1793   0.003552  0.0001598          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6395     0.2627          0          0     0.4681    0.05755     0.3818     0.4284        153        256: 3% ──────────── 6/230 2.0it/s 3.0s<1:54
+[K     24/100       3.9G     0.7771     0.3747     0.8066          0          0          0          0          0          0     0.1785   0.003513  0.0001744          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6495     0.2625          0          0      0.468    0.05728     0.3787      0.428        132        256: 3% ──────────── 7/230 2.0it/s 3.5s<1:50
+[K     24/100       3.9G     0.8099     0.3837     0.8055          0          0          0          0          0          0     0.1729    0.00348  0.0001794          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6487     0.2623          0          0     0.4677    0.05732     0.3767     0.4277        197        256: 3% ──────────── 8/230 2.1it/s 4.0s<1:47
+[K     24/100       3.9G     0.7974     0.3811     0.8064          0          0          0          0          0          0     0.1754   0.003465  0.0001779          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6488     0.2622          0          0     0.4678    0.05741     0.3766      0.428        125        256: 4% ──────────── 9/230 2.1it/s 4.4s<1:45
+[K     24/100       3.9G     0.7934     0.3796     0.8047          0          0          0          0          0          0     0.1752   0.003452  0.0001793          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6487     0.2621          0          0     0.4679    0.05743     0.3769      0.428        142        256: 4% ╸─────────── 10/230 2.1it/s 4.9s<1:44
+[K     24/100       3.9G     0.7962     0.3819     0.8053          0          0          0          0          0          0     0.1755   0.003443  0.0001778          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6479     0.2619          0          0     0.4679     0.0574     0.3769      0.428        186        256: 5% ╸─────────── 11/230 2.1it/s 5.4s<1:44
+[K     24/100       3.9G     0.7909     0.3775     0.8059          0          0          0          0          0          0     0.1752   0.003432  0.0001785          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6498     0.2619          0          0     0.4678    0.05738     0.3775     0.4277        117        256: 5% ╸─────────── 12/230 2.1it/s 5.9s<1:45
+[K     24/100       3.9G     0.7827     0.3746     0.8049          0          0          0          0          0          0     0.1761   0.003425   0.000178          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6495     0.2619          0          0     0.4677    0.05742     0.3772     0.4277        106        256: 6% ╸─────────── 13/230 2.1it/s 6.4s<1:45
+[K     24/100       3.9G     0.7754     0.3739     0.8044          0          0          0          0          0          0     0.1807   0.003432  0.0001759          0          0          0          0          0          0          0          0          0          0          0          0          0          0       0.65     0.2619          0          0     0.4678    0.05744     0.3777     0.4278        162        256: 6% ╸─────────── 14/230 2.0it/s 6.9s<1:46
+[K     24/100       3.9G     0.7719     0.3736     0.8056          0          0          0          0          0          0      0.178   0.003417   0.000178          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6531     0.2619          0          0     0.4678    0.05742     0.3772     0.4278        110        256: 7% ╸─────────── 15/230 2.0it/s 7.4s<1:45
+[K     24/100       3.9G     0.7739     0.3757     0.8048          0          0          0          0          0          0     0.1796    0.00341  0.0001782          0          0          0          0          0          0          0          0          0          0          0          0          0          0      0.657     0.2619          0          0     0.4677     0.0574     0.3772     0.4276        149        256: 7% ╸─────────── 16/230 2.1it/s 7.8s<1:42
+[K     24/100       3.9G     0.7783     0.3777     0.8047          0          0          0          0          0          0     0.1812   0.003397  0.0001821          0          0          0          0          0          0          0          0          0          0          0          0          0          0      0.659      0.262          0          0     0.4676    0.05748      0.377     0.4276        132        256: 7% ╸─────────── 17/230 2.0it/s 8.3s<1:45
+[K     24/100       3.9G     0.7774     0.3781      0.806          0          0          0          0          0          0     0.1808   0.003406  0.0001822          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6579     0.2621          0          0     0.4676    0.05747     0.3773     0.4276        160        256: 8% ╸─────────── 18/230 2.0it/s 8.9s<1:48
+[K     24/100       3.9G     0.7724     0.3781     0.8076          0          0          0          0          0          0     0.1835   0.003414  0.0001829          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6575     0.2621          0          0     0.4677    0.05736     0.3776     0.4276        112        256: 8% ╸─────────── 19/230 1.9it/s 9.5s<1:53
+[K     24/100       3.9G     0.7749     0.3795     0.8082          0          0          0          0          0          0      0.184   0.003429  0.0001821          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6552     0.2622          0          0     0.4679    0.05722     0.3782     0.4275        204        256: 9% ━─────────── 20/230 1.9it/s 10.0s<1:49
+[K     24/100       3.9G     0.7749     0.3795     0.8082          0          0          0          0          0          0      0.184   0.003429  0.0001821          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6552     0.2622          0          0     0.4679    0.05722     0.3782     0.4275        204        256: 9% ━─────────── 21/230 4.6it/s 10.1s<45.1s
+Traceback (most recent call last):
+  File "/root/shared-nvme/LADD_public_p1/ladd/code_versions/current_hbb/tools/train_ladd_hbb.py", line 407, in <module>
+    main()
+  File "/root/shared-nvme/LADD_public_p1/ladd/code_versions/current_hbb/tools/train_ladd_hbb.py", line 403, in main
+    model.train(**train_kwargs)
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/engine/model.py", line 788, in train
+    self.trainer.train()
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/engine/trainer.py", line 244, in train
+    self._do_train()
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/engine/trainer.py", line 436, in _do_train
+    loss, self.loss_items = self.model(batch)
+                            ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/nn/tasks.py", line 141, in forward
+    return self.loss(x, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/nn/tasks.py", line 335, in loss
+    return self.criterion(preds, batch)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/utils/loss.py", line 463, in __call__
+    return self.loss(self.parse_output(preds), batch)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/ladd/code_versions/current_hbb/src/teacher_student_decomposition_kd_hbb/loss.py", line 573, in loss
+    extra_losses = self._compute_decomposition_losses(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/ladd/code_versions/current_hbb/src/teacher_student_decomposition_kd_hbb/loss.py", line 1946, in _compute_decomposition_losses
+    teacher_outputs = self.teacher_model(batch["teacher_img"])
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/nn/tasks.py", line 142, in forward
+    return self.predict(x, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/nn/tasks.py", line 159, in predict
+    return self._predict_once(x, profile, visualize, embed)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/nn/tasks.py", line 181, in _predict_once
+    x = m(x)  # run
+        ^^^^
+  File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/nn/modules/conv.py", line 641, in forward
+    return torch.cat(x, self.d)
+           ^^^^^^^^^^^^^^^^^^^^
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 128.00 MiB. GPU 0 has a total capacity of 23.52 GiB of which 45.19 MiB is free. Process 236779 has 5.76 GiB memory in use. Process 242547 has 3.73 GiB memory in use. Process 264821 has 3.21 GiB memory in use. Process 265617 has 3.19 GiB memory in use. Including non-PyTorch memory, this process has 4.42 GiB memory in use. Process 267661 has 3.09 GiB memory in use. Of the allocated memory 3.58 GiB is allocated by PyTorch, and 318.35 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+
+====================================================================================================
+FILE /root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_gpu1/b/manifest.txt
+[keyword_hits]
+21: warmup_epochs=0
+22: warmup_bias_lr=0.001
+23: warmup_momentum=
+24: freeze_bn_stats=1
+25: freeze_bn_after_epoch=-1
+36: ladd_b_det_only=0
+37: ladd_a2_det_only=0
+40: b_split_load_strict=0
+[tail]
+server_tag=shared_nvme_gpu1
+task=hbb
+phase=b
+run_tag=formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b
+model=runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_a2select_s_s0_a2lr3e4_short13_b1_a2_e13_b64_s0_gpu0/weights/best.pt
+sar_baseline=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/sar/sar_yolo11s_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt
+rgb_teacher=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/rgb/rgb_yolo11s_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt
+data_cfg=/root/shared-nvme/LADD_public/configs/datasets/ogsod_hbb_sar.yaml
+teacher_data_cfg=/root/shared-nvme/LADD_public/configs/datasets/ogsod_hbb_rgb.yaml
+project_dir=runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2
+run_name=ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_b_e100_b64_s0_gpu1
+resume_from=
+seed=0
+epochs=100
+batch_size=64
+cos_lr=1
+lr0=0.001
+lrf=0.01
+optimizer=MuSGD
+warmup_epochs=0
+warmup_bias_lr=0.001
+warmup_momentum=
+freeze_bn_stats=1
+freeze_bn_after_epoch=-1
+ladd_diag_log_bn=1
+ladd_diag_log_grad=0
+ladd_grad_clip_norm=0.0
+ladd_assert_phase_freeze=1
+ladd_diag_log_every=1
+ladd_kd_decay_mode=none
+ladd_kd_decay_start_epoch=-1
+ladd_kd_decay_end_epoch=-1
+ladd_kd_final_mult=1.0
+ladd_kd_stop_after_epoch=-1
+ladd_b_det_only=0
+ladd_a2_det_only=0
+b_detector_source=
+b_decomp_source=
+b_split_load_strict=0
+b_reset_student_from_scratch=0
+b_load_student_split=0
+b_load_student_reachability=1
+b_load_student_aux=0
+alpha_kd=1.0
+lambda_reach=1.0
+lambda_match_inner=1.0
+lambda_rank_inner=1.0
+lambda_residual_aux=0.25
+close_at_epoch=100
+close_mosaic=0
+student_branch_mode=split
+alpha_s_rec=0.1
+comparison_kd_profile=none
+profile_kd_weight=1.0
+profile_kd_replace_base=0
+fgd_alpha=0.0001
+fgd_beta=0.00005
+fgd_gamma=0.001
+fgd_lambda=0.0
+fgd_normalization_mode=original
+fgd_temperature=0.5
+fgd_mask_mode=gt_box
+fgd_bg_norm=1
+ld_temperature=10.0
+ld_use_vlr=1
+ld_quality_power=1.0
+ld_min_vlr_weight=0.0
+ld_vlr_topk=0
+ld_vlr_weight=0.25
+ld_main_weight=0.25
+ld_allow_empty_vlr=1
+cclkd_base_temperature=2.0
+cclkd_contrastive_temperature=0.1
+cclkd_feat_weight=1.0
+cclkd_contrast_weight=0.5
+cclkd_bg_weight=0.1
+cclkd_min_confidence=0.1
+cclkd_temperature_min=0.5
+cclkd_temperature_max=5.0
+cclkd_entropy_scale=5.0
+
+====================================================================================================
+FILE /root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_gpu1/b/master.log
+[keyword_hits]
+2: [2026-06-13 15:48:46] Phase b failed with code 1
+1087: Traceback (most recent call last):
+1144: torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 128.00 MiB. GPU 0 has a total capacity of 23.52 GiB of which 45.19 MiB is free. Process 236779 has 5.76 GiB memory in use. Process 242547 has 3.73 GiB memory in use. Process 264821 has 3.21 GiB memory in use. Process 265617 has 3.19 GiB memory in use. Including non-PyTorch memory, this process has 4.42 GiB memory in use. Process 267661 has 3.09 GiB memory in use. Of the allocated memory 3.58 GiB is allocated by PyTorch, and 318.35 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+[tail]
+[K     24/100       3.9G     0.7328     0.3665     0.7823          0          0          0          0          0          0      0.192   0.003283  0.0001726          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6818     0.2623          0          0     0.4674    0.05823     0.3717     0.4291        128        256: 0% ──────────── 0/230  0.4s
+[K     24/100       3.9G     0.7817     0.3787     0.7904          0          0          0          0          0          0     0.1782   0.003382  0.0001667          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6692     0.2622          0          0     0.4674    0.05766     0.3754     0.4281        189        256: 0% ──────────── 1/230 1.5s/it 0.9s<5:39
+[K     24/100       3.9G     0.8221     0.3829      0.803          0          0          0          0          0          0     0.1763   0.003483  0.0001592          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6544     0.2622          0          0     0.4678    0.05737     0.3766      0.428        224        256: 1% ──────────── 2/230 1.2it/s 1.3s<3:14
+[K     24/100       3.9G     0.8049      0.376     0.8054          0          0          0          0          0          0     0.1818   0.003497  0.0001501          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6562     0.2622          0          0     0.4681    0.05722     0.3777     0.4281        141        256: 1% ──────────── 3/230 1.6it/s 1.7s<2:24
+[K     24/100       3.9G     0.7839     0.3737     0.8092          0          0          0          0          0          0     0.1805    0.00351  0.0001599          0          0          0          0          0          0          0          0          0          0          0          0          0          0      0.654     0.2624          0          0      0.468    0.05728     0.3818      0.428        133        256: 2% ──────────── 4/230 1.8it/s 2.1s<2:06
+[K     24/100       3.9G     0.7782     0.3724     0.8072          0          0          0          0          0          0     0.1822   0.003548  0.0001609          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6439     0.2626          0          0     0.4683    0.05727     0.3822     0.4283        195        256: 2% ──────────── 5/230 1.9it/s 2.6s<1:59
+[K     24/100       3.9G     0.7675       0.37     0.8074          0          0          0          0          0          0     0.1793   0.003552  0.0001598          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6395     0.2627          0          0     0.4681    0.05755     0.3818     0.4284        153        256: 3% ──────────── 6/230 2.0it/s 3.0s<1:54
+[K     24/100       3.9G     0.7771     0.3747     0.8066          0          0          0          0          0          0     0.1785   0.003513  0.0001744          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6495     0.2625          0          0      0.468    0.05728     0.3787      0.428        132        256: 3% ──────────── 7/230 2.0it/s 3.5s<1:50
+[K     24/100       3.9G     0.8099     0.3837     0.8055          0          0          0          0          0          0     0.1729    0.00348  0.0001794          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6487     0.2623          0          0     0.4677    0.05732     0.3767     0.4277        197        256: 3% ──────────── 8/230 2.1it/s 4.0s<1:47
+[K     24/100       3.9G     0.7974     0.3811     0.8064          0          0          0          0          0          0     0.1754   0.003465  0.0001779          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6488     0.2622          0          0     0.4678    0.05741     0.3766      0.428        125        256: 4% ──────────── 9/230 2.1it/s 4.4s<1:45
+[K     24/100       3.9G     0.7934     0.3796     0.8047          0          0          0          0          0          0     0.1752   0.003452  0.0001793          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6487     0.2621          0          0     0.4679    0.05743     0.3769      0.428        142        256: 4% ╸─────────── 10/230 2.1it/s 4.9s<1:44
+[K     24/100       3.9G     0.7962     0.3819     0.8053          0          0          0          0          0          0     0.1755   0.003443  0.0001778          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6479     0.2619          0          0     0.4679     0.0574     0.3769      0.428        186        256: 5% ╸─────────── 11/230 2.1it/s 5.4s<1:44
+[K     24/100       3.9G     0.7909     0.3775     0.8059          0          0          0          0          0          0     0.1752   0.003432  0.0001785          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6498     0.2619          0          0     0.4678    0.05738     0.3775     0.4277        117        256: 5% ╸─────────── 12/230 2.1it/s 5.9s<1:45
+[K     24/100       3.9G     0.7827     0.3746     0.8049          0          0          0          0          0          0     0.1761   0.003425   0.000178          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6495     0.2619          0          0     0.4677    0.05742     0.3772     0.4277        106        256: 6% ╸─────────── 13/230 2.1it/s 6.4s<1:45
+[K     24/100       3.9G     0.7754     0.3739     0.8044          0          0          0          0          0          0     0.1807   0.003432  0.0001759          0          0          0          0          0          0          0          0          0          0          0          0          0          0       0.65     0.2619          0          0     0.4678    0.05744     0.3777     0.4278        162        256: 6% ╸─────────── 14/230 2.0it/s 6.9s<1:46
+[K     24/100       3.9G     0.7719     0.3736     0.8056          0          0          0          0          0          0      0.178   0.003417   0.000178          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6531     0.2619          0          0     0.4678    0.05742     0.3772     0.4278        110        256: 7% ╸─────────── 15/230 2.0it/s 7.4s<1:45
+[K     24/100       3.9G     0.7739     0.3757     0.8048          0          0          0          0          0          0     0.1796    0.00341  0.0001782          0          0          0          0          0          0          0          0          0          0          0          0          0          0      0.657     0.2619          0          0     0.4677     0.0574     0.3772     0.4276        149        256: 7% ╸─────────── 16/230 2.1it/s 7.8s<1:42
+[K     24/100       3.9G     0.7783     0.3777     0.8047          0          0          0          0          0          0     0.1812   0.003397  0.0001821          0          0          0          0          0          0          0          0          0          0          0          0          0          0      0.659      0.262          0          0     0.4676    0.05748      0.377     0.4276        132        256: 7% ╸─────────── 17/230 2.0it/s 8.3s<1:45
+[K     24/100       3.9G     0.7774     0.3781      0.806          0          0          0          0          0          0     0.1808   0.003406  0.0001822          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6579     0.2621          0          0     0.4676    0.05747     0.3773     0.4276        160        256: 8% ╸─────────── 18/230 2.0it/s 8.9s<1:48
+[K     24/100       3.9G     0.7724     0.3781     0.8076          0          0          0          0          0          0     0.1835   0.003414  0.0001829          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6575     0.2621          0          0     0.4677    0.05736     0.3776     0.4276        112        256: 8% ╸─────────── 19/230 1.9it/s 9.5s<1:53
+[K     24/100       3.9G     0.7749     0.3795     0.8082          0          0          0          0          0          0      0.184   0.003429  0.0001821          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6552     0.2622          0          0     0.4679    0.05722     0.3782     0.4275        204        256: 9% ━─────────── 20/230 1.9it/s 10.0s<1:49
+[K     24/100       3.9G     0.7749     0.3795     0.8082          0          0          0          0          0          0      0.184   0.003429  0.0001821          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6552     0.2622          0          0     0.4679    0.05722     0.3782     0.4275        204        256: 9% ━─────────── 21/230 4.6it/s 10.1s<45.1s
+Traceback (most recent call last):
+  File "/root/shared-nvme/LADD_public_p1/ladd/code_versions/current_hbb/tools/train_ladd_hbb.py", line 407, in <module>
+    main()
+  File "/root/shared-nvme/LADD_public_p1/ladd/code_versions/current_hbb/tools/train_ladd_hbb.py", line 403, in main
+    model.train(**train_kwargs)
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/engine/model.py", line 788, in train
+    self.trainer.train()
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/engine/trainer.py", line 244, in train
+    self._do_train()
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/engine/trainer.py", line 436, in _do_train
+    loss, self.loss_items = self.model(batch)
+                            ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/nn/tasks.py", line 141, in forward
+    return self.loss(x, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/nn/tasks.py", line 335, in loss
+    return self.criterion(preds, batch)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/utils/loss.py", line 463, in __call__
+    return self.loss(self.parse_output(preds), batch)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/ladd/code_versions/current_hbb/src/teacher_student_decomposition_kd_hbb/loss.py", line 573, in loss
+    extra_losses = self._compute_decomposition_losses(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/ladd/code_versions/current_hbb/src/teacher_student_decomposition_kd_hbb/loss.py", line 1946, in _compute_decomposition_losses
+    teacher_outputs = self.teacher_model(batch["teacher_img"])
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/nn/tasks.py", line 142, in forward
+    return self.predict(x, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/nn/tasks.py", line 159, in predict
+    return self._predict_once(x, profile, visualize, embed)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/nn/tasks.py", line 181, in _predict_once
+    x = m(x)  # run
+        ^^^^
+  File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/nn/modules/conv.py", line 641, in forward
+    return torch.cat(x, self.d)
+           ^^^^^^^^^^^^^^^^^^^^
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 128.00 MiB. GPU 0 has a total capacity of 23.52 GiB of which 45.19 MiB is free. Process 236779 has 5.76 GiB memory in use. Process 242547 has 3.73 GiB memory in use. Process 264821 has 3.21 GiB memory in use. Process 265617 has 3.19 GiB memory in use. Including non-PyTorch memory, this process has 4.42 GiB memory in use. Process 267661 has 3.09 GiB memory in use. Of the allocated memory 3.58 GiB is allocated by PyTorch, and 318.35 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+
+====================================================================================================
+FILE /root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_gpu1/chain.log
+[keyword_hits]
+[tail]
+[2026-06-13 14:59:17] phase=b model=runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_a2select_s_s0_a2lr3e4_short13_b1_a2_e13_b64_s0_gpu0/weights/best.pt
+
+====================================================================================================
+FILE /root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_gpu1/manifest.txt
+[keyword_hits]
+16: a2_schedule=optimizer=MuSGD, lr0=0.001, lrf=0.01, warmup_epochs=0, warmup_bias_lr=0.001
+17: b_schedule=optimizer=MuSGD, cos_lr=1, lr0=0.001, lrf=0.01, warmup_epochs=0, warmup_bias_lr=0.001, close_at_epoch=100
+26: b_freeze_bn_after_epoch=-1
+37: ladd_b_det_only=0
+38: ladd_a2_det_only=0
+39: validate_before_train=1
+42: b_split_load_strict=0
+[tail]
+git_commit=67b2404579039aec2ab15babf6c49d63e359ac03
+server_tag=shared_nvme_gpu1
+task=hbb
+chain=b
+run_tag=formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b
+start_model=runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_a2select_s_s0_a2lr3e4_short13_b1_a2_e13_b64_s0_gpu0/weights/best.pt
+sar_baseline=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/sar/sar_yolo11s_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt
+rgb_teacher=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/rgb/rgb_yolo11s_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt
+seed=0
+gpu_id=1
+imgsz=256
+batch_size=64
+epochs_a1=10
+epochs_a2=50
+epochs_b=100
+a2_schedule=optimizer=MuSGD, lr0=0.001, lrf=0.01, warmup_epochs=0, warmup_bias_lr=0.001
+b_schedule=optimizer=MuSGD, cos_lr=1, lr0=0.001, lrf=0.01, warmup_epochs=0, warmup_bias_lr=0.001, close_at_epoch=100
+alpha_kd=1.0
+alpha_s_rec=0.1
+alpha_sep=0.05
+lambda_reach=1.0
+lambda_match_inner=1.0
+lambda_rank_inner=1.0
+lambda_residual_aux=0.25
+residual_aux_mode=energy
+b_freeze_bn_after_epoch=-1
+ladd_diag_log_bn=1
+ladd_diag_log_grad=0
+ladd_grad_clip_norm=0.0
+ladd_assert_phase_freeze=1
+ladd_diag_log_every=1
+ladd_kd_decay_mode=none
+ladd_kd_decay_start_epoch=-1
+ladd_kd_decay_end_epoch=-1
+ladd_kd_final_mult=1.0
+ladd_kd_stop_after_epoch=-1
+ladd_b_det_only=0
+ladd_a2_det_only=0
+validate_before_train=1
+b_detector_source=
+b_decomp_source=
+b_split_load_strict=0
+b_reset_student_from_scratch=0
+b_load_student_split=0
+b_load_student_reachability=1
+b_load_student_aux=0
+rank_d_neg_cap=2.0
+lambda_anti_collapse=0.0
+anti_collapse_floor=0.0
+
+====================================================================================================
+FILE /root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry2_b64_after_oom_gpu1.outer.log
+[keyword_hits]
+[tail]
+[2026-06-13 16:52:22] phase=b model=runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_a2select_s_s0_a2lr3e4_short13_b1_a2_e13_b64_s0_gpu0/weights/best.pt
+[2026-06-13 16:52:22] Launching OGSOD hbb LADD phase b: ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry2_b64_after_oom_b_e100_b64_s0_gpu1
+
+====================================================================================================
+FILE /root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry2_b64_after_oom_gpu1/b/b.log
+[keyword_hits]
+2:  python3 ladd/code_versions/current_hbb/tools/train_ladd_hbb.py --phase b --model runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_a2select_s_s0_a2lr3e4_short13_b1_a2_e13_b64_s0_gpu0/weights/best.pt --data /root/shared-nvme/LADD_public/configs/datasets/ogsod_hbb_sar.yaml --teacher-data /root/shared-nvme/LADD_public/configs/datasets/ogsod_hbb_rgb.yaml --teacher-weights runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/rgb/rgb_yolo11s_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt --imgsz 256 --epochs 100 --batch 64 --workers 8 --device 1 --patience 100 --fraction 1.0 --project runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2 --name ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry2_b64_after_oom_b_e100_b64_s0_gpu1 --phase-detect-mode raw --det-loss-scale 1.0 --phase-stop-metric default --freeze-bn-after-epoch -1 --ladd-diag-log-bn 1 --ladd-di
+5: [34m[1mengine/trainer: [0magnostic_nms=False, amp=True, angle=1.0, augment=False, auto_augment=randaugment, batch=64, bgr=0.0, box=7.5, cache=False, cfg=None, classes=None, close_mosaic=0, cls=0.5, compile=False, conf=None, copy_paste=0.0, copy_paste_mode=flip, cos_lr=True, cutmix=0.0, data=/root/shared-nvme/LADD_public/configs/datasets/ogsod_hbb_sar.yaml, degrees=0.0, deterministic=True, device=1, dfl=1.5, dnn=False, dropout=0.0, dynamic=False, embed=None, end2end=None, epochs=100, erasing=0.0, exist_ok=False, fliplr=0.5, flipud=0.0, format=torchscript, fraction=1.0, freeze=None, half=False, hsv_h=0.0, hsv_s=0.0, hsv_v=0.0, imgsz=256, int8=False, iou=0.7, keras=False, kobj=1.0, line_width=None, lr0=0.001, lrf=0.01, mask_ratio=4, max_det=300, mixup=0.0, mode=train, model=runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_a2select_s_s0_a2lr3e4_short13_b1_a2_e13_b64_s0_gpu0/weights/best.pt, momentum=0.937, mosaic=0.0
+47: ladd_phase_diag phase=b trainable_params=12536281/23919080 bn_eval=81/81 freeze_bn_stats=True freeze_bn_after_epoch=-1 ladd_assert_phase_freeze=True alpha_kd=1.0 base_alpha_kd=1.0 effective_alpha_kd=1.0 kd_multiplier=1.0 kd_warmup_active=False ladd_kd_decay_mode=none ladd_kd_decay_start_epoch=-1 ladd_kd_decay_end_epoch=-1 ladd_kd_final_mult=1.0 ladd_kd_stop_after_epoch=-1 ladd_b_det_only=False ladd_a2_det_only=False ladd_diag_log_grad=False ladd_grad_clip=ULTRALYTICS_DEFAULT ladd_grad_clip_norm=0.0 effective_grad_clip_norm=10.0
+89: Saved pre-train validation snapshot to /root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry2_b64_after_oom_b_e100_b64_s0_gpu1/initial_val_metrics.json
+[tail]
+[K     85/100      3.98G     0.7059     0.3427     0.7937          0          0          0          0          0          0     0.1349   0.002121  0.0001085          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.5924     0.2057          0          0     0.4679    0.05756     0.3776     0.4283        140        256: 13% ━╸────────── 30/230 2.9it/s 10.9s<1:10
+[K     85/100      3.98G     0.7023     0.3417     0.7937          0          0          0          0          0          0     0.1344   0.002118  0.0001089          0          0          0          0          0          0          0          0          0          0          0          0          0          0      0.594     0.2057          0          0     0.4679    0.05756     0.3779     0.4283        115        256: 13% ━╸────────── 31/230 2.9it/s 11.2s<1:10
+[K     85/100      3.98G     0.6992     0.3399     0.7948          0          0          0          0          0          0     0.1341   0.002116  0.0001096          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.5941     0.2057          0          0     0.4679    0.05756     0.3782     0.4283        114        256: 14% ━╸────────── 32/230 2.9it/s 11.6s<1:09
+[K     85/100      3.98G     0.7005       0.34     0.7942          0          0          0          0          0          0     0.1345   0.002113  0.0001103          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.5941     0.2057          0          0     0.4679     0.0576     0.3782     0.4283        167        256: 14% ━╸────────── 33/230 2.9it/s 11.9s<1:08
+[K     85/100      3.98G     0.7003     0.3397     0.7944          0          0          0          0          0          0     0.1345   0.002113  0.0001095          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.5949     0.2057          0          0     0.4679    0.05764     0.3787     0.4284        138        256: 15% ━╸────────── 34/230 2.9it/s 12.2s<1:08
+[K     85/100      3.98G     0.7001     0.3399      0.793          0          0          0          0          0          0     0.1343    0.00211    0.00011          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.5959     0.2057          0          0     0.4678    0.05765     0.3783     0.4283        140        256: 15% ━╸────────── 35/230 2.9it/s 12.6s<1:08
+[K     85/100      3.98G     0.6976      0.339     0.7929          0          0          0          0          0          0     0.1349   0.002113  0.0001097          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.5954     0.2057          0          0     0.4679    0.05763     0.3782     0.4283        153        256: 16% ━╸────────── 36/230 2.9it/s 13.0s<1:08
+[K     85/100      3.98G     0.6963     0.3391     0.7925          0          0          0          0          0          0     0.1352    0.00211  0.0001093          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.5955     0.2057          0          0     0.4678    0.05758      0.378     0.4283        133        256: 16% ━╸────────── 37/230 2.8it/s 13.3s<1:08
+[K     85/100      3.98G     0.6981       0.34      0.793          0          0          0          0          0          0     0.1349    0.00211   0.000109          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.5958     0.2057          0          0     0.4678    0.05754     0.3777     0.4282        168        256: 17% ━╸────────── 38/230 2.9it/s 13.7s<1:07
+[K     85/100      3.98G     0.6943     0.3388      0.793          0          0          0          0          0          0     0.1345   0.002114  0.0001089          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.5945     0.2057          0          0     0.4679    0.05751      0.378     0.4282        113        256: 17% ━━────────── 39/230 2.9it/s 14.0s<1:06
+[K     85/100      3.98G     0.6921      0.338     0.7926          0          0          0          0          0          0     0.1339   0.002111  0.0001101          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.5942     0.2057          0          0     0.4679    0.05756     0.3777     0.4282        127        256: 17% ━━────────── 40/230 2.9it/s 14.4s<1:06
+[K     85/100      3.98G      0.694     0.3386     0.7926          0          0          0          0          0          0     0.1333   0.002108  0.0001109          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.5961     0.2056          0          0     0.4678    0.05756     0.3773     0.4282        192        256: 18% ━━────────── 41/230 2.9it/s 14.7s<1:06
+[K     85/100      3.98G     0.6955     0.3393     0.7922          0          0          0          0          0          0     0.1332   0.002103  0.0001108          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.5983     0.2056          0          0     0.4678    0.05757     0.3772     0.4281        132        256: 18% ━━────────── 42/230 2.9it/s 15.0s<1:05
+[K     85/100      3.98G     0.6968     0.3397     0.7929          0          0          0          0          0          0     0.1336     0.0021  0.0001111          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.5983     0.2056          0          0     0.4678    0.05754     0.3769     0.4281        118        256: 19% ━━────────── 43/230 2.9it/s 15.4s<1:04
+[K     85/100      3.98G     0.6988     0.3401     0.7928          0          0          0          0          0          0     0.1336   0.002098  0.0001109          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.5992     0.2056          0          0     0.4678    0.05752     0.3768     0.4281        173        256: 19% ━━────────── 44/230 2.9it/s 15.7s<1:04
+[K     85/100      3.98G     0.7045     0.3415     0.7922          0          0          0          0          0          0     0.1333   0.002096  0.0001124          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.5993     0.2056          0          0     0.4678    0.05755     0.3767     0.4281        219        256: 20% ━━────────── 45/230 2.9it/s 16.1s<1:04
+[K     85/100      3.98G     0.7034     0.3414     0.7922          0          0          0          0          0          0      0.134   0.002094  0.0001134          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.5998     0.2056          0          0     0.4678    0.05754     0.3767     0.4281        126        256: 20% ━━────────── 46/230 2.9it/s 16.4s<1:03
+[K     85/100      3.98G     0.7022     0.3412     0.7922          0          0          0          0          0          0     0.1342   0.002092  0.0001129          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6004     0.2056          0          0     0.4677    0.05758     0.3767     0.4281        143        256: 20% ━━────────── 47/230 2.9it/s 16.8s<1:03
+[K     85/100      3.98G     0.7016     0.3411     0.7918          0          0          0          0          0          0     0.1341   0.002091  0.0001126          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6002     0.2055          0          0     0.4677    0.05758     0.3766      0.428        173        256: 21% ━━╸───────── 48/230 2.9it/s 17.1s<1:04
+[K     85/100      3.98G     0.7009     0.3408     0.7917          0          0          0          0          0          0     0.1335   0.002087   0.000113          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6019     0.2055          0          0     0.4677     0.0576     0.3765      0.428        123        256: 21% ━━╸───────── 49/230 2.9it/s 17.5s<1:03
+[K     85/100      3.98G     0.6992     0.3404     0.7921          0          0          0          0          0          0     0.1337    0.00209  0.0001125          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6009     0.2055          0          0     0.4677    0.05762     0.3767      0.428        158        256: 22% ━━╸───────── 50/230 2.9it/s 17.8s<1:02
+[K     85/100      3.98G     0.6971     0.3398     0.7925          0          0          0          0          0          0     0.1341   0.002092  0.0001126          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6007     0.2056          0          0     0.4677     0.0576     0.3768      0.428        140        256: 22% ━━╸───────── 51/230 2.9it/s 18.2s<1:02
+[K     85/100      3.98G     0.6951     0.3387     0.7928          0          0          0          0          0          0     0.1343    0.00209  0.0001128          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6004     0.2055          0          0     0.4677    0.05762     0.3772     0.4281        115        256: 23% ━━╸───────── 52/230 2.8it/s 18.5s<1:04
+[K     85/100      3.98G     0.6929     0.3379     0.7928          0          0          0          0          0          0     0.1341   0.002089  0.0001122          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6019     0.2055          0          0     0.4677    0.05759     0.3769      0.428        129        256: 23% ━━╸───────── 53/230 2.6it/s 19.0s<1:07
+[K     85/100      3.98G     0.6922     0.3379     0.7923          0          0          0          0          0          0     0.1339   0.002088  0.0001119          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6034     0.2055          0          0     0.4677    0.05757     0.3768      0.428        117        256: 23% ━━╸───────── 54/230 2.5it/s 19.4s<1:10
+[K     85/100      3.98G     0.6905     0.3376     0.7927          0          0          0          0          0          0     0.1349   0.002089  0.0001115          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6031     0.2055          0          0     0.4677    0.05755     0.3768      0.428        128        256: 24% ━━╸───────── 55/230 2.5it/s 19.8s<1:10
+[K     85/100      3.98G     0.6925     0.3382     0.7931          0          0          0          0          0          0     0.1349   0.002086  0.0001119          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6056     0.2055          0          0     0.4677    0.05752     0.3766      0.428        126        256: 24% ━━╸───────── 56/230 2.5it/s 20.2s<1:09
+[K     85/100      3.98G     0.6923     0.3382     0.7932          0          0          0          0          0          0     0.1354   0.002085  0.0001118          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6054     0.2055          0          0     0.4677    0.05749     0.3768      0.428        120        256: 25% ━━╸───────── 57/230 2.6it/s 20.6s<1:07
+[K     85/100      3.98G     0.6919     0.3383     0.7925          0          0          0          0          0          0     0.1353   0.002084  0.0001115          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6053     0.2055          0          0     0.4677    0.05748     0.3767      0.428        135        256: 25% ━━━───────── 58/230 2.6it/s 21.0s<1:07
+[K     85/100      3.98G     0.6919     0.3381     0.7926          0          0          0          0          0          0     0.1349   0.002088   0.000111          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6043     0.2055          0          0     0.4677    0.05748     0.3768      0.428        170        256: 26% ━━━───────── 59/230 2.6it/s 21.4s<1:06
+[K     85/100      3.98G     0.6947     0.3389     0.7934          0          0          0          0          0          0     0.1348   0.002087  0.0001104          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6046     0.2055          0          0     0.4677    0.05748     0.3767      0.428        136        256: 26% ━━━───────── 60/230 2.6it/s 21.8s<1:06
+[K     85/100      3.98G     0.6969       0.34     0.7933          0          0          0          0          0          0     0.1342   0.002084  0.0001105          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6064     0.2055          0          0     0.4677    0.05749     0.3764      0.428        166        256: 27% ━━━───────── 61/230 2.6it/s 22.1s<1:05
+[K     85/100      3.98G     0.6939     0.3389     0.7935          0          0          0          0          0          0     0.1345   0.002085  0.0001107          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6061     0.2055          0          0     0.4677    0.05749     0.3767      0.428        113        256: 27% ━━━───────── 62/230 2.6it/s 22.5s<1:04
+[K     85/100      3.98G      0.692     0.3381     0.7938          0          0          0          0          0          0     0.1344   0.002085  0.0001103          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6054     0.2055          0          0     0.4677    0.05752     0.3767      0.428        127        256: 27% ━━━───────── 63/230 2.6it/s 22.9s<1:05
+[K     85/100      3.98G     0.6906     0.3381      0.794          0          0          0          0          0          0     0.1341   0.002083  0.0001101          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6069     0.2054          0          0     0.4677    0.05752     0.3766      0.428        112        256: 28% ━━━───────── 64/230 2.5it/s 23.3s<1:06
+[K     85/100      3.98G      0.692     0.3382     0.7939          0          0          0          0          0          0     0.1339   0.002083  0.0001101          0          0          0          0          0          0          0          0          0          0          0          0          0          0      0.607     0.2054          0          0     0.4677    0.05752     0.3766      0.428        202        256: 28% ━━━───────── 65/230 2.6it/s 23.7s<1:04
+[K     85/100      3.98G      0.692     0.3381      0.794          0          0          0          0          0          0     0.1338   0.002088  0.0001099          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6062     0.2055          0          0     0.4677     0.0575     0.3766      0.428        204        256: 29% ━━━───────── 66/230 2.6it/s 24.1s<1:03
+[K     85/100      3.98G     0.6898     0.3371     0.7937          0          0          0          0          0          0     0.1337    0.00209    0.00011          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6058     0.2055          0          0     0.4677    0.05751     0.3767      0.428        112        256: 29% ━━━───────── 67/230 2.6it/s 24.5s<1:03
+[K     85/100      3.98G     0.6909     0.3375     0.7937          0          0          0          0          0          0     0.1338   0.002093  0.0001095          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6046     0.2055          0          0     0.4677    0.05751     0.3767      0.428        208        256: 30% ━━━╸──────── 68/230 2.6it/s 24.9s<1:03
+[K     85/100      3.98G     0.6899     0.3374     0.7937          0          0          0          0          0          0     0.1336   0.002091  0.0001096          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6057     0.2055          0          0     0.4677    0.05748     0.3766      0.428        118        256: 30% ━━━╸──────── 69/230 2.5it/s 25.3s<1:04
+[K     85/100      3.98G     0.6889     0.3371     0.7934          0          0          0          0          0          0     0.1332   0.002091  0.0001093          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6063     0.2055          0          0     0.4677    0.05749     0.3765      0.428        174        256: 30% ━━━╸──────── 70/230 2.5it/s 25.7s<1:04
+[K     85/100      3.98G     0.6885     0.3368     0.7937          0          0          0          0          0          0     0.1339   0.002088  0.0001101          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6075     0.2055          0          0     0.4677    0.05747     0.3765     0.4279        107        256: 31% ━━━╸──────── 71/230 2.5it/s 26.1s<1:03
+[K     85/100      3.98G     0.6883     0.3365     0.7941          0          0          0          0          0          0     0.1338   0.002088  0.0001103          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6077     0.2055          0          0     0.4678    0.05743     0.3765     0.4279        170        256: 31% ━━━╸──────── 72/230 2.5it/s 26.5s<1:02
+[K     85/100      3.98G     0.6909     0.3374     0.7939          0          0          0          0          0          0     0.1336   0.002087  0.0001106          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6082     0.2054          0          0     0.4678    0.05742     0.3765     0.4279        149        256: 32% ━━━╸──────── 73/230 2.5it/s 26.9s<1:03
+[K     85/100      3.98G     0.6908     0.3374     0.7938          0          0          0          0          0          0     0.1338   0.002091  0.0001105          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6071     0.2055          0          0     0.4678    0.05741     0.3767     0.4279        191        256: 32% ━━━╸──────── 74/230 2.5it/s 27.3s<1:02
+[K     85/100      3.98G     0.6902     0.3374     0.7944          0          0          0          0          0          0     0.1344   0.002092  0.0001101          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6065     0.2055          0          0     0.4678    0.05742      0.377     0.4279        130        256: 33% ━━━╸──────── 75/230 2.5it/s 27.7s<1:02
+[K     85/100      3.98G     0.6916     0.3376     0.7941          0          0          0          0          0          0     0.1343   0.002093  0.0001101          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6065     0.2055          0          0     0.4678    0.05744     0.3769     0.4279        259        256: 33% ━━━╸──────── 76/230 2.5it/s 28.1s<1:01
+[K     85/100      3.98G      0.691     0.3375     0.7942          0          0          0          0          0          0     0.1341   0.002092    0.00011          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6064     0.2055          0          0     0.4678    0.05742     0.3768     0.4279        124        256: 33% ━━━━──────── 77/230 2.5it/s 28.5s<1:01
+[K     85/100      3.98G     0.6909      0.338     0.7938          0          0          0          0          0          0     0.1342    0.00209  0.0001098          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6071     0.2055          0          0     0.4678    0.05741     0.3767     0.4279        117        256: 34% ━━━━──────── 78/230 2.6it/s 28.9s<59.4s
+[K     85/100      3.98G     0.6923     0.3388     0.7937          0          0          0          0          0          0     0.1344   0.002089  0.0001098          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6065     0.2055          0          0     0.4678     0.0574     0.3765     0.4279        169        256: 34% ━━━━──────── 79/230 2.6it/s 29.2s<58.6s
+[K     85/100      3.98G     0.6917     0.3386     0.7939          0          0          0          0          0          0     0.1343   0.002091  0.0001095          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6061     0.2055          0          0     0.4678    0.05739     0.3766     0.4279        137        256: 35% ━━━━──────── 80/230 2.6it/s 29.6s<58.3s
+[K     85/100      3.98G      0.691     0.3383     0.7939          0          0          0          0          0          0     0.1343   0.002092  0.0001093          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6054     0.2055          0          0     0.4678    0.05739     0.3768     0.4279        138        256: 35% ━━━━──────── 81/230 2.6it/s 30.0s<57.8s
+[K     85/100      3.98G     0.6943     0.3393     0.7937          0          0          0          0          0          0     0.1342   0.002092  0.0001092          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6057     0.2055          0          0     0.4678     0.0574     0.3766     0.4279        246        256: 36% ━━━━──────── 82/230 2.6it/s 30.4s<56.7s
+[K     85/100      3.98G     0.6942     0.3394     0.7939          0          0          0          0          0          0     0.1345    0.00209  0.0001105          0          0          0          0          0          0          0          0          0          0          0          0          0          0      0.607     0.2055          0          0     0.4678    0.05738     0.3764     0.4279        121        256: 36% ━━━━──────── 83/230 2.6it/s 30.8s<56.4s
+[K     85/100      3.98G     0.6949     0.3397     0.7942          0          0          0          0          0          0     0.1344    0.00209  0.0001104          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6078     0.2055          0          0     0.4678    0.05736     0.3763     0.4279        120        256: 37% ━━━━──────── 84/230 2.6it/s 31.2s<55.8s
+[K     85/100      3.98G     0.6964     0.3401     0.7944          0          0          0          0          0          0     0.1351   0.002087  0.0001119          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6093     0.2054          0          0     0.4678    0.05733     0.3762     0.4278        107        256: 37% ━━━━──────── 85/230 2.6it/s 31.5s<54.7s
+[K     85/100      3.98G     0.6963     0.3403     0.7945          0          0          0          0          0          0     0.1351   0.002084  0.0001133          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6103     0.2054          0          0     0.4678    0.05731     0.3759     0.4278        106        256: 37% ━━━━──────── 86/230 2.6it/s 31.9s<55.1s
+[K     85/100      3.98G     0.6959     0.3402     0.7944          0          0          0          0          0          0     0.1348   0.002083  0.0001131          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6109     0.2054          0          0     0.4678    0.05732     0.3759     0.4278        141        256: 38% ━━━━╸─────── 87/230 2.6it/s 32.3s<54.0s
+[K     85/100      3.98G      0.695     0.3397     0.7944          0          0          0          0          0          0     0.1345   0.002084  0.0001136          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6108     0.2054          0          0     0.4678    0.05733      0.376     0.4278        130        256: 38% ━━━━╸─────── 88/230 2.6it/s 32.7s<53.6s
+[K     85/100      3.98G      0.694     0.3396     0.7944          0          0          0          0          0          0      0.135   0.002086  0.0001133          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6102     0.2054          0          0     0.4678    0.05733     0.3762     0.4279        161        256: 39% ━━━━╸─────── 89/230 2.7it/s 33.0s<52.8s
+[K     85/100      3.98G     0.6935     0.3393     0.7944          0          0          0          0          0          0     0.1351   0.002086  0.0001131          0          0          0          0          0          0          0          0          0          0          0          0          0          0       0.61     0.2054          0          0     0.4678    0.05735     0.3762     0.4279        158        256: 39% ━━━━╸─────── 90/230 2.7it/s 33.4s<52.8s
+[K     85/100      3.98G     0.6922     0.3389     0.7944          0          0          0          0          0          0     0.1351   0.002087  0.0001125          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6096     0.2054          0          0     0.4678    0.05735     0.3765     0.4278        127        256: 40% ━━━━╸─────── 91/230 2.7it/s 33.8s<52.0s
+[K     85/100      3.98G     0.6903     0.3382     0.7945          0          0          0          0          0          0      0.135   0.002089  0.0001121          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6091     0.2054          0          0     0.4678    0.05735     0.3767     0.4278        139        256: 40% ━━━━╸─────── 92/230 2.7it/s 34.1s<50.6s
+[K     85/100      3.98G     0.6884     0.3376     0.7948          0          0          0          0          0          0     0.1353   0.002092  0.0001118          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6083     0.2054          0          0     0.4679    0.05734     0.3769     0.4278        123        256: 40% ━━━━╸─────── 93/230 2.8it/s 34.5s<49.3s
+[K     85/100      3.98G      0.687     0.3373      0.795          0          0          0          0          0          0     0.1354   0.002093  0.0001115          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6081     0.2054          0          0     0.4679    0.05735      0.377     0.4279        132        256: 41% ━━━━╸─────── 94/230 2.8it/s 34.8s<48.1s
+[K     85/100      3.98G     0.6895      0.338     0.7951          0          0          0          0          0          0     0.1354   0.002092  0.0001113          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6079     0.2054          0          0     0.4679    0.05735     0.3769     0.4279        171        256: 41% ━━━━╸─────── 95/230 2.9it/s 35.2s<47.3s
+[K     85/100      3.98G     0.6888     0.3378     0.7953          0          0          0          0          0          0     0.1352   0.002091  0.0001115          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6083     0.2054          0          0     0.4679    0.05734     0.3768     0.4278        122        256: 42% ━━━━━─────── 96/230 2.9it/s 35.5s<46.9s
+[K     85/100      3.98G     0.6884     0.3376     0.7954          0          0          0          0          0          0     0.1352   0.002092  0.0001112          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6083     0.2054          0          0     0.4679    0.05734     0.3768     0.4278        189        256: 42% ━━━━━─────── 97/230 2.9it/s 35.8s<46.3s
+[K     85/100      3.98G     0.6887     0.3377     0.7955          0          0          0          0          0          0      0.135   0.002092  0.0001113          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6086     0.2054          0          0     0.4679    0.05732     0.3766     0.4278        142        256: 43% ━━━━━─────── 98/230 2.9it/s 36.2s<45.7s
+[K     85/100      3.98G     0.6879     0.3373     0.7954          0          0          0          0          0          0     0.1347   0.002091  0.0001112          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6093     0.2054          0          0     0.4679    0.05731     0.3766     0.4278        123        256: 43% ━━━━━─────── 99/230 2.9it/s 36.5s<45.2s
+[K     85/100      3.98G      0.688     0.3375     0.7954          0          0          0          0          0          0     0.1347   0.002091  0.0001114          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6092     0.2054          0          0     0.4679    0.05731     0.3764     0.4278        162        256: 43% ━━━━━─────── 100/230 2.9it/s 36.9s<45.1s
+[K     85/100      3.98G     0.6875     0.3373     0.7953          0          0          0          0          0          0     0.1345   0.002091  0.0001113          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6095     0.2054          0          0     0.4678    0.05731     0.3763     0.4278        128        256: 44% ━━━━━─────── 101/230 2.9it/s 37.2s<44.9s
+[K     85/100      3.98G     0.6866     0.3371     0.7956          0          0          0          0          0          0     0.1347   0.002093  0.0001117          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6095     0.2054          0          0     0.4679     0.0573     0.3763     0.4278        112        256: 44% ━━━━━─────── 102/230 2.9it/s 37.6s<44.6s
+[K     85/100      3.98G      0.685     0.3366     0.7953          0          0          0          0          0          0     0.1345   0.002093  0.0001121          0          0          0          0          0          0          0          0          0          0          0          0          0          0       0.61     0.2054          0          0     0.4679    0.05729     0.3762     0.4278        133        256: 45% ━━━━━─────── 103/230 2.9it/s 37.9s<44.0s
+[K     85/100      3.98G     0.6843     0.3363     0.7954          0          0          0          0          0          0     0.1348   0.002093  0.0001118          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6101     0.2054          0          0     0.4679    0.05728     0.3762     0.4278        139        256: 45% ━━━━━─────── 104/230 2.8it/s 38.3s<44.5s
+[K     85/100      3.98G     0.6842     0.3361     0.7955          0          0          0          0          0          0     0.1349   0.002092  0.0001118          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6101     0.2054          0          0     0.4679    0.05728     0.3763     0.4278        168        256: 46% ━━━━━─────── 105/230 2.8it/s 38.6s<43.9s
+[K     85/100      3.98G     0.6842     0.3361     0.7953          0          0          0          0          0          0     0.1349   0.002092  0.0001118          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6105     0.2054          0          0     0.4679    0.05727     0.3762     0.4277        136        256: 46% ━━━━━╸────── 106/230 2.8it/s 39.0s<43.8s
+[K     85/100      3.98G     0.6857     0.3367     0.7952          0          0          0          0          0          0     0.1348    0.00209  0.0001118          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6108     0.2054          0          0     0.4679    0.05727     0.3761     0.4277        128        256: 47% ━━━━━╸────── 107/230 2.9it/s 39.3s<43.2s
+[K     85/100      3.98G     0.6861     0.3368     0.7952          0          0          0          0          0          0     0.1349    0.00209  0.0001116          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6108     0.2054          0          0     0.4679    0.05725     0.3761     0.4277        149        256: 47% ━━━━━╸────── 108/230 2.8it/s 39.7s<43.2s
+[K     85/100      3.98G     0.6839      0.336     0.7952          0          0          0          0          0          0     0.1349   0.002093  0.0001113          0          0          0          0          0          0          0          0          0          0          0          0          0          0     0.6102     0.2054          0          0     0.4679    0.05725     0.3762     0.4277        122        256: 47% ━━━━━╸────── 109/230 2.8it/s 40.0s<42.5s
+
+====================================================================================================
+FILE /root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry2_b64_after_oom_gpu1/b/manifest.txt
+[keyword_hits]
+21: warmup_epochs=0
+22: warmup_bias_lr=0.001
+23: warmup_momentum=
+24: freeze_bn_stats=1
+25: freeze_bn_after_epoch=-1
+36: ladd_b_det_only=0
+37: ladd_a2_det_only=0
+40: b_split_load_strict=0
+[tail]
+server_tag=shared_nvme_gpu1
+task=hbb
+phase=b
+run_tag=formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry2_b64_after_oom
+model=runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_a2select_s_s0_a2lr3e4_short13_b1_a2_e13_b64_s0_gpu0/weights/best.pt
+sar_baseline=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/sar/sar_yolo11s_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt
+rgb_teacher=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/rgb/rgb_yolo11s_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt
+data_cfg=/root/shared-nvme/LADD_public/configs/datasets/ogsod_hbb_sar.yaml
+teacher_data_cfg=/root/shared-nvme/LADD_public/configs/datasets/ogsod_hbb_rgb.yaml
+project_dir=runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2
+run_name=ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry2_b64_after_oom_b_e100_b64_s0_gpu1
+resume_from=
+seed=0
+epochs=100
+batch_size=64
+cos_lr=1
+lr0=0.001
+lrf=0.01
+optimizer=MuSGD
+warmup_epochs=0
+warmup_bias_lr=0.001
+warmup_momentum=
+freeze_bn_stats=1
+freeze_bn_after_epoch=-1
+ladd_diag_log_bn=1
+ladd_diag_log_grad=0
+ladd_grad_clip_norm=0.0
+ladd_assert_phase_freeze=1
+ladd_diag_log_every=1
+ladd_kd_decay_mode=none
+ladd_kd_decay_start_epoch=-1
+ladd_kd_decay_end_epoch=-1
+ladd_kd_final_mult=1.0
+ladd_kd_stop_after_epoch=-1
+ladd_b_det_only=0
+ladd_a2_det_only=0
+b_detector_source=
+b_decomp_source=
+b_split_load_strict=0
+b_reset_student_from_scratch=0
+b_load_student_split=0
+b_load_student_reachability=1
+b_load_student_aux=0
+alpha_kd=1.0
+lambda_reach=1.0
+lambda_match_inner=1.0
+lambda_rank_inner=1.0
+lambda_residual_aux=0.25
+close_at_epoch=100
+close_mosaic=0
+student_branch_mode=split
+alpha_s_rec=0.1
+comparison_kd_profile=none
+profile_kd_weight=1.0
+profile_kd_replace_base=0
+fgd_alpha=0.0001
+fgd_beta=0.00005
+fgd_gamma=0.001
+fgd_lambda=0.0
+fgd_normalization_mode=original
+fgd_temperature=0.5
+fgd_mask_mode=gt_box
+fgd_bg_norm=1
+ld_temperature=10.0
+ld_use_vlr=1
+ld_quality_power=1.0
+ld_min_vlr_weight=0.0
+ld_vlr_topk=0
+ld_vlr_weight=0.25
+ld_main_weight=0.25
+ld_allow_empty_vlr=1
+cclkd_base_temperature=2.0
+cclkd_contrastive_temperature=0.1
+cclkd_feat_weight=1.0
+cclkd_contrast_weight=0.5
+cclkd_bg_weight=0.1
+cclkd_min_confidence=0.1
+cclkd_temperature_min=0.5
+cclkd_temperature_max=5.0
+cclkd_entropy_scale=5.0
+
+====================================================================================================
+FILE /root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry2_b64_after_oom_gpu1/b/master.log
+[keyword_hits]
+[tail]
+[2026-06-13 16:52:22] Launching OGSOD hbb LADD phase b: ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry2_b64_after_oom_b_e100_b64_s0_gpu1
+
+====================================================================================================
+FILE /root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry2_b64_after_oom_gpu1/chain.log
+[keyword_hits]
+[tail]
+[2026-06-13 16:52:22] phase=b model=runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_a2select_s_s0_a2lr3e4_short13_b1_a2_e13_b64_s0_gpu0/weights/best.pt
+
+====================================================================================================
+FILE /root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry2_b64_after_oom_gpu1/manifest.txt
+[keyword_hits]
+16: a2_schedule=optimizer=MuSGD, lr0=0.001, lrf=0.01, warmup_epochs=0, warmup_bias_lr=0.001
+17: b_schedule=optimizer=MuSGD, cos_lr=1, lr0=0.001, lrf=0.01, warmup_epochs=0, warmup_bias_lr=0.001, close_at_epoch=100
+26: b_freeze_bn_after_epoch=-1
+37: ladd_b_det_only=0
+38: ladd_a2_det_only=0
+39: validate_before_train=1
+42: b_split_load_strict=0
+[tail]
+git_commit=c7f309d8bbc5aed195fa565bae9d0526f9aa4291
+server_tag=shared_nvme_gpu1
+task=hbb
+chain=b
+run_tag=formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry2_b64_after_oom
+start_model=runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_a2select_s_s0_a2lr3e4_short13_b1_a2_e13_b64_s0_gpu0/weights/best.pt
+sar_baseline=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/sar/sar_yolo11s_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt
+rgb_teacher=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/rgb/rgb_yolo11s_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt
+seed=0
+gpu_id=1
+imgsz=256
+batch_size=64
+epochs_a1=10
+epochs_a2=50
+epochs_b=100
+a2_schedule=optimizer=MuSGD, lr0=0.001, lrf=0.01, warmup_epochs=0, warmup_bias_lr=0.001
+b_schedule=optimizer=MuSGD, cos_lr=1, lr0=0.001, lrf=0.01, warmup_epochs=0, warmup_bias_lr=0.001, close_at_epoch=100
+alpha_kd=1.0
+alpha_s_rec=0.1
+alpha_sep=0.05
+lambda_reach=1.0
+lambda_match_inner=1.0
+lambda_rank_inner=1.0
+lambda_residual_aux=0.25
+residual_aux_mode=energy
+b_freeze_bn_after_epoch=-1
+ladd_diag_log_bn=1
+ladd_diag_log_grad=0
+ladd_grad_clip_norm=0.0
+ladd_assert_phase_freeze=1
+ladd_diag_log_every=1
+ladd_kd_decay_mode=none
+ladd_kd_decay_start_epoch=-1
+ladd_kd_decay_end_epoch=-1
+ladd_kd_final_mult=1.0
+ladd_kd_stop_after_epoch=-1
+ladd_b_det_only=0
+ladd_a2_det_only=0
+validate_before_train=1
+b_detector_source=
+b_decomp_source=
+b_split_load_strict=0
+b_reset_student_from_scratch=0
+b_load_student_split=0
+b_load_student_reachability=1
+b_load_student_aux=0
+rank_d_neg_cap=2.0
+lambda_anti_collapse=0.0
+anti_collapse_floor=0.0
+
+====================================================================================================
+FILE /root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry_b64_after_oom_gpu1.outer.log
+[keyword_hits]
+3: [2026-06-13 16:51:13] Phase b failed with code 1
+5:  python3 ladd/code_versions/current_hbb/tools/train_ladd_hbb.py --phase b --model runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_a2select_s_s0_a2lr3e4_short13_b1_a2_e13_b64_s0_gpu0/weights/best.pt --data shared/configs/datasets_public/ogsod1_sar_detect.yaml --teacher-data shared/configs/datasets_public/ogsod1_rgb_detect.yaml --teacher-weights runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/rgb/rgb_yolo11s_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt --imgsz 256 --epochs 100 --batch 64 --workers 8 --device 1 --patience 100 --fraction 1.0 --project runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2 --name ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry_b64_after_oom_b_e100_b64_s0_gpu1 --phase-detect-mode raw --det-loss-scale 1.0 --phase-stop-metric default --freeze-bn-after-epoch -1 --ladd-diag-log-bn 1 --ladd-diag-log-grad 0 --ladd-grad
+8: [34m[1mengine/trainer: [0magnostic_nms=False, amp=True, angle=1.0, augment=False, auto_augment=randaugment, batch=64, bgr=0.0, box=7.5, cache=False, cfg=None, classes=None, close_mosaic=0, cls=0.5, compile=False, conf=None, copy_paste=0.0, copy_paste_mode=flip, cos_lr=True, cutmix=0.0, data=/root/shared-nvme/LADD_public_p1/shared/configs/datasets_public/ogsod1_sar_detect.yaml, degrees=0.0, deterministic=True, device=1, dfl=1.5, dnn=False, dropout=0.0, dynamic=False, embed=None, end2end=None, epochs=100, erasing=0.0, exist_ok=False, fliplr=0.5, flipud=0.0, format=torchscript, fraction=1.0, freeze=None, half=False, hsv_h=0.0, hsv_s=0.0, hsv_v=0.0, imgsz=256, int8=False, iou=0.7, keras=False, kobj=1.0, line_width=None, lr0=0.001, lrf=0.01, mask_ratio=4, max_det=300, mixup=0.0, mode=train, model=runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_a2select_s_s0_a2lr3e4_short13_b1_a2_e13_b64_s0_gpu0/weights/best.pt, momen
+10: Traceback (most recent call last):
+21: Traceback (most recent call last):
+39:     raise RuntimeError(emojis(f"Dataset '{clean_url(self.args.data)}' error ❌ {e}")) from e
+40: RuntimeError: Dataset '/root/shared-nvme/LADD_public_p1/shared/configs/datasets_public/ogsod1_sar_detect.yaml' error ❌ Dataset '/root/shared-nvme/LADD_public_p1/shared/configs/datasets_public/ogsod1_sar_detect.yaml' images not found, missing path '/path/to/OGSOD-1.0/sar/images/test'
+[tail]
+[2026-06-13 16:51:07] phase=b model=runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_a2select_s_s0_a2lr3e4_short13_b1_a2_e13_b64_s0_gpu0/weights/best.pt
+[2026-06-13 16:51:07] Launching OGSOD hbb LADD phase b: ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry_b64_after_oom_b_e100_b64_s0_gpu1
+[2026-06-13 16:51:13] Phase b failed with code 1
+[2026-06-13 16:51:07] command:
+ python3 ladd/code_versions/current_hbb/tools/train_ladd_hbb.py --phase b --model runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_a2select_s_s0_a2lr3e4_short13_b1_a2_e13_b64_s0_gpu0/weights/best.pt --data shared/configs/datasets_public/ogsod1_sar_detect.yaml --teacher-data shared/configs/datasets_public/ogsod1_rgb_detect.yaml --teacher-weights runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/rgb/rgb_yolo11s_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt --imgsz 256 --epochs 100 --batch 64 --workers 8 --device 1 --patience 100 --fraction 1.0 --project runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2 --name ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry_b64_after_oom_b_e100_b64_s0_gpu1 --phase-detect-mode raw --det-loss-scale 1.0 --phase-stop-metric default --freeze-bn-after-epoch -1 --ladd-diag-log-bn 1 --ladd-diag-log-grad 0 --ladd-grad
+New https://pypi.org/project/ultralytics/8.4.66 available 😃 Update with 'pip install -U ultralytics'
+Ultralytics 8.4.30 🚀 Python-3.12.3 torch-2.7.0a0+7c8ec84dab.nv25.03 CUDA:1 (NVIDIA GeForce RTX 4090, 24081MiB)
+[34m[1mengine/trainer: [0magnostic_nms=False, amp=True, angle=1.0, augment=False, auto_augment=randaugment, batch=64, bgr=0.0, box=7.5, cache=False, cfg=None, classes=None, close_mosaic=0, cls=0.5, compile=False, conf=None, copy_paste=0.0, copy_paste_mode=flip, cos_lr=True, cutmix=0.0, data=/root/shared-nvme/LADD_public_p1/shared/configs/datasets_public/ogsod1_sar_detect.yaml, degrees=0.0, deterministic=True, device=1, dfl=1.5, dnn=False, dropout=0.0, dynamic=False, embed=None, end2end=None, epochs=100, erasing=0.0, exist_ok=False, fliplr=0.5, flipud=0.0, format=torchscript, fraction=1.0, freeze=None, half=False, hsv_h=0.0, hsv_s=0.0, hsv_v=0.0, imgsz=256, int8=False, iou=0.7, keras=False, kobj=1.0, line_width=None, lr0=0.001, lrf=0.01, mask_ratio=4, max_det=300, mixup=0.0, mode=train, model=runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_a2select_s_s0_a2lr3e4_short13_b1_a2_e13_b64_s0_gpu0/weights/best.pt, momen
+
+Traceback (most recent call last):
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/engine/trainer.py", line 694, in get_dataset
+    data = check_det_dataset(self.args.data)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/data/utils.py", line 477, in check_det_dataset
+    raise FileNotFoundError(m)
+FileNotFoundError: Dataset '/root/shared-nvme/LADD_public_p1/shared/configs/datasets_public/ogsod1_sar_detect.yaml' images not found, missing path '/path/to/OGSOD-1.0/sar/images/test'
+Note dataset download directory is '/root/shared-nvme/ladd/datasets'. You can update this in '/root/.config/Ultralytics/settings.json'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/root/shared-nvme/LADD_public_p1/ladd/code_versions/current_hbb/tools/train_ladd_hbb.py", line 407, in <module>
+    main()
+  File "/root/shared-nvme/LADD_public_p1/ladd/code_versions/current_hbb/tools/train_ladd_hbb.py", line 403, in main
+    model.train(**train_kwargs)
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/engine/model.py", line 783, in train
+    self.trainer = (trainer or self._smart_load("trainer"))(overrides=args, _callbacks=self.callbacks)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/ladd/code_versions/current_hbb/src/teacher_student_decomposition_kd_hbb/trainer.py", line 644, in __init__
+    super().__init__(cfg, overrides, _callbacks)
+  File "/root/shared-nvme/LADD_public_p1/ladd/code_versions/current_hbb/src/teacher_student_decomposition_kd_hbb/trainer.py", line 266, in __init__
+    super().__init__(cfg, overrides, _callbacks)
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/models/yolo/detect/train.py", line 63, in __init__
+    super().__init__(cfg, overrides, _callbacks)
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/engine/trainer.py", line 186, in __init__
+    self.data = self.get_dataset()
+                ^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/engine/trainer.py", line 698, in get_dataset
+    raise RuntimeError(emojis(f"Dataset '{clean_url(self.args.data)}' error ❌ {e}")) from e
+RuntimeError: Dataset '/root/shared-nvme/LADD_public_p1/shared/configs/datasets_public/ogsod1_sar_detect.yaml' error ❌ Dataset '/root/shared-nvme/LADD_public_p1/shared/configs/datasets_public/ogsod1_sar_detect.yaml' images not found, missing path '/path/to/OGSOD-1.0/sar/images/test'
+Note dataset download directory is '/root/shared-nvme/ladd/datasets'. You can update this in '/root/.config/Ultralytics/settings.json'
+
+====================================================================================================
+FILE /root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry_b64_after_oom_gpu1/b/b.log
+[keyword_hits]
+2:  python3 ladd/code_versions/current_hbb/tools/train_ladd_hbb.py --phase b --model runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_a2select_s_s0_a2lr3e4_short13_b1_a2_e13_b64_s0_gpu0/weights/best.pt --data shared/configs/datasets_public/ogsod1_sar_detect.yaml --teacher-data shared/configs/datasets_public/ogsod1_rgb_detect.yaml --teacher-weights runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/rgb/rgb_yolo11s_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt --imgsz 256 --epochs 100 --batch 64 --workers 8 --device 1 --patience 100 --fraction 1.0 --project runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2 --name ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry_b64_after_oom_b_e100_b64_s0_gpu1 --phase-detect-mode raw --det-loss-scale 1.0 --phase-stop-metric default --freeze-bn-after-epoch -1 --ladd-diag-log-bn 1 --ladd-diag-log-grad 0 --ladd-grad
+5: [34m[1mengine/trainer: [0magnostic_nms=False, amp=True, angle=1.0, augment=False, auto_augment=randaugment, batch=64, bgr=0.0, box=7.5, cache=False, cfg=None, classes=None, close_mosaic=0, cls=0.5, compile=False, conf=None, copy_paste=0.0, copy_paste_mode=flip, cos_lr=True, cutmix=0.0, data=/root/shared-nvme/LADD_public_p1/shared/configs/datasets_public/ogsod1_sar_detect.yaml, degrees=0.0, deterministic=True, device=1, dfl=1.5, dnn=False, dropout=0.0, dynamic=False, embed=None, end2end=None, epochs=100, erasing=0.0, exist_ok=False, fliplr=0.5, flipud=0.0, format=torchscript, fraction=1.0, freeze=None, half=False, hsv_h=0.0, hsv_s=0.0, hsv_v=0.0, imgsz=256, int8=False, iou=0.7, keras=False, kobj=1.0, line_width=None, lr0=0.001, lrf=0.01, mask_ratio=4, max_det=300, mixup=0.0, mode=train, model=runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_a2select_s_s0_a2lr3e4_short13_b1_a2_e13_b64_s0_gpu0/weights/best.pt, momen
+7: Traceback (most recent call last):
+18: Traceback (most recent call last):
+36:     raise RuntimeError(emojis(f"Dataset '{clean_url(self.args.data)}' error ❌ {e}")) from e
+37: RuntimeError: Dataset '/root/shared-nvme/LADD_public_p1/shared/configs/datasets_public/ogsod1_sar_detect.yaml' error ❌ Dataset '/root/shared-nvme/LADD_public_p1/shared/configs/datasets_public/ogsod1_sar_detect.yaml' images not found, missing path '/path/to/OGSOD-1.0/sar/images/test'
+[tail]
+[2026-06-13 16:51:07] command:
+ python3 ladd/code_versions/current_hbb/tools/train_ladd_hbb.py --phase b --model runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_a2select_s_s0_a2lr3e4_short13_b1_a2_e13_b64_s0_gpu0/weights/best.pt --data shared/configs/datasets_public/ogsod1_sar_detect.yaml --teacher-data shared/configs/datasets_public/ogsod1_rgb_detect.yaml --teacher-weights runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/rgb/rgb_yolo11s_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt --imgsz 256 --epochs 100 --batch 64 --workers 8 --device 1 --patience 100 --fraction 1.0 --project runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2 --name ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry_b64_after_oom_b_e100_b64_s0_gpu1 --phase-detect-mode raw --det-loss-scale 1.0 --phase-stop-metric default --freeze-bn-after-epoch -1 --ladd-diag-log-bn 1 --ladd-diag-log-grad 0 --ladd-grad
+New https://pypi.org/project/ultralytics/8.4.66 available 😃 Update with 'pip install -U ultralytics'
+Ultralytics 8.4.30 🚀 Python-3.12.3 torch-2.7.0a0+7c8ec84dab.nv25.03 CUDA:1 (NVIDIA GeForce RTX 4090, 24081MiB)
+[34m[1mengine/trainer: [0magnostic_nms=False, amp=True, angle=1.0, augment=False, auto_augment=randaugment, batch=64, bgr=0.0, box=7.5, cache=False, cfg=None, classes=None, close_mosaic=0, cls=0.5, compile=False, conf=None, copy_paste=0.0, copy_paste_mode=flip, cos_lr=True, cutmix=0.0, data=/root/shared-nvme/LADD_public_p1/shared/configs/datasets_public/ogsod1_sar_detect.yaml, degrees=0.0, deterministic=True, device=1, dfl=1.5, dnn=False, dropout=0.0, dynamic=False, embed=None, end2end=None, epochs=100, erasing=0.0, exist_ok=False, fliplr=0.5, flipud=0.0, format=torchscript, fraction=1.0, freeze=None, half=False, hsv_h=0.0, hsv_s=0.0, hsv_v=0.0, imgsz=256, int8=False, iou=0.7, keras=False, kobj=1.0, line_width=None, lr0=0.001, lrf=0.01, mask_ratio=4, max_det=300, mixup=0.0, mode=train, model=runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_a2select_s_s0_a2lr3e4_short13_b1_a2_e13_b64_s0_gpu0/weights/best.pt, momen
+
+Traceback (most recent call last):
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/engine/trainer.py", line 694, in get_dataset
+    data = check_det_dataset(self.args.data)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/data/utils.py", line 477, in check_det_dataset
+    raise FileNotFoundError(m)
+FileNotFoundError: Dataset '/root/shared-nvme/LADD_public_p1/shared/configs/datasets_public/ogsod1_sar_detect.yaml' images not found, missing path '/path/to/OGSOD-1.0/sar/images/test'
+Note dataset download directory is '/root/shared-nvme/ladd/datasets'. You can update this in '/root/.config/Ultralytics/settings.json'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/root/shared-nvme/LADD_public_p1/ladd/code_versions/current_hbb/tools/train_ladd_hbb.py", line 407, in <module>
+    main()
+  File "/root/shared-nvme/LADD_public_p1/ladd/code_versions/current_hbb/tools/train_ladd_hbb.py", line 403, in main
+    model.train(**train_kwargs)
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/engine/model.py", line 783, in train
+    self.trainer = (trainer or self._smart_load("trainer"))(overrides=args, _callbacks=self.callbacks)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/ladd/code_versions/current_hbb/src/teacher_student_decomposition_kd_hbb/trainer.py", line 644, in __init__
+    super().__init__(cfg, overrides, _callbacks)
+  File "/root/shared-nvme/LADD_public_p1/ladd/code_versions/current_hbb/src/teacher_student_decomposition_kd_hbb/trainer.py", line 266, in __init__
+    super().__init__(cfg, overrides, _callbacks)
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/models/yolo/detect/train.py", line 63, in __init__
+    super().__init__(cfg, overrides, _callbacks)
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/engine/trainer.py", line 186, in __init__
+    self.data = self.get_dataset()
+                ^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/engine/trainer.py", line 698, in get_dataset
+    raise RuntimeError(emojis(f"Dataset '{clean_url(self.args.data)}' error ❌ {e}")) from e
+RuntimeError: Dataset '/root/shared-nvme/LADD_public_p1/shared/configs/datasets_public/ogsod1_sar_detect.yaml' error ❌ Dataset '/root/shared-nvme/LADD_public_p1/shared/configs/datasets_public/ogsod1_sar_detect.yaml' images not found, missing path '/path/to/OGSOD-1.0/sar/images/test'
+Note dataset download directory is '/root/shared-nvme/ladd/datasets'. You can update this in '/root/.config/Ultralytics/settings.json'
+
+====================================================================================================
+FILE /root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry_b64_after_oom_gpu1/b/manifest.txt
+[keyword_hits]
+21: warmup_epochs=0
+22: warmup_bias_lr=0.001
+23: warmup_momentum=
+24: freeze_bn_stats=1
+25: freeze_bn_after_epoch=-1
+36: ladd_b_det_only=0
+37: ladd_a2_det_only=0
+40: b_split_load_strict=0
+[tail]
+server_tag=shared_nvme_gpu1
+task=hbb
+phase=b
+run_tag=formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry_b64_after_oom
+model=runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_a2select_s_s0_a2lr3e4_short13_b1_a2_e13_b64_s0_gpu0/weights/best.pt
+sar_baseline=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/sar/sar_yolo11s_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt
+rgb_teacher=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/rgb/rgb_yolo11s_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt
+data_cfg=shared/configs/datasets_public/ogsod1_sar_detect.yaml
+teacher_data_cfg=shared/configs/datasets_public/ogsod1_rgb_detect.yaml
+project_dir=runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2
+run_name=ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry_b64_after_oom_b_e100_b64_s0_gpu1
+resume_from=
+seed=0
+epochs=100
+batch_size=64
+cos_lr=1
+lr0=0.001
+lrf=0.01
+optimizer=MuSGD
+warmup_epochs=0
+warmup_bias_lr=0.001
+warmup_momentum=
+freeze_bn_stats=1
+freeze_bn_after_epoch=-1
+ladd_diag_log_bn=1
+ladd_diag_log_grad=0
+ladd_grad_clip_norm=0.0
+ladd_assert_phase_freeze=1
+ladd_diag_log_every=1
+ladd_kd_decay_mode=none
+ladd_kd_decay_start_epoch=-1
+ladd_kd_decay_end_epoch=-1
+ladd_kd_final_mult=1.0
+ladd_kd_stop_after_epoch=-1
+ladd_b_det_only=0
+ladd_a2_det_only=0
+b_detector_source=
+b_decomp_source=
+b_split_load_strict=0
+b_reset_student_from_scratch=0
+b_load_student_split=0
+b_load_student_reachability=1
+b_load_student_aux=0
+alpha_kd=1.0
+lambda_reach=1.0
+lambda_match_inner=1.0
+lambda_rank_inner=1.0
+lambda_residual_aux=0.25
+close_at_epoch=100
+close_mosaic=0
+student_branch_mode=split
+alpha_s_rec=0.1
+comparison_kd_profile=none
+profile_kd_weight=1.0
+profile_kd_replace_base=0
+fgd_alpha=0.0001
+fgd_beta=0.00005
+fgd_gamma=0.001
+fgd_lambda=0.0
+fgd_normalization_mode=original
+fgd_temperature=0.5
+fgd_mask_mode=gt_box
+fgd_bg_norm=1
+ld_temperature=10.0
+ld_use_vlr=1
+ld_quality_power=1.0
+ld_min_vlr_weight=0.0
+ld_vlr_topk=0
+ld_vlr_weight=0.25
+ld_main_weight=0.25
+ld_allow_empty_vlr=1
+cclkd_base_temperature=2.0
+cclkd_contrastive_temperature=0.1
+cclkd_feat_weight=1.0
+cclkd_contrast_weight=0.5
+cclkd_bg_weight=0.1
+cclkd_min_confidence=0.1
+cclkd_temperature_min=0.5
+cclkd_temperature_max=5.0
+cclkd_entropy_scale=5.0
+
+====================================================================================================
+FILE /root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry_b64_after_oom_gpu1/b/master.log
+[keyword_hits]
+2: [2026-06-13 16:51:13] Phase b failed with code 1
+4:  python3 ladd/code_versions/current_hbb/tools/train_ladd_hbb.py --phase b --model runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_a2select_s_s0_a2lr3e4_short13_b1_a2_e13_b64_s0_gpu0/weights/best.pt --data shared/configs/datasets_public/ogsod1_sar_detect.yaml --teacher-data shared/configs/datasets_public/ogsod1_rgb_detect.yaml --teacher-weights runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/rgb/rgb_yolo11s_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt --imgsz 256 --epochs 100 --batch 64 --workers 8 --device 1 --patience 100 --fraction 1.0 --project runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2 --name ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry_b64_after_oom_b_e100_b64_s0_gpu1 --phase-detect-mode raw --det-loss-scale 1.0 --phase-stop-metric default --freeze-bn-after-epoch -1 --ladd-diag-log-bn 1 --ladd-diag-log-grad 0 --ladd-grad
+7: [34m[1mengine/trainer: [0magnostic_nms=False, amp=True, angle=1.0, augment=False, auto_augment=randaugment, batch=64, bgr=0.0, box=7.5, cache=False, cfg=None, classes=None, close_mosaic=0, cls=0.5, compile=False, conf=None, copy_paste=0.0, copy_paste_mode=flip, cos_lr=True, cutmix=0.0, data=/root/shared-nvme/LADD_public_p1/shared/configs/datasets_public/ogsod1_sar_detect.yaml, degrees=0.0, deterministic=True, device=1, dfl=1.5, dnn=False, dropout=0.0, dynamic=False, embed=None, end2end=None, epochs=100, erasing=0.0, exist_ok=False, fliplr=0.5, flipud=0.0, format=torchscript, fraction=1.0, freeze=None, half=False, hsv_h=0.0, hsv_s=0.0, hsv_v=0.0, imgsz=256, int8=False, iou=0.7, keras=False, kobj=1.0, line_width=None, lr0=0.001, lrf=0.01, mask_ratio=4, max_det=300, mixup=0.0, mode=train, model=runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_a2select_s_s0_a2lr3e4_short13_b1_a2_e13_b64_s0_gpu0/weights/best.pt, momen
+9: Traceback (most recent call last):
+20: Traceback (most recent call last):
+38:     raise RuntimeError(emojis(f"Dataset '{clean_url(self.args.data)}' error ❌ {e}")) from e
+39: RuntimeError: Dataset '/root/shared-nvme/LADD_public_p1/shared/configs/datasets_public/ogsod1_sar_detect.yaml' error ❌ Dataset '/root/shared-nvme/LADD_public_p1/shared/configs/datasets_public/ogsod1_sar_detect.yaml' images not found, missing path '/path/to/OGSOD-1.0/sar/images/test'
+[tail]
+[2026-06-13 16:51:07] Launching OGSOD hbb LADD phase b: ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry_b64_after_oom_b_e100_b64_s0_gpu1
+[2026-06-13 16:51:13] Phase b failed with code 1
+[2026-06-13 16:51:07] command:
+ python3 ladd/code_versions/current_hbb/tools/train_ladd_hbb.py --phase b --model runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_a2select_s_s0_a2lr3e4_short13_b1_a2_e13_b64_s0_gpu0/weights/best.pt --data shared/configs/datasets_public/ogsod1_sar_detect.yaml --teacher-data shared/configs/datasets_public/ogsod1_rgb_detect.yaml --teacher-weights runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/rgb/rgb_yolo11s_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt --imgsz 256 --epochs 100 --batch 64 --workers 8 --device 1 --patience 100 --fraction 1.0 --project runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2 --name ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry_b64_after_oom_b_e100_b64_s0_gpu1 --phase-detect-mode raw --det-loss-scale 1.0 --phase-stop-metric default --freeze-bn-after-epoch -1 --ladd-diag-log-bn 1 --ladd-diag-log-grad 0 --ladd-grad
+New https://pypi.org/project/ultralytics/8.4.66 available 😃 Update with 'pip install -U ultralytics'
+Ultralytics 8.4.30 🚀 Python-3.12.3 torch-2.7.0a0+7c8ec84dab.nv25.03 CUDA:1 (NVIDIA GeForce RTX 4090, 24081MiB)
+[34m[1mengine/trainer: [0magnostic_nms=False, amp=True, angle=1.0, augment=False, auto_augment=randaugment, batch=64, bgr=0.0, box=7.5, cache=False, cfg=None, classes=None, close_mosaic=0, cls=0.5, compile=False, conf=None, copy_paste=0.0, copy_paste_mode=flip, cos_lr=True, cutmix=0.0, data=/root/shared-nvme/LADD_public_p1/shared/configs/datasets_public/ogsod1_sar_detect.yaml, degrees=0.0, deterministic=True, device=1, dfl=1.5, dnn=False, dropout=0.0, dynamic=False, embed=None, end2end=None, epochs=100, erasing=0.0, exist_ok=False, fliplr=0.5, flipud=0.0, format=torchscript, fraction=1.0, freeze=None, half=False, hsv_h=0.0, hsv_s=0.0, hsv_v=0.0, imgsz=256, int8=False, iou=0.7, keras=False, kobj=1.0, line_width=None, lr0=0.001, lrf=0.01, mask_ratio=4, max_det=300, mixup=0.0, mode=train, model=runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_a2select_s_s0_a2lr3e4_short13_b1_a2_e13_b64_s0_gpu0/weights/best.pt, momen
+
+Traceback (most recent call last):
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/engine/trainer.py", line 694, in get_dataset
+    data = check_det_dataset(self.args.data)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/data/utils.py", line 477, in check_det_dataset
+    raise FileNotFoundError(m)
+FileNotFoundError: Dataset '/root/shared-nvme/LADD_public_p1/shared/configs/datasets_public/ogsod1_sar_detect.yaml' images not found, missing path '/path/to/OGSOD-1.0/sar/images/test'
+Note dataset download directory is '/root/shared-nvme/ladd/datasets'. You can update this in '/root/.config/Ultralytics/settings.json'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/root/shared-nvme/LADD_public_p1/ladd/code_versions/current_hbb/tools/train_ladd_hbb.py", line 407, in <module>
+    main()
+  File "/root/shared-nvme/LADD_public_p1/ladd/code_versions/current_hbb/tools/train_ladd_hbb.py", line 403, in main
+    model.train(**train_kwargs)
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/engine/model.py", line 783, in train
+    self.trainer = (trainer or self._smart_load("trainer"))(overrides=args, _callbacks=self.callbacks)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/ladd/code_versions/current_hbb/src/teacher_student_decomposition_kd_hbb/trainer.py", line 644, in __init__
+    super().__init__(cfg, overrides, _callbacks)
+  File "/root/shared-nvme/LADD_public_p1/ladd/code_versions/current_hbb/src/teacher_student_decomposition_kd_hbb/trainer.py", line 266, in __init__
+    super().__init__(cfg, overrides, _callbacks)
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/models/yolo/detect/train.py", line 63, in __init__
+    super().__init__(cfg, overrides, _callbacks)
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/engine/trainer.py", line 186, in __init__
+    self.data = self.get_dataset()
+                ^^^^^^^^^^^^^^^^^^
+  File "/root/shared-nvme/LADD_public_p1/shared/yolo/ultralytics/engine/trainer.py", line 698, in get_dataset
+    raise RuntimeError(emojis(f"Dataset '{clean_url(self.args.data)}' error ❌ {e}")) from e
+RuntimeError: Dataset '/root/shared-nvme/LADD_public_p1/shared/configs/datasets_public/ogsod1_sar_detect.yaml' error ❌ Dataset '/root/shared-nvme/LADD_public_p1/shared/configs/datasets_public/ogsod1_sar_detect.yaml' images not found, missing path '/path/to/OGSOD-1.0/sar/images/test'
+Note dataset download directory is '/root/shared-nvme/ladd/datasets'. You can update this in '/root/.config/Ultralytics/settings.json'
+
+====================================================================================================
+FILE /root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry_b64_after_oom_gpu1/chain.log
+[keyword_hits]
+[tail]
+[2026-06-13 16:51:07] phase=b model=runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_a2select_s_s0_a2lr3e4_short13_b1_a2_e13_b64_s0_gpu0/weights/best.pt
+
+====================================================================================================
+FILE /root/shared-nvme/LADD_public_p1/logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry_b64_after_oom_gpu1/manifest.txt
+[keyword_hits]
+16: a2_schedule=optimizer=MuSGD, lr0=0.001, lrf=0.01, warmup_epochs=0, warmup_bias_lr=0.001
+17: b_schedule=optimizer=MuSGD, cos_lr=1, lr0=0.001, lrf=0.01, warmup_epochs=0, warmup_bias_lr=0.001, close_at_epoch=100
+26: b_freeze_bn_after_epoch=-1
+37: ladd_b_det_only=0
+38: ladd_a2_det_only=0
+39: validate_before_train=1
+42: b_split_load_strict=0
+[tail]
+git_commit=c7f309d8bbc5aed195fa565bae9d0526f9aa4291
+server_tag=shared_nvme_gpu1
+task=hbb
+chain=b
+run_tag=formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry_b64_after_oom
+start_model=runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_a2select_s_s0_a2lr3e4_short13_b1_a2_e13_b64_s0_gpu0/weights/best.pt
+sar_baseline=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/sar/sar_yolo11s_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt
+rgb_teacher=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/rgb/rgb_yolo11s_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt
+seed=0
+gpu_id=1
+imgsz=256
+batch_size=64
+epochs_a1=10
+epochs_a2=50
+epochs_b=100
+a2_schedule=optimizer=MuSGD, lr0=0.001, lrf=0.01, warmup_epochs=0, warmup_bias_lr=0.001
+b_schedule=optimizer=MuSGD, cos_lr=1, lr0=0.001, lrf=0.01, warmup_epochs=0, warmup_bias_lr=0.001, close_at_epoch=100
+alpha_kd=1.0
+alpha_s_rec=0.1
+alpha_sep=0.05
+lambda_reach=1.0
+lambda_match_inner=1.0
+lambda_rank_inner=1.0
+lambda_residual_aux=0.25
+residual_aux_mode=energy
+b_freeze_bn_after_epoch=-1
+ladd_diag_log_bn=1
+ladd_diag_log_grad=0
+ladd_grad_clip_norm=0.0
+ladd_assert_phase_freeze=1
+ladd_diag_log_every=1
+ladd_kd_decay_mode=none
+ladd_kd_decay_start_epoch=-1
+ladd_kd_decay_end_epoch=-1
+ladd_kd_final_mult=1.0
+ladd_kd_stop_after_epoch=-1
+ladd_b_det_only=0
+ladd_a2_det_only=0
+validate_before_train=1
+b_detector_source=
+b_decomp_source=
+b_split_load_strict=0
+b_reset_student_from_scratch=0
+b_load_student_split=0
+b_load_student_reachability=1
+b_load_student_aux=0
+rank_d_neg_cap=2.0
+lambda_anti_collapse=0.0
+anti_collapse_floor=0.0
+
+====================================================================================================
+FILE /root/shared-nvme/LADD_public_p1/logs/manual_relaunch/bentrance_S2_a2best_continue_b100_after67b_retry2_b64_after_oom_20260613_165222.log
+[keyword_hits]
+4: Command: env SAR_BASELINE=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/sar/sar_yolo11s_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt RGB_TEACHER=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/rgb/rgb_yolo11s_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt DATA_CFG=/root/shared-nvme/LADD_public/configs/datasets/ogsod_hbb_sar.yaml TEACHER_DATA_CFG=/root/shared-nvme/LADD_public/configs/datasets/ogsod_hbb_rgb.yaml MODEL_SIZE=s GPU_ID=1 SEED=0 BATCH_SIZE=64 WORKERS=8 IMGSZ=256 EPOCHS_A1=10 EPOCHS_A2=50 EPOCHS_B=100 PATIENCE_A=200 PATIENCE_B=100 PROJECT_DIR=runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2 CHAIN_LOG_DIR=logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry2_b64_after_oom_gpu1 MOSAIC=0.0 A_CLOSE_MOSAIC=0 B_CLOSE_AT_EPOCH=100 MIXUP=0.0 CUTMIX=0.0 DEGREES=0.0 PERSPECTIVE=0.0 TRANSLATE=0.1 SCALE=0.5 FLIPLR=0.5 FLIPUD=0.0 HSV_H=0.0 HSV_S=0.0 HSV_V=0.0 ERASING=0.0 SAVE_PERIOD
+[tail]
+[2026-06-13 16:52:22] Launching formal LADD cap2 yolo11s seed=0 gpu=1
+sar_baseline=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/sar/sar_yolo11s_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt
+rgb_teacher=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/rgb/rgb_yolo11s_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt
+Command: env SAR_BASELINE=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/sar/sar_yolo11s_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt RGB_TEACHER=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/rgb/rgb_yolo11s_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt DATA_CFG=/root/shared-nvme/LADD_public/configs/datasets/ogsod_hbb_sar.yaml TEACHER_DATA_CFG=/root/shared-nvme/LADD_public/configs/datasets/ogsod_hbb_rgb.yaml MODEL_SIZE=s GPU_ID=1 SEED=0 BATCH_SIZE=64 WORKERS=8 IMGSZ=256 EPOCHS_A1=10 EPOCHS_A2=50 EPOCHS_B=100 PATIENCE_A=200 PATIENCE_B=100 PROJECT_DIR=runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2 CHAIN_LOG_DIR=logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry2_b64_after_oom_gpu1 MOSAIC=0.0 A_CLOSE_MOSAIC=0 B_CLOSE_AT_EPOCH=100 MIXUP=0.0 CUTMIX=0.0 DEGREES=0.0 PERSPECTIVE=0.0 TRANSLATE=0.1 SCALE=0.5 FLIPLR=0.5 FLIPUD=0.0 HSV_H=0.0 HSV_S=0.0 HSV_V=0.0 ERASING=0.0 SAVE_PERIOD
+Launched pid=269648; log=logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry2_b64_after_oom_gpu1.outer.log; pid_file=logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry2_b64_after_oom_gpu1.pid
+
+====================================================================================================
+FILE /root/shared-nvme/LADD_public_p1/logs/manual_relaunch/bentrance_S2_a2best_continue_b100_after67b_retry_b64_after_oom_20260613_165107.log
+[keyword_hits]
+4: Command: env SAR_BASELINE=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/sar/sar_yolo11s_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt RGB_TEACHER=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/rgb/rgb_yolo11s_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt DATA_CFG=shared/configs/datasets_public/ogsod1_sar_detect.yaml TEACHER_DATA_CFG=shared/configs/datasets_public/ogsod1_rgb_detect.yaml MODEL_SIZE=s GPU_ID=1 SEED=0 BATCH_SIZE=64 WORKERS=8 IMGSZ=256 EPOCHS_A1=10 EPOCHS_A2=50 EPOCHS_B=100 PATIENCE_A=200 PATIENCE_B=100 PROJECT_DIR=runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2 CHAIN_LOG_DIR=logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry_b64_after_oom_gpu1 MOSAIC=0.0 A_CLOSE_MOSAIC=0 B_CLOSE_AT_EPOCH=100 MIXUP=0.0 CUTMIX=0.0 DEGREES=0.0 PERSPECTIVE=0.0 TRANSLATE=0.1 SCALE=0.5 FLIPLR=0.5 FLIPUD=0.0 HSV_H=0.0 HSV_S=0.0 HSV_V=0.0 ERASING=0.0 SAVE_PERIOD=100 USE_FG_MASK_FOR_REAC
+[tail]
+[2026-06-13 16:51:07] Launching formal LADD cap2 yolo11s seed=0 gpu=1
+sar_baseline=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/sar/sar_yolo11s_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt
+rgb_teacher=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/rgb/rgb_yolo11s_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt
+Command: env SAR_BASELINE=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/sar/sar_yolo11s_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt RGB_TEACHER=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/rgb/rgb_yolo11s_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt DATA_CFG=shared/configs/datasets_public/ogsod1_sar_detect.yaml TEACHER_DATA_CFG=shared/configs/datasets_public/ogsod1_rgb_detect.yaml MODEL_SIZE=s GPU_ID=1 SEED=0 BATCH_SIZE=64 WORKERS=8 IMGSZ=256 EPOCHS_A1=10 EPOCHS_A2=50 EPOCHS_B=100 PATIENCE_A=200 PATIENCE_B=100 PROJECT_DIR=runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2 CHAIN_LOG_DIR=logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry_b64_after_oom_gpu1 MOSAIC=0.0 A_CLOSE_MOSAIC=0 B_CLOSE_AT_EPOCH=100 MIXUP=0.0 CUTMIX=0.0 DEGREES=0.0 PERSPECTIVE=0.0 TRANSLATE=0.1 SCALE=0.5 FLIPLR=0.5 FLIPUD=0.0 HSV_H=0.0 HSV_S=0.0 HSV_V=0.0 ERASING=0.0 SAVE_PERIOD=100 USE_FG_MASK_FOR_REAC
+Launched pid=269423; log=logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry_b64_after_oom_gpu1.outer.log; pid_file=logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S2_a2best_continue_b100_after67b_retry_b64_after_oom_gpu1.pid

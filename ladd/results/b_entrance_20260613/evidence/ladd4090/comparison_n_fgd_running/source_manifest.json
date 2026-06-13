@@ -1,0 +1,18 @@
+{
+  "id": "comparison_n_fgd_running",
+  "kind": "comparison",
+  "status": "running",
+  "tag": "transfer_fgd_hbb_ogsod11n_from_yolo_formal_nomosaic_yolo11n_fgd_v2_20260612_fgd_original_low_from_yolo_s0_b_e800_b64_s0_gpu0",
+  "run": "runs_public/ogsod/hbb/formal_nomosaic_20260528/comparisons/from_yolo_pretrain/yolo11n/fgd/transfer_fgd_hbb_ogsod11n_from_yolo_formal_nomosaic_yolo11n_fgd_v2_20260612_fgd_original_low_from_yolo_s0_b_e800_b64_s0_gpu0",
+  "server": "ladd4090",
+  "run_dir": "/root/shared-nvme/LADD_public_p1/runs_public/ogsod/hbb/formal_nomosaic_20260528/comparisons/from_yolo_pretrain/yolo11n/fgd/transfer_fgd_hbb_ogsod11n_from_yolo_formal_nomosaic_yolo11n_fgd_v2_20260612_fgd_original_low_from_yolo_s0_b_e800_b64_s0_gpu0",
+  "exists": true,
+  "active_process_count": "25",
+  "copied_files": [
+    "evidence/ladd4090/comparison_n_fgd_running/run_files/args.yaml",
+    "evidence/ladd4090/comparison_n_fgd_running/run_files/ladd_diagnostics.csv",
+    "evidence/ladd4090/comparison_n_fgd_running/run_files/results.csv"
+  ],
+  "log_extract": "evidence/ladd4090/comparison_n_fgd_running/log_extract.txt",
+  "source_logs": []
+}

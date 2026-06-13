@@ -1,0 +1,2 @@
+log_extract_for=transfer_fgd_hbb_ogsod11s_from_yolo_formal_nomosaic_yolo11s_fgd_v2_20260612_fgd_original_low_from_yolo_from_yolo_s0_b_e800_b64_s0_gpu1
+generated_at=2026-06-13 19:12:19 CST

@@ -1,0 +1,15 @@
+===== logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S1_basecontinue_b100_autodl_after67b_gpu0.direct.outer.log =====
+
+[2026-06-13 14:56:35] phase=b model=runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/sar/sar_yolo11s_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt
+[2026-06-13 14:56:35] Launching OGSOD hbb LADD phase b: ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_bentrance_S1_basecontinue_b100_autodl_after67b_b_e100_b64_s0_gpu0
+[2026-06-13 18:29:59] Phase b finished
+python3: can't open file '/root/autodl-tmp/LADD_public/tools/summarize_tskd_results.py': [Errno 2] No such file or directory
+[2026-06-13 18:29:59] Run directory: /root/autodl-tmp/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_bentrance_S1_basecontinue_b100_autodl_after67b_b_e100_b64_s0_gpu0
+[2026-06-13 18:29:59] Chain complete. Final model: /root/autodl-tmp/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_bentrance_S1_basecontinue_b100_autodl_after67b_b_e100_b64_s0_gpu0/weights/best.pt
+
+
+
+===== logs/formal_nomosaic_20260528/ladd/formal_nomosaic_yolo11s_cap2_s0_bentrance_S1_basecontinue_b100_autodl_after67b_gpu0.outer.log =====
+
+
+

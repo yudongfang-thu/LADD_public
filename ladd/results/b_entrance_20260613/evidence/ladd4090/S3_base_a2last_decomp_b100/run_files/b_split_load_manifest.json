@@ -1,0 +1,42 @@
+{
+  "b_detector_source": "/root/shared-nvme/archive/ladd_pre_public_20260604_220559/runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/sar/sar_yolo11s_hbb_800ep_cos_nomosaic_albu_b64_s0/weights/best.pt",
+  "b_decomp_source": "/root/shared-nvme/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11s/cap2/ladd_hbb_ogsod11s_formal_nomosaic_yolo11s_cap2_s0_diag_a2damage_s_s0_a2lr3e4_b1_a2_e50_b64_s0_gpu1/weights/last.pt",
+  "b_split_load_strict": true,
+  "b_load_student_split": false,
+  "b_load_student_reachability": true,
+  "b_load_student_aux": false,
+  "selected_decomp_modules": [
+    "teacher_decomposition",
+    "teacher_decoder",
+    "teacher_task_heads",
+    "student_reachability"
+  ],
+  "note": "Split-load overwrites only selected modules from b_decomp_source; unselected modules retain the START_MODEL/MODEL initialization unless separately reset.",
+  "modules": {
+    "detector.model": {
+      "missing_keys": [],
+      "unexpected_keys": [],
+      "num_tensors": 499
+    },
+    "teacher_decomposition": {
+      "missing_keys": [],
+      "unexpected_keys": [],
+      "num_tensors": 84
+    },
+    "teacher_decoder": {
+      "missing_keys": [],
+      "unexpected_keys": [],
+      "num_tensors": 9
+    },
+    "teacher_task_heads": {
+      "missing_keys": [],
+      "unexpected_keys": [],
+      "num_tensors": 15
+    },
+    "student_reachability": {
+      "missing_keys": [],
+      "unexpected_keys": [],
+      "num_tensors": 15
+    }
+  }
+}
