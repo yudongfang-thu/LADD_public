@@ -32,7 +32,7 @@ DEFAULT_ARCHIVE = Path(
     "cclkd_reproduction/yolov5_sanity/results/"
     "scalingfix_paper_components_400ep_20260613"
 )
-DEFAULT_MILESTONES = [150, 200, 250, 300, 350, 399]
+DEFAULT_MILESTONES = [80, 100, 125, 150, 185, 200, 250, 300, 350, 399]
 
 RUNS = {
     "paper_full": {
