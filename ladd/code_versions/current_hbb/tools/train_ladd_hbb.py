@@ -98,6 +98,24 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--ladd-kd-final-mult", type=float, default=1.0)
     parser.add_argument("--ladd-kd-stop-after-epoch", type=int, default=-1)
     parser.add_argument(
+        "--ladd-b-loss-warmup-mode",
+        choices=("none", "linear"),
+        default="none",
+        help="B-stage warmup for core LADD non-detection losses. Independent from ladd_kd_decay_mode.",
+    )
+    parser.add_argument("--ladd-b-loss-warmup-start-epoch", type=int, default=-1)
+    parser.add_argument("--ladd-b-loss-warmup-end-epoch", type=int, default=-1)
+    parser.add_argument("--ladd-b-loss-warmup-final-mult", type=float, default=1.0)
+    parser.add_argument(
+        "--ladd-b-loss-warmup-scope",
+        choices=("core", "extended"),
+        default="core",
+        help=(
+            "core scales alpha_kd, alpha_s_rec, alpha_sep, lambda_residual_aux. "
+            "extended is reserved for optional B-stage losses such as s_repel/path_b/r_sar/DKD/proto."
+        ),
+    )
+    parser.add_argument(
         "--ladd-b-det-only",
         action="store_true",
         help="In B phase, keep trainability unchanged but disable all non-detection LADD losses.",
@@ -279,6 +297,11 @@ def main() -> None:
         ladd_kd_decay_end_epoch=args.ladd_kd_decay_end_epoch,
         ladd_kd_final_mult=args.ladd_kd_final_mult,
         ladd_kd_stop_after_epoch=args.ladd_kd_stop_after_epoch,
+        ladd_b_loss_warmup_mode=args.ladd_b_loss_warmup_mode,
+        ladd_b_loss_warmup_start_epoch=args.ladd_b_loss_warmup_start_epoch,
+        ladd_b_loss_warmup_end_epoch=args.ladd_b_loss_warmup_end_epoch,
+        ladd_b_loss_warmup_final_mult=args.ladd_b_loss_warmup_final_mult,
+        ladd_b_loss_warmup_scope=args.ladd_b_loss_warmup_scope,
         ladd_b_det_only=int(bool(args.ladd_b_det_only)),
         ladd_a2_det_only=int(bool(args.ladd_a2_det_only)),
         data=str(args.data.resolve()),

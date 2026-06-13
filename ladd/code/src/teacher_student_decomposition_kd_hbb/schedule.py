@@ -37,6 +37,13 @@ TRACKED_LADD_WEIGHT_KEYS = (
     "lambda_rank_inner",
 )
 
+CORE_B_LADD_WARMUP_KEYS = (
+    "alpha_kd",
+    "alpha_s_rec",
+    "alpha_sep",
+    "lambda_residual_aux",
+)
+
 
 def clamp_unit(value: float) -> float:
     return max(0.0, min(float(value), 1.0))
@@ -99,6 +106,43 @@ def compute_kd_multiplier(
     raise ValueError(f"Unsupported ladd_kd_decay_mode={decay_mode}")
 
 
+def compute_b_loss_warmup_multiplier(
+    *,
+    phase: str,
+    epoch_1based: int,
+    mode: str = "none",
+    start_epoch: int = -1,
+    end_epoch: int = -1,
+    final_mult: float = 1.0,
+) -> float:
+    """Return the B-phase core LADD loss warmup multiplier for a 1-based phase epoch."""
+    if str(phase).lower() != "b":
+        return 1.0
+
+    mode = str(mode or "none").lower()
+    if mode == "none":
+        return 1.0
+    if mode != "linear":
+        raise ValueError(f"Unsupported ladd_b_loss_warmup_mode={mode}")
+
+    epoch = int(epoch_1based)
+    start = int(start_epoch)
+    end = int(end_epoch)
+    final_mult = clamp_unit(final_mult)
+
+    if start < 0:
+        start = 0
+    if end <= start:
+        return final_mult if epoch >= start else 0.0
+    if epoch <= start:
+        return 0.0
+    if epoch >= end:
+        return final_mult
+
+    progress = (epoch - start) / float(end - start)
+    return progress * final_mult
+
+
 def is_kd_warmup_active(
     *,
     phase: str,
@@ -150,6 +194,11 @@ def compute_effective_ladd_weights(
     stop_after_epoch: int = -1,
     ladd_b_det_only: bool = False,
     ladd_a2_det_only: bool = False,
+    b_loss_warmup_mode: str = "none",
+    b_loss_warmup_start_epoch: int = -1,
+    b_loss_warmup_end_epoch: int = -1,
+    b_loss_warmup_final_mult: float = 1.0,
+    b_loss_warmup_scope: str = "core",
 ) -> dict[str, float]:
     """Compute the tracked effective LADD weights for diagnostics and runtime application."""
     weights = {key: float(base_weights.get(key, 0.0)) for key in TRACKED_LADD_WEIGHT_KEYS}
@@ -164,6 +213,23 @@ def compute_effective_ladd_weights(
         stop_after_epoch=stop_after_epoch,
     )
     weights["alpha_kd"] *= kd_multiplier
+    b_loss_warmup_multiplier = compute_b_loss_warmup_multiplier(
+        phase=phase,
+        epoch_1based=epoch_1based,
+        mode=b_loss_warmup_mode,
+        start_epoch=b_loss_warmup_start_epoch,
+        end_epoch=b_loss_warmup_end_epoch,
+        final_mult=b_loss_warmup_final_mult,
+    )
+    if str(b_loss_warmup_mode or "none").lower() != "none":
+        scope = str(b_loss_warmup_scope or "core").lower()
+        if scope != "core":
+            raise ValueError(
+                "Only core B loss warmup scope is implemented. "
+                "Supported core keys: alpha_kd, alpha_s_rec, alpha_sep, lambda_residual_aux."
+            )
+        for key in CORE_B_LADD_WARMUP_KEYS:
+            weights[key] *= b_loss_warmup_multiplier
     weights["base_alpha_kd"] = base_alpha_kd
     if is_det_only_phase(phase=phase, ladd_b_det_only=ladd_b_det_only, ladd_a2_det_only=ladd_a2_det_only):
         for key in weights:
@@ -178,4 +244,10 @@ def compute_effective_ladd_weights(
             decay_end_epoch=decay_end_epoch,
         )
     )
+    weights["b_loss_warmup_multiplier"] = b_loss_warmup_multiplier
+    weights["b_loss_warmup_active"] = float(
+        str(b_loss_warmup_mode or "none").lower() != "none"
+        and b_loss_warmup_multiplier < clamp_unit(b_loss_warmup_final_mult)
+    )
+    weights["b_loss_warmup_scope"] = str(b_loss_warmup_scope or "core")
     return weights

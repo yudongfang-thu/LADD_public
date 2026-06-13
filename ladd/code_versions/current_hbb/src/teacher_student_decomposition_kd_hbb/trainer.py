@@ -253,6 +253,11 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(DetectionTrainer):
             "ladd_kd_decay_end_epoch": int(overrides.pop("ladd_kd_decay_end_epoch", -1)),
             "ladd_kd_final_mult": float(overrides.pop("ladd_kd_final_mult", 1.0)),
             "ladd_kd_stop_after_epoch": int(overrides.pop("ladd_kd_stop_after_epoch", -1)),
+            "ladd_b_loss_warmup_mode": str(overrides.pop("ladd_b_loss_warmup_mode", "none")),
+            "ladd_b_loss_warmup_start_epoch": int(overrides.pop("ladd_b_loss_warmup_start_epoch", -1)),
+            "ladd_b_loss_warmup_end_epoch": int(overrides.pop("ladd_b_loss_warmup_end_epoch", -1)),
+            "ladd_b_loss_warmup_final_mult": float(overrides.pop("ladd_b_loss_warmup_final_mult", 1.0)),
+            "ladd_b_loss_warmup_scope": str(overrides.pop("ladd_b_loss_warmup_scope", "core")),
             "ladd_b_det_only": int(overrides.pop("ladd_b_det_only", 0)) > 0,
             "ladd_a2_det_only": int(overrides.pop("ladd_a2_det_only", 0)) > 0,
         }
@@ -753,6 +758,11 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             stop_after_epoch=int(self.diagnostic_cfg.get("ladd_kd_stop_after_epoch", -1)),
             ladd_b_det_only=bool(self.diagnostic_cfg.get("ladd_b_det_only", False)),
             ladd_a2_det_only=bool(self.diagnostic_cfg.get("ladd_a2_det_only", False)),
+            b_loss_warmup_mode=self.diagnostic_cfg.get("ladd_b_loss_warmup_mode", "none"),
+            b_loss_warmup_start_epoch=int(self.diagnostic_cfg.get("ladd_b_loss_warmup_start_epoch", -1)),
+            b_loss_warmup_end_epoch=int(self.diagnostic_cfg.get("ladd_b_loss_warmup_end_epoch", -1)),
+            b_loss_warmup_final_mult=float(self.diagnostic_cfg.get("ladd_b_loss_warmup_final_mult", 1.0)),
+            b_loss_warmup_scope=self.diagnostic_cfg.get("ladd_b_loss_warmup_scope", "core"),
         )
 
     @staticmethod
@@ -1289,6 +1299,13 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             f"ladd_kd_decay_end_epoch={int(self.diagnostic_cfg.get('ladd_kd_decay_end_epoch', -1))} "
             f"ladd_kd_final_mult={float(self.diagnostic_cfg.get('ladd_kd_final_mult', 1.0))} "
             f"ladd_kd_stop_after_epoch={int(self.diagnostic_cfg.get('ladd_kd_stop_after_epoch', -1))} "
+            f"b_loss_warmup_mode={self.diagnostic_cfg.get('ladd_b_loss_warmup_mode', 'none')} "
+            f"b_loss_warmup_start_epoch={int(self.diagnostic_cfg.get('ladd_b_loss_warmup_start_epoch', -1))} "
+            f"b_loss_warmup_end_epoch={int(self.diagnostic_cfg.get('ladd_b_loss_warmup_end_epoch', -1))} "
+            f"b_loss_warmup_final_mult={float(self.diagnostic_cfg.get('ladd_b_loss_warmup_final_mult', 1.0))} "
+            f"b_loss_warmup_scope={self.diagnostic_cfg.get('ladd_b_loss_warmup_scope', 'core')} "
+            f"b_loss_warmup_multiplier={float(weights.get('b_loss_warmup_multiplier', 1.0))} "
+            f"b_loss_warmup_active={bool(weights.get('b_loss_warmup_active', 0.0))} "
             f"ladd_b_det_only={bool(self.diagnostic_cfg.get('ladd_b_det_only', False))} "
             f"ladd_a2_det_only={bool(self.diagnostic_cfg.get('ladd_a2_det_only', False))} "
             f"ladd_diag_log_grad={bool(self.diagnostic_cfg.get('ladd_diag_log_grad', False))} "
@@ -1503,6 +1520,13 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             "ladd_kd_decay_end_epoch": int(self.diagnostic_cfg.get("ladd_kd_decay_end_epoch", -1)),
             "ladd_kd_final_mult": float(self.diagnostic_cfg.get("ladd_kd_final_mult", 1.0)),
             "ladd_kd_stop_after_epoch": int(self.diagnostic_cfg.get("ladd_kd_stop_after_epoch", -1)),
+            "b_loss_warmup_mode": self.diagnostic_cfg.get("ladd_b_loss_warmup_mode", "none"),
+            "b_loss_warmup_start_epoch": int(self.diagnostic_cfg.get("ladd_b_loss_warmup_start_epoch", -1)),
+            "b_loss_warmup_end_epoch": int(self.diagnostic_cfg.get("ladd_b_loss_warmup_end_epoch", -1)),
+            "b_loss_warmup_final_mult": float(self.diagnostic_cfg.get("ladd_b_loss_warmup_final_mult", 1.0)),
+            "b_loss_warmup_scope": self.diagnostic_cfg.get("ladd_b_loss_warmup_scope", "core"),
+            "b_loss_warmup_multiplier": float(weights.get("b_loss_warmup_multiplier", 1.0)),
+            "b_loss_warmup_active": int(bool(weights.get("b_loss_warmup_active", 0.0))),
             "ladd_b_det_only": int(self.diagnostic_cfg.get("ladd_b_det_only", False)),
             "ladd_a2_det_only": int(self.diagnostic_cfg.get("ladd_a2_det_only", False)),
             "effective_alpha_s_rec": float(weights.get("alpha_s_rec", 0.0)),

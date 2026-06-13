@@ -31,7 +31,11 @@ LADD diagnostics:
   LADD_ASSERT_PHASE_FREEZE=0, LADD_DIAG_LOG_EVERY=1
   LADD_KD_DECAY_MODE=none|linear|cosine|step,
   LADD_KD_DECAY_START_EPOCH, LADD_KD_DECAY_END_EPOCH, LADD_KD_FINAL_MULT,
-  LADD_KD_STOP_AFTER_EPOCH, LADD_B_DET_ONLY=1, LADD_A2_DET_ONLY=1
+  LADD_KD_STOP_AFTER_EPOCH,
+  LADD_B_LOSS_WARMUP_MODE=none|linear, LADD_B_LOSS_WARMUP_START_EPOCH,
+  LADD_B_LOSS_WARMUP_END_EPOCH, LADD_B_LOSS_WARMUP_FINAL_MULT,
+  LADD_B_LOSS_WARMUP_SCOPE=core|extended,
+  LADD_B_DET_ONLY=1, LADD_A2_DET_ONLY=1
 
 Reach anti-collapse overrides:
   RANK_D_NEG_CAP, LAMBDA_ANTI_COLLAPSE, ANTI_COLLAPSE_FLOOR
@@ -280,6 +284,11 @@ mkdir -p "$LOG_DIR"
   echo "ladd_kd_decay_end_epoch=${LADD_KD_DECAY_END_EPOCH:--1}"
   echo "ladd_kd_final_mult=${LADD_KD_FINAL_MULT:-1.0}"
   echo "ladd_kd_stop_after_epoch=${LADD_KD_STOP_AFTER_EPOCH:--1}"
+  echo "ladd_b_loss_warmup_mode=${LADD_B_LOSS_WARMUP_MODE:-none}"
+  echo "ladd_b_loss_warmup_start_epoch=${LADD_B_LOSS_WARMUP_START_EPOCH:--1}"
+  echo "ladd_b_loss_warmup_end_epoch=${LADD_B_LOSS_WARMUP_END_EPOCH:--1}"
+  echo "ladd_b_loss_warmup_final_mult=${LADD_B_LOSS_WARMUP_FINAL_MULT:-1.0}"
+  echo "ladd_b_loss_warmup_scope=${LADD_B_LOSS_WARMUP_SCOPE:-core}"
   echo "ladd_b_det_only=${LADD_B_DET_ONLY:-0}"
   echo "ladd_a2_det_only=${LADD_A2_DET_ONLY:-0}"
   echo "b_detector_source=${B_DETECTOR_SOURCE:-}"
@@ -357,6 +366,11 @@ cmd=(
   --ladd-kd-decay-end-epoch "${LADD_KD_DECAY_END_EPOCH:--1}"
   --ladd-kd-final-mult "${LADD_KD_FINAL_MULT:-1.0}"
   --ladd-kd-stop-after-epoch "${LADD_KD_STOP_AFTER_EPOCH:--1}"
+  --ladd-b-loss-warmup-mode "${LADD_B_LOSS_WARMUP_MODE:-none}"
+  --ladd-b-loss-warmup-start-epoch "${LADD_B_LOSS_WARMUP_START_EPOCH:--1}"
+  --ladd-b-loss-warmup-end-epoch "${LADD_B_LOSS_WARMUP_END_EPOCH:--1}"
+  --ladd-b-loss-warmup-final-mult "${LADD_B_LOSS_WARMUP_FINAL_MULT:-1.0}"
+  --ladd-b-loss-warmup-scope "${LADD_B_LOSS_WARMUP_SCOPE:-core}"
   --reach-target-mode "$REACH_TARGET_MODE"
   --kd-target-mode "$KD_TARGET_MODE"
   --lambda-rec "$LAMBDA_REC"
