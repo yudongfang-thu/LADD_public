@@ -409,7 +409,7 @@ def build_milestone_rows(data: dict[str, dict[str, Any]], milestones: list[int])
 def write_csv(path: Path, fields: list[str], rows: list[dict[str, str]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fields)
+        writer = csv.DictWriter(handle, fieldnames=fields, lineterminator="\n")
         writer.writeheader()
         writer.writerows([{field: row.get(field, "") for field in fields} for row in rows])
 
