@@ -203,6 +203,11 @@ def compute_effective_ladd_weights(
     """Compute the tracked effective LADD weights for diagnostics and runtime application."""
     weights = {key: float(base_weights.get(key, 0.0)) for key in TRACKED_LADD_WEIGHT_KEYS}
     base_alpha_kd = float(base_weights.get("alpha_kd", 0.0))
+    det_only = is_det_only_phase(
+        phase=phase,
+        ladd_b_det_only=ladd_b_det_only,
+        ladd_a2_det_only=ladd_a2_det_only,
+    )
     kd_multiplier = compute_kd_multiplier(
         phase=phase,
         epoch_1based=epoch_1based,
@@ -231,13 +236,14 @@ def compute_effective_ladd_weights(
         for key in CORE_B_LADD_WARMUP_KEYS:
             weights[key] *= b_loss_warmup_multiplier
     weights["base_alpha_kd"] = base_alpha_kd
-    if is_det_only_phase(phase=phase, ladd_b_det_only=ladd_b_det_only, ladd_a2_det_only=ladd_a2_det_only):
+    if det_only:
         for key in weights:
             if key != "base_alpha_kd":
                 weights[key] = 0.0
     weights["kd_multiplier"] = kd_multiplier
     weights["kd_warmup_active"] = float(
-        is_kd_warmup_active(
+        (not det_only)
+        and is_kd_warmup_active(
             phase=phase,
             epoch_1based=epoch_1based,
             decay_mode=decay_mode,
@@ -246,7 +252,8 @@ def compute_effective_ladd_weights(
     )
     weights["b_loss_warmup_multiplier"] = b_loss_warmup_multiplier
     weights["b_loss_warmup_active"] = float(
-        str(b_loss_warmup_mode or "none").lower() != "none"
+        (not det_only)
+        and str(b_loss_warmup_mode or "none").lower() != "none"
         and b_loss_warmup_multiplier < clamp_unit(b_loss_warmup_final_mult)
     )
     weights["b_loss_warmup_scope"] = str(b_loss_warmup_scope or "core")

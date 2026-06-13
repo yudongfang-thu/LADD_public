@@ -280,10 +280,14 @@ run_phase() {
 
 IFS=',' read -r -a requested_phases <<< "$LADD_CHAIN_PHASES"
 first_phase="${requested_phases[0]}"
-if [[ "$first_phase" != "a1" && -z "${START_MODEL:-}" && -z "${B_DETECTOR_SOURCE:-}" ]]; then
-  echo "LADD_CHAIN_PHASES starts from ${first_phase}, but neither START_MODEL nor B_DETECTOR_SOURCE is set." >&2
-  echo "Refusing to run from SAR_BASELINE accidentally." >&2
-  exit 2
+if [[ "$first_phase" != "a1" && -z "${START_MODEL:-}" ]]; then
+  if [[ "$first_phase" == "b" && -n "${B_DETECTOR_SOURCE:-}" && -n "${B_DECOMP_SOURCE:-}" ]]; then
+    :
+  else
+    echo "LADD_CHAIN_PHASES starts from ${first_phase}, but START_MODEL is not set." >&2
+    echo "Only B split-load may omit START_MODEL, and it requires both B_DETECTOR_SOURCE and B_DECOMP_SOURCE." >&2
+    exit 2
+  fi
 fi
 for phase in "${requested_phases[@]}"; do
   case "$phase" in

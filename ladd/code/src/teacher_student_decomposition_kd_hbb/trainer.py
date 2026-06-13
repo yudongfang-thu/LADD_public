@@ -1162,6 +1162,23 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
                 f"and det_loss_scale={det_scale:.3f}"
             )
 
+    def _warn_conflicting_warmup_modes(self) -> None:
+        if RANK not in {-1, 0}:
+            return
+        if str(self.manual_phase_cfg.get("phase", "")).lower() != "b":
+            return
+
+        kd_mode = str(self.diagnostic_cfg.get("ladd_kd_decay_mode", "none") or "none").lower()
+        b_loss_mode = str(self.diagnostic_cfg.get("ladd_b_loss_warmup_mode", "none") or "none").lower()
+
+        kd_warmup_modes = {"warmup", "warmup_linear", "linear_warmup", "ramp_linear"}
+        if b_loss_mode != "none" and kd_mode in kd_warmup_modes:
+            LOGGER.warning(
+                "Both KD warmup and core B loss warmup are enabled. "
+                "alpha_kd will be multiplied by both kd_multiplier and b_loss_warmup_multiplier. "
+                "For core LADD warmup experiments, prefer LADD_KD_DECAY_MODE=none."
+            )
+
     def _setup_train(self):
         super()._setup_train()
         self.stopper = PhaseMinEarlyStopping(
@@ -1172,6 +1189,7 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
         self._maybe_apply_b_split_load()
         self._apply_manual_phase(announce=True)
         self._refresh_effective_ladd_weights()
+        self._warn_conflicting_warmup_modes()
         if self._should_freeze_bn_stats():
             self._set_bn_stats_eval(unwrap_model(self.model))
         self._log_phase_training_state()

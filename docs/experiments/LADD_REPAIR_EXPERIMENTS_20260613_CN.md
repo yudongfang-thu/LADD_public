@@ -85,6 +85,17 @@ ladd/results/repair_experiments_20260613/
 - n：N1 支持 n 对 short-A2 + weakKD 有正收益，但不替代已知更强 n 主线。
 - m：当前 m 不建议继续 full B；应先定位 m A2 目标或容量适配问题。
 
-## 7. 同步说明
+## 7. B-stage warmup 命名规则
+
+后续 B-stage warmup 实验必须区分 KD-only warmup 与 core LADD warmup，避免把实验解释混在一起。
+
+| 类型 | 关键配置 | 命名规则 | 解释 |
+|---|---|---|---|
+| KD-only warmup | `LADD_KD_DECAY_MODE=warmup_linear`；`LADD_B_LOSS_WARMUP_MODE=none` | `*_kd_warmup_*` | 只延迟打开 `alpha_kd` |
+| Core LADD warmup | `LADD_KD_DECAY_MODE=none`；`LADD_B_LOSS_WARMUP_MODE=linear`；`LADD_B_LOSS_WARMUP_SCOPE=core` | `*_core_ladd_warmup_*` | 同时延迟打开 `alpha_kd`、`alpha_s_rec`、`alpha_sep`、`lambda_residual_aux` |
+
+禁止把 KD-only warmup 写成 LADD warmup。若同时打开 KD warmup 和 core LADD warmup，`alpha_kd` 会同时乘 `kd_multiplier` 与 `b_loss_warmup_multiplier`，该配置只应用于明确的诊断，不作为默认主线。
+
+## 8. 同步说明
 
 本次同步只提交 lightweight evidence 与 summary。权重、TensorBoard event、wandb、完整 run 目录、完整大日志均已排除。
