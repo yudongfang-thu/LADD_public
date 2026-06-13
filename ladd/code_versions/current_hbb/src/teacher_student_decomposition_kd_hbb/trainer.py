@@ -634,6 +634,9 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             "reach_c_mode": str(overrides.pop("reach_c_mode", "none")),
             "lambda_reach_c": float(overrides.pop("lambda_reach_c", 0.0)),
             "b_reset_student_from_scratch": bool(overrides.pop("b_reset_student_from_scratch", False)),
+            "b_detector_source": str(overrides.pop("b_detector_source", "") or ""),
+            "b_decomp_source": str(overrides.pop("b_decomp_source", "") or ""),
+            "b_split_load_strict": int(overrides.pop("b_split_load_strict", 0)) > 0,
         }
         super().__init__(cfg, overrides, _callbacks)
         self.current_phase: str | None = None
@@ -840,6 +843,86 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             LOGGER.info(
                 "Manual phase 'b': reset student-side modules from scratch before distillation "
                 "(student detector/split/reachability/residual aux)."
+            )
+
+    @staticmethod
+    def _load_state_with_report(target, source, *, strict: bool) -> dict:
+        result = target.load_state_dict(source.state_dict(), strict=strict)
+        missing = list(getattr(result, "missing_keys", []))
+        unexpected = list(getattr(result, "unexpected_keys", []))
+        return {
+            "missing_keys": missing,
+            "unexpected_keys": unexpected,
+            "num_tensors": len(source.state_dict()),
+        }
+
+    def _maybe_apply_b_split_load(self) -> None:
+        if self.manual_phase_cfg["phase"] != "b":
+            return
+        detector_source = self.manual_phase_cfg.get("b_detector_source", "")
+        decomp_source = self.manual_phase_cfg.get("b_decomp_source", "")
+        if not detector_source and not decomp_source:
+            return
+        if not detector_source or not decomp_source:
+            raise ValueError(
+                "B split-load diagnostics require both --b-detector-source and --b-decomp-source."
+            )
+
+        strict = bool(self.manual_phase_cfg.get("b_split_load_strict", False))
+        model = unwrap_model(self.model)
+        report = {
+            "b_detector_source": detector_source,
+            "b_decomp_source": decomp_source,
+            "b_split_load_strict": strict,
+            "modules": {},
+        }
+
+        detector_model = YOLO(detector_source).model
+        detector_report = self._load_state_with_report(model.model, detector_model.model, strict=strict)
+        report["modules"]["detector.model"] = detector_report
+        if self.ema and hasattr(self.ema, "ema"):
+            self._load_state_with_report(self.ema.ema.model, detector_model.model, strict=strict)
+
+        decomp_model = YOLO(decomp_source).model
+        module_names = (
+            "teacher_decomposition",
+            "teacher_decoder",
+            "teacher_task_heads",
+            "teacher_recon_decoder",
+            "teacher_recon_task_heads",
+            "student_split",
+            "student_reachability",
+            "student_r_aux_decoder",
+            "student_r_fg_heads",
+        )
+        for name in module_names:
+            if not hasattr(model, name):
+                continue
+            if not hasattr(decomp_model, name):
+                if strict:
+                    raise AttributeError(f"B split-load source missing module: {name}")
+                report["modules"][name] = {"missing_module": True}
+                continue
+            module_report = self._load_state_with_report(
+                getattr(model, name),
+                getattr(decomp_model, name),
+                strict=strict,
+            )
+            report["modules"][name] = module_report
+            if self.ema and hasattr(self.ema, "ema") and hasattr(self.ema.ema, name):
+                self._load_state_with_report(
+                    getattr(self.ema.ema, name),
+                    getattr(decomp_model, name),
+                    strict=strict,
+                )
+
+        report_path = self.save_dir / "b_split_load_manifest.json"
+        report_path.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        if RANK in {-1, 0}:
+            LOGGER.info(
+                "Manual phase 'b': applied split-load initialization "
+                f"detector_source={detector_source} decomp_source={decomp_source} "
+                f"strict={strict} manifest={report_path}"
             )
 
     def _apply_manual_phase(self, announce: bool = True) -> None:
@@ -1062,6 +1145,7 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             min_epochs=self._resolve_phase_min_epochs(),
         )
         self._maybe_reset_student_from_scratch_for_phase_b()
+        self._maybe_apply_b_split_load()
         self._apply_manual_phase(announce=True)
         self._refresh_effective_ladd_weights()
         if self._should_freeze_bn_stats():

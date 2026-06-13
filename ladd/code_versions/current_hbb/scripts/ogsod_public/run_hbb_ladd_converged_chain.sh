@@ -106,6 +106,9 @@ manifest="${CHAIN_LOG_DIR}/manifest.txt"
   echo "ladd_kd_stop_after_epoch=${LADD_KD_STOP_AFTER_EPOCH:--1}"
   echo "ladd_b_det_only=${LADD_B_DET_ONLY:-0}"
   echo "ladd_a2_det_only=${LADD_A2_DET_ONLY:-0}"
+  echo "b_detector_source=${B_DETECTOR_SOURCE:-}"
+  echo "b_decomp_source=${B_DECOMP_SOURCE:-}"
+  echo "b_split_load_strict=${B_SPLIT_LOAD_STRICT:-0}"
   echo "rank_d_neg_cap=${RANK_D_NEG_CAP:-4.0}"
   echo "lambda_anti_collapse=${LAMBDA_ANTI_COLLAPSE:-0.0}"
   echo "anti_collapse_floor=${ANTI_COLLAPSE_FLOOR:-0.0}"
@@ -228,6 +231,13 @@ run_phase() {
     LADD_B_DET_ONLY="${LADD_B_DET_ONLY:-0}"
     LADD_A2_DET_ONLY="${LADD_A2_DET_ONLY:-0}"
   )
+  if [[ "$phase" == "b" ]]; then
+    env_args+=(
+      B_DETECTOR_SOURCE="${B_DETECTOR_SOURCE:-}"
+      B_DECOMP_SOURCE="${B_DECOMP_SOURCE:-}"
+      B_SPLIT_LOAD_STRICT="${B_SPLIT_LOAD_STRICT:-0}"
+    )
+  fi
 
   env "${env_args[@]}" ladd/code_versions/current_hbb/scripts/ogsod_public/run_ladd_phase.sh hbb "$phase" "$RUN_TAG"
   local actual_run_dir

@@ -282,6 +282,9 @@ mkdir -p "$LOG_DIR"
   echo "ladd_kd_stop_after_epoch=${LADD_KD_STOP_AFTER_EPOCH:--1}"
   echo "ladd_b_det_only=${LADD_B_DET_ONLY:-0}"
   echo "ladd_a2_det_only=${LADD_A2_DET_ONLY:-0}"
+  echo "b_detector_source=${B_DETECTOR_SOURCE:-}"
+  echo "b_decomp_source=${B_DECOMP_SOURCE:-}"
+  echo "b_split_load_strict=${B_SPLIT_LOAD_STRICT:-0}"
   echo "alpha_kd=${ALPHA_KD}"
   echo "lambda_reach=${LAMBDA_REACH}"
   echo "lambda_match_inner=${LAMBDA_MATCH_INNER}"
@@ -487,6 +490,17 @@ if [[ "${LADD_B_DET_ONLY:-0}" == "1" ]]; then
 fi
 if [[ "${LADD_A2_DET_ONLY:-0}" == "1" ]]; then
   cmd+=(--ladd-a2-det-only)
+fi
+if [[ -n "${B_DETECTOR_SOURCE:-}" ]]; then
+  require_file "$B_DETECTOR_SOURCE" "B detector source checkpoint"
+  cmd+=(--b-detector-source "$B_DETECTOR_SOURCE")
+fi
+if [[ -n "${B_DECOMP_SOURCE:-}" ]]; then
+  require_file "$B_DECOMP_SOURCE" "B decomposition source checkpoint"
+  cmd+=(--b-decomp-source "$B_DECOMP_SOURCE")
+fi
+if [[ "${B_SPLIT_LOAD_STRICT:-0}" == "1" ]]; then
+  cmd+=(--b-split-load-strict)
 fi
 if [[ "$EXIST_OK" == "1" ]]; then
   cmd+=(--exist-ok)
