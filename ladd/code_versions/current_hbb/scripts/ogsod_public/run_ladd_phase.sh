@@ -285,6 +285,10 @@ mkdir -p "$LOG_DIR"
   echo "b_detector_source=${B_DETECTOR_SOURCE:-}"
   echo "b_decomp_source=${B_DECOMP_SOURCE:-}"
   echo "b_split_load_strict=${B_SPLIT_LOAD_STRICT:-0}"
+  echo "b_reset_student_from_scratch=${B_RESET_STUDENT_FROM_SCRATCH:-0}"
+  echo "b_load_student_split=${B_LOAD_STUDENT_SPLIT:-0}"
+  echo "b_load_student_reachability=${B_LOAD_STUDENT_REACHABILITY:-1}"
+  echo "b_load_student_aux=${B_LOAD_STUDENT_AUX:-0}"
   echo "alpha_kd=${ALPHA_KD}"
   echo "lambda_reach=${LAMBDA_REACH}"
   echo "lambda_match_inner=${LAMBDA_MATCH_INNER}"
@@ -501,6 +505,20 @@ if [[ -n "${B_DECOMP_SOURCE:-}" ]]; then
 fi
 if [[ "${B_SPLIT_LOAD_STRICT:-0}" == "1" ]]; then
   cmd+=(--b-split-load-strict)
+fi
+if [[ "${B_RESET_STUDENT_FROM_SCRATCH:-0}" == "1" ]]; then
+  cmd+=(--b-reset-student-from-scratch)
+fi
+if [[ "${B_LOAD_STUDENT_SPLIT:-0}" == "1" ]]; then
+  cmd+=(--b-load-student-split)
+fi
+if [[ "${B_LOAD_STUDENT_REACHABILITY:-1}" == "1" ]]; then
+  cmd+=(--b-load-student-reachability)
+else
+  cmd+=(--no-b-load-student-reachability)
+fi
+if [[ "${B_LOAD_STUDENT_AUX:-0}" == "1" ]]; then
+  cmd+=(--b-load-student-aux)
 fi
 if [[ "$EXIST_OK" == "1" ]]; then
   cmd+=(--exist-ok)

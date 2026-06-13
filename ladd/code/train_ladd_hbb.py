@@ -207,6 +207,41 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--reach-c-mode", choices=("none", "rank", "weight"), default="none")
     parser.add_argument("--lambda-reach-c", type=float, default=0.0)
     parser.add_argument("--b-reset-student-from-scratch", action="store_true")
+    parser.add_argument(
+        "--b-detector-source",
+        type=Path,
+        default=None,
+        help="For B-phase split-load diagnostics, load detector weights from this checkpoint after model init.",
+    )
+    parser.add_argument(
+        "--b-decomp-source",
+        type=Path,
+        default=None,
+        help="For B-phase split-load diagnostics, load LADD decomposition/reach modules from this checkpoint.",
+    )
+    parser.add_argument(
+        "--b-split-load-strict",
+        action="store_true",
+        help="Require strict split-load module matches for detector/decomposition checkpoints.",
+    )
+    parser.add_argument(
+        "--b-load-student-split",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="In B split-load diagnostics, also load student_split from the decomposition checkpoint.",
+    )
+    parser.add_argument(
+        "--b-load-student-reachability",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="In B split-load diagnostics, load student_reachability from the decomposition checkpoint.",
+    )
+    parser.add_argument(
+        "--b-load-student-aux",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="In B split-load diagnostics, also load student residual auxiliary modules from the decomposition checkpoint.",
+    )
     parser.add_argument("--force-student-rec", action="store_true")
 
     add_common_detector_train_overrides(parser)
@@ -341,6 +376,20 @@ def main() -> None:
         reach_c_mode=args.reach_c_mode,
         lambda_reach_c=args.lambda_reach_c,
         b_reset_student_from_scratch=args.b_reset_student_from_scratch,
+        b_detector_source=(
+            str(require_existing_file(args.b_detector_source, "--b-detector-source"))
+            if args.b_detector_source is not None
+            else ""
+        ),
+        b_decomp_source=(
+            str(require_existing_file(args.b_decomp_source, "--b-decomp-source"))
+            if args.b_decomp_source is not None
+            else ""
+        ),
+        b_split_load_strict=int(bool(args.b_split_load_strict)),
+        b_load_student_split=int(bool(args.b_load_student_split)),
+        b_load_student_reachability=int(bool(args.b_load_student_reachability)),
+        b_load_student_aux=int(bool(args.b_load_student_aux)),
         force_student_rec=int(bool(args.force_student_rec)),
     )
     train_kwargs.update(collect_common_detector_train_overrides(args))

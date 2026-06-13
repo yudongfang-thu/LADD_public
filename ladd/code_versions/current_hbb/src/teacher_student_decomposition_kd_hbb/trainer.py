@@ -637,6 +637,9 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             "b_detector_source": str(overrides.pop("b_detector_source", "") or ""),
             "b_decomp_source": str(overrides.pop("b_decomp_source", "") or ""),
             "b_split_load_strict": int(overrides.pop("b_split_load_strict", 0)) > 0,
+            "b_load_student_split": int(overrides.pop("b_load_student_split", 0)) > 0,
+            "b_load_student_reachability": int(overrides.pop("b_load_student_reachability", 1)) > 0,
+            "b_load_student_aux": int(overrides.pop("b_load_student_aux", 0)) > 0,
         }
         super().__init__(cfg, overrides, _callbacks)
         self.current_phase: str | None = None
@@ -874,6 +877,16 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             "b_detector_source": detector_source,
             "b_decomp_source": decomp_source,
             "b_split_load_strict": strict,
+            "b_load_student_split": bool(self.manual_phase_cfg.get("b_load_student_split", False)),
+            "b_load_student_reachability": bool(
+                self.manual_phase_cfg.get("b_load_student_reachability", True)
+            ),
+            "b_load_student_aux": bool(self.manual_phase_cfg.get("b_load_student_aux", False)),
+            "selected_decomp_modules": [],
+            "note": (
+                "Split-load overwrites only selected modules from b_decomp_source; "
+                "unselected modules retain the START_MODEL/MODEL initialization unless separately reset."
+            ),
             "modules": {},
         }
 
@@ -884,17 +897,18 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             self._load_state_with_report(self.ema.ema.model, detector_model.model, strict=strict)
 
         decomp_model = YOLO(decomp_source).model
-        module_names = (
+        module_names = [
             "teacher_decomposition",
             "teacher_decoder",
             "teacher_task_heads",
-            "teacher_recon_decoder",
-            "teacher_recon_task_heads",
-            "student_split",
-            "student_reachability",
-            "student_r_aux_decoder",
-            "student_r_fg_heads",
-        )
+        ]
+        if self.manual_phase_cfg.get("b_load_student_split", False):
+            module_names.append("student_split")
+        if self.manual_phase_cfg.get("b_load_student_reachability", True):
+            module_names.append("student_reachability")
+        if self.manual_phase_cfg.get("b_load_student_aux", False):
+            module_names.extend(("student_r_aux_decoder", "student_r_fg_heads"))
+        report["selected_decomp_modules"] = module_names
         for name in module_names:
             if not hasattr(model, name):
                 continue

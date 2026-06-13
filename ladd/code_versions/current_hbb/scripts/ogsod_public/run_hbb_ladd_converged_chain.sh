@@ -28,7 +28,10 @@ Common overrides:
   LADD_DIAG_LOG_BN, LADD_DIAG_LOG_GRAD, LADD_GRAD_CLIP_NORM,
   LADD_ASSERT_PHASE_FREEZE, LADD_DIAG_LOG_EVERY, LADD_CHAIN_PHASES, EXIST_OK=1,
   LADD_KD_DECAY_MODE, LADD_KD_DECAY_START_EPOCH, LADD_KD_DECAY_END_EPOCH,
-  LADD_KD_FINAL_MULT, LADD_KD_STOP_AFTER_EPOCH, LADD_B_DET_ONLY, LADD_A2_DET_ONLY
+  LADD_KD_FINAL_MULT, LADD_KD_STOP_AFTER_EPOCH, LADD_B_DET_ONLY, LADD_A2_DET_ONLY,
+  START_MODEL, VALIDATE_BEFORE_TRAIN, B_DETECTOR_SOURCE, B_DECOMP_SOURCE,
+  B_SPLIT_LOAD_STRICT, B_RESET_STUDENT_FROM_SCRATCH, B_LOAD_STUDENT_SPLIT,
+  B_LOAD_STUDENT_REACHABILITY, B_LOAD_STUDENT_AUX
 EOF
 }
 
@@ -74,6 +77,7 @@ manifest="${CHAIN_LOG_DIR}/manifest.txt"
   echo "task=hbb"
   echo "chain=${LADD_CHAIN_PHASES}"
   echo "run_tag=${RUN_TAG}"
+  echo "start_model=${START_MODEL:-}"
   echo "sar_baseline=${SAR_BASELINE}"
   echo "rgb_teacher=${RGB_TEACHER}"
   echo "seed=${SEED}"
@@ -106,15 +110,20 @@ manifest="${CHAIN_LOG_DIR}/manifest.txt"
   echo "ladd_kd_stop_after_epoch=${LADD_KD_STOP_AFTER_EPOCH:--1}"
   echo "ladd_b_det_only=${LADD_B_DET_ONLY:-0}"
   echo "ladd_a2_det_only=${LADD_A2_DET_ONLY:-0}"
+  echo "validate_before_train=${VALIDATE_BEFORE_TRAIN:-0}"
   echo "b_detector_source=${B_DETECTOR_SOURCE:-}"
   echo "b_decomp_source=${B_DECOMP_SOURCE:-}"
   echo "b_split_load_strict=${B_SPLIT_LOAD_STRICT:-0}"
+  echo "b_reset_student_from_scratch=${B_RESET_STUDENT_FROM_SCRATCH:-0}"
+  echo "b_load_student_split=${B_LOAD_STUDENT_SPLIT:-0}"
+  echo "b_load_student_reachability=${B_LOAD_STUDENT_REACHABILITY:-1}"
+  echo "b_load_student_aux=${B_LOAD_STUDENT_AUX:-0}"
   echo "rank_d_neg_cap=${RANK_D_NEG_CAP:-4.0}"
   echo "lambda_anti_collapse=${LAMBDA_ANTI_COLLAPSE:-0.0}"
   echo "anti_collapse_floor=${ANTI_COLLAPSE_FLOOR:-0.0}"
 } > "$manifest"
 
-current_model="$SAR_BASELINE"
+current_model="${START_MODEL:-$SAR_BASELINE}"
 
 run_phase() {
   local phase="$1"
@@ -230,12 +239,17 @@ run_phase() {
     LADD_KD_STOP_AFTER_EPOCH="${LADD_KD_STOP_AFTER_EPOCH:--1}"
     LADD_B_DET_ONLY="${LADD_B_DET_ONLY:-0}"
     LADD_A2_DET_ONLY="${LADD_A2_DET_ONLY:-0}"
+    VALIDATE_BEFORE_TRAIN="${VALIDATE_BEFORE_TRAIN:-0}"
   )
   if [[ "$phase" == "b" ]]; then
     env_args+=(
       B_DETECTOR_SOURCE="${B_DETECTOR_SOURCE:-}"
       B_DECOMP_SOURCE="${B_DECOMP_SOURCE:-}"
       B_SPLIT_LOAD_STRICT="${B_SPLIT_LOAD_STRICT:-0}"
+      B_RESET_STUDENT_FROM_SCRATCH="${B_RESET_STUDENT_FROM_SCRATCH:-0}"
+      B_LOAD_STUDENT_SPLIT="${B_LOAD_STUDENT_SPLIT:-0}"
+      B_LOAD_STUDENT_REACHABILITY="${B_LOAD_STUDENT_REACHABILITY:-1}"
+      B_LOAD_STUDENT_AUX="${B_LOAD_STUDENT_AUX:-0}"
     )
   fi
 
@@ -252,6 +266,12 @@ run_phase() {
 }
 
 IFS=',' read -r -a requested_phases <<< "$LADD_CHAIN_PHASES"
+first_phase="${requested_phases[0]}"
+if [[ "$first_phase" != "a1" && -z "${START_MODEL:-}" && -z "${B_DETECTOR_SOURCE:-}" ]]; then
+  echo "LADD_CHAIN_PHASES starts from ${first_phase}, but neither START_MODEL nor B_DETECTOR_SOURCE is set." >&2
+  echo "Refusing to run from SAR_BASELINE accidentally." >&2
+  exit 2
+fi
 for phase in "${requested_phases[@]}"; do
   case "$phase" in
     a1) run_phase a1 "$EPOCHS_A1" "$PATIENCE_A" ;;
