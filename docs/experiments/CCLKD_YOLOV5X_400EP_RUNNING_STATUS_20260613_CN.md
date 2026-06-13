@@ -1,36 +1,49 @@
-# CCLKD YOLOv5x 400epoch Running Status (2026-06-13)
+# CCLKD YOLOv5x 400epoch Running Status (2026-06-14)
 
-90 服务器快照时间：`2026-06-13 23:42:58 +08`。
+90 服务器快照时间：`2026-06-14 00:13:27 +08`。
 
-本次为 P0 running snapshot：Full 和 ATKD-only 均已超过 epoch 150；CCL-only 和 det-only 已早于本次快照超过 150。四条主实验均继续运行，未自动重启，未停止。
+本次更新继续跟踪 4 个 YOLOv5x scaling-fix b32/s0/400ep 主实验。当前不改 loss、不启动 sweep、不新增实验、不停止主实验。
 
 ## 当前结果
 
 | 实验 | GPU | 进度 | AP50 | AP | 同 epoch det-only AP | ΔAP vs det-only | KD/det ratio | 显存 used/free | 状态 |
 |---|---:|---:|---:|---:|---:|---:|---:|---|---|
-| Full CCLKD | 0 | 185/399 | 0.59976 | 0.32287 | 0.31722 | 0.00565 | 0.43622 | 16275 / 7850 MiB | running |
-| ATKD-only | 1 | 151/399 | 0.57164 | 0.30139 | 0.29451 | 0.00688 | 0.05804 | 20139 / 3986 MiB | running |
-| CCL-only | 3 | 237/399 | 0.62667 | 0.35324 | 0.34817 | 0.00507 | 0.40220 | 23319 / 806 MiB | running |
-| Det-only baseline | 5 | 268/399 | 0.64535 | 0.36632 | baseline |  | 0.00000 | 10715 / 13411 MiB | running |
+| Full CCLKD | 0 | 190/399 | 0.60260 | 0.32503 | 0.32033 | 0.00470 | 0.44153 | 16275 / 7850 MiB | running |
+| ATKD-only | 1 | 154/399 | 0.57474 | 0.30333 | 0.29610 | 0.00723 | 0.06036 | 20139 / 3986 MiB | running |
+| CCL-only | 3 | 242/399 | 0.63011 | 0.35620 | 0.35128 | 0.00492 | 0.40563 | 23319 / 806 MiB | running |
+| Det-only baseline | 5 | 273/399 | 0.64690 | 0.36961 | baseline |  | 0.00000 | 10719 / 13407 MiB | running |
 
 ## 诊断表
 
 | 实验 | student box/obj/cls | teacher box/obj/cls | KD total | LLD | FLD | RLD | CCL | COP+ | temp | feature ok | NaN/Inf |
 |---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| Full CCLKD | 0.05083/0.00580/0.00170 | 0.04147/0.00509/0.00112 | 0.80010 | 0.01031 | 0.03280 | 0.06335 | 0.69364 | 0.98589 | 2.85704 | 1.0 | 0.0 |
-| ATKD-only | 0.05259/0.00601/0.00187 | 0.04317/0.00531/0.00119 | 0.11144 | 0.01107 | 0.03155 | 0.06882 | 0.00000 | 0.98226 | 2.87130 | 1.0 | 0.0 |
-| CCL-only | 0.04799/0.00559/0.00139 | 0.04014/0.00494/0.00085 | 0.69407 | 0.00000 | 0.00000 | 0.00000 | 0.69407 | 0.98798 | 2.84596 | 1.0 | 0.0 |
-| Det-only baseline | 0.04633/0.00549/0.00130 | 0.00000/0.00000/0.00000 | 0.00000 | 0.00000 | 0.00000 | 0.00000 | 0.00000 |  |  |  | 0.0 |
+| Full CCLKD | 0.05034/0.00581/0.00160 | 0.04161/0.00514/0.00114 | 0.79898 | 0.01054 | 0.03292 | 0.06164 | 0.69388 | 0.98487 | 2.85794 | 1.0 | 0.0 |
+| ATKD-only | 0.05346/0.00597/0.00177 | 0.04358/0.00529/0.00122 | 0.11693 | 0.01117 | 0.03840 | 0.06736 | 0.00000 | 0.98302 | 2.87086 | 1.0 | 0.0 |
+| CCL-only | 0.04755/0.00561/0.00145 | 0.03948/0.00493/0.00094 | 0.69395 | 0.00000 | 0.00000 | 0.00000 | 0.69395 | 0.98741 | 2.84218 | 1.0 | 0.0 |
+| Det-only baseline | 0.04563/0.00527/0.00126 | 0.00000/0.00000/0.00000 | 0.00000 | 0.00000 | 0.00000 | 0.00000 | 0.00000 |  |  |  | 0.0 |
 
 ## 当前判断
 
-- Current training is numerically stable.
+- Training is stable.
 - Feature capture works and no NaN/Inf is detected.
-- Same-epoch AP deltas are positive but still small: Full ΔAP=0.00565, ATKD-only ΔAP=0.00688, CCL-only ΔAP=0.00507.
-- ATKD-only appears more efficient than CCL-only in terms of gain per KD/det ratio: ATKD-only ratio=0.05804, CCL-only ratio=0.40220.
-- CCL-only has high KD pressure but very small AP gain, suggesting possible low-efficiency CCL.
-- Do not modify loss or launch sweeps until the 200epoch aligned snapshot is available.
-- 200epoch 规则 A 的早期信号：Full ΔAP >= +0.005；到 200 对齐前继续跑，不改代码。
+- All paper runs show positive same-epoch AP delta.
+- Gains are still small: Full ΔAP=0.00470, ATKD-only ΔAP=0.00723, CCL-only ΔAP=0.00492.
+- Full is not yet clearly better than ATKD-only at common epochs. At exact epoch 150, `full_minus_atkd_ap=-0.00027`.
+- ATKD-only appears more efficient than CCL-only in terms of gain per KD/det ratio: ATKD-only ratio=0.06036, CCL-only ratio=0.40563.
+- CCL has high KD/det ratio but limited AP gain; keep it marked as possible low-efficiency CCL.
+- Do not modify loss or launch sweep before 200/250 aligned snapshots.
+- P0 已完成；下一次刷新节点是 Full 和 ATKD-only 都到 epoch 200 后的 200epoch 对齐快照。当前不应用 200/250 最终判断。
+
+## Milestone Table
+
+新增固定 epoch 对齐表，严格 exact epoch 对齐，缺失 epoch 写 `pending`，不使用 nearest epoch：
+
+- `milestone_component_comparison.csv`
+- `milestone_component_comparison.md`
+
+## Planning Note
+
+暂不启动 sweep。只有 200/250 对齐后同时出现 ATKD-only 明显高于 det-only、Full 低于或基本等于 ATKD-only、CCL-only weak gain、Full weighted KD/det ratio 明显高于 ATKD-only，才准备以下候选：CCL weight 0.25、CCL weight 0.5、KD warmup 10。
 
 ## 日志关键字摘要
 

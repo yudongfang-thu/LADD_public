@@ -1,0 +1,11 @@
+epoch,det_only_ap50,det_only_ap,atkd_ap50,atkd_ap,atkd_delta_ap50,atkd_delta_ap,ccl_ap50,ccl_ap,ccl_delta_ap50,ccl_delta_ap,full_ap50,full_ap,full_delta_ap50,full_delta_ap,full_minus_atkd_ap,full_minus_ccl_ap,best_component_by_ap,note
+80,0.50571,0.25132,0.51741,0.25550,0.01170,0.00418,0.51267,0.25521,0.00696,0.00389,0.51322,0.25640,0.00751,0.00508,0.00090,0.00119,full,pre_200_snapshot
+100,0.52099,0.26324,0.53451,0.26782,0.01352,0.00458,0.52576,0.26603,0.00477,0.00279,0.53206,0.26901,0.01107,0.00577,0.00119,0.00298,full,pre_200_snapshot
+125,0.54104,0.27807,0.55339,0.28386,0.01235,0.00579,0.54515,0.28164,0.00411,0.00357,0.54914,0.28352,0.00810,0.00545,-0.00034,0.00188,atkd,pre_200_snapshot
+150,0.55895,0.29367,0.57138,0.30024,0.01243,0.00657,0.56775,0.29892,0.00880,0.00525,0.56975,0.29997,0.01080,0.00630,-0.00027,0.00105,atkd,pre_200_snapshot
+185,0.58721,0.31722,pending,pending,pending,pending,0.59192,0.32023,0.00471,0.00301,0.59976,0.32287,0.01255,0.00565,pending,0.00264,full,pending
+200,0.59920,0.32520,pending,pending,pending,pending,0.60038,0.32936,0.00118,0.00416,pending,pending,pending,pending,pending,pending,ccl,pending
+250,0.63437,0.35625,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending
+300,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending
+350,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending
+399,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending
