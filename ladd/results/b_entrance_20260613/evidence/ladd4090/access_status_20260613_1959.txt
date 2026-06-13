@@ -1,0 +1,16 @@
+Snapshot refresh attempt: 2026-06-13 19:58-19:59 CST
+
+Status:
+- AutoDL remained reachable and was refreshed successfully.
+- ladd4090 could not be refreshed in this attempt.
+
+Observed ladd4090 failure:
+- `ssh ladd4090 ...` reached the paratera endpoint but failed authentication/forwarding:
+  `Permission denied (password,publickey)`.
+- No ControlMaster socket existed at `~/.ssh/codex_cm/ladd4090.sock`.
+- Existing `ladd117` ControlMaster was alive, but no verified reusable SSH tunnel to ladd4090 was found.
+
+Implication:
+- Current ladd4090 experiment rows in this evidence package remain the previous synced snapshot:
+  S2 retry2 at 86/100, S4 strict b64 at 8/120, FGD n at 636/800, FGD s at 452/800.
+- Do not interpret those ladd4090 rows as refreshed at 19:59 CST.
