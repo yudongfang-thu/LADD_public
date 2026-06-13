@@ -1,7 +1,5 @@
 # YOLOv5x CCLKD Milestone Component Comparison
 
-Exact epoch matches only. Missing epochs are marked as `pending`; no nearest-epoch substitution is used.
-
 | epoch | det_only_ap | atkd_ap | atkd_delta_ap | ccl_ap | ccl_delta_ap | full_ap | full_delta_ap | full_minus_atkd_ap | full_minus_ccl_ap | best_component_by_ap | note |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 80 | 0.25132 | 0.25550 | 0.00418 | 0.25521 | 0.00389 | 0.25640 | 0.00508 | 0.00090 | 0.00119 | full | pre_200_snapshot |
