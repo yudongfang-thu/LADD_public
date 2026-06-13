@@ -1,2 +1,2 @@
-38:albumentations: 1 validation error for InitSchema
-41:    For further information visit https://errors.pydantic.dev/2.12/v/missing
+[34m[1malbumentations: [0m1 validation error for InitSchema
+    For further information visit https://errors.pydantic.dev/2.12/v/missing

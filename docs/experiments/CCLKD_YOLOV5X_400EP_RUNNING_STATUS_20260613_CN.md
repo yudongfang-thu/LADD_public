@@ -1,61 +1,55 @@
 # CCLKD YOLOv5x 400epoch Running Status (2026-06-14)
 
-90 服务器快照时间：`2026-06-14 00:13:27 +08`。
+90 服务器快照时间：`2026-06-14 02:33:14 +0800`。
 
-本次更新继续跟踪 4 个 YOLOv5x scaling-fix b32/s0/400ep 主实验。当前不改 loss、不启动 sweep、不新增实验、不停止主实验。
+本次更新继续跟踪 4 个 YOLOv5x scaling-fix b32/s0/400ep 主实验，并补充 Full run 的 online teacher RGB validation。当前未修改 loss、未启动 sweep、未停止主实验。
 
 ## 当前结果
 
 | 实验 | GPU | 进度 | AP50 | AP | 同 epoch det-only AP | ΔAP vs det-only | KD/det ratio | 显存 used/free | 状态 |
 |---|---:|---:|---:|---:|---:|---:|---:|---|---|
-| Full CCLKD | 0 | 190/399 | 0.60260 | 0.32503 | 0.32033 | 0.00470 | 0.44153 | 16275 / 7850 MiB | running |
-| ATKD-only | 1 | 154/399 | 0.57474 | 0.30333 | 0.29610 | 0.00723 | 0.06036 | 20139 / 3986 MiB | running |
-| CCL-only | 3 | 242/399 | 0.63011 | 0.35620 | 0.35128 | 0.00492 | 0.40563 | 23319 / 806 MiB | running |
-| Det-only baseline | 5 | 273/399 | 0.64690 | 0.36961 | baseline |  | 0.00000 | 10719 / 13407 MiB | running |
+| Full CCLKD | 0 | 216/399 | 0.62098 | 0.34303 | 0.33524 | 0.00779 | 0.45018 | 16275 / 7850 MiB | running |
+| ATKD-only | 1 | 168/399 | 0.58778 | 0.31239 | 0.30484 | 0.00755 | 0.05871 | 20139 / 3986 MiB | running |
+| CCL-only | 3 | 267/399 | 0.64386 | 0.37259 | 0.36548 | 0.00711 | 0.42223 | 23950 / 176 MiB | running |
+| Det-only baseline | 5 | 303/399 | 0.66992 | 0.38651 | baseline |  | 0.00000 | 11851 / 12275 MiB | running |
 
-## 诊断表
+## Loss Contribution
 
-| 实验 | student box/obj/cls | teacher box/obj/cls | KD total | LLD | FLD | RLD | CCL | COP+ | temp | feature ok | NaN/Inf |
-|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| Full CCLKD | 0.05034/0.00581/0.00160 | 0.04161/0.00514/0.00114 | 0.79898 | 0.01054 | 0.03292 | 0.06164 | 0.69388 | 0.98487 | 2.85794 | 1.0 | 0.0 |
-| ATKD-only | 0.05346/0.00597/0.00177 | 0.04358/0.00529/0.00122 | 0.11693 | 0.01117 | 0.03840 | 0.06736 | 0.00000 | 0.98302 | 2.87086 | 1.0 | 0.0 |
-| CCL-only | 0.04755/0.00561/0.00145 | 0.03948/0.00493/0.00094 | 0.69395 | 0.00000 | 0.00000 | 0.00000 | 0.69395 | 0.98741 | 2.84218 | 1.0 | 0.0 |
-| Det-only baseline | 0.04563/0.00527/0.00126 | 0.00000/0.00000/0.00000 | 0.00000 | 0.00000 | 0.00000 | 0.00000 | 0.00000 |  |  |  | 0.0 |
+| 实验 | epoch | student det display sum | ATKD | CCL | KD total | ATKD share | CCL share | KD/det ratio |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| Full CCLKD | 216 | 0.05553 | 0.09915 | 0.69220 | 0.79135 | 0.12529 | 0.87471 | 0.45018 |
+| ATKD-only | 168 | 0.05956 | 0.11141 | 0.00000 | 0.11141 | 1.00000 | 0.00000 | 0.05871 |
+| CCL-only | 267 | 0.05228 | 0.00000 | 0.69374 | 0.69374 | 0.00000 | 1.00000 | 0.42223 |
+| Det-only baseline | 303 | 0.05008 | 0.00000 | 0.00000 | 0.00000 |  |  | 0.00000 |
+
+## Online Teacher Evaluation
+
+| model/branch | epoch | modality | AP50 | AP |
+|---|---:|---|---:|---:|
+| Full run online teacher | 214 | RGB | 0.80073 | 0.42392 |
+| Full run student | 214 | SAR | 0.61927 | 0.34123 |
+| Det-only student | 214 | SAR | 0.60733 | 0.33427 |
+| Independent RGB YOLOv5x baseline | 399 | RGB | 0.86506 | 0.52414 |
+
+- Online teacher 明显强于 SAR student：teacher-student AP gap = `0.08269`。
+- Full student 相对同 epoch det-only 只提升 `0.00696` AP，约回收 teacher-det gap 的 `0.07763`。
+- 原文 CCLKD 是 online dual-branch teacher-student 协议：teacher 使用 easy-to-detect modality 及检测损失训练，student 使用 hard-to-detect modality 并接收 ATKD/CCL。
 
 ## 当前判断
 
-- Training is stable.
-- Feature capture works and no NaN/Inf is detected.
-- All paper runs show positive same-epoch AP delta.
-- Gains are still small: Full ΔAP=0.00470, ATKD-only ΔAP=0.00723, CCL-only ΔAP=0.00492.
-- Full is not yet clearly better than ATKD-only at common epochs. At exact epoch 150, `full_minus_atkd_ap=-0.00027`.
-- ATKD-only appears more efficient than CCL-only in terms of gain per KD/det ratio: ATKD-only ratio=0.06036, CCL-only ratio=0.40563.
-- CCL has high KD/det ratio but limited AP gain; keep it marked as possible low-efficiency CCL.
-- Do not modify loss or launch sweep before 200/250 aligned snapshots.
-- P0 已完成；下一次刷新节点是 Full 和 ATKD-only 都到 epoch 200 后的 200epoch 对齐快照。当前不应用 200/250 最终判断。
+- Training is stable; four main 400epoch runs remain active.
+- Feature capture works and no NaN/Inf is detected in paper runs.
+- All paper runs still show positive same-epoch AP delta, but gains remain small.
+- Full is positive at epoch 216, but Full is not yet clearly better than ATKD-only at common epochs.
+- CCL dominates Full KD pressure: latest Full KD consists mostly of CCL, while AP gain remains small.
+- The online teacher is not weak, so the main bottleneck is likely KD/CCL transfer efficiency rather than absence of teacher signal.
+- Do not modify loss or launch sweep before the 200/250 aligned snapshots are archived.
 
-## Milestone Table
+## Artifacts
 
-新增固定 epoch 对齐表，严格 exact epoch 对齐，缺失 epoch 写 `pending`，不使用 nearest epoch：
-
-- `milestone_component_comparison.csv`
-- `milestone_component_comparison.md`
-
-## Planning Note
-
-暂不启动 sweep。只有 200/250 对齐后同时出现 ATKD-only 明显高于 det-only、Full 低于或基本等于 ATKD-only、CCL-only weak gain、Full weighted KD/det ratio 明显高于 ATKD-only，才准备以下候选：CCL weight 0.25、CCL weight 0.5、KD warmup 10。
-
-## 日志关键字摘要
-
-- `paper_full`：只有 Albumentations/Pydantic 初始化 warning
-- `paper_atkd_only`：只有 Albumentations/Pydantic 初始化 warning
-- `paper_ccl_only`：只有 Albumentations/Pydantic 初始化 warning
-- `det_only_same_trainer`：只有 Albumentations/Pydantic 初始化 warning
-
-## 证据归档
-
-证据包路径：`cclkd_reproduction/yolov5_sanity/results/scalingfix_paper_components_400ep_20260613/`
-
-每个 run 已更新：`results.csv`、`cclkd_yolov5_diagnostics.csv`、`nohup_tail_300.log`、`nohup_error_grep_tail.log`、`run_meta.txt`、`command.sh`、`opt.yaml`、`hyp.yaml`。
-
-未上传内容：checkpoint 权重、TensorBoard event 文件、完整 nohup 大日志。
+- `summary.csv`
+- `milestone_component_comparison.csv/md`
+- `loss_contribution_latest.csv/md`
+- `teacher_eval_online_full_latest.csv/md`
+- `figures/yolov5x_cclkd_*.png/pdf`
+- Per-run `results.csv`, `cclkd_yolov5_diagnostics.csv`, `nohup_tail_300.log`, `nohup_error_grep_tail.log`.

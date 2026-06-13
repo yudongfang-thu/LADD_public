@@ -1,0 +1,2 @@
+run,checkpoint_epoch,modality,precision,recall,AP50,AP,student_epoch,student_AP50,student_AP,detonly_same_epoch_AP50,detonly_same_epoch_AP,teacher_minus_student_AP,teacher_minus_detonly_AP,student_gain_vs_detonly_AP,gap_recovery_ratio,independent_rgb_yolov5x_AP50,independent_rgb_yolov5x_AP
+paper_full,214,RGB,0.82765,0.76227,0.80073,0.42392,214,0.61927,0.34123,0.60733,0.33427,0.08269,0.08965,0.00696,0.07763,0.86506,0.52414
