@@ -88,7 +88,11 @@ def parse_args() -> argparse.Namespace:
         default=1,
         help="Record LADD diagnostics every N epochs. Defaults to every epoch.",
     )
-    parser.add_argument("--ladd-kd-decay-mode", choices=("none", "linear", "cosine", "step"), default="none")
+    parser.add_argument(
+        "--ladd-kd-decay-mode",
+        choices=("none", "linear", "cosine", "step", "warmup", "warmup_linear", "linear_warmup", "ramp_linear"),
+        default="none",
+    )
     parser.add_argument("--ladd-kd-decay-start-epoch", type=int, default=-1)
     parser.add_argument("--ladd-kd-decay-end-epoch", type=int, default=-1)
     parser.add_argument("--ladd-kd-final-mult", type=float, default=1.0)

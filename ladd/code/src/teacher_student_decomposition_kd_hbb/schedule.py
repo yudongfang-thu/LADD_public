@@ -66,6 +66,18 @@ def compute_kd_multiplier(
     end = int(decay_end_epoch)
     final_mult = clamp_unit(final_mult)
 
+    if mode in {"warmup", "warmup_linear", "linear_warmup", "ramp_linear"}:
+        if start < 0:
+            start = 0
+        if end <= start:
+            return final_mult if epoch >= start else 0.0
+        if epoch <= start:
+            return 0.0
+        if epoch >= end:
+            return final_mult
+        progress = (epoch - start) / float(end - start)
+        return progress * final_mult
+
     if mode == "none" or start < 0:
         return 1.0
     if mode == "step":
@@ -85,6 +97,25 @@ def compute_kd_multiplier(
         return final_mult + (1.0 - final_mult) * cosine
 
     raise ValueError(f"Unsupported ladd_kd_decay_mode={decay_mode}")
+
+
+def is_kd_warmup_active(
+    *,
+    phase: str,
+    epoch_1based: int,
+    decay_mode: str = "none",
+    decay_end_epoch: int = -1,
+) -> bool:
+    """Return whether the configured B-phase KD warmup has not reached full strength yet."""
+    if str(phase).lower() != "b":
+        return False
+    mode = str(decay_mode or "none").lower()
+    if mode not in {"warmup", "warmup_linear", "linear_warmup", "ramp_linear"}:
+        return False
+    end = int(decay_end_epoch)
+    if end < 0:
+        return False
+    return int(epoch_1based) < end
 
 
 def is_det_only_phase(*, phase: str, ladd_b_det_only: bool = False, ladd_a2_det_only: bool = False) -> bool:
@@ -122,6 +153,7 @@ def compute_effective_ladd_weights(
 ) -> dict[str, float]:
     """Compute the tracked effective LADD weights for diagnostics and runtime application."""
     weights = {key: float(base_weights.get(key, 0.0)) for key in TRACKED_LADD_WEIGHT_KEYS}
+    base_alpha_kd = float(base_weights.get("alpha_kd", 0.0))
     kd_multiplier = compute_kd_multiplier(
         phase=phase,
         epoch_1based=epoch_1based,
@@ -132,8 +164,18 @@ def compute_effective_ladd_weights(
         stop_after_epoch=stop_after_epoch,
     )
     weights["alpha_kd"] *= kd_multiplier
+    weights["base_alpha_kd"] = base_alpha_kd
     if is_det_only_phase(phase=phase, ladd_b_det_only=ladd_b_det_only, ladd_a2_det_only=ladd_a2_det_only):
         for key in weights:
-            weights[key] = 0.0
+            if key != "base_alpha_kd":
+                weights[key] = 0.0
     weights["kd_multiplier"] = kd_multiplier
+    weights["kd_warmup_active"] = float(
+        is_kd_warmup_active(
+            phase=phase,
+            epoch_1based=epoch_1based,
+            decay_mode=decay_mode,
+            decay_end_epoch=decay_end_epoch,
+        )
+    )
     return weights

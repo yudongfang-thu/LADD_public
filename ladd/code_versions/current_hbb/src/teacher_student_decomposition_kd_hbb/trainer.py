@@ -1280,8 +1280,10 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             f"freeze_bn_after_epoch={int(self.diagnostic_cfg.get('freeze_bn_after_epoch', -1))} "
             f"ladd_assert_phase_freeze={bool(self.diagnostic_cfg.get('ladd_assert_phase_freeze', False))} "
             f"alpha_kd={float(self.tskd_cfg['alpha_kd'])} "
+            f"base_alpha_kd={float(weights.get('base_alpha_kd', self.tskd_cfg['alpha_kd']))} "
             f"effective_alpha_kd={float(weights.get('alpha_kd', 0.0))} "
             f"kd_multiplier={float(weights.get('kd_multiplier', 1.0))} "
+            f"kd_warmup_active={bool(weights.get('kd_warmup_active', 0.0))} "
             f"ladd_kd_decay_mode={self.diagnostic_cfg.get('ladd_kd_decay_mode', 'none')} "
             f"ladd_kd_decay_start_epoch={int(self.diagnostic_cfg.get('ladd_kd_decay_start_epoch', -1))} "
             f"ladd_kd_decay_end_epoch={int(self.diagnostic_cfg.get('ladd_kd_decay_end_epoch', -1))} "
@@ -1492,8 +1494,10 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             "bn_stats_frozen_this_epoch": int(self._should_freeze_bn_stats()),
             "nan_or_inf_detected": int(self._has_nonfinite(list(metrics.values()) + list(bn_stats.values()))),
             **grad_stats,
+            "base_alpha_kd": float(weights.get("base_alpha_kd", self.tskd_cfg["alpha_kd"])),
             "effective_alpha_kd": float(weights.get("alpha_kd", 0.0)),
             "kd_multiplier": float(weights.get("kd_multiplier", 1.0)),
+            "kd_warmup_active": int(bool(weights.get("kd_warmup_active", 0.0))),
             "ladd_kd_decay_mode": self.diagnostic_cfg.get("ladd_kd_decay_mode", "none"),
             "ladd_kd_decay_start_epoch": int(self.diagnostic_cfg.get("ladd_kd_decay_start_epoch", -1)),
             "ladd_kd_decay_end_epoch": int(self.diagnostic_cfg.get("ladd_kd_decay_end_epoch", -1)),
