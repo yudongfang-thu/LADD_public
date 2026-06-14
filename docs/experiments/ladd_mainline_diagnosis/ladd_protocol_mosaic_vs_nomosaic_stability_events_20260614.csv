@@ -1,0 +1,6 @@
+group_id,protocol,variant,attempted_runs,attempted_unique_seeds,healthy_complete_runs,healthy_complete_unique_seeds,nan_crash_runs,late_regression_runs,other_noncomplete_runs,statuses,use_in_performance_mean
+mosaic100_cap2_normal_bn,mosaic100_close100,cap2 normal BN,3,3,3,3,0,0,0,mosaic_cap2_s0:complete;mosaic_cap2_s42:complete;mosaic_cap2_s123:complete,only healthy_complete_runs
+mosaic100_legacy_normal_bn,mosaic100_close100,legacy normal BN,3,3,3,3,0,0,0,mosaic_legacy_s0:complete;mosaic_legacy_s42:complete;mosaic_legacy_s123:complete,only healthy_complete_runs
+nomosaic_cap2_normal_bn_attempts,formal_nomosaic_800,cap2 normal BN attempts,4,3,2,2,1,1,0,nomosaic_cap2_s0_a2mu:complete;nomosaic_cap2_s42_a2mu:complete;nomosaic_cap2_s123_old_crash:nan_crash;nomosaic_cap2_s123_bstable:late_regression,only healthy_complete_runs
+nomosaic_cap2_bnfreeze,formal_nomosaic_800,cap2 BN-freeze,3,3,3,3,0,0,0,nomosaic_cap2_s0_bnfreeze:complete;nomosaic_cap2_s42_bnfreeze:complete;nomosaic_cap2_s123_bnfreeze:complete,only healthy_complete_runs
+nomosaic_original_seed0,formal_nomosaic_800,original normal BN,1,1,1,1,0,0,0,nomosaic_original_s0:complete,only healthy_complete_runs

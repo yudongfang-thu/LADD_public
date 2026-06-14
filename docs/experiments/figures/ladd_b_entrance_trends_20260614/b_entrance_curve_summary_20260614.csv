@@ -1,0 +1,9 @@
+run,model,epochs,best,best_epoch,last,best_final_drop,last20_slope_per_epoch,source
+N1 baseline cont.,n,100,0.56615,99,0.56594,0.00021,0.000053,ladd/results/b_entrance_20260613/evidence/ladd4090/N1_basecontinue_b100/run_files/results.csv
+N2 A2-best cont.,n,100,0.55872,100,0.55872,0.00000,0.000101,ladd/results/b_entrance_20260613/evidence/ladd4090/N2_a2best_continue_b100/run_files/results.csv
+N3 SAR-base + A2-last decomp,n,100,0.55722,100,0.55722,0.00000,0.000106,ladd/results/b_entrance_20260613/evidence/ladd4090/N3_base_a2last_decomp_b100/run_files/results.csv
+N4 N3 + KD ramp,n,120,0.56379,113,0.56311,0.00068,-0.000010,ladd/results/b_entrance_20260613/evidence/ladd4090/N4_base_a2last_kdramp_b120/run_files/results.csv
+S1 baseline cont.,s,100,0.62493,62,0.62238,0.00255,-0.000047,ladd/results/b_entrance_20260613/evidence/autodl/S1_basecontinue_b100_autodl/run_files/results.csv
+S2 A2-best cont.,s,100,0.62599,54,0.62174,0.00425,-0.000048,ladd/results/b_entrance_20260613/evidence/ladd4090/S2_a2best_continue_b100_retry2_running/run_files/results.csv
+S3 SAR-base + A2-last decomp,s,100,0.62553,65,0.62262,0.00291,-0.000062,ladd/results/b_entrance_20260613/evidence/ladd4090/S3_base_a2last_decomp_b100/run_files/results.csv
+S4 S3 + KD ramp,s,120,0.62521,62,0.62111,0.00410,-0.000039,docs/experiments/figures/ladd_b_entrance_trends_20260614/source/S4_latest_results.csv

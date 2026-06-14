@@ -1,0 +1,12 @@
+host=p-fc024d48c0fa-ackcs-00gjh35x
+date=Sun Jun 14 21:07:33 CST 2026
+repo=/root/shared-nvme/LADD_public
+commit=
+branch=
+[gpu]
+0, NVIDIA GeForce RTX 4090, 1, 24564, 0
+1, NVIDIA GeForce RTX 4090, 1, 24564, 0
+
+[training_processes]
+   1665    1563 S     9-23:28:58  0.0  0.0 /base/mambaforge/bin/python3.10 /base/mambaforge/bin/supervisord -n
+   1708    1675 Sl    9-23:28:57  0.1  0.0 /base/mambaforge/bin/python3.10 /base/mambaforge/bin/jupyter-lab --ip 0.0.0.0 --port 1888 --no-browser --ServerApp.root_dir=/root --ServerApp.allow_root=True --IdentityProvider.token=863dd59590992b8cc83156f1e10360b1

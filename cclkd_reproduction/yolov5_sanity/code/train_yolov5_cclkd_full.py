@@ -67,6 +67,10 @@ DIAG_FIELDS = (
     "cop_class1_count",
     "cop_class2_count",
     "neg_candidates_mean",
+    "ccl_pos_sim",
+    "ccl_neg_sim",
+    "ccl_margin",
+    "ccl_valid_classes",
     "temperature_mean",
     "temperature_min",
     "temperature_max",
@@ -528,6 +532,8 @@ def train(hyp, opt, device, callbacks):
                                 nc=nc,
                                 atkd_weight=atkd_weight,
                                 ccl_weight=ccl_weight,
+                                ccl_source=opt.cclkd_ccl_source,
+                                ccl_pair_mode=opt.cclkd_ccl_pair_mode,
                             )
                         else:
                             kd_loss, kd_items = raw_proxy_full_loss(student_preds, teacher_preds, targets, compute_student_loss)
@@ -612,7 +618,7 @@ def train(hyp, opt, device, callbacks):
         write_diagnostics_csv(save_dir / "cclkd_yolov5_diagnostics.csv", diag_row)
         LOGGER.info(
             "diagnostics: mode=%s cop_positive_ratio=%.4g kd_to_student_det_ratio=%.4g "
-            "lld=%.4g fld=%.4g rld=%.4g ccl=%.4g",
+            "lld=%.4g fld=%.4g rld=%.4g ccl=%.4g ccl_margin=%.4g",
             mode,
             float(diag_row.get("cop_positive_ratio", 0.0) or 0.0),
             float(diag_row.get("kd_to_student_det_ratio", 0.0) or 0.0),
@@ -620,6 +626,7 @@ def train(hyp, opt, device, callbacks):
             float(diag_row.get("fld_loss", 0.0) or 0.0),
             float(diag_row.get("rld_loss", 0.0) or 0.0),
             float(diag_row.get("ccl_loss", 0.0) or 0.0),
+            float(diag_row.get("ccl_margin", 0.0) or 0.0),
         )
 
         if student_feature_capture is not None:
@@ -691,6 +698,20 @@ def parse_args():
     parser.add_argument("--kd-warmup-epochs", type=int, default=3)
     parser.add_argument("--atkd-weight", type=float, default=None)
     parser.add_argument("--ccl-weight", type=float, default=None)
+    parser.add_argument(
+        "--cclkd-ccl-source",
+        choices=("box_proxy", "box_class", "roi_feature"),
+        default="box_class",
+        help="CCL candidate representation. box_proxy reproduces the legacy xywh-only path; "
+        "box_class adds objectness/class-j conditioning; roi_feature uses box-sampled Detect-input features.",
+    )
+    parser.add_argument(
+        "--cclkd-ccl-pair-mode",
+        choices=("paper_pair", "anchor_teacher_neg"),
+        default="anchor_teacher_neg",
+        help="paper_pair compares teacher-student positive sets against teacher-student non-target sets; "
+        "anchor_teacher_neg pushes student positives away from teacher negatives.",
+    )
     parser.add_argument("--mode", choices=MODES, default="paper_full")
     parser.add_argument("--allow-raw-proxy", action="store_true")
     parser.add_argument("--max-train-batches", type=int, default=-1)

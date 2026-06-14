@@ -1,0 +1,19 @@
+## HalluciDet-n AutoDL
+epochs=641, last_epoch=640, last_mAP50-95=0.407769, best_mAP50-95=0.414556@636, last_mAP50=0.728013
+last_losses train=47.2419, val=55.9398, box=1.3742, cls=0.6752, dfl=0.9051
+window_25: start_epoch=616, start=0.409237, end=0.407769, raw_gain=-0.001468, slope_per_epoch=0.00006309, slope_per_100ep=0.00631
+window_50: start_epoch=591, start=0.404524, end=0.407769, raw_gain=0.003246, slope_per_epoch=0.00011216, slope_per_100ep=0.01122
+window_100: start_epoch=541, start=0.392210, end=0.407769, raw_gain=0.015559, slope_per_epoch=0.00015908, slope_per_100ep=0.01591
+window_200: start_epoch=441, start=0.361104, end=0.407769, raw_gain=0.046666, slope_per_epoch=0.00023821, slope_per_100ep=0.02382
+avg_delta_last50_vs_prev50: 0.007790
+avg_delta_last100_vs_prev100: 0.023919
+
+## HalluciDet-s Dual4090
+epochs=347, last_epoch=346, last_mAP50-95=0.365077, best_mAP50-95=0.365647@333, last_mAP50=0.667336
+last_losses train=53.1295, val=58.8261, box=1.5573, cls=0.7964, dfl=0.9695
+window_25: start_epoch=322, start=0.352619, end=0.365077, raw_gain=0.012458, slope_per_epoch=0.00023947, slope_per_100ep=0.02395
+window_50: start_epoch=297, start=0.350668, end=0.365077, raw_gain=0.014409, slope_per_epoch=0.00031755, slope_per_100ep=0.03176
+window_100: start_epoch=247, start=0.324081, end=0.365077, raw_gain=0.040996, slope_per_epoch=0.00044355, slope_per_100ep=0.04436
+window_200: start_epoch=147, start=0.252746, end=0.365077, raw_gain=0.112331, slope_per_epoch=0.00056067, slope_per_100ep=0.05607
+avg_delta_last50_vs_prev50: 0.022512
+avg_delta_last100_vs_prev100: 0.056721

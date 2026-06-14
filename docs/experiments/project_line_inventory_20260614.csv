@@ -1,0 +1,4 @@
+line_id,line_name,primary_question,primary_dirs,canonical_status_doc,raw_evidence_roots,current_action
+cclkd_reproduction,CCLKD 复现消融线,CCLKD paper formulation 是否复现/受控对比是否可用,"cclkd_reproduction/; comparison/cclkd/","docs/experiments/cclkd_reproduction/CCLKD_LINE_STATUS_20260614_CN.md","cclkd_reproduction/diagnostics/; cclkd_reproduction/yolov5_sanity/results/","分离 YOLOv5x paper gate 与 YOLO11 controlled comparison"
+comparison_methods,其他对比方法线,FGD/LD/HalluciDet/CCLKD 作为外部对照是否协议匹配,"comparison/","docs/experiments/comparison_methods/COMPARISON_LINE_STATUS_20260614_CN.md","comparison/results_shutdown_sync_20260614/","按 registry 核验 LD/FGD/HalluciDet 的完成度和可比性"
+ladd_mainline_diagnosis,LADD 主线诊断线,LADD 历史健康主线与近期崩溃/平台差异来自哪里,"ladd/code/; ladd/results/; docs/experiments/","docs/experiments/ladd_mainline_diagnosis/LADD_LINE_FORENSIC_MAP_20260614_CN.md","ladd/results/*; remote_backups/","暂停新实验，做 forensic review 和配置/loss diff"

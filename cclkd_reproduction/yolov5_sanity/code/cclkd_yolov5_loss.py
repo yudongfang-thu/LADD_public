@@ -263,6 +263,70 @@ def contrastive_loss(student_box_probs, teacher_box_probs, pos_mask, neg_mask, t
     return -F.log_softmax(logits, dim=0)[0]
 
 
+def class_conditioned_box_vectors(vectors: torch.Tensor, class_id: int) -> torch.Tensor:
+    """Class-conditioned candidate-box representation for YOLOv5 CCL.
+
+    The legacy CCL path used only xywh logits, so positive and negative sets
+    could have nearly identical cosine similarity. This representation injects
+    objectness and the class-j probability into the localization vector, which
+    better matches the paper's category-constrained candidate distributions.
+    """
+
+    box = vectors[:, :4].sigmoid()
+    obj = vectors[:, 4:5].sigmoid() if vectors.shape[1] > 4 else torch.ones_like(box[:, :1])
+    if vectors.shape[1] > 5 + class_id:
+        cls_prob = vectors[:, 5 + class_id : 6 + class_id].sigmoid()
+    else:
+        cls_prob = torch.ones_like(obj)
+    return torch.cat((box * obj * cls_prob, obj * cls_prob, cls_prob), dim=1)
+
+
+def contrastive_pair_loss(
+    student_vectors: torch.Tensor,
+    teacher_vectors: torch.Tensor,
+    pos_mask: torch.Tensor,
+    neg_mask: torch.Tensor,
+    tau: float = 0.1,
+    pair_mode: str = "anchor_teacher_neg",
+):
+    """InfoNCE-style CCL over candidate vectors.
+
+    `paper_pair` follows the extracted Algorithm 2 literally: positive
+    teacher-student candidates compete against non-target teacher-student
+    candidates. `anchor_teacher_neg` is the practical category-discriminative
+    variant suggested by the paper text: student positives are pulled toward
+    teacher positives and pushed away from teacher negatives.
+    """
+
+    if pos_mask.sum() == 0 or neg_mask.sum() == 0:
+        zero = student_vectors.new_zeros(())
+        return zero, zero.detach(), zero.detach()
+    s = F.normalize(student_vectors, dim=-1, eps=1e-6)
+    t = F.normalize(teacher_vectors.detach(), dim=-1, eps=1e-6)
+    pos_sim_each = (s[pos_mask] * t[pos_mask]).sum(dim=-1)
+    if pair_mode == "paper_pair":
+        neg_sim_each = (s[neg_mask] * t[neg_mask]).sum(dim=-1)
+        pos_sim = pos_sim_each.mean()
+        neg_sim = neg_sim_each.mean()
+        logits = torch.stack((pos_sim, neg_sim), dim=0) / max(float(tau), 1e-6)
+        return -F.log_softmax(logits, dim=0)[0], pos_sim.detach(), neg_sim.detach()
+    if pair_mode != "anchor_teacher_neg":
+        raise ValueError(f"Unknown CCL pair_mode: {pair_mode!r}")
+
+    n = min(int(pos_mask.sum().item()), int(neg_mask.sum().item()), 256)
+    if n <= 0:
+        zero = student_vectors.new_zeros(())
+        return zero, zero.detach(), zero.detach()
+    pos_idx = torch.where(pos_mask)[0]
+    neg_idx = torch.where(neg_mask)[0]
+    pos_idx = pos_idx[torch.randperm(pos_idx.numel(), device=pos_idx.device)[:n]]
+    neg_idx = neg_idx[torch.randperm(neg_idx.numel(), device=neg_idx.device)[:n]]
+    pos_sim = (s[pos_idx] * t[pos_idx]).sum(dim=-1)
+    neg_sim = (s[pos_idx] * t[neg_idx]).sum(dim=-1)
+    logits = torch.stack((pos_sim, neg_sim), dim=-1) / max(float(tau), 1e-6)
+    return -F.log_softmax(logits, dim=-1)[:, 0].mean(), pos_sim.mean().detach(), neg_sim.mean().detach()
+
+
 def _zero_outputs(
     device_tensor,
     nc: int,
@@ -287,6 +351,10 @@ def _zero_outputs(
         "cop_class1_count": 0.0,
         "cop_class2_count": 0.0,
         "neg_candidates_mean": 0.0,
+        "ccl_pos_sim": 0.0,
+        "ccl_neg_sim": 0.0,
+        "ccl_margin": 0.0,
+        "ccl_valid_classes": 0.0,
         "temperature_mean": 0.0,
         "temperature_min": 0.0,
         "temperature_max": 0.0,
@@ -314,7 +382,13 @@ def cclkd_paper_loss(
     roi_grid_size: int = 3,
     atkd_weight: float = 1.0,
     ccl_weight: float = 1.0,
+    ccl_source: str = "box_class",
+    ccl_pair_mode: str = "anchor_teacher_neg",
 ):
+    if ccl_source not in {"box_proxy", "box_class", "roi_feature"}:
+        raise ValueError(f"Unknown CCL source: {ccl_source!r}")
+    if ccl_pair_mode not in {"paper_pair", "anchor_teacher_neg"}:
+        raise ValueError(f"Unknown CCL pair mode: {ccl_pair_mode!r}")
     candidates = collect_yolov5_positive_candidates(student_preds, targets, student_loss)
     teacher_vectors = positive_vectors(teacher_preds, candidates.indices).detach()
     student_feature_levels = len(student_features)
@@ -361,6 +435,8 @@ def cclkd_paper_loss(
     temperatures = []
     class_weights = []
     ccl_terms = []
+    ccl_pos_sims = []
+    ccl_neg_sims = []
     neg_counts = []
 
     include_atkd = atkd_weight != 0.0
@@ -383,8 +459,8 @@ def cclkd_paper_loss(
             fld = fld + feature_kl(student_sampled, teacher_sampled, class_pos, temperature)
             rld = rld + relationship_loss(student_sampled, teacher_sampled, class_pos, temperature)
         if include_ccl and class_neg.sum() > 0:
-            ccl_terms.append(
-                contrastive_loss(
+            if ccl_source == "box_proxy":
+                ccl_term = contrastive_loss(
                     student_box_probs,
                     teacher_box_probs,
                     class_pos,
@@ -392,7 +468,29 @@ def cclkd_paper_loss(
                     temperature,
                     tau=contrastive_temperature,
                 )
+                zero_sim = ccl_term.detach().new_zeros(())
+                pos_sim = zero_sim
+                neg_sim = zero_sim
+            else:
+                if ccl_source == "box_class":
+                    ccl_student_vectors = class_conditioned_box_vectors(candidates.vectors, cls)
+                    ccl_teacher_vectors = class_conditioned_box_vectors(teacher_vectors, cls)
+                else:
+                    ccl_student_vectors = student_sampled
+                    ccl_teacher_vectors = teacher_sampled
+                ccl_term, pos_sim, neg_sim = contrastive_pair_loss(
+                    ccl_student_vectors,
+                    ccl_teacher_vectors,
+                    class_pos,
+                    class_neg,
+                    tau=contrastive_temperature,
+                    pair_mode=ccl_pair_mode,
+                )
+            ccl_terms.append(
+                ccl_term
             )
+            ccl_pos_sims.append(pos_sim)
+            ccl_neg_sims.append(neg_sim)
             class_weights.append(1.0 / class_pos.sum().detach().float().clamp_min(1.0))
 
     class_count = max(len(temperatures), 1)
@@ -413,6 +511,9 @@ def cclkd_paper_loss(
     finite_tensors = torch.stack((total.detach(), lld.detach(), fld.detach(), rld.detach(), ccl.detach()))
     nan_or_inf = float((~torch.isfinite(finite_tensors)).any().item())
     class_counts = cop["class_counts"].detach()
+    ccl_pos_tensor = torch.stack(ccl_pos_sims) if ccl_pos_sims else candidates.vectors.new_zeros(1)
+    ccl_neg_tensor = torch.stack(ccl_neg_sims) if ccl_neg_sims else candidates.vectors.new_zeros(1)
+    ccl_margin_tensor = ccl_pos_tensor - ccl_neg_tensor
     positive_count = float(positive_mask.sum().detach().item())
     valid_count = float(valid_mask.sum().detach().item())
     diagnostics = {
@@ -429,6 +530,10 @@ def cclkd_paper_loss(
         "cop_class1_count": float(class_counts[1].item()) if nc > 1 else 0.0,
         "cop_class2_count": float(class_counts[2].item()) if nc > 2 else 0.0,
         "neg_candidates_mean": float(torch.stack(neg_counts).mean().item()) if neg_counts else 0.0,
+        "ccl_pos_sim": float(ccl_pos_tensor.detach().mean().item()),
+        "ccl_neg_sim": float(ccl_neg_tensor.detach().mean().item()),
+        "ccl_margin": float(ccl_margin_tensor.detach().mean().item()),
+        "ccl_valid_classes": float(len(ccl_terms)),
         "temperature_mean": float(temp_tensor.detach().mean().item()),
         "temperature_min": float(temp_tensor.detach().min().item()),
         "temperature_max": float(temp_tensor.detach().max().item()),

@@ -14,7 +14,6 @@ from __future__ import annotations
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Optional, Tuple
 
 
 class AttentionBlock(nn.Module):
@@ -126,6 +125,8 @@ class HallucinationNetwork(nn.Module):
             nn.Conv2d(base_channels, out_channels, 1),
             nn.Tanh()  # Output in [-1, 1] range
         )
+        self.input_channels = in_channels
+        self.outputs_unit_range = False
 
         self._init_weights()
 
@@ -169,6 +170,47 @@ class HallucinationNetwork(nn.Module):
         return out
 
 
+class OfficialStyleHallucinationNetwork(nn.Module):
+    """
+    HalluciDet-paper-aligned hallucination network.
+
+    The official repository builds a segmentation_models U-Net with an
+    ImageNet-pretrained encoder and a sigmoid output head. This wrapper keeps
+    that behavior optional so existing custom-U-Net checkpoints remain
+    loadable, while allowing an official-style YOLO adaptation probe.
+    """
+
+    def __init__(
+        self,
+        encoder_name: str = "resnet34",
+        encoder_weights: str | None = "imagenet",
+        in_channels: int = 3,
+        out_channels: int = 3,
+    ):
+        super().__init__()
+        try:
+            import segmentation_models_pytorch as smp
+        except ImportError as exc:
+            raise ImportError(
+                "official_unet requires segmentation_models_pytorch. "
+                "Install it on the training server, e.g. `pip install segmentation-models-pytorch`."
+            ) from exc
+
+        self.net = smp.Unet(
+            encoder_name=encoder_name,
+            encoder_weights=encoder_weights,
+            in_channels=in_channels,
+            classes=out_channels,
+            activation=None,
+        )
+        self.output = nn.Sigmoid()
+        self.input_channels = in_channels
+        self.outputs_unit_range = True
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.output(self.net(x))
+
+
 class HalluciDetModel(nn.Module):
     """
     Complete HalluciDet model combining hallucination network and frozen detector
@@ -182,14 +224,20 @@ class HalluciDetModel(nn.Module):
 
     def __init__(
         self,
-        hallucination_net: HallucinationNetwork,
+        hallucination_net: nn.Module,
         rgb_detector: nn.Module,
-        normalize_input: bool = False
+        normalize_input: bool = False,
+        hallucination_input_mode: str = "grayscale",
     ):
         super().__init__()
         self.hallucination_net = hallucination_net
         self.rgb_detector = rgb_detector
         self.normalize_input = normalize_input
+        self.hallucination_input_mode = hallucination_input_mode
+        if self.hallucination_input_mode not in {"grayscale", "replicate3", "rgb"}:
+            raise ValueError(
+                "hallucination_input_mode must be one of: grayscale, replicate3, rgb."
+            )
 
         # Freeze RGB detector
         for param in self.rgb_detector.parameters():
@@ -198,6 +246,57 @@ class HalluciDetModel(nn.Module):
         self.names = getattr(self.rgb_detector, "names", None)
         self.stride = getattr(self.rgb_detector, "stride", None)
         self.args = getattr(self.rgb_detector, "args", None)
+
+    @staticmethod
+    def _to_single_channel(image: torch.Tensor) -> torch.Tensor:
+        if image.shape[1] == 1:
+            return image
+        if image.shape[1] != 3:
+            raise RuntimeError(f"HalluciDet expects 1 or 3 input channels, got {image.shape[1]}.")
+        return 0.299 * image[:, 0:1] + 0.587 * image[:, 1:2] + 0.114 * image[:, 2:3]
+
+    def prepare_hallucination_input(self, sar_image: torch.Tensor) -> torch.Tensor:
+        """Normalize dataloader images and adapt channels for the hallucination net."""
+        sar_image = sar_image.float()
+        if sar_image.numel() and sar_image.max() > 1.5:
+            sar_image = sar_image / 255.0
+
+        if self.normalize_input:
+            raise RuntimeError(
+                "HalluciDetModel no longer supports per-batch min-max normalization. "
+                "Normalize inputs with the dataloader path used for training."
+            )
+
+        if self.hallucination_input_mode == "grayscale":
+            prepared = self._to_single_channel(sar_image)
+        elif self.hallucination_input_mode == "replicate3":
+            prepared = self._to_single_channel(sar_image).repeat(1, 3, 1, 1)
+        else:
+            if sar_image.shape[1] == 1:
+                prepared = sar_image.repeat(1, 3, 1, 1)
+            elif sar_image.shape[1] == 3:
+                prepared = sar_image
+            else:
+                raise RuntimeError(f"HalluciDet expects 1 or 3 input channels, got {sar_image.shape[1]}.")
+
+        expected = getattr(self.hallucination_net, "input_channels", None)
+        if expected is not None and prepared.shape[1] != int(expected):
+            raise RuntimeError(
+                f"Hallucination input mode {self.hallucination_input_mode!r} produced "
+                f"{prepared.shape[1]} channels, but the hallucination network expects {expected}."
+            )
+        return prepared
+
+    def postprocess_hallucination_output(self, hallucinated: torch.Tensor) -> torch.Tensor:
+        """Convert hallucination-net output to the detector's [0, 1] image range."""
+        if getattr(self.hallucination_net, "outputs_unit_range", False):
+            return hallucinated.clamp(0.0, 1.0)
+        return ((hallucinated + 1.0) / 2.0).clamp(0.0, 1.0)
+
+    def hallucinate(self, sar_image: torch.Tensor) -> torch.Tensor:
+        prepared = self.prepare_hallucination_input(sar_image)
+        hallucinated = self.hallucination_net(prepared)
+        return self.postprocess_hallucination_output(hallucinated)
 
     def forward(self, sar_image: torch.Tensor, return_hallucinated: bool = False):
         """
@@ -211,25 +310,7 @@ class HalluciDetModel(nn.Module):
             If return_hallucinated=False: Detection outputs from frozen detector
             If return_hallucinated=True: (detections, hallucinated_image)
         """
-        # Ensure single-channel input
-        sar_image = sar_image.float()
-        if sar_image.numel() and sar_image.max() > 1.5:
-            sar_image = sar_image / 255.0
-        if sar_image.shape[1] == 3:
-            # If input is 3-channel, convert to grayscale
-            sar_image = 0.299 * sar_image[:, 0:1] + 0.587 * sar_image[:, 1:2] + 0.114 * sar_image[:, 2:3]
-
-        if self.normalize_input:
-            raise RuntimeError(
-                "HalluciDetModel no longer supports per-batch min-max normalization. "
-                "Normalize inputs with the dataloader path used for training."
-            )
-
-        # Hallucinate
-        hallucinated = self.hallucination_net(sar_image)  # [-1, 1]
-
-        # Convert to [0, 1] for detector
-        hallucinated = (hallucinated + 1.0) / 2.0
+        hallucinated = self.hallucinate(sar_image)
 
         # Detect with frozen RGB detector
         # Detector is in eval mode and weights are frozen, BUT we don't use no_grad()
@@ -246,6 +327,7 @@ def build_hallucidet(
     in_channels: int = 1,
     base_channels: int = 64,
     use_attention: bool = True,
+    hallucination_input_mode: str = "grayscale",
     device: str = 'cuda'
 ) -> HalluciDetModel:
     """
@@ -276,7 +358,11 @@ def build_hallucidet(
     rgb_detector.eval()
 
     # Build complete model
-    model = HalluciDetModel(hallucination_net, rgb_detector)
+    model = HalluciDetModel(
+        hallucination_net,
+        rgb_detector,
+        hallucination_input_mode=hallucination_input_mode,
+    )
     model.to(device)
 
     return model

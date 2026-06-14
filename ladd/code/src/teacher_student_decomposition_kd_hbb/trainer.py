@@ -860,13 +860,47 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
 
     @staticmethod
     def _load_state_with_report(target, source, *, strict: bool) -> dict:
-        result = target.load_state_dict(source.state_dict(), strict=strict)
+        source_state = source.state_dict()
+        if strict:
+            result = target.load_state_dict(source_state, strict=True)
+            return {
+                "missing_keys": list(getattr(result, "missing_keys", [])),
+                "unexpected_keys": list(getattr(result, "unexpected_keys", [])),
+                "num_tensors": len(source_state),
+                "num_loaded_tensors": len(source_state),
+                "num_shape_mismatch": 0,
+                "shape_mismatch_keys": [],
+            }
+
+        target_state = target.state_dict()
+        compatible_state = {}
+        unexpected = []
+        shape_mismatch = []
+        for key, value in source_state.items():
+            if key not in target_state:
+                unexpected.append(key)
+                continue
+            if tuple(value.shape) != tuple(target_state[key].shape):
+                shape_mismatch.append(
+                    {
+                        "key": key,
+                        "source_shape": list(value.shape),
+                        "target_shape": list(target_state[key].shape),
+                    }
+                )
+                continue
+            compatible_state[key] = value
+
+        result = target.load_state_dict(compatible_state, strict=False)
         missing = list(getattr(result, "missing_keys", []))
-        unexpected = list(getattr(result, "unexpected_keys", []))
+        unexpected = sorted(set(unexpected + list(getattr(result, "unexpected_keys", []))))
         return {
             "missing_keys": missing,
             "unexpected_keys": unexpected,
-            "num_tensors": len(source.state_dict()),
+            "num_tensors": len(source_state),
+            "num_loaded_tensors": len(compatible_state),
+            "num_shape_mismatch": len(shape_mismatch),
+            "shape_mismatch_keys": shape_mismatch,
         }
 
     def _maybe_apply_b_split_load(self) -> None:

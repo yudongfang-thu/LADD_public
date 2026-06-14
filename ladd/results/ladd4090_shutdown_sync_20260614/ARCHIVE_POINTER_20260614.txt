@@ -1,0 +1,18 @@
+ladd4090 shutdown lightweight evidence archive
+================================================
+
+The compressed transfer package was moved outside this Git workspace to avoid
+accidental large-artifact commits.
+
+Local archive path:
+/Users/yudongfang/Desktop/光sar/LADD_public_local_archives/ladd4090_shutdown_sync_20260614/ladd4090_shutdown_lightweight_evidence_20260614.tar.gz
+
+SHA256 file:
+/Users/yudongfang/Desktop/光sar/LADD_public_local_archives/ladd4090_shutdown_sync_20260614/ladd4090_shutdown_lightweight_evidence_20260614.tar.gz.sha256.remote
+
+Extracted lightweight evidence retained in this repository:
+ladd/results/ladd4090_shutdown_sync_20260614/evidence_raw/ladd4090/repo_root_snapshot/
+
+The extracted evidence was checked for .pt/.pth/TensorBoard event/wandb leaks
+when synced on 2026-06-14.
+

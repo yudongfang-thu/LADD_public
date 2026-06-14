@@ -129,8 +129,78 @@ Four files follow the standard pattern:
 
 Launch scripts that invoke the LADD trainer with `--comparison-kd-profile` set to one of the four controlled methods. Formal launchers reject archived profiles.
 
+## Testing and validation
+
+### Running tests
+
+```bash
+pytest tests/  # Run all tests
+pytest tests/test_ladd_bn_freeze.py  # Test BN freeze behavior
+pytest tests/test_ladd_kd_schedule.py  # Test KD schedule warmup
+pytest tests/test_ladd_h1_diagnostics.py  # Test H1 diagnostic logging
+```
+
+### Result analysis tools
+
+Located in `tools/`:
+
+- **`check_ladd_warmup_smoke.py`** — Verify warmup schedule correctness in diagnostics CSV
+  ```bash
+  python tools/check_ladd_warmup_smoke.py \
+    --diagnostics runs/.../ladd_diagnostics.csv \
+    --mode core --start 0 --end 10
+  ```
+- **`summarize_ladd_diag_runs.py`** — Aggregate LADD diagnostic runs into comparison tables
+- **`summarize_ladd_capacity_diag.py`** — Generate capacity diagnostic summaries across model sizes
+- **`build_experiment_registry.py`** — Build experiment registry from run directories
+
+## Documentation structure
+
+Primary docs in `docs/`:
+
+- **`docs/README_CN.md`** — Documentation index and quick navigation
+- **`docs/experiments/BASELINE_LADD_STATUS_CN.md`** — Current baseline and LADD result ledger
+- **`docs/experiments/EXPERIMENT_INDEX_CN.md`** — Full experiment index
+- **`docs/experiments/COMPARISON_METHODS_RECORD_CN.md`** — Comparison method sources and DOIs
+- **`docs/method/METHOD_OVERVIEW_CN.md`** — LADD method overview
+
+Top-level docs:
+
+- **`README.md`** — High-level project overview and directory map
+- **`PACKAGE_AUDIT_CN.md`** — What is included/excluded and evidence block locations
+- **`AGENTS.md`** — Legacy agent guidance file (similar to CLAUDE.md)
+
+## Environment setup
+
+Before first run, configure dataset paths in `shared/configs/datasets_public/ogsod1_*.yaml` or run:
+
+```bash
+bash scripts/prepare_server_runtime.sh <dataset-root> <asset-root>
+```
+
+All commands run from repo root. Python path injection happens automatically in training scripts.
+
+## Dependencies
+
+This project vendors Ultralytics YOLO and relies on PyTorch. Key dependencies:
+- PyTorch (with CUDA support for GPU training)
+- Ultralytics framework (vendored in `shared/yolo/ultralytics/`)
+- pytest (for running tests)
+- Standard scientific Python stack (numpy, opencv, albumentations for augmentation)
+
+No separate requirements.txt — the vendored YOLO code is self-contained.
+
 ## Known issues (current debugging focus)
 
 1. **B-stage collapse**: LADD B phase shows late-training degradation on some seeds/machines — likely BN running stats pollution. Fix attempt: `FREEZE_BN_STATS=1`.
 2. **CCLKD reproduction gap**: Old CCLKD runs before 2026-06-06 used an incorrect CCL formulation and are diagnostic only. Current CCL uses neck features and per-sampled negative similarity.
 3. **4090D vs 90 divergence**: YOLO11s LADD results significantly lower on 4090D than on server 90 — protocol/implementation divergence under investigation.
+4. **Invalid dual-4090 runs**: Runs with `nc=5` yaml error (before 2026-06-05) are invalid and excluded from formal results.
+
+## Important conventions
+
+- **No checkpoint weights in git**: All `.pt`/`.pth` files are gitignored. Results are tracked via compact summaries in `*/results/` directories.
+- **Run from repo root**: All training commands and scripts assume execution from the repository root.
+- **Chinese documentation**: Most documentation is in Chinese (`*_CN.md` files).
+- **Deterministic training**: Formal runs use `--deterministic` and `--seed` for reproducibility.
+- **Multi-phase training**: LADD uses a 4-phase training scheme (a1, a2, b, c) with phase-specific freezing and loss schedules.

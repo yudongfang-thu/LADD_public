@@ -17,6 +17,8 @@ Environment:
   CCLKD_YOLOV5_KD_WEIGHT           outer KD scale (default: 1.0)
   CCLKD_YOLOV5_ATKD_WEIGHT         optional ATKD weight override
   CCLKD_YOLOV5_CCL_WEIGHT          optional CCL weight override
+  CCLKD_YOLOV5_CCL_SOURCE          box_proxy|box_class|roi_feature (default: box_class)
+  CCLKD_YOLOV5_CCL_PAIR_MODE       paper_pair|anchor_teacher_neg (default: anchor_teacher_neg)
   CCLKD_YOLOV5_KD_WARMUP_EPOCHS    KD warmup epochs (default: 3)
   CCLKD_YOLOV5_TEACHER_DET_WEIGHT  teacher detection loss weight (default: 1.0)
   ALLOW_RAW_PROXY      1 to allow raw_proxy_full/current_full (default: 0)
@@ -53,6 +55,8 @@ CCLKD_YOLOV5_COS_LR="${CCLKD_YOLOV5_COS_LR:-0}"
 CCLKD_YOLOV5_KD_WEIGHT="${CCLKD_YOLOV5_KD_WEIGHT:-1.0}"
 CCLKD_YOLOV5_ATKD_WEIGHT="${CCLKD_YOLOV5_ATKD_WEIGHT:-}"
 CCLKD_YOLOV5_CCL_WEIGHT="${CCLKD_YOLOV5_CCL_WEIGHT:-}"
+CCLKD_YOLOV5_CCL_SOURCE="${CCLKD_YOLOV5_CCL_SOURCE:-box_class}"
+CCLKD_YOLOV5_CCL_PAIR_MODE="${CCLKD_YOLOV5_CCL_PAIR_MODE:-anchor_teacher_neg}"
 CCLKD_YOLOV5_KD_WARMUP_EPOCHS="${CCLKD_YOLOV5_KD_WARMUP_EPOCHS:-3}"
 CCLKD_YOLOV5_TEACHER_DET_WEIGHT="${CCLKD_YOLOV5_TEACHER_DET_WEIGHT:-1.0}"
 ALLOW_RAW_PROXY="${ALLOW_RAW_PROXY:-0}"
@@ -69,6 +73,8 @@ esac
 case "$CCLKD_YOLOV5_COS_LR" in 0|1) ;; *) echo "Invalid CCLKD_YOLOV5_COS_LR: $CCLKD_YOLOV5_COS_LR" >&2; exit 2 ;; esac
 case "$SKIP_VAL" in 0|1) ;; *) echo "Invalid SKIP_VAL: $SKIP_VAL" >&2; exit 2 ;; esac
 case "$ALLOW_RAW_PROXY" in 0|1) ;; *) echo "Invalid ALLOW_RAW_PROXY: $ALLOW_RAW_PROXY" >&2; exit 2 ;; esac
+case "$CCLKD_YOLOV5_CCL_SOURCE" in box_proxy|box_class|roi_feature) ;; *) echo "Invalid CCLKD_YOLOV5_CCL_SOURCE: $CCLKD_YOLOV5_CCL_SOURCE" >&2; exit 2 ;; esac
+case "$CCLKD_YOLOV5_CCL_PAIR_MODE" in paper_pair|anchor_teacher_neg) ;; *) echo "Invalid CCLKD_YOLOV5_CCL_PAIR_MODE: $CCLKD_YOLOV5_CCL_PAIR_MODE" >&2; exit 2 ;; esac
 
 if [[ "$CCLKD_YOLOV5_MODE" == "current_full" || "$CCLKD_YOLOV5_MODE" == "raw_proxy_full" ]]; then
   if [[ "$ALLOW_RAW_PROXY" != "1" ]]; then
@@ -111,6 +117,8 @@ CMD=(
   --teacher-det-weight "$CCLKD_YOLOV5_TEACHER_DET_WEIGHT"
   --kd-weight "$CCLKD_YOLOV5_KD_WEIGHT"
   --kd-warmup-epochs "$CCLKD_YOLOV5_KD_WARMUP_EPOCHS"
+  --cclkd-ccl-source "$CCLKD_YOLOV5_CCL_SOURCE"
+  --cclkd-ccl-pair-mode "$CCLKD_YOLOV5_CCL_PAIR_MODE"
   --mode "$CCLKD_YOLOV5_MODE"
   --max-train-batches "$MAX_TRAIN_BATCHES"
   --exist-ok
@@ -168,6 +176,8 @@ mkdir -p "$RUN_DIR"
   echo "kd_weight=$CCLKD_YOLOV5_KD_WEIGHT"
   echo "atkd_weight=$CCLKD_YOLOV5_ATKD_WEIGHT"
   echo "ccl_weight=$CCLKD_YOLOV5_CCL_WEIGHT"
+  echo "ccl_source=$CCLKD_YOLOV5_CCL_SOURCE"
+  echo "ccl_pair_mode=$CCLKD_YOLOV5_CCL_PAIR_MODE"
   echo "kd_warmup_epochs=$CCLKD_YOLOV5_KD_WARMUP_EPOCHS"
   echo "teacher_det_weight=$CCLKD_YOLOV5_TEACHER_DET_WEIGHT"
   echo "allow_raw_proxy=$ALLOW_RAW_PROXY"

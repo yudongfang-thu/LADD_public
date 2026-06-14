@@ -1,0 +1,4 @@
+YOLO11n AutoDL: epochs=629, last_epoch=628, last_mAP50-95=0.41033, best=0.41160@600, first50_avg=0.10989, prev100_avg=0.37633, last100_avg=0.40147, last100_delta=0.02514
+  last losses: train/loss=47.4246, val/loss=56.0112, box=1.3832, cls=0.6774, dfl=0.9054, mAP50=0.73468
+YOLO11s Dual4090: epochs=332, last_epoch=331, last_mAP50-95=0.36217, best=0.36554@330, first50_avg=0.12299, prev100_avg=0.27711, last100_avg=0.33744, last100_delta=0.06032
+  last losses: train/loss=53.7908, val/loss=59.2596, box=1.5785, cls=0.8144, dfl=0.9708, mAP50=0.66628

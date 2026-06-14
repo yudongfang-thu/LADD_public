@@ -1,0 +1,8 @@
+estimate,epoch,ap,delta_ap_vs_det
+atkd_observed_epoch287,287,0.38994,0.01314
+atkd_epoch399_flat_latest_delta_conservative,399,0.45302,0.01314
+atkd_epoch399_linear_delta_from_200_287_main,399,0.459537,0.019657
+atkd_epoch399_recent_delta_from_237_287_aggressive,399,0.465013,0.025133
+full_epoch399_projected_delta_from_300_392,399,0.448195,0.008315
+ccl_observed_epoch399,399,0.44348,0.0036
+det_only_observed_epoch399,399,0.43988,0.0

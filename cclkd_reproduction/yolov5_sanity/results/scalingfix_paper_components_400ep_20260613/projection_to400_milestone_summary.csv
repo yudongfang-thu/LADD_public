@@ -1,0 +1,5 @@
+epoch,det_only_ap,ccl_ap,ccl_delta_ap,atkd_ap,atkd_delta_ap,atkd_status,full_ap,full_delta_ap,full_status,best_ap,best_method
+287,0.3768,0.38386,0.00706,0.38994,0.01314,observed,0.38504,0.00824,observed,0.38994,atkd
+300,0.38416,0.39227,0.00811,0.397651,0.013491,projected_delta_from_200_287,0.3934,0.00924,observed,0.397651,atkd
+350,0.41471,0.42223,0.00752,0.431315,0.016605,projected_delta_from_200_287,0.42415,0.00944,observed,0.431315,atkd
+399,0.43988,0.44348,0.0036,0.459537,0.019657,projected_delta_from_200_287,0.448195,0.008315,projected_delta_from_300_392,0.459537,atkd

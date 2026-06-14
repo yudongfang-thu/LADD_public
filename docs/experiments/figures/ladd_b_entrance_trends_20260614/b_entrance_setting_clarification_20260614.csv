@@ -1,0 +1,8 @@
+id,actual_detector_init,actual_decomp_init,b_objective,diagnostic,status
+N1/S1,SAR converged baseline best,none / detection-only,"pure detection, B_DET_ONLY=1",control: extra B training benefit,done
+N2/S2,A2 best checkpoint,same A2 best checkpoint,normal LADD B,current mainline A2-best warm start vs baseline continuation,done
+N2-last/S2-last,A2 last checkpoint,same A2 last checkpoint,normal LADD B,missing: whether A2-last is worse/better than A2-best selection,not run
+N3/S3 current,SAR converged baseline best,A2 last teacher_decomp/decoder/task_heads/student_reachability,normal LADD B,effect of A2 decomposition without inheriting A2 detector damage,done but not yolo-init
+N4/S4 current,SAR converged baseline best,A2 last teacher_decomp/decoder/task_heads/student_reachability,normal LADD B + KD-only warmup,whether early B shock is mostly KD,done but not yolo-init
+N3y/S3y desired,YOLO initial/pretrained weights (yolo11n/s.pt),"A2 last selected modules, if split-load supports it",normal LADD B,"desired: from yolo-init detector + A2 decomposition, compare with historical mainline",not run
+N4y/S4y desired,YOLO initial/pretrained weights (yolo11n/s.pt),"A2 last selected modules, if split-load supports it",normal LADD B + KD-only or core warmup variant,desired: whether warmup helps when detector starts from yolo-init,not run
