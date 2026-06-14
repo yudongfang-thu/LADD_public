@@ -8,9 +8,9 @@ Exact epoch matches only. Missing epochs are marked as `pending`; no nearest-epo
 | 100 | 0.26324 | 0.26782 | 0.00458 | 0.26603 | 0.00279 | 0.26901 | 0.00577 | 0.00119 | 0.00298 | full | pre_200_snapshot |
 | 125 | 0.27807 | 0.28386 | 0.00579 | 0.28164 | 0.00357 | 0.28352 | 0.00545 | -0.00034 | 0.00188 | atkd | pre_200_snapshot |
 | 150 | 0.29367 | 0.30024 | 0.00657 | 0.29892 | 0.00525 | 0.29997 | 0.00630 | -0.00027 | 0.00105 | atkd | pre_200_snapshot |
-| 185 | 0.31722 | pending | pending | 0.32023 | 0.00301 | 0.32287 | 0.00565 | pending | 0.00264 | full | pending |
-| 200 | 0.32520 | pending | pending | 0.32936 | 0.00416 | 0.33255 | 0.00735 | pending | 0.00319 | full | pending |
-| 250 | 0.35625 | pending | pending | 0.36116 | 0.00491 | pending | pending | pending | pending | ccl | pending |
-| 300 | 0.38416 | pending | pending | pending | pending | pending | pending | pending | pending | pending | pending |
-| 350 | pending | pending | pending | pending | pending | pending | pending | pending | pending | pending | pending |
-| 399 | pending | pending | pending | pending | pending | pending | pending | pending | pending | pending | pending |
+| 185 | 0.31722 | 0.32360 | 0.00638 | 0.32023 | 0.00301 | 0.32287 | 0.00565 | -0.00073 | 0.00264 | atkd | pre_200_snapshot |
+| 200 | 0.32520 | 0.33383 | 0.00863 | 0.32936 | 0.00416 | 0.33255 | 0.00735 | -0.00128 | 0.00319 | atkd | aligned_snapshot |
+| 250 | 0.35625 | 0.36522 | 0.00897 | 0.36116 | 0.00491 | 0.36360 | 0.00735 | -0.00162 | 0.00244 | atkd | aligned_snapshot |
+| 300 | 0.38416 | pending | pending | 0.39227 | 0.00811 | 0.39340 | 0.00924 | pending | 0.00113 | full | pending |
+| 350 | 0.41471 | pending | pending | 0.42223 | 0.00752 | 0.42415 | 0.00944 | pending | 0.00192 | full | pending |
+| 399 | 0.43988 | pending | pending | 0.44348 | 0.00360 | pending | pending | pending | pending | ccl | pending |

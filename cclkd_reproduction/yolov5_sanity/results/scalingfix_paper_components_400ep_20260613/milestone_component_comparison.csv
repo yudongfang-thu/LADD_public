@@ -3,9 +3,9 @@ epoch,det_only_ap50,det_only_ap,atkd_ap50,atkd_ap,atkd_delta_ap50,atkd_delta_ap,
 100,0.52099,0.26324,0.53451,0.26782,0.01352,0.00458,0.52576,0.26603,0.00477,0.00279,0.53206,0.26901,0.01107,0.00577,0.00119,0.00298,full,pre_200_snapshot
 125,0.54104,0.27807,0.55339,0.28386,0.01235,0.00579,0.54515,0.28164,0.00411,0.00357,0.54914,0.28352,0.00810,0.00545,-0.00034,0.00188,atkd,pre_200_snapshot
 150,0.55895,0.29367,0.57138,0.30024,0.01243,0.00657,0.56775,0.29892,0.00880,0.00525,0.56975,0.29997,0.01080,0.00630,-0.00027,0.00105,atkd,pre_200_snapshot
-185,0.58721,0.31722,pending,pending,pending,pending,0.59192,0.32023,0.00471,0.00301,0.59976,0.32287,0.01255,0.00565,pending,0.00264,full,pending
-200,0.59920,0.32520,pending,pending,pending,pending,0.60038,0.32936,0.00118,0.00416,0.60932,0.33255,0.01012,0.00735,pending,0.00319,full,pending
-250,0.63437,0.35625,pending,pending,pending,pending,0.63427,0.36116,-0.00010,0.00491,pending,pending,pending,pending,pending,pending,ccl,pending
-300,0.66691,0.38416,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending
-350,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending
-399,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending,pending
+185,0.58721,0.31722,0.60080,0.32360,0.01359,0.00638,0.59192,0.32023,0.00471,0.00301,0.59976,0.32287,0.01255,0.00565,-0.00073,0.00264,atkd,pre_200_snapshot
+200,0.59920,0.32520,0.61454,0.33383,0.01534,0.00863,0.60038,0.32936,0.00118,0.00416,0.60932,0.33255,0.01012,0.00735,-0.00128,0.00319,atkd,aligned_snapshot
+250,0.63437,0.35625,0.65129,0.36522,0.01692,0.00897,0.63427,0.36116,-0.00010,0.00491,0.64647,0.36360,0.01210,0.00735,-0.00162,0.00244,atkd,aligned_snapshot
+300,0.66691,0.38416,pending,pending,pending,pending,0.66508,0.39227,-0.00183,0.00811,0.67331,0.39340,0.00640,0.00924,pending,0.00113,full,pending
+350,0.69734,0.41471,pending,pending,pending,pending,0.70044,0.42223,0.00310,0.00752,0.70442,0.42415,0.00708,0.00944,pending,0.00192,full,pending
+399,0.72299,0.43988,pending,pending,pending,pending,0.72411,0.44348,0.00112,0.00360,pending,pending,pending,pending,pending,pending,ccl,pending

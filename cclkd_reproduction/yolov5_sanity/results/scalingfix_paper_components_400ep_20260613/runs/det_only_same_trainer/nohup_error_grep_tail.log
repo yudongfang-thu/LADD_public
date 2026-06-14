@@ -1,2 +1,160 @@
-[34m[1malbumentations: [0m1 validation error for InitSchema
-    For further information visit https://errors.pydantic.dev/2.12/v/missing
+
+    399/399      5.88G    0.03488   0.004499  0.0007299          0          0          0          0          0          0          0          0:  91%|█████████ | 418/459 02:10
+    399/399      5.88G    0.03488   0.004499  0.0007299          0          0          0          0          0          0          0          0:  91%|█████████▏| 419/459 02:10/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:505: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(amp):
+
+    399/399      5.88G    0.03489   0.004497  0.0007315          0          0          0          0          0          0          0          0:  91%|█████████▏| 419/459 02:10
+    399/399      5.88G    0.03489   0.004497  0.0007315          0          0          0          0          0          0          0          0:  92%|█████████▏| 420/459 02:10/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:505: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(amp):
+
+    399/399      5.88G    0.03489     0.0045  0.0007302          0          0          0          0          0          0          0          0:  92%|█████████▏| 420/459 02:10
+    399/399      5.88G    0.03489     0.0045  0.0007302          0          0          0          0          0          0          0          0:  92%|█████████▏| 421/459 02:10/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:505: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(amp):
+
+    399/399      5.88G     0.0349   0.004501  0.0007295          0          0          0          0          0          0          0          0:  92%|█████████▏| 421/459 02:11
+    399/399      5.88G     0.0349   0.004501  0.0007295          0          0          0          0          0          0          0          0:  92%|█████████▏| 422/459 02:11/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:505: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(amp):
+
+    399/399      5.88G    0.03489   0.004501   0.000731          0          0          0          0          0          0          0          0:  92%|█████████▏| 422/459 02:11
+    399/399      5.88G    0.03489   0.004501   0.000731          0          0          0          0          0          0          0          0:  92%|█████████▏| 423/459 02:11/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:505: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(amp):
+
+    399/399      5.88G    0.03489   0.004501  0.0007344          0          0          0          0          0          0          0          0:  92%|█████████▏| 423/459 02:11
+    399/399      5.88G    0.03489   0.004501  0.0007344          0          0          0          0          0          0          0          0:  92%|█████████▏| 424/459 02:11/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:505: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(amp):
+
+    399/399      5.88G    0.03489     0.0045  0.0007336          0          0          0          0          0          0          0          0:  92%|█████████▏| 424/459 02:11
+    399/399      5.88G    0.03489     0.0045  0.0007336          0          0          0          0          0          0          0          0:  93%|█████████▎| 425/459 02:11/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:505: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(amp):
+
+    399/399      5.88G    0.03488   0.004502  0.0007324          0          0          0          0          0          0          0          0:  93%|█████████▎| 425/459 02:12
+    399/399      5.88G    0.03488   0.004502  0.0007324          0          0          0          0          0          0          0          0:  93%|█████████▎| 426/459 02:12/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:505: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(amp):
+
+    399/399      5.88G    0.03487   0.004504  0.0007312          0          0          0          0          0          0          0          0:  93%|█████████▎| 426/459 02:12
+    399/399      5.88G    0.03487   0.004504  0.0007312          0          0          0          0          0          0          0          0:  93%|█████████▎| 427/459 02:12/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:505: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(amp):
+
+    399/399      5.88G    0.03488   0.004504  0.0007318          0          0          0          0          0          0          0          0:  93%|█████████▎| 427/459 02:12
+    399/399      5.88G    0.03488   0.004504  0.0007318          0          0          0          0          0          0          0          0:  93%|█████████▎| 428/459 02:12/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:505: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(amp):
+
+    399/399      5.88G    0.03488   0.004504  0.0007306          0          0          0          0          0          0          0          0:  93%|█████████▎| 428/459 02:13
+    399/399      5.88G    0.03488   0.004504  0.0007306          0          0          0          0          0          0          0          0:  93%|█████████▎| 429/459 02:13/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:505: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(amp):
+
+    399/399      5.88G    0.03488   0.004503  0.0007294          0          0          0          0          0          0          0          0:  93%|█████████▎| 429/459 02:13
+    399/399      5.88G    0.03488   0.004503  0.0007294          0          0          0          0          0          0          0          0:  94%|█████████▎| 430/459 02:13/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:505: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(amp):
+
+    399/399      5.88G    0.03489   0.004503  0.0007287          0          0          0          0          0          0          0          0:  94%|█████████▎| 430/459 02:13
+    399/399      5.88G    0.03489   0.004503  0.0007287          0          0          0          0          0          0          0          0:  94%|█████████▍| 431/459 02:13/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:505: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(amp):
+
+    399/399      5.88G    0.03488   0.004503  0.0007276          0          0          0          0          0          0          0          0:  94%|█████████▍| 431/459 02:14
+    399/399      5.88G    0.03488   0.004503  0.0007276          0          0          0          0          0          0          0          0:  94%|█████████▍| 432/459 02:14/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:505: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(amp):
+
+    399/399      5.88G    0.03486   0.004499  0.0007261          0          0          0          0          0          0          0          0:  94%|█████████▍| 432/459 02:14
+    399/399      5.88G    0.03486   0.004499  0.0007261          0          0          0          0          0          0          0          0:  94%|█████████▍| 433/459 02:14/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:505: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(amp):
+
+    399/399      5.88G    0.03485   0.004497  0.0007249          0          0          0          0          0          0          0          0:  94%|█████████▍| 433/459 02:14
+    399/399      5.88G    0.03485   0.004497  0.0007249          0          0          0          0          0          0          0          0:  95%|█████████▍| 434/459 02:14/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:505: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(amp):
+
+    399/399      5.88G    0.03486   0.004503  0.0007243          0          0          0          0          0          0          0          0:  95%|█████████▍| 434/459 02:14
+    399/399      5.88G    0.03486   0.004503  0.0007243          0          0          0          0          0          0          0          0:  95%|█████████▍| 435/459 02:14/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:505: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(amp):
+
+    399/399      5.88G    0.03485     0.0045  0.0007267          0          0          0          0          0          0          0          0:  95%|█████████▍| 435/459 02:15
+    399/399      5.88G    0.03485     0.0045  0.0007267          0          0          0          0          0          0          0          0:  95%|█████████▍| 436/459 02:15/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:505: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(amp):
+
+    399/399      5.88G    0.03485   0.004501  0.0007253          0          0          0          0          0          0          0          0:  95%|█████████▍| 436/459 02:15
+    399/399      5.88G    0.03485   0.004501  0.0007253          0          0          0          0          0          0          0          0:  95%|█████████▌| 437/459 02:15/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:505: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(amp):
+
+    399/399      5.88G    0.03485   0.004501  0.0007251          0          0          0          0          0          0          0          0:  95%|█████████▌| 437/459 02:15
+    399/399      5.88G    0.03485   0.004501  0.0007251          0          0          0          0          0          0          0          0:  95%|█████████▌| 438/459 02:15/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:505: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(amp):
+
+    399/399      5.88G    0.03484   0.004498   0.000724          0          0          0          0          0          0          0          0:  95%|█████████▌| 438/459 02:16
+    399/399      5.88G    0.03484   0.004498   0.000724          0          0          0          0          0          0          0          0:  96%|█████████▌| 439/459 02:16/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:505: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(amp):
+
+    399/399      5.88G    0.03483   0.004498  0.0007226          0          0          0          0          0          0          0          0:  96%|█████████▌| 439/459 02:16
+    399/399      5.88G    0.03483   0.004498  0.0007226          0          0          0          0          0          0          0          0:  96%|█████████▌| 440/459 02:16/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:505: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(amp):
+
+    399/399      5.88G    0.03483   0.004496  0.0007213          0          0          0          0          0          0          0          0:  96%|█████████▌| 440/459 02:16
+    399/399      5.88G    0.03483   0.004496  0.0007213          0          0          0          0          0          0          0          0:  96%|█████████▌| 441/459 02:16/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:505: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(amp):
+
+    399/399      5.88G    0.03483   0.004492  0.0007204          0          0          0          0          0          0          0          0:  96%|█████████▌| 441/459 02:16
+    399/399      5.88G    0.03483   0.004492  0.0007204          0          0          0          0          0          0          0          0:  96%|█████████▋| 442/459 02:16/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:505: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(amp):
+
+    399/399      5.88G    0.03486   0.004492  0.0007199          0          0          0          0          0          0          0          0:  96%|█████████▋| 442/459 02:17
+    399/399      5.88G    0.03486   0.004492  0.0007199          0          0          0          0          0          0          0          0:  97%|█████████▋| 443/459 02:17/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:505: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(amp):
+
+    399/399      5.88G    0.03485   0.004494  0.0007188          0          0          0          0          0          0          0          0:  97%|█████████▋| 443/459 02:17
+    399/399      5.88G    0.03485   0.004494  0.0007188          0          0          0          0          0          0          0          0:  97%|█████████▋| 444/459 02:17/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:505: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(amp):
+
+    399/399      5.88G    0.03484   0.004493  0.0007176          0          0          0          0          0          0          0          0:  97%|█████████▋| 444/459 02:17
+    399/399      5.88G    0.03484   0.004493  0.0007176          0          0          0          0          0          0          0          0:  97%|█████████▋| 445/459 02:17/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:505: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(amp):
+
+    399/399      5.88G    0.03486   0.004497  0.0007193          0          0          0          0          0          0          0          0:  97%|█████████▋| 445/459 02:18
+    399/399      5.88G    0.03486   0.004497  0.0007193          0          0          0          0          0          0          0          0:  97%|█████████▋| 446/459 02:18/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:505: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(amp):
+
+    399/399      5.88G    0.03486   0.004496  0.0007185          0          0          0          0          0          0          0          0:  97%|█████████▋| 446/459 02:18
+    399/399      5.88G    0.03486   0.004496  0.0007185          0          0          0          0          0          0          0          0:  97%|█████████▋| 447/459 02:18/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:505: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(amp):
+
+    399/399      5.88G    0.03486   0.004497  0.0007183          0          0          0          0          0          0          0          0:  97%|█████████▋| 447/459 02:18
+    399/399      5.88G    0.03486   0.004497  0.0007183          0          0          0          0          0          0          0          0:  98%|█████████▊| 448/459 02:18/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:505: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(amp):
+
+    399/399      5.88G    0.03486   0.004502  0.0007172          0          0          0          0          0          0          0          0:  98%|█████████▊| 448/459 02:18
+    399/399      5.88G    0.03486   0.004502  0.0007172          0          0          0          0          0          0          0          0:  98%|█████████▊| 449/459 02:18/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:505: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(amp):
+
+    399/399      5.88G    0.03487   0.004503  0.0007174          0          0          0          0          0          0          0          0:  98%|█████████▊| 449/459 02:19
+    399/399      5.88G    0.03487   0.004503  0.0007174          0          0          0          0          0          0          0          0:  98%|█████████▊| 450/459 02:19/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:505: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(amp):
+
+    399/399      5.88G    0.03487     0.0045  0.0007166          0          0          0          0          0          0          0          0:  98%|█████████▊| 450/459 02:19
+    399/399      5.88G    0.03487     0.0045  0.0007166          0          0          0          0          0          0          0          0:  98%|█████████▊| 451/459 02:19/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:505: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(amp):
+
+    399/399      5.88G    0.03488   0.004501  0.0007156          0          0          0          0          0          0          0          0:  98%|█████████▊| 451/459 02:19
+    399/399      5.88G    0.03488   0.004501  0.0007156          0          0          0          0          0          0          0          0:  98%|█████████▊| 452/459 02:19/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:505: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(amp):
+
+    399/399      5.88G    0.03487     0.0045  0.0007147          0          0          0          0          0          0          0          0:  98%|█████████▊| 452/459 02:20
+    399/399      5.88G    0.03487     0.0045  0.0007147          0          0          0          0          0          0          0          0:  99%|█████████▊| 453/459 02:20/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:505: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(amp):
+
+    399/399      5.88G    0.03486   0.004498  0.0007137          0          0          0          0          0          0          0          0:  99%|█████████▊| 453/459 02:20
+    399/399      5.88G    0.03486   0.004498  0.0007137          0          0          0          0          0          0          0          0:  99%|█████████▉| 454/459 02:20/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:505: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(amp):
+
+    399/399      5.88G    0.03485   0.004497  0.0007124          0          0          0          0          0          0          0          0:  99%|█████████▉| 454/459 02:20
+    399/399      5.88G    0.03485   0.004497  0.0007124          0          0          0          0          0          0          0          0:  99%|█████████▉| 455/459 02:20/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:505: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(amp):
+
+    399/399      5.88G    0.03484   0.004497  0.0007111          0          0          0          0          0          0          0          0:  99%|█████████▉| 455/459 02:21
+    399/399      5.88G    0.03484   0.004497  0.0007111          0          0          0          0          0          0          0          0:  99%|█████████▉| 456/459 02:21/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:505: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(amp):
+
+    399/399      5.88G    0.03485   0.004501  0.0007137          0          0          0          0          0          0          0          0:  99%|█████████▉| 456/459 02:21
+    399/399      5.88G    0.03485   0.004501  0.0007137          0          0          0          0          0          0          0          0: 100%|█████████▉| 457/459 02:21/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:505: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(amp):
+
+    399/399      5.88G    0.03485     0.0045  0.0007127          0          0          0          0          0          0          0          0: 100%|█████████▉| 457/459 02:21
+    399/399      5.88G    0.03485     0.0045  0.0007127          0          0          0          0          0          0          0          0: 100%|█████████▉| 458/459 02:21/mnt/dataY/ydf/projects/LADD_public/cclkd_reproduction/yolov5_sanity/code/train_yolov5_cclkd_full.py:505: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(amp):
