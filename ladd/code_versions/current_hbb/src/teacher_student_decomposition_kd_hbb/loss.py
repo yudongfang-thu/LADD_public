@@ -19,6 +19,18 @@ def _standardize_map(x: torch.Tensor, eps: float = 1e-6) -> torch.Tensor:
     return (x - x.mean(dim=dims, keepdim=True)) / x.std(dim=dims, keepdim=True, unbiased=False).clamp_min(eps)
 
 
+def _pkd_channel_standardize_map(x: torch.Tensor, eps: float = 1e-6) -> torch.Tensor:
+    """PKD-style channel-wise zero-mean/unit-variance normalization."""
+    if x.dim() != 4:
+        raise RuntimeError(f"PKD normalization expects [N, C, H, W], got {tuple(x.shape)}.")
+    n, c, h, w = x.shape
+    y = x.permute(1, 0, 2, 3).reshape(c, -1)
+    mean = y.mean(dim=-1, keepdim=True)
+    std = y.std(dim=-1, keepdim=True)
+    y = (y - mean) / (std + eps)
+    return y.reshape(c, n, h, w).permute(1, 0, 2, 3)
+
+
 def _unwrap_teacher_preds(outputs: Any) -> dict[str, torch.Tensor]:
     if isinstance(outputs, tuple):
         if len(outputs) >= 2 and isinstance(outputs[1], dict):
@@ -53,6 +65,19 @@ def _pairwise_iou_xyxy(boxes1: torch.Tensor, boxes2: torch.Tensor, eps: float = 
     area1 = (boxes1[:, 2] - boxes1[:, 0]).clamp_min(0) * (boxes1[:, 3] - boxes1[:, 1]).clamp_min(0)
     area2 = (boxes2[:, 2] - boxes2[:, 0]).clamp_min(0) * (boxes2[:, 3] - boxes2[:, 1]).clamp_min(0)
     return inter / (area1[:, None] + area2[None, :] - inter).clamp_min(eps)
+
+
+def _aligned_iou_xyxy(boxes1: torch.Tensor, boxes2: torch.Tensor, eps: float = 1e-7) -> torch.Tensor:
+    """IoU for aligned xyxy box tensors with shape [..., 4]."""
+    if boxes1.shape != boxes2.shape or boxes1.shape[-1] != 4:
+        raise RuntimeError(f"Aligned IoU expects matching [..., 4] boxes, got {tuple(boxes1.shape)} and {tuple(boxes2.shape)}.")
+    lt = torch.maximum(boxes1[..., :2], boxes2[..., :2])
+    rb = torch.minimum(boxes1[..., 2:], boxes2[..., 2:])
+    wh = (rb - lt).clamp_min(0)
+    inter = wh[..., 0] * wh[..., 1]
+    area1 = (boxes1[..., 2] - boxes1[..., 0]).clamp_min(0) * (boxes1[..., 3] - boxes1[..., 1]).clamp_min(0)
+    area2 = (boxes2[..., 2] - boxes2[..., 0]).clamp_min(0) * (boxes2[..., 3] - boxes2[..., 1]).clamp_min(0)
+    return inter / (area1 + area2 - inter).clamp_min(eps)
 
 
 def _contrastive_alignment_loss(student: torch.Tensor, teacher: torch.Tensor, temperature: float = 0.20) -> torch.Tensor:
@@ -245,6 +270,12 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         ld_vlr_weight: float = 0.25,
         ld_main_weight: float = 0.25,
         ld_allow_empty_vlr: bool = True,
+        cmdistill_feature_weight: float = 1.0,
+        cmdistill_relation_weight: float = 1.0,
+        cmdistill_logit_weight: float = 1.0,
+        cmdistill_temperature: float = 4.0,
+        cmdistill_max_tokens: int = 512,
+        cmdistill_min_confidence: float = 0.05,
         cclkd_base_temperature: float = 2.0,
         cclkd_contrastive_temperature: float = 0.1,
         cclkd_feat_weight: float = 1.0,
@@ -311,6 +342,12 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         self.ld_main_weight = max(float(ld_main_weight), 0.0)
         self.ld_allow_empty_vlr = bool(ld_allow_empty_vlr)
         self._ld_warned_missing_teacher_scores = False
+        self.cmdistill_feature_weight = max(float(cmdistill_feature_weight), 0.0)
+        self.cmdistill_relation_weight = max(float(cmdistill_relation_weight), 0.0)
+        self.cmdistill_logit_weight = max(float(cmdistill_logit_weight), 0.0)
+        self.cmdistill_temperature = max(float(cmdistill_temperature), 1e-6)
+        self.cmdistill_max_tokens = max(int(cmdistill_max_tokens), 16)
+        self.cmdistill_min_confidence = min(max(float(cmdistill_min_confidence), 0.0), 1.0)
         self.cclkd_base_temperature = max(float(cclkd_base_temperature), 1e-6)
         self.cclkd_contrastive_temperature = max(float(cclkd_contrastive_temperature), 1e-6)
         self.cclkd_feat_weight = max(float(cclkd_feat_weight), 0.0)
@@ -476,10 +513,10 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
 
     @staticmethod
     def _validate_comparison_kd_profile(mode: str) -> str:
-        if mode not in {"none", "fgd", "ld", "cclkd"}:
+        if mode not in {"none", "fgd", "ld", "cmdistill", "cclkd"}:
             raise ValueError(
                 "comparison_kd_profile must be one of "
-                "{'none', 'fgd', 'ld', 'cclkd'}, got "
+                "{'none', 'fgd', 'ld', 'cmdistill', 'cclkd'}, got "
                 f"{mode!r}."
             )
         return mode
@@ -1210,6 +1247,140 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
 
         return self.ld_main_weight * main_loss + self.ld_vlr_weight * vlr_loss
 
+    def _cmdistill_style_loss(
+        self,
+        student_map: torch.Tensor,
+        teacher_map: torch.Tensor,
+        fg_mask: torch.Tensor,
+        target_scores: torch.Tensor,
+        student_distri: torch.Tensor | None,
+        teacher_distri: torch.Tensor | None,
+        student_scores: torch.Tensor | None,
+        teacher_scores: torch.Tensor | None,
+        student_bboxes: torch.Tensor | None = None,
+        teacher_bboxes: torch.Tensor | None = None,
+        level_index: int | None = None,
+        num_levels: int | None = None,
+    ) -> torch.Tensor:
+        """CMDistill frozen-teacher KD: PCCFD + SLRD + IBCLD.
+
+        This is a paper-aligned adaptation because no official CMDistill code is
+        available in the project. It follows the paper components:
+        PCC feature distillation on selected FPN maps, semantic relation
+        distillation on the deepest map, and IoU plus multi-binary BCE logic
+        distillation on detector outputs.
+        """
+        if student_map.shape != teacher_map.shape:
+            raise RuntimeError(
+                "CMDistill requires matching student/teacher feature maps, got "
+                f"student={tuple(student_map.shape)} teacher={tuple(teacher_map.shape)}."
+            )
+        teacher_map = teacher_map.detach()
+        zero = student_map.new_zeros(())
+        is_first_level = level_index is None or int(level_index) == 0
+        is_last_level = level_index is None or num_levels is None or int(level_index) == int(num_levels) - 1
+
+        feature_loss = zero
+        if self.cmdistill_feature_weight > 0 and (is_first_level or is_last_level):
+            feature_loss = self._cmdistill_pcc_feature_loss(student_map, teacher_map)
+
+        relation_loss = zero
+        if self.cmdistill_relation_weight > 0 and is_last_level:
+            relation_loss = self._cmdistill_relation_loss(student_map, teacher_map)
+
+        output_loss = zero
+        if self.cmdistill_logit_weight > 0:
+            output_loss = self._cmdistill_output_loss(
+                student_distri,
+                teacher_distri,
+                student_scores,
+                teacher_scores,
+                fg_mask,
+                target_scores,
+                student_bboxes,
+                teacher_bboxes,
+            )
+
+        return (
+            self.cmdistill_feature_weight * feature_loss
+            + self.cmdistill_relation_weight * relation_loss
+            + self.cmdistill_logit_weight * output_loss
+        )
+
+    def _cmdistill_pcc_feature_loss(self, student_map: torch.Tensor, teacher_map: torch.Tensor) -> torch.Tensor:
+        """PCCFD: CMDistill Pearson-correlation feature distillation.
+
+        CMDistill defines PCCFD as normalized feature imitation. The concrete
+        channel-wise normalization follows the open PKD implementation for the
+        under-specified tensor reduction detail.
+        """
+        student_norm = _pkd_channel_standardize_map(student_map)
+        teacher_norm = _pkd_channel_standardize_map(teacher_map.detach())
+        return 0.5 * F.mse_loss(student_norm, teacher_norm)
+
+    def _cmdistill_relation_loss(
+        self,
+        student_map: torch.Tensor,
+        teacher_map: torch.Tensor,
+    ) -> torch.Tensor:
+        student_flat = _flatten_feat(student_map).reshape(-1, student_map.shape[1])
+        teacher_flat = _flatten_feat(teacher_map.detach()).reshape(-1, teacher_map.shape[1])
+        if student_flat.shape[0] < 2:
+            return student_map.new_zeros(())
+
+        candidate_idx = torch.arange(student_flat.shape[0], device=student_map.device)
+        if candidate_idx.numel() > self.cmdistill_max_tokens:
+            perm = torch.randperm(candidate_idx.numel(), device=student_map.device)[: self.cmdistill_max_tokens]
+            candidate_idx = candidate_idx[perm]
+        if candidate_idx.numel() < 2:
+            return student_map.new_zeros(())
+
+        student_tokens = F.normalize(student_flat[candidate_idx], dim=-1, eps=1e-6)
+        teacher_tokens = F.normalize(teacher_flat[candidate_idx], dim=-1, eps=1e-6)
+        student_relation = student_tokens @ student_tokens.transpose(0, 1)
+        teacher_relation = teacher_tokens @ teacher_tokens.transpose(0, 1)
+        return F.l1_loss(student_relation, teacher_relation)
+
+    def _cmdistill_output_loss(
+        self,
+        student_distri: torch.Tensor | None,
+        teacher_distri: torch.Tensor | None,
+        student_scores: torch.Tensor | None,
+        teacher_scores: torch.Tensor | None,
+        fg_mask: torch.Tensor,
+        target_scores: torch.Tensor,
+        student_bboxes: torch.Tensor | None,
+        teacher_bboxes: torch.Tensor | None,
+    ) -> torch.Tensor:
+        if student_scores is None or teacher_scores is None or student_scores.shape != teacher_scores.shape:
+            raise RuntimeError("CMDistill IBCLD requires matching student/teacher class logits.")
+        if student_bboxes is None or teacher_bboxes is None or student_bboxes.shape != teacher_bboxes.shape:
+            raise RuntimeError("CMDistill IBCLD requires matching decoded student/teacher boxes.")
+        if target_scores.shape[:2] != student_scores.shape[:2]:
+            raise RuntimeError(
+                "CMDistill requires target_scores aligned with class logits, got "
+                f"target_scores={tuple(target_scores.shape)} scores={tuple(student_scores.shape)}."
+            )
+
+        teacher_scores = teacher_scores.detach()
+        teacher_bboxes = teacher_bboxes.detach()
+        teacher_conf = teacher_scores.sigmoid().amax(dim=-1)
+        candidate = fg_mask.reshape(student_scores.shape[:2]).bool()
+        if self.cmdistill_min_confidence > 0:
+            candidate = candidate | (teacher_conf >= self.cmdistill_min_confidence)
+        if not candidate.any():
+            return student_scores.new_zeros(())
+
+        cls_loss = F.binary_cross_entropy_with_logits(
+            student_scores[candidate],
+            teacher_scores[candidate].sigmoid(),
+            reduction="mean",
+        )
+        iou = _aligned_iou_xyxy(student_bboxes[candidate], teacher_bboxes[candidate])
+        box_loss = (1.0 - iou).mean()
+
+        return cls_loss + box_loss
+
     def _cclkd_style_loss(
         self,
         student_map: torch.Tensor,
@@ -1380,6 +1551,8 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         gt_bboxes: torch.Tensor | None = None,
         mask_gt: torch.Tensor | None = None,
         imgsz: torch.Tensor | None = None,
+        level_index: int | None = None,
+        num_levels: int | None = None,
     ) -> torch.Tensor:
         if self.comparison_kd_profile == "none" or self.profile_kd_weight <= 0:
             return student_map.new_zeros(())
@@ -1396,6 +1569,21 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
                 gt_bboxes=gt_bboxes,
                 mask_gt=mask_gt,
                 level_stride_tensor=stride_tensor,
+            )
+        if self.comparison_kd_profile == "cmdistill":
+            return self._cmdistill_style_loss(
+                student_map,
+                teacher_map,
+                fg_mask,
+                target_scores,
+                student_distri,
+                teacher_distri,
+                student_scores,
+                teacher_scores,
+                student_bboxes,
+                teacher_bboxes,
+                level_index,
+                num_levels,
             )
         if self.comparison_kd_profile == "cclkd":
             return self._cclkd_style_loss(
@@ -1952,7 +2140,7 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
                 teacher_distri_all = teacher_distri_all.permute(0, 2, 1).contiguous()
             if teacher_distri_all.shape != student_pred_distri.shape:
                 teacher_distri_all = None
-        if self.comparison_kd_profile == "ld" and (
+        if self.comparison_kd_profile in {"ld", "cmdistill"} and (
             not isinstance(teacher_distri_all, torch.Tensor)
             or teacher_distri_all.shape != student_pred_distri.shape
         ):
@@ -1962,12 +2150,12 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
                 else None
             )
             raise RuntimeError(
-                "LD could not obtain raw teacher DFL logits matching the student distribution. "
+                f"{self.comparison_kd_profile} could not obtain raw teacher DFL logits matching the student distribution. "
                 f"raw_teacher_boxes={raw_shape}, student={tuple(student_pred_distri.shape)}. "
                 "The teacher eval forward must return (decoded_predictions, raw_predictions_dict)."
             )
         teacher_pred_bboxes = None
-        if self.comparison_kd_profile == "ld" and isinstance(teacher_distri_all, torch.Tensor):
+        if self.comparison_kd_profile in {"ld", "cmdistill"} and isinstance(teacher_distri_all, torch.Tensor):
             # Decoded boxes are in the same stride/grid unit as `anchor_points`.
             # Per-level LD converts them to pixel xyxy via `stride_tensor` only
             # when comparing to pixel-space GT boxes for VLR-style weights.
@@ -2239,6 +2427,8 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
                     gt_bboxes.to(z_t.dtype),
                     mask_gt,
                     imgsz.to(z_t.dtype),
+                    i,
+                    len(teacher_feats),
                 )
                 profile_kd_loss = profile_kd_loss + level_profile_loss
                 profile_levels += 1

@@ -24,6 +24,7 @@ for root in (
 
 from teacher_student_decomposition_kd_hbb.loss import (  # noqa: E402
     TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB,
+    _pkd_channel_standardize_map,
 )
 
 
@@ -49,6 +50,12 @@ def make_loss(**overrides):
         "ld_main_weight": 0.25,
         "ld_allow_empty_vlr": True,
         "_ld_warned_missing_teacher_scores": False,
+        "cmdistill_feature_weight": 1.0,
+        "cmdistill_relation_weight": 1.0,
+        "cmdistill_logit_weight": 1.0,
+        "cmdistill_temperature": 4.0,
+        "cmdistill_max_tokens": 64,
+        "cmdistill_min_confidence": 0.05,
     }
     defaults.update(overrides)
     for key, value in defaults.items():
@@ -164,10 +171,112 @@ def check_ld():
         raise AssertionError("LD shape mismatch did not raise RuntimeError")
 
 
+def check_cmdistill():
+    torch.manual_seed(3)
+    bsz, channels, height, width, reg_max, n_cls = 2, 16, 8, 8, 8, 4
+    n_tokens = height * width
+    criterion = make_loss()
+    student_map = torch.randn(bsz, channels, height, width, requires_grad=True)
+    teacher_map = torch.randn(bsz, channels, height, width, requires_grad=True)
+    student_distri = torch.randn(bsz, n_tokens, 4 * reg_max, requires_grad=True)
+    teacher_distri = torch.randn(bsz, n_tokens, 4 * reg_max)
+    student_scores = torch.randn(bsz, n_tokens, n_cls, requires_grad=True)
+    teacher_scores = torch.randn(bsz, n_tokens, n_cls)
+    student_bboxes = torch.rand(bsz, n_tokens, 4, requires_grad=True)
+    teacher_bboxes = torch.rand(bsz, n_tokens, 4)
+    student_bboxes_xyxy = torch.cat(
+        [
+            torch.minimum(student_bboxes[..., :2], student_bboxes[..., 2:]),
+            torch.maximum(student_bboxes[..., :2], student_bboxes[..., 2:]) + 0.1,
+        ],
+        dim=-1,
+    )
+    teacher_bboxes_xyxy = torch.cat(
+        [
+            torch.minimum(teacher_bboxes[..., :2], teacher_bboxes[..., 2:]),
+            torch.maximum(teacher_bboxes[..., :2], teacher_bboxes[..., 2:]) + 0.1,
+        ],
+        dim=-1,
+    )
+    fg = torch.zeros(bsz, n_tokens, dtype=torch.bool)
+    fg[0, :5] = True
+    fg[1, 10:16] = True
+    target_scores = torch.zeros(bsz, n_tokens, n_cls)
+    target_scores[..., 2][fg] = 1.0
+
+    loss = criterion._cmdistill_style_loss(
+        student_map,
+        teacher_map,
+        fg,
+        target_scores,
+        student_distri,
+        teacher_distri,
+        student_scores,
+        teacher_scores,
+        student_bboxes_xyxy,
+        teacher_bboxes_xyxy,
+        level_index=2,
+        num_levels=3,
+    )
+    assert torch.isfinite(loss), loss
+    assert loss.item() > 0, loss.item()
+    loss.backward()
+    assert student_map.grad is not None and torch.isfinite(student_map.grad).all()
+    assert student_distri.grad is None
+    assert student_scores.grad is not None and torch.isfinite(student_scores.grad).all()
+    assert student_bboxes.grad is not None and torch.isfinite(student_bboxes.grad).all()
+    assert teacher_map.grad is None
+
+    feature_only = make_loss(cmdistill_relation_weight=0.0, cmdistill_logit_weight=0.0)
+    feature_loss = feature_only._cmdistill_style_loss(
+        student_map.detach().clone().requires_grad_(True),
+        teacher_map.detach().clone(),
+        fg,
+        target_scores,
+        None,
+        None,
+        student_scores.detach().clone(),
+        teacher_scores,
+        None,
+        None,
+        level_index=0,
+        num_levels=3,
+    )
+    assert torch.isfinite(feature_loss) and feature_loss.item() > 0
+
+    middle_level_feature = feature_only._cmdistill_style_loss(
+        student_map.detach().clone().requires_grad_(True),
+        teacher_map.detach().clone(),
+        fg,
+        target_scores,
+        None,
+        None,
+        student_scores.detach().clone(),
+        teacher_scores,
+        None,
+        None,
+        level_index=1,
+        num_levels=3,
+    )
+    assert torch.isfinite(middle_level_feature)
+    assert middle_level_feature.item() == 0.0
+
+    # OpenMMLab PKD normalizes each channel over N/H/W, then uses MSE/2.
+    pkd_input = torch.randn(2, 5, 4, 3)
+    c = pkd_input.shape[1]
+    reference = pkd_input.permute(1, 0, 2, 3).reshape(c, -1)
+    reference = (reference - reference.mean(dim=-1, keepdim=True)) / (
+        reference.std(dim=-1, keepdim=True) + 1e-6
+    )
+    reference = reference.reshape(c, *pkd_input.shape[:1], *pkd_input.shape[2:]).permute(1, 0, 2, 3)
+    assert torch.allclose(_pkd_channel_standardize_map(pkd_input), reference)
+
+
 def check_profile_names():
     validate = TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB._validate_comparison_kd_profile
     assert validate("fgd") == "fgd"
     assert validate("ld") == "ld"
+    assert validate("cmdistill") == "cmdistill"
     for legacy in ("hallucidet", "hallucidet_style"):
         try:
             validate(legacy)
@@ -180,6 +289,7 @@ def check_profile_names():
 def main():
     check_fgd()
     check_ld()
+    check_cmdistill()
     check_profile_names()
     print("comparison loss smoke checks passed")
 

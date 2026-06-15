@@ -4,7 +4,7 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  comparison/code/launch_formal_from_yolo_kd_job.sh <fgd|ld> <n|s|m|l|x> <seed> <gpu_id>
+  comparison/code/launch_formal_from_yolo_kd_job.sh <fgd|ld|cmdistill> <n|s|m|l|x> <seed> <gpu_id>
 
 Runs a from-YOLO-pretrain KD comparison under the formal OGSOD HBB protocol:
   student init = yolo11<size>.pt
@@ -31,7 +31,7 @@ SEED="${3:-}"
 GPU_ID="${4:-}"
 
 case "$METHOD" in
-  fgd|ld) ;;
+  fgd|ld|cmdistill) ;;
   hallucidet|hallucidet_style)
     echo "Legacy HalluciDet-style KD profile has been removed. Use comparison/hallucidet/train_hallucidet.py for the standalone HalluciDet-YOLO adaptation." >&2
     exit 2
@@ -77,7 +77,12 @@ if [[ "${DRY_RUN:-0}" != "1" && ! -f "$RGB_TEACHER" ]]; then
   exit 1
 fi
 
-COMPARISON_IMPL_VERSION="${COMPARISON_IMPL_VERSION:-v2_20260610}"
+if [[ -z "${COMPARISON_IMPL_VERSION:-}" ]]; then
+  case "$METHOD" in
+    cmdistill) COMPARISON_IMPL_VERSION="v2_strict_20260615" ;;
+    *) COMPARISON_IMPL_VERSION="v2_20260610" ;;
+  esac
+fi
 RUN_TAG="formal_nomosaic_yolo11${SIZE}_${METHOD}_${COMPARISON_IMPL_VERSION}_from_yolo_s${SEED}${RUN_TAG_SUFFIX:-}"
 PROJECT_DIR="${BASE_ROOT}/comparisons/from_yolo_pretrain/yolo11${SIZE}/${METHOD}"
 LOG_DIR="logs/formal_nomosaic_20260528/comparisons/from_yolo_pretrain"
@@ -173,6 +178,17 @@ case "$METHOD" in
       "LD_VLR_WEIGHT=${LD_VLR_WEIGHT:-0.25}"
       "LD_MAIN_WEIGHT=${LD_MAIN_WEIGHT:-0.25}"
       "LD_ALLOW_EMPTY_VLR=${LD_ALLOW_EMPTY_VLR:-1}"
+    )
+    ;;
+  cmdistill)
+    cmd+=(
+      "KD_CALIBRATION_MODE=${KD_CALIBRATION_MODE:-affine}"
+      "CMDISTILL_FEATURE_WEIGHT=${CMDISTILL_FEATURE_WEIGHT:-1.0}"
+      "CMDISTILL_RELATION_WEIGHT=${CMDISTILL_RELATION_WEIGHT:-1.0}"
+      "CMDISTILL_LOGIT_WEIGHT=${CMDISTILL_LOGIT_WEIGHT:-1.0}"
+      "CMDISTILL_TEMPERATURE=${CMDISTILL_TEMPERATURE:-4.0}"
+      "CMDISTILL_MAX_TOKENS=${CMDISTILL_MAX_TOKENS:-512}"
+      "CMDISTILL_MIN_CONFIDENCE=${CMDISTILL_MIN_CONFIDENCE:-0.05}"
     )
     ;;
 esac

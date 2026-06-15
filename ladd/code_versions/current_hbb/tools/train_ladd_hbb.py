@@ -182,11 +182,11 @@ def parse_args() -> argparse.Namespace:
 
     parser.add_argument(
         "--comparison-kd-profile",
-        choices=("none", "fgd", "ld", "cclkd"),
+        choices=("none", "fgd", "ld", "cmdistill", "cclkd"),
         default="none",
         help=(
             "Portable comparison KD profile for OGSOD HBB. "
-            "fgd and ld are generic detector KD transfers; "
+            "fgd, ld, and cmdistill are generic detector KD transfers; "
             "cclkd is kept for existing online-comparison compatibility. "
             "HalluciDet now uses the standalone comparison/hallucidet trainer."
         ),
@@ -214,6 +214,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--ld-vlr-weight", type=float, default=0.25)
     parser.add_argument("--ld-main-weight", type=float, default=0.25)
     parser.add_argument("--ld-allow-empty-vlr", type=int, default=1)
+    parser.add_argument("--cmdistill-feature-weight", type=float, default=1.0)
+    parser.add_argument("--cmdistill-relation-weight", type=float, default=1.0)
+    parser.add_argument("--cmdistill-logit-weight", type=float, default=1.0)
+    parser.add_argument("--cmdistill-temperature", type=float, default=4.0)
+    parser.add_argument("--cmdistill-max-tokens", type=int, default=512)
+    parser.add_argument("--cmdistill-min-confidence", type=float, default=0.05)
     parser.add_argument("--cclkd-base-temperature", type=float, default=2.0)
     parser.add_argument("--cclkd-contrastive-temperature", type=float, default=0.1)
     parser.add_argument("--cclkd-feat-weight", type=float, default=1.0)
@@ -390,6 +396,12 @@ def main() -> None:
         ld_vlr_weight=args.ld_vlr_weight,
         ld_main_weight=args.ld_main_weight,
         ld_allow_empty_vlr=int(bool(args.ld_allow_empty_vlr)),
+        cmdistill_feature_weight=args.cmdistill_feature_weight,
+        cmdistill_relation_weight=args.cmdistill_relation_weight,
+        cmdistill_logit_weight=args.cmdistill_logit_weight,
+        cmdistill_temperature=args.cmdistill_temperature,
+        cmdistill_max_tokens=args.cmdistill_max_tokens,
+        cmdistill_min_confidence=args.cmdistill_min_confidence,
         cclkd_base_temperature=args.cclkd_base_temperature,
         cclkd_contrastive_temperature=args.cclkd_contrastive_temperature,
         cclkd_feat_weight=args.cclkd_feat_weight,

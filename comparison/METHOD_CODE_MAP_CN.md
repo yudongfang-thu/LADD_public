@@ -27,6 +27,7 @@ image/representation hallucination 入口。严格实现边界见
 |---|---|---|---|
 | FGD-style | `--comparison-kd-profile fgd` | `TSKDDetectionLossHBB._fgd_style_loss()` | fg/bg feature + attention mask；GT-box mask 默认启用；official trainable global relation 默认不启用 |
 | LD | `--comparison-kd-profile ld` | `_ld_style_loss()` | foreground/main YOLO DFL KL + teacher-quality VLR-style candidate LD；错形直接失败 |
+| CMDistill reimplementation | `--comparison-kd-profile cmdistill` | `_cmdistill_style_loss()` | 非官方 paper-aligned adaptation；PCCFD shallow/deep feature + deepest SLRD affinity + IBCLD decoded-box IoU / binary classification logic |
 | CCLKD | `launch_formal_online_cclkd_job.sh` / `train_cclkd_online_hbb.py` | online teacher detection loss + SAR student detection loss + CCLKD loss | COP + localization-only LLD + FLD-MSE + RLD feature-correlation + CCL；原文复现见 `../cclkd_reproduction/` |
 | HalluciDet-YOLO adaptation | `python comparison/hallucidet/train_hallucidet.py` | `HalluciDetTrainer` / `HallucinationNetwork` | detection-loss-only standalone protocol；不是旧 feature/response/margin KD profile |
 
@@ -37,7 +38,10 @@ image/representation hallucination 入口。严格实现边界见
 2026-06-04 已修复 LD/FGD 语义。2026-06-10 FGD/LD 进一步更新为
 FGD-YOLO focal+attention-mask adaptation 与 LD-YOLO main+VLR-style adaptation，
 2026-06-13 移除旧 HalluciDet-style KD profile，保留 standalone HalluciDet-YOLO
-adaptation。2026-06-05 CCLKD loss 级实现已修正，并补齐
+adaptation。2026-06-15 新增非官方 CMDistill controlled comparison profile，
+并更新为 `v2_strict_20260615`：PCCFD + SLRD + IBCLD，launcher 默认启用
+`KD_CALIBRATION_MODE=affine` 作为学生 adaptive layer。
+2026-06-05 CCLKD loss 级实现已修正，并补齐
 `cclkd_reproduction/code/` online teacher-student 复现入口；当前仍等待 GPU smoke。
 `ladd/code/` 与
 `ladd/code_versions/current_hbb/` 应保持字节一致；任何实验启动前先执行同步检查。
