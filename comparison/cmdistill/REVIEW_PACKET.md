@@ -31,6 +31,7 @@ Paper and notes:
 - `REVIEW_ROUND1_RESPONSE.md`
 - `REVIEW_ROUND2_RESPONSE.md`
 - `REVIEW_ROUND3.md`
+- `REVIEW_ROUND4.md`
 - `references/PKD_REFERENCE.md`
 - `references/pkd_loss_mmrazor.py`
 
@@ -116,6 +117,14 @@ cleanup commit records the review in `REVIEW_ROUND3.md`, updates CMDistill run
 tags to `v3_smoke_ready_20260615`, adds an epoch-1 stdout smoke summary, splits
 nonfinite diagnostics into metric/CMDistill and BN components, and standardizes
 the public naming as CMDistill-style.
+
+## Round 4 Pre-Smoke Review
+
+The fourth external review again returned `ready for 1-epoch GPU smoke`. It
+found no P0/P1 blockers before smoke training. Remaining items are formal-run
+hardening tasks for after smoke: hard-fail on missing CMDistill prerequisites,
+add a deeper `_compute_decomposition_losses()` synthetic guard, and evaluate
+`CMDISTILL_MIN_CONFIDENCE` from real smoke diagnostics before long runs.
 
 ## Local Validation
 
