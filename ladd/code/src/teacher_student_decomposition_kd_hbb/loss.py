@@ -414,6 +414,7 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         self.contrastive_temperature = float(contrastive_temperature)
         self.teacher_target_modules = None
         self._cached_teacher_feats = None  # DKD: cached teacher backbone features
+        self._cmdistill_last_stats: dict[str, float | int] = {}
         self.phase_loss_scales = {
             "det": 1.0,
             "rec": 1.0,
@@ -1298,6 +1299,30 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
             + self.cmdistill_relation_weight * relation_loss
         )
 
+    def _cmdistill_update_stats(self, **stats: float | int) -> None:
+        current = getattr(self, "_cmdistill_last_stats", {})
+        current.update(stats)
+        self._cmdistill_last_stats = current
+
+    def _cmdistill_combine_components(
+        self,
+        pcc_loss: torch.Tensor,
+        pcc_levels: int,
+        relation_loss: torch.Tensor,
+        relation_levels: int,
+        output_loss: torch.Tensor | None = None,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        zero = pcc_loss.new_zeros(())
+        feature_term = pcc_loss / pcc_levels if pcc_levels > 0 else zero
+        relation_term = relation_loss / relation_levels if relation_levels > 0 else zero
+        output_term = output_loss if output_loss is not None else zero
+        total = (
+            self.cmdistill_feature_weight * feature_term
+            + self.cmdistill_relation_weight * relation_term
+            + self.cmdistill_logit_weight * output_term
+        )
+        return total, feature_term, relation_term, output_term
+
     def _cmdistill_pcc_feature_loss(self, student_map: torch.Tensor, teacher_map: torch.Tensor) -> torch.Tensor:
         """PCCFD: CMDistill Pearson-correlation feature distillation.
 
@@ -1326,6 +1351,7 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         if candidate_idx.numel() < 2:
             return student_map.new_zeros(())
 
+        self._cmdistill_update_stats(cmdistill_slrd_tokens=int(candidate_idx.numel()))
         student_tokens = F.normalize(student_flat[:, candidate_idx, :], dim=-1, eps=1e-6)
         teacher_tokens = F.normalize(teacher_flat[:, candidate_idx, :], dim=-1, eps=1e-6)
         student_relation = torch.bmm(student_tokens, student_tokens.transpose(1, 2))
@@ -1356,10 +1382,20 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         teacher_scores = teacher_scores.detach()
         teacher_bboxes = teacher_bboxes.detach()
         teacher_conf = teacher_scores.sigmoid().amax(dim=-1)
-        candidate = fg_mask.reshape(student_scores.shape[:2]).bool()
+        fg = fg_mask.reshape(student_scores.shape[:2]).bool()
+        teacher_conf_candidate = torch.zeros_like(fg)
         if self.cmdistill_min_confidence > 0:
-            candidate = candidate | (teacher_conf >= self.cmdistill_min_confidence)
+            teacher_conf_candidate = teacher_conf >= self.cmdistill_min_confidence
+        candidate = fg | teacher_conf_candidate
+        teacher_conf_added = teacher_conf_candidate & ~fg
         if not candidate.any():
+            self._cmdistill_update_stats(
+                cmdistill_ibcld_candidate_ratio=0.0,
+                cmdistill_ibcld_fg_count=int(fg.sum().detach().cpu()),
+                cmdistill_ibcld_teacher_conf_added_count=int(teacher_conf_added.sum().detach().cpu()),
+                cmdistill_ibcld_cls_loss=0.0,
+                cmdistill_ibcld_box_loss=0.0,
+            )
             return student_scores.new_zeros(())
 
         cls_loss = F.binary_cross_entropy_with_logits(
@@ -1369,6 +1405,13 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         )
         iou = _aligned_iou_xyxy(student_bboxes[candidate], teacher_bboxes[candidate])
         box_loss = (1.0 - iou).mean()
+        self._cmdistill_update_stats(
+            cmdistill_ibcld_candidate_ratio=float(candidate.float().mean().detach().cpu()),
+            cmdistill_ibcld_fg_count=int(fg.sum().detach().cpu()),
+            cmdistill_ibcld_teacher_conf_added_count=int(teacher_conf_added.sum().detach().cpu()),
+            cmdistill_ibcld_cls_loss=float(cls_loss.detach().cpu()),
+            cmdistill_ibcld_box_loss=float(box_loss.detach().cpu()),
+        )
 
         return cls_loss + box_loss
 
@@ -2107,6 +2150,7 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         self._v2_fg_mask_list = []
         # DKD caching: teacher backbone features for logit distillation
         self._cached_teacher_feats = None
+        self._cmdistill_last_stats = {}
         # Proto cls caching: per-scale z_t, z_s, fg_mask, target_scores slices
         self._proto_z_t_list: list[torch.Tensor] = []
         self._proto_z_s_list: list[torch.Tensor] = []
@@ -2219,6 +2263,10 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         student_rec_levels = 0
         profile_levels = 0
         profile_kd_loss = zero
+        cmd_pcc_loss = zero
+        cmd_pcc_levels = 0
+        cmd_relation_loss = zero
+        cmd_relation_levels = 0
         offset = 0
         _v2_recon: list[torch.Tensor] = []
         _v2_z_s: list[torch.Tensor] = []
@@ -2400,7 +2448,17 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
                     rank_gap_mean = rank_gap_mean + level_gap
                     reach_levels += 1
 
-            if self.comparison_kd_profile != "none" and self.profile_kd_weight > 0:
+            if self.comparison_kd_profile == "cmdistill" and self.profile_kd_weight > 0:
+                is_first_level = i == 0
+                is_last_level = i == len(teacher_feats) - 1
+                cmd_teacher_map = target_z_t_map.detach() if self.kd_target_mode == "detach" else target_z_t_map
+                if self.cmdistill_feature_weight > 0 and (is_first_level or is_last_level):
+                    cmd_pcc_loss = cmd_pcc_loss + self._cmdistill_pcc_feature_loss(z_s_kd_map, cmd_teacher_map)
+                    cmd_pcc_levels += 1
+                if self.cmdistill_relation_weight > 0 and is_last_level:
+                    cmd_relation_loss = cmd_relation_loss + self._cmdistill_relation_loss(z_s_kd_map, cmd_teacher_map)
+                    cmd_relation_levels += 1
+            elif self.comparison_kd_profile != "none" and self.profile_kd_weight > 0:
                 level_profile_loss = self._compute_profile_kd_loss(
                     z_s_kd_map,
                     target_z_t_map.detach() if self.kd_target_mode == "detach" else target_z_t_map,
@@ -2546,22 +2604,34 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         if profile_levels > 0:
             kd_loss = kd_loss + self.profile_kd_weight * (profile_kd_loss / profile_levels)
 
-        if (
-            self.comparison_kd_profile == "cmdistill"
-            and self.profile_kd_weight > 0
-            and self.cmdistill_logit_weight > 0
-        ):
-            cmdistill_output_loss = self._cmdistill_output_loss(
-                student_pred_distri,
-                teacher_distri_all,
-                student_pred_scores,
-                teacher_scores_all,
-                fg_mask,
-                target_scores,
-                student_pred_bboxes,
-                teacher_pred_bboxes,
+        if self.comparison_kd_profile == "cmdistill" and self.profile_kd_weight > 0:
+            cmd_output_loss = zero
+            if self.cmdistill_logit_weight > 0:
+                cmd_output_loss = self._cmdistill_output_loss(
+                    student_pred_distri,
+                    teacher_distri_all,
+                    student_pred_scores,
+                    teacher_scores_all,
+                    fg_mask,
+                    target_scores,
+                    student_pred_bboxes,
+                    teacher_pred_bboxes,
+                )
+            cmd_total, cmd_feature_term, cmd_relation_term, cmd_output_term = self._cmdistill_combine_components(
+                cmd_pcc_loss,
+                cmd_pcc_levels,
+                cmd_relation_loss,
+                cmd_relation_levels,
+                cmd_output_loss,
             )
-            kd_loss = kd_loss + self.profile_kd_weight * self.cmdistill_logit_weight * cmdistill_output_loss
+            kd_loss = kd_loss + self.profile_kd_weight * cmd_total
+            self._cmdistill_update_stats(
+                cmdistill_pcc_levels=int(cmd_pcc_levels),
+                cmdistill_pcc_loss=float(cmd_feature_term.detach().cpu()),
+                cmdistill_relation_loss=float(cmd_relation_term.detach().cpu()),
+                cmdistill_ibcld_loss=float(cmd_output_term.detach().cpu()),
+                cmdistill_total_loss=float(cmd_total.detach().cpu()),
+            )
 
         if residual_aux_levels > 0:
             residual_aux_loss = residual_aux_loss / residual_aux_levels

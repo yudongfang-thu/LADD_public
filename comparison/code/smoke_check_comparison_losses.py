@@ -56,6 +56,7 @@ def make_loss(**overrides):
         "cmdistill_temperature": 4.0,
         "cmdistill_max_tokens": 64,
         "cmdistill_min_confidence": 0.05,
+        "_cmdistill_last_stats": {},
     }
     defaults.update(overrides)
     for key, value in defaults.items():
@@ -244,6 +245,12 @@ def check_cmdistill():
     assert student_scores.grad is not None and torch.isfinite(student_scores.grad).all()
     assert student_bboxes.grad is not None and torch.isfinite(student_bboxes.grad).all()
     assert teacher_scores.grad is None
+    stats = criterion._cmdistill_last_stats
+    assert 0.0 < stats["cmdistill_ibcld_candidate_ratio"] <= 1.0
+    assert stats["cmdistill_ibcld_fg_count"] == int(fg.sum())
+    assert stats["cmdistill_ibcld_teacher_conf_added_count"] >= 0
+    assert stats["cmdistill_ibcld_cls_loss"] > 0.0
+    assert stats["cmdistill_ibcld_box_loss"] >= 0.0
 
     criterion_no_sampling = make_loss(cmdistill_max_tokens=n_tokens)
     batch_relation = criterion_no_sampling._cmdistill_relation_loss(
@@ -259,6 +266,31 @@ def check_cmdistill():
         teacher_map.detach()[1:],
     )
     assert torch.allclose(batch_relation, 0.5 * (img0_relation + img1_relation), atol=1e-6)
+    assert criterion_no_sampling._cmdistill_last_stats["cmdistill_slrd_tokens"] == n_tokens
+
+    component_norm = make_loss(
+        cmdistill_feature_weight=2.0,
+        cmdistill_relation_weight=3.0,
+        cmdistill_logit_weight=5.0,
+    )
+    pcc_sum = torch.tensor(9.0)
+    relation_sum = torch.tensor(6.0)
+    output_term = torch.tensor(2.0)
+    total, feature_term, relation_term, output_seen = component_norm._cmdistill_combine_components(
+        pcc_sum,
+        2,
+        relation_sum,
+        1,
+        output_term,
+    )
+    expected_feature = pcc_sum / 2
+    expected_total = 2.0 * expected_feature + 3.0 * relation_sum + 5.0 * output_term
+    generic_wrong = 2.0 * ((pcc_sum + relation_sum) / 3) + 5.0 * output_term
+    assert torch.allclose(feature_term, expected_feature)
+    assert torch.allclose(relation_term, relation_sum)
+    assert torch.allclose(output_seen, output_term)
+    assert torch.allclose(total, expected_total)
+    assert not torch.allclose(total, generic_wrong)
 
     logit_only_style = make_loss(
         cmdistill_feature_weight=0.0,

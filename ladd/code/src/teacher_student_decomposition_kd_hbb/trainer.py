@@ -1540,6 +1540,24 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
                 return True
         return False
 
+    def _collect_cmdistill_stats(self) -> dict:
+        criterion = getattr(unwrap_model(self.model), "criterion", None)
+        raw_stats = getattr(criterion, "_cmdistill_last_stats", {}) if criterion is not None else {}
+        keys = (
+            "cmdistill_pcc_levels",
+            "cmdistill_slrd_tokens",
+            "cmdistill_ibcld_candidate_ratio",
+            "cmdistill_ibcld_fg_count",
+            "cmdistill_ibcld_teacher_conf_added_count",
+            "cmdistill_ibcld_cls_loss",
+            "cmdistill_ibcld_box_loss",
+            "cmdistill_pcc_loss",
+            "cmdistill_relation_loss",
+            "cmdistill_ibcld_loss",
+            "cmdistill_total_loss",
+        )
+        return {key: raw_stats.get(key, 0.0) for key in keys}
+
     def _append_ladd_diagnostics(self, metrics: dict) -> None:
         if RANK not in {-1, 0}:
             return
@@ -1549,6 +1567,7 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             return
         weights = self._refresh_effective_ladd_weights()
         bn_stats = self._collect_bn_stats()
+        cmdistill_stats = self._collect_cmdistill_stats()
         grad_stats = self._last_grad_norms if self.diagnostic_cfg.get("ladd_diag_log_grad", False) else None
         if grad_stats is None:
             nan = float("nan")
@@ -1570,10 +1589,13 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             "kd_loss": self._metric_value(metrics, "train/kd_loss"),
             "reach_match_loss": self._metric_value(metrics, "train/reach_match_loss"),
             "reach_rank_loss": self._metric_value(metrics, "train/reach_rank_loss"),
+            **cmdistill_stats,
             **bn_stats,
             "bn_stats_mode": self._bn_stats_mode_label(),
             "bn_stats_frozen_this_epoch": int(self._should_freeze_bn_stats()),
-            "nan_or_inf_detected": int(self._has_nonfinite(list(metrics.values()) + list(bn_stats.values()))),
+            "nan_or_inf_detected": int(
+                self._has_nonfinite(list(metrics.values()) + list(bn_stats.values()) + list(cmdistill_stats.values()))
+            ),
             **grad_stats,
             "base_alpha_kd": float(weights.get("base_alpha_kd", self.tskd_cfg["alpha_kd"])),
             "effective_alpha_kd": float(weights.get("alpha_kd", 0.0)),

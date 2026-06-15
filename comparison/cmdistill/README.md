@@ -8,6 +8,8 @@ For external code review, start from [`REVIEW_PACKET.md`](REVIEW_PACKET.md).
 For a copy-ready review prompt, see [`PRO_REVIEW_PROMPT.md`](PRO_REVIEW_PROMPT.md).
 The first review response is tracked in
 [`REVIEW_ROUND1_RESPONSE.md`](REVIEW_ROUND1_RESPONSE.md).
+The second review cleanup is tracked in
+[`REVIEW_ROUND2_RESPONSE.md`](REVIEW_ROUND2_RESPONSE.md).
 
 ## Paper Asset
 
@@ -47,6 +49,9 @@ paper and used as a strong comparison method in the CCLKD OGSOD benchmark:
   binary cross entropy against teacher sigmoid probabilities. IBCLD is computed
   once on the full concatenated detector output, not inside the per-FPN feature
   loop.
+- Total CMDistill KD is explicitly normalized as
+  `feature_weight * mean(PCCFD_shallow, PCCFD_deep) +
+  relation_weight * SLRD_deep + logit_weight * IBCLD_full_outputs`.
 
 It uses a frozen RGB teacher and SAR student, matching the existing FGD/LD
 controlled comparison protocol. It is not an online CCLKD trainer.
@@ -86,6 +91,8 @@ temperature-scaled KL.
 `CMDISTILL_MAX_TOKENS` caps SLRD relation tokens per image for memory control.
 `CMDISTILL_MIN_CONFIDENCE` adds teacher-confident predictions to the IBCLD
 candidate set in addition to assigner foreground tokens.
+Valid formal CMDistill-style runs require `KD_CALIBRATION_MODE=affine`; runs
+with a different calibration mode are not valid CMDistill comparison runs.
 
 ## Validation
 

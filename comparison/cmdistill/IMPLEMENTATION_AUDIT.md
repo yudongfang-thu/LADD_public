@@ -17,7 +17,7 @@ The implementation must follow the CMDistill paper first:
 | PCCFD | Pearson-correlation feature distillation on selected FPN layers; paper selects shallowest and deepest feature layers and uses an adaptive layer before feature loss. | `_cmdistill_pcc_feature_loss()` in `ladd/code/src/teacher_student_decomposition_kd_hbb/loss.py`; launchers set `KD_CALIBRATION_MODE=affine` to enable the 1x1 student adaptive layer. |
 | SLRD | Affinity matrices from high-level semantic features, supervised with L1; only deepest semantic feature graph is used for efficiency. | `_cmdistill_relation_loss()` uses per-image normalized token affinity and L1 on the deepest feature level. The token cap samples the spatial-token axis within each image and does not mix batch items. |
 | IBCLD | Logic distillation combines teacher-student predicted-box IoU loss and binary classification logic loss. | `_cmdistill_output_loss()` uses `1 - IoU(decoded student box, decoded teacher box)` plus BCE from student logits to teacher sigmoid probabilities. It is called once on the full concatenated detector output. |
-| Total loss | `L_total = L_det + lambda1 L_fea + lambda2 L_rela + lambda3 L_log`. | Controlled comparison profile adds weighted CMDistill profile loss to student detection loss; weights are exposed as `CMDISTILL_FEATURE_WEIGHT`, `CMDISTILL_RELATION_WEIGHT`, and `CMDISTILL_LOGIT_WEIGHT`. |
+| Total loss | `L_total = L_det + lambda1 L_fea + lambda2 L_rela + lambda3 L_log`. | Controlled comparison profile explicitly uses `mean(PCCFD_shallow, PCCFD_deep)`, `SLRD_deep`, and full-output `IBCLD`; weights are exposed as `CMDISTILL_FEATURE_WEIGHT`, `CMDISTILL_RELATION_WEIGHT`, and `CMDISTILL_LOGIT_WEIGHT`. |
 
 ## Known Adaptation Boundaries
 
@@ -28,6 +28,8 @@ The implementation must follow the CMDistill paper first:
 - `CMDISTILL_MAX_TOKENS` is an OGSOD/YOLO11 memory-control adaptation for SLRD.
 - `CMDISTILL_MIN_CONFIDENCE` is an OGSOD/YOLO11 candidate-filtering adaptation for IBCLD.
 - `CMDISTILL_TEMPERATURE` is accepted for CLI compatibility but is currently unused by strict IBCLD.
+- Valid formal CMDistill-style runs require `KD_CALIBRATION_MODE=affine`. Runs
+  with `KD_CALIBRATION_MODE!=affine` are not valid CMDistill comparison runs.
 
 ## Review Round 1 Fixes
 
@@ -39,6 +41,20 @@ The implementation must follow the CMDistill paper first:
   `KD_CALIBRATION_MODE=affine`.
 - Extended smoke checks for SLRD no-batch-mixing, PCCFD/SLRD level selection,
   IBCLD call separation, teacher detach, and candidate-count behavior.
+
+## Review Round 2 Cleanup
+
+- Replaced the generic profile-level averaging for CMDistill with explicit
+  component normalization:
+  `feature_weight * mean(PCCFD_shallow, PCCFD_deep) +
+  relation_weight * SLRD_deep + logit_weight * IBCLD_full_outputs`.
+- Added `_cmdistill_last_stats` and diagnostics fields for smoke inspection:
+  `cmdistill_pcc_levels`, `cmdistill_slrd_tokens`,
+  `cmdistill_ibcld_candidate_ratio`, `cmdistill_ibcld_fg_count`,
+  `cmdistill_ibcld_teacher_conf_added_count`, `cmdistill_ibcld_cls_loss`, and
+  `cmdistill_ibcld_box_loss`.
+- Extended synthetic smoke checks to verify the explicit normalization is not
+  equivalent to dividing CMDistill feature/relation losses by all FPN levels.
 
 ## Validation
 

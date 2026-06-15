@@ -38,6 +38,7 @@ Core implementation:
   - `_cmdistill_pcc_feature_loss`
   - `_cmdistill_relation_loss`
   - `_cmdistill_output_loss`
+  - `_cmdistill_combine_components`
   - `_pkd_channel_standardize_map`
 - `../../ladd/code_versions/current_hbb/src/teacher_student_decomposition_kd_hbb/loss.py`
   - synchronized copy used by formal launch scripts
@@ -57,7 +58,7 @@ Entrypoints:
 | PCCFD | 1x1 student adaptive layer via `KD_CALIBRATION_MODE=affine`; shallowest and deepest feature maps; channel-wise Pearson normalization; MSE/2. |
 | SLRD | Deepest feature map only; per-image normalized token affinity matrix; L1 loss; spatial-token cap for memory control. |
 | IBCLD | Decoded student/teacher box IoU loss plus BCE from student logits to teacher sigmoid probabilities, computed once on full concatenated detector outputs. |
-| Total | Student detection loss plus weighted CMDistill losses controlled by `CMDISTILL_FEATURE_WEIGHT`, `CMDISTILL_RELATION_WEIGHT`, and `CMDISTILL_LOGIT_WEIGHT`. |
+| Total | Student detection loss plus `feature_weight * mean(PCCFD_shallow, PCCFD_deep) + relation_weight * SLRD_deep + logit_weight * IBCLD_full_outputs`. |
 
 ## Known Adaptation Boundaries
 
@@ -71,6 +72,8 @@ Entrypoints:
   adaptations and should be reported with any result.
 - `CMDISTILL_TEMPERATURE` is reserved/accepted by CLI but is not used by strict
   IBCLD.
+- Valid formal CMDistill-style runs require `KD_CALIBRATION_MODE=affine`. Runs
+  with `KD_CALIBRATION_MODE!=affine` are not valid CMDistill comparison runs.
 
 ## Round 1 Review Response
 
@@ -84,6 +87,24 @@ have been applied:
   non-`affine` KD calibration mode.
 - Smoke tests now cover SLRD no-batch-mixing, feature/relation level selection,
   IBCLD call separation, teacher detach, and confidence-candidate behavior.
+
+## Round 2 Cleanup
+
+The second external review verdict was `ready for smoke training`, with cleanup
+recommended before formal long runs. The following changes have been applied:
+
+- CMDistill no longer uses generic `profile_kd_loss / profile_levels`
+  normalization. PCCFD is averaged over shallowest and deepest feature maps,
+  SLRD is taken from the deepest feature map, and IBCLD is computed once on the
+  full detector output.
+- `ladd_diagnostics.csv` now receives lightweight CMDistill smoke stats from
+  the loss object: PCC levels, SLRD token count, IBCLD candidate ratio, IBCLD
+  foreground count, teacher-confidence added count, and IBCLD cls/box losses.
+- Synthetic smoke checks verify that CMDistill component normalization is not
+  equivalent to dividing by all FPN levels.
+
+This status supports short GPU smoke training only. It does not justify a
+formal 800-epoch run without first checking real data-flow diagnostics.
 
 ## Local Validation
 
