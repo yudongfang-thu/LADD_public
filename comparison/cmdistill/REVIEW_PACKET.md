@@ -28,6 +28,9 @@ Paper and notes:
 - `paper/CMDistill__2025_JSTARS__Cross_Modal_Distillation_Framework_for_AAV_Image_Object_Detection.pdf`
 - `paper/README.md`
 - `IMPLEMENTATION_AUDIT.md`
+- `REVIEW_ROUND1_RESPONSE.md`
+- `REVIEW_ROUND2_RESPONSE.md`
+- `REVIEW_ROUND3.md`
 - `references/PKD_REFERENCE.md`
 - `references/pkd_loss_mmrazor.py`
 
@@ -105,6 +108,14 @@ recommended before formal long runs. The following changes have been applied:
 
 This status supports short GPU smoke training only. It does not justify a
 formal 800-epoch run without first checking real data-flow diagnostics.
+
+## Round 3 Cleanup
+
+The third external review verdict was `ready for 1-epoch GPU smoke`. The
+cleanup commit records the review in `REVIEW_ROUND3.md`, updates CMDistill run
+tags to `v3_smoke_ready_20260615`, adds an epoch-1 stdout smoke summary, splits
+nonfinite diagnostics into metric/CMDistill and BN components, and standardizes
+the public naming as CMDistill-style.
 
 ## Local Validation
 

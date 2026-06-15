@@ -268,6 +268,8 @@ def check_cmdistill():
     assert torch.allclose(batch_relation, 0.5 * (img0_relation + img1_relation), atol=1e-6)
     assert criterion_no_sampling._cmdistill_last_stats["cmdistill_slrd_tokens"] == n_tokens
 
+    # Guard the training-path formula: CMDistill must not regress to generic
+    # profile averaging over all FPN levels.
     component_norm = make_loss(
         cmdistill_feature_weight=2.0,
         cmdistill_relation_weight=3.0,

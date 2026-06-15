@@ -56,6 +56,15 @@ The implementation must follow the CMDistill paper first:
 - Extended synthetic smoke checks to verify the explicit normalization is not
   equivalent to dividing CMDistill feature/relation losses by all FPN levels.
 
+## Review Round 3 Cleanup
+
+- Default CMDistill run tags now use `v3_smoke_ready_20260615`.
+- `ladd_diagnostics.csv` keeps the legacy `nan_or_inf_detected` flag and also
+  splits it into `nonfinite_metrics_or_cmdistill` and `nonfinite_bn_stats`.
+- Epoch-1 CMDistill runs print one `cmdistill_smoke_stats` summary line to the
+  outer log for quick smoke inspection.
+- Naming is standardized as CMDistill-style controlled comparison.
+
 ## Validation
 
 Current local validation:

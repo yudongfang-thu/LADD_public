@@ -1,8 +1,8 @@
-# CMDistill Controlled Comparison
+# CMDistill-style Controlled Comparison
 
-This directory documents the CMDistill baseline in the controlled comparison
+This directory documents the CMDistill-style baseline in the controlled comparison
 framework. CMDistill is currently a high-priority comparison method because the
-CCLKD paper reports CMDistill as a strong OGSOD/YOLOv11 benchmark competitor.
+CCLKD paper reports CMDistill as a strong OGSOD/YOLO11 benchmark competitor.
 
 For external code review, start from [`REVIEW_PACKET.md`](REVIEW_PACKET.md).
 For a copy-ready review prompt, see [`PRO_REVIEW_PROMPT.md`](PRO_REVIEW_PROMPT.md).
@@ -10,6 +10,8 @@ The first review response is tracked in
 [`REVIEW_ROUND1_RESPONSE.md`](REVIEW_ROUND1_RESPONSE.md).
 The second review cleanup is tracked in
 [`REVIEW_ROUND2_RESPONSE.md`](REVIEW_ROUND2_RESPONSE.md).
+The third review cleanup is tracked in
+[`REVIEW_ROUND3.md`](REVIEW_ROUND3.md).
 
 ## Paper Asset
 
@@ -28,10 +30,9 @@ Source priority for implementation:
 
 ## Scope
 
-`cmdistill` is a non-official paper-aligned implementation. No official
-CMDistill code was found in the current project search, so this profile should
-be reported as "CMDistill reimplementation/adaptation" unless later validated
-against an official release.
+`cmdistill` is a non-official CMDistill-style paper-aligned OGSOD/YOLO11
+adaptation. No official CMDistill code was found. Results must not be reported
+as official CMDistill reproduction.
 
 The implemented profile follows the three components described in the CMDistill
 paper and used as a strong comparison method in the CCLKD OGSOD benchmark:

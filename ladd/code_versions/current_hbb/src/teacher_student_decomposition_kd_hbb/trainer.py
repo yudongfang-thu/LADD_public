@@ -1568,6 +1568,10 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
         weights = self._refresh_effective_ladd_weights()
         bn_stats = self._collect_bn_stats()
         cmdistill_stats = self._collect_cmdistill_stats()
+        nonfinite_metrics_or_cmdistill = int(
+            self._has_nonfinite(list(metrics.values()) + list(cmdistill_stats.values()))
+        )
+        nonfinite_bn_stats = int(self._has_nonfinite(list(bn_stats.values())))
         grad_stats = self._last_grad_norms if self.diagnostic_cfg.get("ladd_diag_log_grad", False) else None
         if grad_stats is None:
             nan = float("nan")
@@ -1593,9 +1597,9 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             **bn_stats,
             "bn_stats_mode": self._bn_stats_mode_label(),
             "bn_stats_frozen_this_epoch": int(self._should_freeze_bn_stats()),
-            "nan_or_inf_detected": int(
-                self._has_nonfinite(list(metrics.values()) + list(bn_stats.values()) + list(cmdistill_stats.values()))
-            ),
+            "nonfinite_metrics_or_cmdistill": nonfinite_metrics_or_cmdistill,
+            "nonfinite_bn_stats": nonfinite_bn_stats,
+            "nan_or_inf_detected": int(nonfinite_metrics_or_cmdistill or nonfinite_bn_stats),
             **grad_stats,
             "base_alpha_kd": float(weights.get("base_alpha_kd", self.tskd_cfg["alpha_kd"])),
             "effective_alpha_kd": float(weights.get("alpha_kd", 0.0)),
@@ -1630,3 +1634,14 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             if write_header:
                 writer.writeheader()
             writer.writerow(row)
+        if self.dkd_cfg.get("comparison_kd_profile") == "cmdistill" and epoch_1based == 1:
+            LOGGER.info(
+                "cmdistill_smoke_stats "
+                f"candidate_ratio={float(cmdistill_stats['cmdistill_ibcld_candidate_ratio']):.6f} "
+                f"fg_count={int(cmdistill_stats['cmdistill_ibcld_fg_count'])} "
+                f"teacher_conf_added={int(cmdistill_stats['cmdistill_ibcld_teacher_conf_added_count'])} "
+                f"pcc_loss={float(cmdistill_stats['cmdistill_pcc_loss']):.6f} "
+                f"relation_loss={float(cmdistill_stats['cmdistill_relation_loss']):.6f} "
+                f"ibcld_loss={float(cmdistill_stats['cmdistill_ibcld_loss']):.6f} "
+                f"total={float(cmdistill_stats['cmdistill_total_loss']):.6f}"
+            )

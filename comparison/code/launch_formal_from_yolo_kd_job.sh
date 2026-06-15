@@ -79,7 +79,7 @@ fi
 
 if [[ -z "${COMPARISON_IMPL_VERSION:-}" ]]; then
   case "$METHOD" in
-    cmdistill) COMPARISON_IMPL_VERSION="v2_strict_20260615" ;;
+    cmdistill) COMPARISON_IMPL_VERSION="v3_smoke_ready_20260615" ;;
     *) COMPARISON_IMPL_VERSION="v2_20260610" ;;
   esac
 fi
