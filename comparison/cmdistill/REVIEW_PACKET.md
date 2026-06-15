@@ -55,8 +55,8 @@ Entrypoints:
 | CMDistill component | Current implementation |
 |---|---|
 | PCCFD | 1x1 student adaptive layer via `KD_CALIBRATION_MODE=affine`; shallowest and deepest feature maps; channel-wise Pearson normalization; MSE/2. |
-| SLRD | Deepest feature map only; normalized token affinity matrix; L1 loss. |
-| IBCLD | Decoded student/teacher box IoU loss plus BCE from student logits to teacher sigmoid probabilities. |
+| SLRD | Deepest feature map only; per-image normalized token affinity matrix; L1 loss; spatial-token cap for memory control. |
+| IBCLD | Decoded student/teacher box IoU loss plus BCE from student logits to teacher sigmoid probabilities, computed once on full concatenated detector outputs. |
 | Total | Student detection loss plus weighted CMDistill losses controlled by `CMDISTILL_FEATURE_WEIGHT`, `CMDISTILL_RELATION_WEIGHT`, and `CMDISTILL_LOGIT_WEIGHT`. |
 
 ## Known Adaptation Boundaries
@@ -67,6 +67,23 @@ Entrypoints:
   controlled comparison protocol, `256 x 256` input.
 - No official CMDistill code was found. This is a paper-aligned
   reimplementation/adaptation, not a line-by-line official reproduction.
+- `CMDISTILL_MAX_TOKENS` and `CMDISTILL_MIN_CONFIDENCE` are YOLO11/OGSOD
+  adaptations and should be reported with any result.
+- `CMDISTILL_TEMPERATURE` is reserved/accepted by CLI but is not used by strict
+  IBCLD.
+
+## Round 1 Review Response
+
+The first external review returned `needs code fix first`. The following fixes
+have been applied:
+
+- SLRD no longer mixes tokens across images in a batch.
+- IBCLD is no longer computed inside each FPN feature-profile call; it is
+  computed once at detector-output level.
+- CMDistill now warns if the adaptive layer is disabled by using a
+  non-`affine` KD calibration mode.
+- Smoke tests now cover SLRD no-batch-mixing, feature/relation level selection,
+  IBCLD call separation, teacher detach, and confidence-candidate behavior.
 
 ## Local Validation
 

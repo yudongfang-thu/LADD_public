@@ -223,9 +223,63 @@ def check_cmdistill():
     loss.backward()
     assert student_map.grad is not None and torch.isfinite(student_map.grad).all()
     assert student_distri.grad is None
+    assert student_scores.grad is None
+    assert student_bboxes.grad is None
+    assert teacher_map.grad is None
+
+    output_loss = criterion._cmdistill_output_loss(
+        student_distri,
+        teacher_distri,
+        student_scores,
+        teacher_scores,
+        fg,
+        target_scores,
+        student_bboxes_xyxy,
+        teacher_bboxes_xyxy,
+    )
+    assert torch.isfinite(output_loss), output_loss
+    assert output_loss.item() > 0, output_loss.item()
+    output_loss.backward()
+    assert student_distri.grad is None
     assert student_scores.grad is not None and torch.isfinite(student_scores.grad).all()
     assert student_bboxes.grad is not None and torch.isfinite(student_bboxes.grad).all()
-    assert teacher_map.grad is None
+    assert teacher_scores.grad is None
+
+    criterion_no_sampling = make_loss(cmdistill_max_tokens=n_tokens)
+    batch_relation = criterion_no_sampling._cmdistill_relation_loss(
+        student_map.detach(),
+        teacher_map.detach(),
+    )
+    img0_relation = criterion_no_sampling._cmdistill_relation_loss(
+        student_map.detach()[:1],
+        teacher_map.detach()[:1],
+    )
+    img1_relation = criterion_no_sampling._cmdistill_relation_loss(
+        student_map.detach()[1:],
+        teacher_map.detach()[1:],
+    )
+    assert torch.allclose(batch_relation, 0.5 * (img0_relation + img1_relation), atol=1e-6)
+
+    logit_only_style = make_loss(
+        cmdistill_feature_weight=0.0,
+        cmdistill_relation_weight=0.0,
+        cmdistill_logit_weight=1.0,
+    )._cmdistill_style_loss(
+        student_map.detach().clone().requires_grad_(True),
+        teacher_map.detach().clone(),
+        fg,
+        target_scores,
+        student_distri.detach().clone(),
+        teacher_distri,
+        student_scores.detach().clone(),
+        teacher_scores,
+        student_bboxes_xyxy.detach().clone(),
+        teacher_bboxes_xyxy,
+        level_index=2,
+        num_levels=3,
+    )
+    assert torch.isfinite(logit_only_style)
+    assert logit_only_style.item() == 0.0
 
     feature_only = make_loss(cmdistill_relation_weight=0.0, cmdistill_logit_weight=0.0)
     feature_loss = feature_only._cmdistill_style_loss(
@@ -260,6 +314,50 @@ def check_cmdistill():
     )
     assert torch.isfinite(middle_level_feature)
     assert middle_level_feature.item() == 0.0
+
+    relation_only = make_loss(
+        cmdistill_feature_weight=0.0,
+        cmdistill_relation_weight=1.0,
+        cmdistill_logit_weight=0.0,
+        cmdistill_max_tokens=n_tokens,
+    )
+    relation_middle = relation_only._cmdistill_style_loss(
+        student_map.detach().clone().requires_grad_(True),
+        teacher_map.detach().clone(),
+        fg,
+        target_scores,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        level_index=1,
+        num_levels=3,
+    )
+    relation_last = relation_only._cmdistill_style_loss(
+        student_map.detach().clone().requires_grad_(True),
+        teacher_map.detach().clone(),
+        fg,
+        target_scores,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        level_index=2,
+        num_levels=3,
+    )
+    assert torch.isfinite(relation_middle)
+    assert relation_middle.item() == 0.0
+    assert torch.isfinite(relation_last) and relation_last.item() > 0
+
+    teacher_scores_with_candidate = teacher_scores.clone()
+    teacher_scores_with_candidate[:, 20, :] = 8.0
+    candidate_fg_only = fg
+    candidate_with_teacher_conf = candidate_fg_only | (teacher_scores_with_candidate.sigmoid().amax(dim=-1) >= 0.5)
+    assert candidate_with_teacher_conf.sum() > candidate_fg_only.sum()
 
     # OpenMMLab PKD normalizes each channel over N/H/W, then uses MSE/2.
     pkd_input = torch.randn(2, 5, 4, 3)

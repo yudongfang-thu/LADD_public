@@ -21,6 +21,11 @@ Important context:
    - comparison/cmdistill/references/PKD_REFERENCE.md
    - comparison/cmdistill/references/pkd_loss_mmrazor.py
 4. No official CMDistill code was found. This should be reviewed as a paper-aligned reimplementation/adaptation, not a line-by-line reproduction.
+5. A first review returned "needs code fix first". The follow-up commit claims to fix:
+   - SLRD batch mixing by computing per-image relation matrices with torch.bmm.
+   - IBCLD placement by computing output-level logic distillation once on full concatenated detector outputs, not inside each per-FPN feature loss.
+   - A warning when CMDistill is used without KD_CALIBRATION_MODE=affine.
+   - Smoke tests for these behaviors.
 
 Please review whether the implementation is faithful enough to run as a controlled comparison baseline. In particular, audit:
 
@@ -33,11 +38,13 @@ Please review whether the implementation is faithful enough to run as a controll
    - Does deepest-feature affinity matrix construction match the CMDistill paper?
    - Is L1 relation loss correct?
    - Are there missing normalization, sampling, or scaling issues?
+   - Verify that the implementation no longer mixes tokens across different images in the batch.
 
 3. IBCLD:
    - Does decoded box IoU loss correctly implement the paper's IoU logic distillation?
    - Does BCE from student logits to teacher sigmoid probabilities correctly implement binary classification logic distillation?
    - Are candidate selection and teacher-confidence filtering defensible, or should all predictions/assigned boxes be used?
+   - Verify that IBCLD is computed once on full detector outputs instead of once per FPN level.
 
 4. Training integration:
    - Check the actual code in:

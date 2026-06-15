@@ -6,6 +6,8 @@ CCLKD paper reports CMDistill as a strong OGSOD/YOLOv11 benchmark competitor.
 
 For external code review, start from [`REVIEW_PACKET.md`](REVIEW_PACKET.md).
 For a copy-ready review prompt, see [`PRO_REVIEW_PROMPT.md`](PRO_REVIEW_PROMPT.md).
+The first review response is tracked in
+[`REVIEW_ROUND1_RESPONSE.md`](REVIEW_ROUND1_RESPONSE.md).
 
 ## Paper Asset
 
@@ -38,10 +40,13 @@ paper and used as a strong comparison method in the CCLKD OGSOD benchmark:
   feature maps. The channel-wise reduction follows PKD only where CMDistill
   does not specify tensor-layout details.
 - SLRD: semantic-level relation distillation. The code samples tokens from the
-  deepest feature map and matches teacher/student affinity matrices with L1.
+  deepest feature map per image and matches teacher/student affinity matrices
+  with L1. Batch items are not mixed when building relation matrices.
 - IBCLD: IoU-based binary classification logic distillation. The code aligns
   decoded teacher/student boxes with `1 - IoU` and aligns multi-class logic with
-  binary cross entropy against teacher sigmoid probabilities.
+  binary cross entropy against teacher sigmoid probabilities. IBCLD is computed
+  once on the full concatenated detector output, not inside the per-FPN feature
+  loop.
 
 It uses a frozen RGB teacher and SAR student, matching the existing FGD/LD
 controlled comparison protocol. It is not an online CCLKD trainer.
@@ -77,6 +82,10 @@ Environment variables:
 `CMDISTILL_TEMPERATURE` remains accepted for CLI compatibility with the earlier
 diagnostic profile, but the strict IBCLD implementation does not use
 temperature-scaled KL.
+
+`CMDISTILL_MAX_TOKENS` caps SLRD relation tokens per image for memory control.
+`CMDISTILL_MIN_CONFIDENCE` adds teacher-confident predictions to the IBCLD
+candidate set in addition to assigner foreground tokens.
 
 ## Validation
 

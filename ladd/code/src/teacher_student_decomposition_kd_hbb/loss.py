@@ -401,6 +401,11 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         self.kd_aggregation_mode = self._validate_kd_aggregation_mode(kd_aggregation_mode)
         self.kd_topk_ratio = float(kd_topk_ratio)
         self.kd_calibration_mode = self._validate_kd_calibration_mode(kd_calibration_mode)
+        if self.comparison_kd_profile == "cmdistill" and self.kd_calibration_mode != "affine":
+            LOGGER.warning(
+                "CMDistill expects KD_CALIBRATION_MODE=affine for the adaptive 1x1 layer; "
+                f"got {self.kd_calibration_mode!r}."
+            )
         self.instance_energy_radius = max(int(instance_energy_radius), 0)
         self.reach_student_detach = bool(reach_student_detach)
         self.student_branch_mode = self._validate_student_branch_mode(student_branch_mode)
@@ -1262,13 +1267,13 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         level_index: int | None = None,
         num_levels: int | None = None,
     ) -> torch.Tensor:
-        """CMDistill frozen-teacher KD: PCCFD + SLRD + IBCLD.
+        """CMDistill feature-side KD: PCCFD + SLRD.
 
         This is a paper-aligned adaptation because no official CMDistill code is
         available in the project. It follows the paper components:
-        PCC feature distillation on selected FPN maps, semantic relation
-        distillation on the deepest map, and IoU plus multi-binary BCE logic
-        distillation on detector outputs.
+        PCC feature distillation on selected FPN maps and semantic relation
+        distillation on the deepest map. IBCLD is computed once on the full
+        concatenated detector outputs in `_compute_decomposition_losses`.
         """
         if student_map.shape != teacher_map.shape:
             raise RuntimeError(
@@ -1288,23 +1293,9 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         if self.cmdistill_relation_weight > 0 and is_last_level:
             relation_loss = self._cmdistill_relation_loss(student_map, teacher_map)
 
-        output_loss = zero
-        if self.cmdistill_logit_weight > 0:
-            output_loss = self._cmdistill_output_loss(
-                student_distri,
-                teacher_distri,
-                student_scores,
-                teacher_scores,
-                fg_mask,
-                target_scores,
-                student_bboxes,
-                teacher_bboxes,
-            )
-
         return (
             self.cmdistill_feature_weight * feature_loss
             + self.cmdistill_relation_weight * relation_loss
-            + self.cmdistill_logit_weight * output_loss
         )
 
     def _cmdistill_pcc_feature_loss(self, student_map: torch.Tensor, teacher_map: torch.Tensor) -> torch.Tensor:
@@ -1323,22 +1314,22 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         student_map: torch.Tensor,
         teacher_map: torch.Tensor,
     ) -> torch.Tensor:
-        student_flat = _flatten_feat(student_map).reshape(-1, student_map.shape[1])
-        teacher_flat = _flatten_feat(teacher_map.detach()).reshape(-1, teacher_map.shape[1])
-        if student_flat.shape[0] < 2:
+        student_flat = _flatten_feat(student_map)
+        teacher_flat = _flatten_feat(teacher_map.detach())
+        if student_flat.shape[1] < 2:
             return student_map.new_zeros(())
 
-        candidate_idx = torch.arange(student_flat.shape[0], device=student_map.device)
+        candidate_idx = torch.arange(student_flat.shape[1], device=student_map.device)
         if candidate_idx.numel() > self.cmdistill_max_tokens:
             perm = torch.randperm(candidate_idx.numel(), device=student_map.device)[: self.cmdistill_max_tokens]
             candidate_idx = candidate_idx[perm]
         if candidate_idx.numel() < 2:
             return student_map.new_zeros(())
 
-        student_tokens = F.normalize(student_flat[candidate_idx], dim=-1, eps=1e-6)
-        teacher_tokens = F.normalize(teacher_flat[candidate_idx], dim=-1, eps=1e-6)
-        student_relation = student_tokens @ student_tokens.transpose(0, 1)
-        teacher_relation = teacher_tokens @ teacher_tokens.transpose(0, 1)
+        student_tokens = F.normalize(student_flat[:, candidate_idx, :], dim=-1, eps=1e-6)
+        teacher_tokens = F.normalize(teacher_flat[:, candidate_idx, :], dim=-1, eps=1e-6)
+        student_relation = torch.bmm(student_tokens, student_tokens.transpose(1, 2))
+        teacher_relation = torch.bmm(teacher_tokens, teacher_tokens.transpose(1, 2))
         return F.l1_loss(student_relation, teacher_relation)
 
     def _cmdistill_output_loss(
@@ -2554,6 +2545,23 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
 
         if profile_levels > 0:
             kd_loss = kd_loss + self.profile_kd_weight * (profile_kd_loss / profile_levels)
+
+        if (
+            self.comparison_kd_profile == "cmdistill"
+            and self.profile_kd_weight > 0
+            and self.cmdistill_logit_weight > 0
+        ):
+            cmdistill_output_loss = self._cmdistill_output_loss(
+                student_pred_distri,
+                teacher_distri_all,
+                student_pred_scores,
+                teacher_scores_all,
+                fg_mask,
+                target_scores,
+                student_pred_bboxes,
+                teacher_pred_bboxes,
+            )
+            kd_loss = kd_loss + self.profile_kd_weight * self.cmdistill_logit_weight * cmdistill_output_loss
 
         if residual_aux_levels > 0:
             residual_aux_loss = residual_aux_loss / residual_aux_levels
