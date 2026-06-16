@@ -10,6 +10,8 @@ LADD-clean / LADD-A1B = A1 teacher decomposition warmup -> B SAR detector traini
 
 A2 只保留为历史诊断和消融入口，不再作为主线阶段，不应把旧 A1-A2-B 结果写作 clean A1B 结果。
 
+当前实验主协议暂定为 `mosaic100`：800 epoch 中前 100 epoch 开 mosaic，后 700 epoch 关闭。暂不把全程 no-mosaic 作为主表协议。
+
 ## 1. 方法名称
 
 | 名称 | 推荐用途 |
@@ -17,8 +19,20 @@ A2 只保留为历史诊断和消融入口，不再作为主线阶段，不应�
 | `LADD-clean` | 论文/报告主方法名，强调去掉历史辅助损失和 A2 |
 | `LADD-A1B` | 实验标签和代码标签，强调阶段链路 |
 | `clean_a1b` | launcher/profile/run tag 中的固定字符串 |
+| `clean_a1b_dyn` | 备选主线标签，表示 B 阶段动态 teacher decomposition |
 
 核心定义：训练时使用 paired RGB/SAR。RGB teacher 的中间特征被分解为 task-relevant common representation `z_t` 与 private/unlearnable component `u_t`；SAR student 学到 `z_s`，并在 B 阶段用 `z_s -> z_t` KD 辅助 SAR-only detector 训练。推理时仍是 SAR-only detector。
+
+### 当前两条主线口径
+
+当前只考虑 SAR baseline 初始化版本，不考虑 YOLO-init 版本。也就是说，A1 的 `MODEL` 是同协议收敛 SAR baseline `best.pt`，RGB teacher 是同协议收敛 RGB baseline `best.pt`。
+
+| 线 | 标签 | B 阶段 teacher decomposition | 推荐用途 |
+|---|---|---|---|
+| static | `clean_a1b` | frozen/eval | 主线，叙事最干净 |
+| dynamic | `clean_a1b_dyn` | train，继续打开 `t_rec/reach/taskL` | 备选主线，验证动态解耦是否更强 |
+
+两条线都不包含 A2，也不恢复已经删除的历史 auxiliary/debug loss。
 
 ## 2. 现有代码实际阶段行为
 
@@ -59,6 +73,21 @@ clean B 使用 `LADD_B_A2_CORE=0`，对应 `trainer.py::_apply_manual_phase()` �
 
 因此 clean B 的长期主项是 detector loss 和 `z_s -> z_t` KD。`task_loss/reach/t_rec` 在 B 中为 0 是 phase scale 关闭的结果，不是代码没有这些实现。
 
+### B_dynamic 的实际 freeze / train
+
+备选主线使用 `LADD_A1B_MODE=dynamic`，launcher 会在 B 阶段设置 `LADD_B_A2_CORE=1`。这不是恢复 A2，而是在 B 阶段继续训练 A1 初始化的 teacher decomposition core：
+
+| 模块 | B_dynamic 状态 | 解释 |
+|---|---|---|
+| detector backbone/head `model.model` | train | 正常 SAR detector 训练 |
+| `student_split` | train | 学 `f_s -> z_s, r_s` |
+| `teacher_decomposition` | train | `z_t/u_t` 随 B 阶段动态适配 |
+| `teacher_decoder` | train | 支持 B 中的 teacher reconstruction |
+| `student_reachability` | train if `reach_input_mode=adapter` | B 中继续 reach 约束 |
+| `teacher_task_heads` | train | B 中继续 task-discriminative supervision |
+
+因此 dynamic 和 static 的唯一区别是 B 阶段是否继续优化 teacher decomposition/reach/taskL。dynamic 不引入任何已经删除的历史 loss。
+
 ## 3. clean A1B objective 定义
 
 clean A1B 主方法的 objective 只包含下面这些真正进入训练 loss 的项：
@@ -69,9 +98,17 @@ L_A1 = lambda_rec * L_t_rec
                      + lambda_rank_inner * L_reach_rank_cap)
      + lambda_taskL * L_task
 
-L_B  = L_det
-     + alpha_kd * L_KD(z_s, stopgrad(z_t))
-     + alpha_s_rec * L_s_rec
+L_B_static  = L_det
+            + alpha_kd * L_KD(z_s, stopgrad(z_t))
+            + alpha_s_rec * L_s_rec
+
+L_B_dynamic = L_det
+            + alpha_kd * L_KD(z_s, stopgrad(z_t))
+            + alpha_s_rec * L_s_rec
+            + lambda_rec * L_t_rec
+            + lambda_reach * (lambda_match_inner * L_reach_match
+                            + lambda_rank_inner * L_reach_rank_cap)
+            + lambda_taskL * L_task
 ```
 
 其中 foreground mask / teacher mask 是作用域和统计机制，不是 clean 主方法里的额外 loss。当前代码中已移除 mask regularization loss，只保留 `mask_mean/mask_std/mask_fg_mean/mask_bg_mean` 诊断统计。
@@ -94,7 +131,7 @@ L_B  = L_det
 | teacher decomposition mask | on | `USE_MASK=1` 使 teacher decomposition 产生 mask 和统计；clean 不启用 mask regularization loss |
 | foreground mask for reconstruction | off | `USE_FG_MASK_FOR_REC=0`，teacher/student reconstruction 默认不只限 foreground |
 
-### B objective 项
+### B_static objective 项
 
 | loss 字段 | clean A1B 状态 | 数学/语义作用 | 梯度流 |
 |---|---:|---|---|
@@ -105,7 +142,20 @@ L_B  = L_det
 | reach losses | off in B | B 默认不继续训练 reach adapter；避免把 B 重新变成 A2-core | 无 |
 | taskL | off in B | task-discriminative `z_t` supervision 已在 A1 完成；B 使用 frozen `z_t` 作为 KD target | 无 |
 
-这个选择来自代码和已有实验行为：mosaic B 的长期有效项是 detector loss 与 KD；`s_rec_loss` 在当前实现中确实由 `ALPHA_S_REC=0.1` 打开，作为 student split 的实现正则。把 B 重新打开 `LADD_B_A2_CORE=1` 会引入 teacher core 继续更新、reach/task/t_rec 混入 B 的复杂叙事，当前不作为 clean 主线。
+这个选择来自代码和已有实验行为：mosaic B 的长期有效项是 detector loss 与 KD；`s_rec_loss` 在当前实现中确实由 `ALPHA_S_REC=0.1` 打开，作为 student split 的实现正则。
+
+### B_dynamic objective 项
+
+| loss 字段 | dynamic 状态 | 数学/语义作用 |
+|---|---:|---|
+| detector loss | on | 正常 YOLO HBB `box/cls/dfl` 检测训练 |
+| `kd_loss` | on | foreground token 上让 `z_s` 对齐当前 `z_t` |
+| `s_rec_loss` | on | student split reconstruction |
+| teacher `t_rec_loss` | on | B 中继续约束 teacher decomposition 可重建 |
+| reach losses | on | B 中继续维护 SAR reach query 与 teacher common space 的可达性 |
+| taskL | on | B 中继续保持 `z_t` 的 task-discriminative 语义 |
+
+dynamic 的潜在优点是 `z_t/u_t` 可以随 SAR detector 和 KD 过程共同适配；风险是变量更多，必须和 static 分开报告。
 
 ### 已从当前 LADD 实现移除的历史 loss
 
@@ -145,8 +195,8 @@ L_B  = L_det
 | A2 | 主线必要阶段 | 不运行；历史诊断/消融 |
 | A1 sep/private aux | 旧代码可算 | 当前代码已移除 |
 | B sep/residual aux | 旧配置中可能非零 | 当前代码已移除 |
-| B core | 可出现 `B_A2_CORE` 诊断 | 主线固定 `LADD_B_A2_CORE=0` |
-| B task/reach/t_rec | 若 `B_A2_CORE=1` 会启用 | 默认关闭，使用 A1 frozen teacher target |
+| B core | 可出现 `B_A2_CORE` 诊断 | static 主线固定 `LADD_B_A2_CORE=0`；dynamic 备选主线显式使用 `LADD_B_A2_CORE=1` |
+| B task/reach/t_rec | 若 `B_A2_CORE=1` 会启用 | static 关闭并使用 A1 frozen teacher target；dynamic 打开但必须单独标记 |
 | run tag | 历史 tag 含 A2/cap2 等混杂语义 | 必须包含 `clean_a1b` |
 | 结果口径 | 可作为历史或附录 | 主表候选 |
 
@@ -173,12 +223,28 @@ rank_d_neg_cap = 2.0
 
 旧 formal no-mosaic 结果和旧 close@100/400ep 结果可以作为历史或附录，不应和 mosaic clean A1B 结果混在主表中直接比较。
 
+当前优先级是先补齐 `n/s` 两个容量，因为 `m` 的 mosaic100 SAR/RGB baseline 还没有完成。同一容量下需要分别跑：
+
+| 优先级 | 容量 | 主线 | 前置条件 |
+|---|---|---|---|
+| P0 | `n` | static `clean_a1b` | `n` SAR/RGB mosaic100 baseline 已可用 |
+| P0 | `n` | dynamic `clean_a1b_dyn` | `n` SAR/RGB mosaic100 baseline 已可用 |
+| P1 | `s` | static `clean_a1b` | `s` SAR/RGB mosaic100 baseline 已可用 |
+| P1 | `s` | dynamic `clean_a1b_dyn` | `s` SAR/RGB mosaic100 baseline 已可用 |
+| P2 | `m` | static + dynamic | 等 `m` SAR/RGB mosaic100 baseline 完成 |
+
 ## 7. clean launcher profile
 
-新增入口：
+static 主线入口：
 
 ```bash
 bash ladd/scripts/launch_ladd_clean_a1b_job.sh <n|s|m|l|x> <seed> <gpu_id>
+```
+
+dynamic 备选主线入口：
+
+```bash
+LADD_A1B_MODE=dynamic bash ladd/scripts/launch_ladd_clean_a1b_job.sh <n|s|m|l|x> <seed> <gpu_id>
 ```
 
 该入口直接调用 `ladd/code_versions/current_hbb/scripts/ogsod_public/run_ladd_phase.sh`，顺序只跑 A1 和 B：
@@ -199,9 +265,16 @@ B:  MODEL = A1 weights/best.pt
 | `ALPHA_KD` | `1.0` |
 | `ALPHA_S_REC` | `0.1` |
 | `USE_MASK`, `USE_FG_MASK_FOR_REACH`, `USE_FG_MASK_FOR_REC` | `1`, `1`, `0` |
-| `LADD_B_A2_CORE`, `LADD_B_DET_ONLY`, `LADD_A2_DET_ONLY` | `0`, `0`, `0` |
+| `LADD_B_DET_ONLY`, `LADD_A2_DET_ONLY` | `0`, `0` |
 
-每次运行会在 `logs/ladd_clean_a1b/.../run_meta_clean_a1b.env` 写入 profile、loss 权重、协议参数、A1/B run name 和 checkpoint 链接；各阶段仍保留 `run_ladd_phase.sh` 自己的 `manifest.txt`。
+两条主线的 profile 差异只有：
+
+| `LADD_A1B_MODE` | run tag | `PROJECT_DIR` key | `LADD_B_A2_CORE` |
+|---|---|---|---|
+| `static` | `clean_a1b_*` | `ladd_clean_a1b` | `0` |
+| `dynamic` | `clean_a1b_dyn_*` | `ladd_clean_a1b_dynamic` | `1` |
+
+每次运行会在 `logs/ladd_clean_a1b/.../run_meta_clean_a1b.env` 或 `logs/ladd_clean_a1b_dynamic/.../run_meta_clean_a1b.env` 写入 profile、loss 权重、协议参数、A1/B run name 和 checkpoint 链接；各阶段仍保留 `run_ladd_phase.sh` 自己的 `manifest.txt`。
 
 ### 当前防误开方式
 
@@ -217,10 +290,10 @@ B:  MODEL = A1 weights/best.pt
 
 可进入 clean A1B 主表的结果必须同时满足：
 
-1. run tag 包含 `clean_a1b`；
+1. run tag 包含 `clean_a1b`；dynamic 备选主线必须包含 `clean_a1b_dyn`；
 2. phase chain 是 `A1 -> B`，没有 A2；
 3. 使用当前 cleaned LADD 代码；结果 CSV 不应出现 `t_sep/s_sep/r_aux/u_aux/mask_reg/recon_task/rs_comp/r_obb/s_repel/path_b/r_sar/dkd/proto_cls` 字段；
-4. B 中 `LADD_B_A2_CORE=0`；
+4. static 主线 B 中 `LADD_B_A2_CORE=0`；dynamic 备选主线 B 中 `LADD_B_A2_CORE=1` 且必须和 static 分开报告；
 5. baseline、LADD、comparison methods 使用同一个 mosaic/close_mosaic 协议；
 6. 不包含 checkpoint 权重或其他大文件进入 public 包。
 
@@ -231,6 +304,6 @@ B:  MODEL = A1 weights/best.pt
 | 旧 A1-A2-B full chain | 历史/附录/消融，不写作 clean A1B |
 | A2 best/last 选择实验 | A2 稳定性诊断 |
 | no-mosaic formal LADD | 历史或附录；不能与 mosaic 主表直接比较 |
-| B_A2_CORE run | 诊断 teacher core 在 B 中继续更新的影响 |
+| 未标记 `clean_a1b_dyn` 的 B_A2_CORE run | 诊断 teacher core 在 B 中继续更新的影响，不能混入 static 主线 |
 | sep/aux/debug loss 非零 run | auxiliary ablation，不是 clean 主线 |
 | mosaic 与 no-mosaic 混合表 | 不作为同协议主表 |

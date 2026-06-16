@@ -11,6 +11,11 @@ LADD-clean / LADD-A1B launcher:
   - does not run A2
   - keeps A1 reconstruction/reach/taskL and B detector/KD/student reconstruction
   - uses the cleaned LADD loss surface without sep/private/residual/debug auxiliary losses
+  - supports LADD_A1B_MODE=static or dynamic
+
+Modes:
+  static   B freezes teacher decomposition; B loss = det + KD + student rec
+  dynamic  B keeps teacher decomposition/reach/taskL active via --ladd-b-a2-core
 
 Required checkpoints:
   SAR_BASELINE=/path/to/sar/best.pt
@@ -31,6 +36,7 @@ Useful overrides:
   DRY_RUN=1
   RUN_TAG_SUFFIX=_try1
   EXP_SUFFIX=try1
+  LADD_A1B_MODE=dynamic
   EPOCHS_A1=1 EPOCHS_B=1
   PROJECT_DIR=/path/to/project
   CHAIN_LOG_DIR=/path/to/logs
@@ -59,6 +65,25 @@ if [[ -z "$GPU_ID" ]]; then
   echo "Missing gpu_id. Pass it as the third argument or set GPU_ID." >&2
   exit 1
 fi
+
+LADD_A1B_MODE="${LADD_A1B_MODE:-static}"
+case "$LADD_A1B_MODE" in
+  static)
+    MODE_TAG="clean_a1b"
+    MODE_PROJECT_KEY="ladd_clean_a1b"
+    LADD_B_A2_CORE_VALUE="0"
+    ;;
+  dynamic|dyn)
+    LADD_A1B_MODE="dynamic"
+    MODE_TAG="clean_a1b_dyn"
+    MODE_PROJECT_KEY="ladd_clean_a1b_dynamic"
+    LADD_B_A2_CORE_VALUE="1"
+    ;;
+  *)
+    echo "Unknown LADD_A1B_MODE=${LADD_A1B_MODE}. Use static or dynamic." >&2
+    exit 1
+    ;;
+esac
 
 case "$SIZE" in
   n|s) BATCH_SIZE_DEFAULT=64 ;;
@@ -127,9 +152,9 @@ if [[ -n "${EXP_SUFFIX:-}" && -z "${RUN_TAG_SUFFIX:-}" ]]; then
 fi
 
 DATE_TAG="${DATE_TAG:-$(date +%Y%m%d_%H%M%S)}"
-RUN_TAG="${RUN_TAG:-clean_a1b_yolo11${SIZE}_cap2_s${SEED}_mosaic_first100_close700${RUN_TAG_SUFFIX:-}_${DATE_TAG}}"
-PROJECT_DIR="${PROJECT_DIR:-runs_public/ogsod/hbb/ladd_clean_a1b/mosaic_first100_close700/yolo11${SIZE}/cap2}"
-CHAIN_LOG_DIR="${CHAIN_LOG_DIR:-logs/ladd_clean_a1b/mosaic_first100_close700/${RUN_TAG}_gpu${GPU_ID}}"
+RUN_TAG="${RUN_TAG:-${MODE_TAG}_yolo11${SIZE}_cap2_s${SEED}_mosaic_first100_close700${RUN_TAG_SUFFIX:-}_${DATE_TAG}}"
+PROJECT_DIR="${PROJECT_DIR:-runs_public/ogsod/hbb/${MODE_PROJECT_KEY}/mosaic_first100_close700/yolo11${SIZE}/cap2}"
+CHAIN_LOG_DIR="${CHAIN_LOG_DIR:-logs/${MODE_PROJECT_KEY}/mosaic_first100_close700/${RUN_TAG}_gpu${GPU_ID}}"
 META_PATH="${CHAIN_LOG_DIR}/run_meta_clean_a1b.env"
 
 EPOCHS_A1_VALUE="${EPOCHS_A1:-10}"
@@ -138,8 +163,8 @@ PATIENCE_A_VALUE="${PATIENCE_A:-200}"
 PATIENCE_B_VALUE="${PATIENCE_B:-$EPOCHS_B_VALUE}"
 SAVE_PERIOD_VALUE="${SAVE_PERIOD:-100}"
 
-A1_RUN_NAME="ladd_clean_a1b_ogsod11${SIZE}_${RUN_TAG}_a1_e${EPOCHS_A1_VALUE}_b${BATCH_SIZE}_s${SEED}_gpu${GPU_ID}"
-B_RUN_NAME="ladd_clean_a1b_ogsod11${SIZE}_${RUN_TAG}_b_e${EPOCHS_B_VALUE}_b${BATCH_SIZE}_s${SEED}_gpu${GPU_ID}"
+A1_RUN_NAME="ladd_${MODE_TAG}_ogsod11${SIZE}_${RUN_TAG}_a1_e${EPOCHS_A1_VALUE}_b${BATCH_SIZE}_s${SEED}_gpu${GPU_ID}"
+B_RUN_NAME="ladd_${MODE_TAG}_ogsod11${SIZE}_${RUN_TAG}_b_e${EPOCHS_B_VALUE}_b${BATCH_SIZE}_s${SEED}_gpu${GPU_ID}"
 A1_LOG_DIR="${CHAIN_LOG_DIR}/a1"
 B_LOG_DIR="${CHAIN_LOG_DIR}/b"
 
@@ -156,7 +181,6 @@ LAMBDA_RANK_INNER_VALUE="${LAMBDA_RANK_INNER:-1.0}"
 USE_MASK_VALUE="${USE_MASK:-1}"
 USE_FG_MASK_FOR_REACH_VALUE="${USE_FG_MASK_FOR_REACH:-1}"
 USE_FG_MASK_FOR_REC_VALUE="${USE_FG_MASK_FOR_REC:-0}"
-LADD_B_A2_CORE_VALUE="0"
 LADD_B_DET_ONLY_VALUE="0"
 LADD_A2_DET_ONLY_VALUE="0"
 
@@ -193,6 +217,7 @@ B_WARMUP_BIAS_LR_VALUE="${B_WARMUP_BIAS_LR:-0.1}"
 write_meta() {
   {
     printf 'run_tag=%q\n' "$RUN_TAG"
+    printf 'ladd_a1b_mode=%q\n' "$LADD_A1B_MODE"
     printf 'size=%q\n' "$SIZE"
     printf 'seed=%q\n' "$SEED"
     printf 'gpu_id=%q\n' "$GPU_ID"
@@ -354,7 +379,7 @@ run_phase() {
 
 write_meta
 
-echo "[$(date '+%F %T')] LADD-clean/A1B yolo11${SIZE} seed=${SEED} gpu=${GPU_ID}"
+echo "[$(date '+%F %T')] LADD-clean/A1B mode=${LADD_A1B_MODE} yolo11${SIZE} seed=${SEED} gpu=${GPU_ID}"
 echo "sar_baseline=${SAR_BASELINE:-<not-found>}"
 echo "rgb_teacher=${RGB_TEACHER:-<not-found>}"
 echo "meta=${META_PATH}"
