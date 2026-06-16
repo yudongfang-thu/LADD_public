@@ -1,0 +1,4 @@
+run,rows,epoch,kd_loss,cmdistill_total_loss,cmdistill_pcc_loss,cmdistill_relation_loss,cmdistill_ibcld_loss,cmdistill_ibcld_candidate_ratio,cmdistill_ibcld_fg_count,cmdistill_ibcld_teacher_conf_added_count,nonfinite_metrics_or_cmdistill,nan_or_inf_detected
+CMDistill YOLO11n,303,303,0.99272,1.09173846244812,0.4225376844406128,0.0957816019654274,0.5734192132949829,0.0118117565289139,101,26,0,0
+CMDistill YOLO11s,303,303,0.68983,0.958521008491516,0.2864285111427307,0.0421081520617008,0.6299843788146973,0.0111607145518064,103,17,0,0
+Current LADD cap2 YOLO11n,246,246,0.01658,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0,0

@@ -1,0 +1,14 @@
+snapshot_time_local 2026-06-16T10:02:43+08:00
+
+[nvidia-smi]
+0, NVIDIA GeForce RTX 4090 D, 14393, 9699, 99
+
+[compute apps]
+66242, /root/miniconda3/bin/python, 4438
+67298, python3, 3832
+67304, python3, 6084
+
+[top-level training processes]
+ 66242  66230 Rl      08:43:52 /root/miniconda3/bin/python ladd/code_versions/current_hbb/tools/train_ladd_hbb.py --phase b --model /root/autodl-tmp/LADD_public/runs_public/ogsod/hbb/formal_nomosaic_20260528/ladd/yolo11n/cap2/ladd_hbb_ogsod11n_formal_nomosaic_
+ 67298  67269 Rl      08:24:30 python3 ladd/code_versions/current_hbb/tools/train_ladd_hbb.py --phase b --model yolo11n.pt --data configs/datasets/ogsod_hbb_sar.yaml --teacher-data configs/datasets/ogsod_hbb_rgb.yaml --teacher-weights runs_public/ogsod/hbb/for
+ 67304  67282 Rl      08:24:30 python3 ladd/code_versions/current_hbb/tools/train_ladd_hbb.py --phase b --model yolo11s.pt --data configs/datasets/ogsod_hbb_sar.yaml --teacher-data configs/datasets/ogsod_hbb_rgb.yaml --teacher-weights runs_public/ogsod/hbb/for

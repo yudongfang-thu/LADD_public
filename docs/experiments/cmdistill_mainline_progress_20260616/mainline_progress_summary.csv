@@ -1,0 +1,10 @@
+model_size,run,rows,latest_epoch,latest_ap,best_ap,best_ap_epoch,latest_ap50,best_ap50,best_ap50_epoch,source_csv
+n,SAR baseline n,800,801,0.55127,0.55654,735,0.82340,0.82568,752,source/sar_yolo11n_baseline_results.csv
+n,RGB teacher n,800,801,0.62737,0.63018,724,0.92787,0.93028,730,source/rgb_yolo11n_baseline_results.csv
+n,Prev LADD cap2 n,800,801,0.57295,0.57615,401,0.85155,0.85586,417,source/prev_ladd_cap2_yolo11n_b800_s42_results.csv
+n,Current LADD cap2 n,246,247,0.48544,0.48544,246,0.74891,0.74891,247,source/ladd_cap2_yolo11n_b800_results.csv
+n,CMDistill n,303,304,0.46990,0.46990,304,0.73608,0.73609,303,source/cmdistill_yolo11n_formal800_results.csv
+s,SAR baseline s,800,801,0.62233,0.62897,730,0.90602,0.91091,733,source/sar_yolo11s_baseline_results.csv
+s,RGB teacher s,800,801,0.64958,0.65768,648,0.93707,0.94435,623,source/rgb_yolo11s_baseline_results.csv
+s,Prev LADD cap2 s,800,801,0.61759,0.63388,264,0.89676,0.91848,265,source/prev_ladd_cap2_yolo11s_b800_s0_results.csv
+s,CMDistill s,303,304,0.56709,0.56710,303,0.84889,0.84908,303,source/cmdistill_yolo11s_formal800_results.csv
