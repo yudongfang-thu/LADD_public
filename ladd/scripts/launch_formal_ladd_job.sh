@@ -22,6 +22,8 @@ Optional:
   EXP_SUFFIX=diag_h1_s_s0_b400  # alias appended to the run tag
   EPOCHS=400              # alias for EPOCHS_B in diagnostics
   EPOCHS_B=400             # diagnostic override; defaults preserve formal protocol
+  B_CLOSE_MOSAIC=700       # explicit Ultralytics close_mosaic for B; wins over B_CLOSE_AT_EPOCH
+  B_CLOSE_AT_EPOCH=700     # compatibility alias converted by the phase script
   LADD_CHAIN_SCRIPT=...     # explicit path to run_hbb_ladd_converged_chain.sh
 EOF
 }
@@ -90,8 +92,13 @@ PATIENCE_A_VALUE="${PATIENCE_A:-200}"
 PATIENCE_B_VALUE="${PATIENCE_B:-${EPOCHS_B_VALUE}}"
 SAVE_PERIOD_VALUE="${SAVE_PERIOD:-100}"
 B_CLOSE_AT_EPOCH_VALUE="${B_CLOSE_AT_EPOCH:-${EPOCHS_B_VALUE}}"
+B_CLOSE_MOSAIC_VALUE="${B_CLOSE_MOSAIC:-}"
 CHAIN_SCRIPT="${LADD_CHAIN_SCRIPT:-ladd/code_versions/current_hbb/scripts/ogsod_public/run_hbb_ladd_converged_chain.sh}"
 mkdir -p "$PROJECT_DIR" "$CHAIN_LOG_DIR" "$LOG_DIR"
+
+if [[ -n "$B_CLOSE_MOSAIC_VALUE" && -n "${B_CLOSE_AT_EPOCH:-}" ]]; then
+  echo "Both B_CLOSE_MOSAIC and B_CLOSE_AT_EPOCH are set; B_CLOSE_MOSAIC=${B_CLOSE_MOSAIC_VALUE} takes precedence." >&2
+fi
 
 if [[ ! -f "$CHAIN_SCRIPT" ]]; then
   echo "Missing LADD chain script: $CHAIN_SCRIPT" >&2
@@ -126,7 +133,6 @@ cmd=(
   "CHAIN_LOG_DIR=${CHAIN_LOG_DIR}"
   "MOSAIC=0.0"
   "A_CLOSE_MOSAIC=0"
-  "B_CLOSE_AT_EPOCH=${B_CLOSE_AT_EPOCH_VALUE}"
   "MIXUP=0.0"
   "CUTMIX=0.0"
   "DEGREES=0.0"
@@ -148,6 +154,12 @@ cmd=(
   "EXIST_OK=${EXIST_OK:-0}"
 )
 
+if [[ -n "$B_CLOSE_MOSAIC_VALUE" ]]; then
+  cmd+=("B_CLOSE_MOSAIC=${B_CLOSE_MOSAIC_VALUE}")
+else
+  cmd+=("B_CLOSE_AT_EPOCH=${B_CLOSE_AT_EPOCH_VALUE}")
+fi
+
 for optional_env in \
   ALPHA_KD ALPHA_S_REC ALPHA_SEP \
   LAMBDA_REACH LAMBDA_MATCH_INNER LAMBDA_RANK_INNER \
@@ -159,7 +171,7 @@ for optional_env in \
   LADD_B_LOSS_WARMUP_MODE LADD_B_LOSS_WARMUP_START_EPOCH \
   LADD_B_LOSS_WARMUP_END_EPOCH LADD_B_LOSS_WARMUP_FINAL_MULT \
   LADD_B_LOSS_WARMUP_SCOPE \
-  LADD_B_DET_ONLY LADD_A2_DET_ONLY \
+  LADD_B_A2_CORE LADD_B_DET_ONLY LADD_A2_DET_ONLY \
   LADD_CHAIN_PHASES SERVER_TAG START_MODEL VALIDATE_BEFORE_TRAIN \
   B_DETECTOR_SOURCE B_DECOMP_SOURCE B_SPLIT_LOAD_STRICT \
   B_RESET_STUDENT_FROM_SCRATCH \
@@ -168,7 +180,7 @@ for optional_env in \
   A2_OPTIMIZER A2_LR0 A2_LRF A2_COS_LR A2_WARMUP_EPOCHS A2_WARMUP_BIAS_LR A2_WARMUP_MOMENTUM A2_DET_LOSS_SCALE \
   A1_FREEZE_BN_STATS A2_FREEZE_BN_STATS B_FREEZE_BN_STATS \
   B_OPTIMIZER B_LR0 B_LRF B_COS_LR B_WARMUP_EPOCHS B_WARMUP_BIAS_LR B_WARMUP_MOMENTUM \
-  B_FREEZE_BN_AFTER_EPOCH; do
+  B_FREEZE_BN_AFTER_EPOCH PYTHON_BIN; do
   if [[ -n "${!optional_env:-}" ]]; then
     cmd+=("${optional_env}=${!optional_env}")
   fi

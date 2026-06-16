@@ -23,7 +23,8 @@ Defaults:
 
 Common overrides:
   GPU_ID, SEED, PROJECT_DIR, CHAIN_LOG_DIR, EPOCHS_A1, EPOCHS_A2, EPOCHS_B,
-  BATCH_SIZE, WORKERS, PATIENCE_B, RANK_D_NEG_CAP, LAMBDA_ANTI_COLLAPSE,
+  BATCH_SIZE, WORKERS, PATIENCE_B, B_CLOSE_MOSAIC, B_CLOSE_AT_EPOCH,
+  RANK_D_NEG_CAP, LAMBDA_ANTI_COLLAPSE,
   ANTI_COLLAPSE_FLOOR, A1_/A2_/B_ optimizer overrides, B_FREEZE_BN_AFTER_EPOCH,
   LADD_DIAG_LOG_BN, LADD_DIAG_LOG_GRAD, LADD_GRAD_CLIP_NORM,
   LADD_ASSERT_PHASE_FREEZE, LADD_DIAG_LOG_EVERY, LADD_CHAIN_PHASES, EXIST_OK=1,
@@ -31,7 +32,7 @@ Common overrides:
   LADD_KD_FINAL_MULT, LADD_KD_STOP_AFTER_EPOCH,
   LADD_B_LOSS_WARMUP_MODE, LADD_B_LOSS_WARMUP_START_EPOCH,
   LADD_B_LOSS_WARMUP_END_EPOCH, LADD_B_LOSS_WARMUP_FINAL_MULT,
-  LADD_B_LOSS_WARMUP_SCOPE, LADD_B_DET_ONLY, LADD_A2_DET_ONLY,
+  LADD_B_LOSS_WARMUP_SCOPE, LADD_B_A2_CORE, LADD_B_DET_ONLY, LADD_A2_DET_ONLY,
   START_MODEL, VALIDATE_BEFORE_TRAIN, B_DETECTOR_SOURCE, B_DECOMP_SOURCE,
   B_SPLIT_LOAD_STRICT, B_RESET_STUDENT_FROM_SCRATCH, B_LOAD_STUDENT_SPLIT,
   B_LOAD_STUDENT_REACHABILITY, B_LOAD_STUDENT_AUX
@@ -72,11 +73,16 @@ LADD_CHAIN_PHASES="${LADD_CHAIN_PHASES:-a1,a2,b}"
 GIT_COMMIT="${GIT_COMMIT:-$(git rev-parse HEAD 2>/dev/null || echo unknown)}"
 SERVER_TAG="${SERVER_TAG:-unknown_server}"
 
+if [[ -n "${B_CLOSE_MOSAIC:-}" && -n "${B_CLOSE_AT_EPOCH:-}" ]]; then
+  echo "Both B_CLOSE_MOSAIC and B_CLOSE_AT_EPOCH are set; B_CLOSE_MOSAIC=${B_CLOSE_MOSAIC} takes precedence." >&2
+fi
+
 mkdir -p "$CHAIN_LOG_DIR"
 manifest="${CHAIN_LOG_DIR}/manifest.txt"
 {
   echo "git_commit=${GIT_COMMIT}"
   echo "server_tag=${SERVER_TAG}"
+  echo "python_bin=${PYTHON_BIN:-python3}"
   echo "task=hbb"
   echo "chain=${LADD_CHAIN_PHASES}"
   echo "run_tag=${RUN_TAG}"
@@ -91,7 +97,9 @@ manifest="${CHAIN_LOG_DIR}/manifest.txt"
   echo "epochs_a2=${EPOCHS_A2}"
   echo "epochs_b=${EPOCHS_B}"
   echo "a2_schedule=optimizer=${A2_OPTIMIZER:-MuSGD}, lr0=${A2_LR0:-0.001}, lrf=${A2_LRF:-0.01}, warmup_epochs=${A2_WARMUP_EPOCHS:-0}, warmup_bias_lr=${A2_WARMUP_BIAS_LR:-0.001}"
-  echo "b_schedule=optimizer=${B_OPTIMIZER:-MuSGD}, cos_lr=${B_COS_LR:-1}, lr0=${B_LR0:-0.001}, lrf=${B_LRF:-0.01}, warmup_epochs=${B_WARMUP_EPOCHS:-0}, warmup_bias_lr=${B_WARMUP_BIAS_LR:-0.001}, close_at_epoch=${B_CLOSE_AT_EPOCH:-${EPOCHS_B}}"
+  echo "b_schedule=optimizer=${B_OPTIMIZER:-MuSGD}, cos_lr=${B_COS_LR:-1}, lr0=${B_LR0:-0.001}, lrf=${B_LRF:-0.01}, warmup_epochs=${B_WARMUP_EPOCHS:-0}, warmup_bias_lr=${B_WARMUP_BIAS_LR:-0.001}, close_mosaic=${B_CLOSE_MOSAIC:-}, close_at_epoch=${B_CLOSE_AT_EPOCH:-${EPOCHS_B}}"
+  echo "b_close_mosaic=${B_CLOSE_MOSAIC:-}"
+  echo "b_close_at_epoch=${B_CLOSE_AT_EPOCH:-${EPOCHS_B}}"
   echo "alpha_kd=${ALPHA_KD:-1.0}"
   echo "alpha_s_rec=${ALPHA_S_REC:-0.1}"
   echo "alpha_sep=${ALPHA_SEP:-0.05}"
@@ -116,6 +124,7 @@ manifest="${CHAIN_LOG_DIR}/manifest.txt"
   echo "ladd_b_loss_warmup_end_epoch=${LADD_B_LOSS_WARMUP_END_EPOCH:--1}"
   echo "ladd_b_loss_warmup_final_mult=${LADD_B_LOSS_WARMUP_FINAL_MULT:-1.0}"
   echo "ladd_b_loss_warmup_scope=${LADD_B_LOSS_WARMUP_SCOPE:-core}"
+  echo "ladd_b_a2_core=${LADD_B_A2_CORE:-0}"
   echo "ladd_b_det_only=${LADD_B_DET_ONLY:-0}"
   echo "ladd_a2_det_only=${LADD_A2_DET_ONLY:-0}"
   echo "validate_before_train=${VALIDATE_BEFORE_TRAIN:-0}"
@@ -157,6 +166,7 @@ run_phase() {
     PROJECT_DIR="$PROJECT_DIR"
     LOG_DIR="$phase_log_dir"
     RUN_NAME="$run_name"
+    PYTHON_BIN="${PYTHON_BIN:-python3}"
     USE_FG_MASK_FOR_REACH="${USE_FG_MASK_FOR_REACH:-1}"
     USE_FG_MASK_FOR_REC="${USE_FG_MASK_FOR_REC:-0}"
     MOSAIC="${MOSAIC:-1.0}"
@@ -194,10 +204,14 @@ run_phase() {
       LRF="${B_LRF:-0.01}"
       WARMUP_EPOCHS="${B_WARMUP_EPOCHS:-0}"
       WARMUP_BIAS_LR="${B_WARMUP_BIAS_LR:-0.001}"
-      CLOSE_AT_EPOCH="${B_CLOSE_AT_EPOCH:-${EPOCHS_B}}"
       SAVE_PERIOD="${SAVE_PERIOD:-100}"
       FREEZE_BN_AFTER_EPOCH="${B_FREEZE_BN_AFTER_EPOCH:--1}"
     )
+    if [[ -n "${B_CLOSE_MOSAIC:-}" ]]; then
+      env_args+=(CLOSE_MOSAIC="${B_CLOSE_MOSAIC}")
+    else
+      env_args+=(CLOSE_AT_EPOCH="${B_CLOSE_AT_EPOCH:-${EPOCHS_B}}")
+    fi
     phase_prefix="B"
   else
     env_args+=(CLOSE_MOSAIC="${A_CLOSE_MOSAIC:-10}")
@@ -250,6 +264,7 @@ run_phase() {
     LADD_B_LOSS_WARMUP_END_EPOCH="${LADD_B_LOSS_WARMUP_END_EPOCH:--1}"
     LADD_B_LOSS_WARMUP_FINAL_MULT="${LADD_B_LOSS_WARMUP_FINAL_MULT:-1.0}"
     LADD_B_LOSS_WARMUP_SCOPE="${LADD_B_LOSS_WARMUP_SCOPE:-core}"
+    LADD_B_A2_CORE="${LADD_B_A2_CORE:-0}"
     LADD_B_DET_ONLY="${LADD_B_DET_ONLY:-0}"
     LADD_A2_DET_ONLY="${LADD_A2_DET_ONLY:-0}"
     VALIDATE_BEFORE_TRAIN="${VALIDATE_BEFORE_TRAIN:-0}"

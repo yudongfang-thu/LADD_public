@@ -42,6 +42,7 @@ Reach anti-collapse overrides:
 
 Note:
   Ultralytics close_mosaic means "number of final epochs with mosaic off".
+  CLOSE_MOSAIC is passed through directly and takes precedence.
   If CLOSE_AT_EPOCH is set, this launcher converts it to
   close_mosaic=max(EPOCHS-CLOSE_AT_EPOCH, 0) for the current phase.
 EOF
@@ -190,6 +191,16 @@ resolve_close_mosaic() {
   printf '%s\n' 10
 }
 
+if [[ -n "${CLOSE_MOSAIC:-}" && -n "${CLOSE_AT_EPOCH:-}" ]]; then
+  echo "Both CLOSE_MOSAIC and CLOSE_AT_EPOCH are set; CLOSE_MOSAIC=${CLOSE_MOSAIC} takes precedence." >&2
+fi
+if [[ -n "${CLOSE_MOSAIC:-}" ]]; then
+  RESOLVED_CLOSE_MOSAIC_SOURCE="explicit_close_mosaic"
+elif [[ -n "${CLOSE_AT_EPOCH:-}" ]]; then
+  RESOLVED_CLOSE_MOSAIC_SOURCE="close_at_epoch"
+else
+  RESOLVED_CLOSE_MOSAIC_SOURCE="default"
+fi
 RESOLVED_CLOSE_MOSAIC="$(resolve_close_mosaic)"
 
 require_file() {
@@ -202,7 +213,7 @@ require_file() {
 }
 
 resolve_actual_run_dir() {
-  python3 - "$PROJECT_DIR" "$RUN_NAME" "$RUN_DIR" <<'PY'
+  "${PYTHON_BIN:-python3}" - "$PROJECT_DIR" "$RUN_NAME" "$RUN_DIR" <<'PY'
 import sys
 from pathlib import Path
 
@@ -289,6 +300,7 @@ mkdir -p "$LOG_DIR"
   echo "ladd_b_loss_warmup_end_epoch=${LADD_B_LOSS_WARMUP_END_EPOCH:--1}"
   echo "ladd_b_loss_warmup_final_mult=${LADD_B_LOSS_WARMUP_FINAL_MULT:-1.0}"
   echo "ladd_b_loss_warmup_scope=${LADD_B_LOSS_WARMUP_SCOPE:-core}"
+  echo "ladd_b_a2_core=${LADD_B_A2_CORE:-0}"
   echo "ladd_b_det_only=${LADD_B_DET_ONLY:-0}"
   echo "ladd_a2_det_only=${LADD_A2_DET_ONLY:-0}"
   echo "b_detector_source=${B_DETECTOR_SOURCE:-}"
@@ -304,7 +316,9 @@ mkdir -p "$LOG_DIR"
   echo "lambda_rank_inner=${LAMBDA_RANK_INNER}"
   echo "lambda_residual_aux=${LAMBDA_RESIDUAL_AUX}"
   echo "close_at_epoch=${CLOSE_AT_EPOCH:-}"
+  echo "close_mosaic_raw=${CLOSE_MOSAIC:-}"
   echo "close_mosaic=${RESOLVED_CLOSE_MOSAIC}"
+  echo "close_mosaic_source=${RESOLVED_CLOSE_MOSAIC_SOURCE}"
   echo "student_branch_mode=${STUDENT_BRANCH_MODE}"
   echo "alpha_s_rec=${ALPHA_S_REC}"
   echo "kd_calibration_mode=${KD_CALIBRATION_MODE:-none}"
@@ -345,7 +359,7 @@ mkdir -p "$LOG_DIR"
 } > "$MANIFEST"
 
 cmd=(
-  python3 "$TOOL"
+  "${PYTHON_BIN:-python3}" "$TOOL"
   --phase "$PHASE"
   --model "$MODEL"
   --data "$DATA_CFG"
@@ -520,6 +534,9 @@ fi
 if [[ "${LADD_B_DET_ONLY:-0}" == "1" ]]; then
   cmd+=(--ladd-b-det-only)
 fi
+if [[ "${LADD_B_A2_CORE:-0}" == "1" ]]; then
+  cmd+=(--ladd-b-a2-core)
+fi
 if [[ "${LADD_A2_DET_ONLY:-0}" == "1" ]]; then
   cmd+=(--ladd-a2-det-only)
 fi
@@ -578,6 +595,6 @@ fi
 ACTUAL_RUN_DIR="$(resolve_actual_run_dir)"
 printf '%s\n' "$ACTUAL_RUN_DIR" > "${LOG_DIR}/actual_run_dir.txt"
 if [[ -f "${ACTUAL_RUN_DIR}/results.csv" ]]; then
-  python3 tools/summarize_tskd_results.py "$ACTUAL_RUN_DIR" | tee -a "$MASTER_LOG" || true
+  "${PYTHON_BIN:-python3}" tools/summarize_tskd_results.py "$ACTUAL_RUN_DIR" | tee -a "$MASTER_LOG" || true
 fi
 echo "[$(date '+%F %T')] Run directory: ${ACTUAL_RUN_DIR}" | tee -a "$MASTER_LOG"

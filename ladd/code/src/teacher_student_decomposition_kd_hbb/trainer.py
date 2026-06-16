@@ -264,6 +264,7 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(DetectionTrainer):
             "ladd_b_loss_warmup_end_epoch": int(overrides.pop("ladd_b_loss_warmup_end_epoch", -1)),
             "ladd_b_loss_warmup_final_mult": float(overrides.pop("ladd_b_loss_warmup_final_mult", 1.0)),
             "ladd_b_loss_warmup_scope": str(overrides.pop("ladd_b_loss_warmup_scope", "core")),
+            "ladd_b_a2_core": int(overrides.pop("ladd_b_a2_core", 0)) > 0,
             "ladd_b_det_only": int(overrides.pop("ladd_b_det_only", 0)) > 0,
             "ladd_a2_det_only": int(overrides.pop("ladd_a2_det_only", 0)) > 0,
         }
@@ -1025,6 +1026,7 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
         self._set_reach_student_detach(False)
 
         recon_task_enabled = getattr(model, "recon_task_enabled", False)
+        b_a2_core = bool(self.diagnostic_cfg.get("ladd_b_a2_core", False))
         if phase == "a1":
             self._set_module_requires_grad(model.model, False)
             self._set_module_requires_grad(model.student_split, False)
@@ -1068,24 +1070,34 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
         elif phase == "b":
             self._set_module_requires_grad(model.model, True)
             self._set_module_requires_grad(model.student_split, student_branch_use_zs)
-            self._set_module_requires_grad(model.teacher_decomposition, False)
-            self._set_module_requires_grad(model.teacher_decoder, teacher_projected_raw)
+            self._set_module_requires_grad(model.teacher_decomposition, b_a2_core)
+            self._set_module_requires_grad(model.teacher_decoder, b_a2_core or teacher_projected_raw)
             self._set_module_requires_grad(model.student_r_aux_decoder, use_residual_aux_head)
-            self._set_module_requires_grad(model.student_reachability, False)
-            self._set_module_requires_grad(model.teacher_task_heads, False)
+            self._set_module_requires_grad(model.student_reachability, b_a2_core and use_reach_adapter)
+            self._set_module_requires_grad(model.teacher_task_heads, b_a2_core)
             self._set_module_requires_grad(model.student_r_fg_heads, use_residual_aux_head)
             if recon_task_enabled:
-                self._set_module_requires_grad(model.teacher_recon_decoder, False)
-                self._set_module_requires_grad(model.teacher_recon_task_heads, False)
-            self._set_reachability_enabled(False)
-            self._set_phase_target_modes(reach_target_mode="detach", kd_target_mode="detach")
+                self._set_module_requires_grad(model.teacher_recon_decoder, b_a2_core)
+                self._set_module_requires_grad(model.teacher_recon_task_heads, b_a2_core)
+            self._set_reachability_enabled(b_a2_core)
+            self._set_phase_target_modes(
+                reach_target_mode=("coupled" if b_a2_core else "detach"),
+                kd_target_mode="detach",
+            )
             self._set_phase_loss_scales(
-                det=det_scale, rec=0.0, teacher_sep=0.0, match=0.0, unmatch=0.0, task=0.0,
+                det=det_scale,
+                rec=(1.0 if b_a2_core else 0.0),
+                teacher_sep=(1.0 if b_a2_core else 0.0),
+                match=(1.0 if b_a2_core else 0.0),
+                unmatch=(1.0 if b_a2_core else 0.0),
+                task=(1.0 if b_a2_core else 0.0),
                 kd=1.0, student_rec=(1.0 if enable_student_rec else 0.0),
                 student_sep=(1.0 if student_branch_split else 0.0),
                 residual_aux=(1.0 if student_branch_split else 0.0),
-                teacher_private_aux=0.0, mask=0.0,
-                recon_task=0.0, rs_comp=1.0,
+                teacher_private_aux=(1.0 if b_a2_core else 0.0),
+                mask=(1.0 if b_a2_core else 0.0),
+                recon_task=(1.0 if b_a2_core and recon_task_enabled else 0.0),
+                rs_comp=1.0,
                 # Path A / D — enabled when student_split is trainable.
                 s_repel=(1.0 if student_branch_split else 0.0),
                 path_b=(1.0 if student_branch_split else 0.0),
@@ -1270,10 +1282,19 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             model.student_r_aux_decoder.eval()
             model.student_r_fg_heads.eval()
         elif phase == "b":
-            model.teacher_decomposition.eval()
-            model.teacher_decoder.eval()
-            model.student_reachability.eval()
-            model.teacher_task_heads.eval()
+            if self.diagnostic_cfg.get("ladd_b_a2_core", False):
+                model.teacher_decomposition.train()
+                model.teacher_decoder.train()
+                model.student_reachability.train()
+                model.teacher_task_heads.train()
+                if getattr(model, "recon_task_enabled", False):
+                    model.teacher_recon_decoder.train()
+                    model.teacher_recon_task_heads.train()
+            else:
+                model.teacher_decomposition.eval()
+                model.teacher_decoder.eval()
+                model.student_reachability.eval()
+                model.teacher_task_heads.eval()
         elif phase == "c":
             train_residual_aux = self.explore_cfg["student_branch_mode"] == "split" and self.nrrl_cfg["residual_aux_mode"] == "fg"
             model.student_r_aux_decoder.train(train_residual_aux)
@@ -1370,6 +1391,7 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             f"b_loss_warmup_scope={self.diagnostic_cfg.get('ladd_b_loss_warmup_scope', 'core')} "
             f"b_loss_warmup_multiplier={float(weights.get('b_loss_warmup_multiplier', 1.0))} "
             f"b_loss_warmup_active={bool(weights.get('b_loss_warmup_active', 0.0))} "
+            f"ladd_b_a2_core={bool(self.diagnostic_cfg.get('ladd_b_a2_core', False))} "
             f"ladd_b_det_only={bool(self.diagnostic_cfg.get('ladd_b_det_only', False))} "
             f"ladd_a2_det_only={bool(self.diagnostic_cfg.get('ladd_a2_det_only', False))} "
             f"ladd_diag_log_grad={bool(self.diagnostic_cfg.get('ladd_diag_log_grad', False))} "
@@ -1410,6 +1432,8 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
         self._phase_freeze_assert_logged_contexts.add(context)
 
     def _assert_b_phase_frozen_modules(self, model, *, context: str) -> None:
+        if self.diagnostic_cfg.get("ladd_b_a2_core", False):
+            return
         self._assert_modules_frozen(
             model,
             ("teacher_decomposition", "student_reachability", "teacher_task_heads"),
@@ -1617,6 +1641,7 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             "b_loss_warmup_scope": self.diagnostic_cfg.get("ladd_b_loss_warmup_scope", "core"),
             "b_loss_warmup_multiplier": float(weights.get("b_loss_warmup_multiplier", 1.0)),
             "b_loss_warmup_active": int(bool(weights.get("b_loss_warmup_active", 0.0))),
+            "ladd_b_a2_core": int(self.diagnostic_cfg.get("ladd_b_a2_core", False)),
             "ladd_b_det_only": int(self.diagnostic_cfg.get("ladd_b_det_only", False)),
             "ladd_a2_det_only": int(self.diagnostic_cfg.get("ladd_a2_det_only", False)),
             "effective_alpha_s_rec": float(weights.get("alpha_s_rec", 0.0)),

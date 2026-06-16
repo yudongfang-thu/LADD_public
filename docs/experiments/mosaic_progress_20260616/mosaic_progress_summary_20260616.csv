@@ -1,0 +1,13 @@
+run_key,label,group,model,seed,epochs_available,best_ap50_95,best_epoch,last_ap50_95,det_loss_last
+old_n_s0,old n LADD s0 A2-best,old_ladd,n,0.0,800,0.56841,798,0.56792,2.20717
+old_n_s42,old n LADD s42 A2-best,old_ladd,n,42.0,800,0.56799,750,0.56044,2.21757
+old_n_s123,old n LADD s123 A2-best,old_ladd,n,123.0,800,0.56163,800,0.56163,2.2225
+cur_n_s0,current n s0 A2-last,current_ladd,n,0.0,624,0.55525,622,0.55518,2.47249
+cur_n_s42,current n s42 A1-best skipA2,current_ladd,n,42.0,630,0.55506,625,0.55494,2.44563
+cur_n_s123,current n s123 A2-last,current_ladd,n,123.0,210,0.45409,210,0.45409,3.40294
+n_sar_base,n SAR baseline,baseline,n,,800,0.54091,746,0.53836,2.28287
+n_rgb_base,n RGB baseline,baseline,n,,800,0.6161,758,0.61345,2.1103300000000003
+s_sar_base,s SAR baseline,baseline,s,,800,0.61972,770,0.6157,1.87836
+s_rgb_base,s RGB baseline,baseline,s,,759,0.66029,679,0.65818,1.8037100000000001
+m_sar_base,m SAR baseline b64,baseline,m,,162,0.48258,162,0.48258,3.0729800000000003
+m_rgb_base,m RGB baseline b64,baseline,m,,163,0.56515,162,0.56507,2.80424

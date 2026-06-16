@@ -1,0 +1,11 @@
+run_key,label,group,seed,entry,epochs_available,best_ap50_95,best_epoch,last_ap50_95,last_epoch,det_loss_last
+old_ladd_s0,"old LADD cap2 s0, A2-best -> B",old_ladd,0.0,A2 best,800,0.56841,798,0.56792,800,2.20717
+old_ladd_s42,"old LADD cap2 s42, A2-best -> B",old_ladd,42.0,A2 best,800,0.56799,750,0.56044,800,2.21757
+old_ladd_s123,"old LADD cap2 s123, A2-best -> B",old_ladd,123.0,A2 best,800,0.56163,800,0.56163,800,2.2225
+new_ladd_s0,"current s0, A2-last -> B",new_ladd,0.0,A2 last,419,0.51173,418,0.51166,419,2.9706699999999997
+new_ladd_s42,"current s42, A1-best skip A2 -> B",new_ladd,42.0,"A1 best, skip A2",424,0.51233,424,0.51233,424,2.94115
+new_ladd_s123,"current s123, A2-last -> B",new_ladd,123.0,A2 last,144,0.42414,144,0.42414,144,3.5620600000000002
+baseline_n_sar,YOLO11n SAR baseline,baseline,,detector from scratch,800,0.54091,746,0.53836,800,2.28287
+baseline_n_rgb,YOLO11n RGB baseline,baseline,,detector from scratch,800,0.6161,758,0.61345,800,2.1103300000000003
+baseline_s_sar,"YOLO11s SAR baseline, current running",baseline_s,,detector from scratch,556,0.60089,553,0.60072,556,2.29771
+baseline_s_rgb,"YOLO11s RGB baseline, current running",baseline_s,,detector from scratch,555,0.65442,555,0.65442,555,2.14408

@@ -1,0 +1,8 @@
+label,epochs,last_epoch,first_ap,last_ap,best_ap,best_epoch
+"new: YOLOinit A1->B(A2-core), AutoDL",270,270,0.0625,0.49436,0.49436,270
+N0 YOLO-init det-only B800sched,332,332,0.01768,0.45155,0.45155,332
+N1 SAR baseline-best continue,332,332,0.54251,0.57494,0.57521,324
+N2 A2-best continue,229,229,0.51911,0.54271,0.55681,214
+N2 A2-last continue,319,319,0.52624,0.4629,0.56073,271
+N3 YOLO-init + A2 decomp,360,360,0.05308,0.4667,0.4667,360
+old mosaic100 LADD s0,360,360,0.39969,0.49853,0.49853,360
