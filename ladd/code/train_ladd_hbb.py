@@ -109,8 +109,7 @@ def parse_args() -> argparse.Namespace:
         choices=("core", "extended"),
         default="core",
         help=(
-            "core scales alpha_kd, alpha_s_rec, alpha_sep, lambda_residual_aux. "
-            "extended is reserved for optional B-stage losses such as s_repel/path_b/r_sar/DKD/proto."
+            "core scales alpha_kd and alpha_s_rec."
         ),
     )
     parser.add_argument(
@@ -133,12 +132,10 @@ def parse_args() -> argparse.Namespace:
     )
 
     parser.add_argument("--lambda-rec", type=float, default=0.1)
-    parser.add_argument("--lambda-sep", type=float, default=0.05)
     parser.add_argument("--lambda-taskL", type=float, default=1.0)
     parser.add_argument("--task-loss-fg-only", action="store_true")
     parser.add_argument("--alpha-kd", type=float, default=1.0)
     parser.add_argument("--alpha-s-rec", type=float, default=0.1)
-    parser.add_argument("--alpha-sep", type=float, default=0.05)
     parser.add_argument("--lambda-reach", type=float, default=1.0)
     parser.add_argument("--lambda-match-inner", type=float, default=1.0)
     parser.add_argument("--lambda-rank-inner", type=float, default=1.0)
@@ -146,8 +143,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--reach-rank-mode", choices=("softplus", "hinge"), default="softplus")
     parser.add_argument("--reach-input-mode", choices=("adapter", "raw"), default="adapter")
     parser.add_argument("--rank-d-neg-cap", type=float, default=4.0)
-    parser.add_argument("--lambda-anti-collapse", type=float, default=0.0)
-    parser.add_argument("--anti-collapse-floor", type=float, default=0.0)
     parser.add_argument("--use-fg-mask-for-reach", action="store_true")
     parser.add_argument("--use-fg-mask-for-rec", action="store_true")
     parser.add_argument("--use-mask", action="store_true")
@@ -167,22 +162,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--kd-topk-ratio", type=float, default=0.5)
     parser.add_argument("--kd-calibration-mode", choices=("none", "affine", "norm_affine"), default="none")
 
-    parser.add_argument("--residual-aux-mode", choices=("none", "fg", "energy", "object_energy"), default="energy")
-    parser.add_argument("--lambda-residual-aux", type=float, default=0.25)
-    parser.add_argument("--energy-bg-weight", type=float, default=1.0)
-    parser.add_argument("--energy-margin", type=float, default=0.2)
-    parser.add_argument("--teacher-private-aux-mode", choices=("none", "energy", "object_energy"), default="energy")
-    parser.add_argument("--lambda-teacher-private-aux", type=float, default=0.25)
-    parser.add_argument("--teacher-private-bg-weight", type=float, default=1.0)
-    parser.add_argument("--teacher-private-margin", type=float, default=0.2)
     parser.add_argument("--unlearnable-hidden-ratio", type=float, default=1.0)
-    parser.add_argument("--instance-energy-radius", type=int, default=1)
 
-    parser.add_argument("--mask-train-mode", choices=("none", "mask_only", "joint"), default="none")
-    parser.add_argument("--mask-target-mode", choices=("none", "teacher_conf", "reach_gap"), default="none")
-    parser.add_argument("--lambda-mask-target", type=float, default=0.0)
-    parser.add_argument("--lambda-mask-sparse", type=float, default=0.0)
-    parser.add_argument("--lambda-mask-smooth", type=float, default=0.0)
     parser.add_argument("--teacher-target-mode", choices=("static", "ema"), default="static")
     parser.add_argument("--teacher-ema-momentum", type=float, default=0.99)
 
@@ -272,12 +253,6 @@ def parse_args() -> argparse.Namespace:
         default=True,
         help="In B split-load diagnostics, load student_reachability from the decomposition checkpoint.",
     )
-    parser.add_argument(
-        "--b-load-student-aux",
-        action=argparse.BooleanOptionalAction,
-        default=False,
-        help="In B split-load diagnostics, also load student residual auxiliary modules from the decomposition checkpoint.",
-    )
     parser.add_argument("--force-student-rec", action="store_true")
 
     add_common_detector_train_overrides(parser)
@@ -333,20 +308,16 @@ def main() -> None:
         exist_ok=args.exist_ok,
         validate_before_train=args.validate_before_train,
         lambda_rec=args.lambda_rec,
-        lambda_sep=args.lambda_sep,
         lambda_taskL=args.lambda_taskL,
         task_loss_fg_only=args.task_loss_fg_only,
         alpha_kd=args.alpha_kd,
         alpha_s_rec=args.alpha_s_rec,
-        alpha_sep=args.alpha_sep,
         lambda_reach=args.lambda_reach,
         lambda_match_inner=args.lambda_match_inner,
         lambda_rank_inner=args.lambda_rank_inner,
         delta=args.delta,
         use_soft_rank=(args.reach_rank_mode == "softplus"),
         rank_d_neg_cap=args.rank_d_neg_cap,
-        lambda_anti_collapse=args.lambda_anti_collapse,
-        anti_collapse_floor=args.anti_collapse_floor,
         reach_input_mode=args.reach_input_mode,
         use_fg_mask_for_reach=args.use_fg_mask_for_reach,
         use_fg_mask_for_rec=args.use_fg_mask_for_rec,
@@ -366,21 +337,7 @@ def main() -> None:
         kd_aggregation_mode=args.kd_aggregation_mode,
         kd_topk_ratio=args.kd_topk_ratio,
         kd_calibration_mode=args.kd_calibration_mode,
-        residual_aux_mode=args.residual_aux_mode,
-        lambda_residual_aux=args.lambda_residual_aux,
-        energy_bg_weight=args.energy_bg_weight,
-        energy_margin=args.energy_margin,
-        teacher_private_aux_mode=args.teacher_private_aux_mode,
-        lambda_teacher_private_aux=args.lambda_teacher_private_aux,
-        teacher_private_bg_weight=args.teacher_private_bg_weight,
-        teacher_private_margin=args.teacher_private_margin,
         unlearnable_hidden_ratio=args.unlearnable_hidden_ratio,
-        instance_energy_radius=args.instance_energy_radius,
-        mask_train_mode=args.mask_train_mode,
-        mask_target_mode=args.mask_target_mode,
-        lambda_mask_target=args.lambda_mask_target,
-        lambda_mask_sparse=args.lambda_mask_sparse,
-        lambda_mask_smooth=args.lambda_mask_smooth,
         teacher_target_mode=args.teacher_target_mode,
         teacher_ema_momentum=args.teacher_ema_momentum,
         comparison_kd_profile=args.comparison_kd_profile,
@@ -437,7 +394,6 @@ def main() -> None:
         b_split_load_strict=int(bool(args.b_split_load_strict)),
         b_load_student_split=int(bool(args.b_load_student_split)),
         b_load_student_reachability=int(bool(args.b_load_student_reachability)),
-        b_load_student_aux=int(bool(args.b_load_student_aux)),
         force_student_rec=int(bool(args.force_student_rec)),
     )
     train_kwargs.update(collect_common_detector_train_overrides(args))

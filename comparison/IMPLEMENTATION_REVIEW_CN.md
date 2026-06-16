@@ -129,8 +129,9 @@ Faster R-CNN/FCOS/RetinaNet 逐行复现。旧 `hallucidet`/`hallucidet_style`
 3. CCLKD 必须先 smoke online teacher-student trainer；frozen-teacher smoke 不再作为 CCLKD 通过证据。
 4. FGD 修复前结果全部作废；LD 修复前 soft-logit / foreground-only 结果全部作废；
    旧 hallucidet/hallucidet_style 结果只能作为历史参考，不能写作 HalluciDet。
-5. 第二轮复核意见响应与未采纳原因见
-   [`REVIEW_FEEDBACK_RESPONSE_CN.md`](REVIEW_FEEDBACK_RESPONSE_CN.md)。
+5. 当前方法名、有效入口与实现边界以
+   [`../docs/method/METHOD_DEFINITIONS_AND_IMPLEMENTATION_CN.md`](../docs/method/METHOD_DEFINITIONS_AND_IMPLEMENTATION_CN.md)
+   为准。
 
 ## 5. 4090 服务器 smoke 记录
 
@@ -229,5 +230,5 @@ FGD 重点判断：最后一轮 `train/kd_loss=3.38704`，大于 `box/cls/dfl`
 - `ld` 两条仍在运行但已接近平台：`n_ld` 0.57035@640，`s_ld` 0.64390@612。
 - `fgd` 两条仍在运行且较慢；曲线远低于早期 best，需要在结果表中单独标注。
 
-详见轻量记录：
-[`FORMAL_TRANSFER_STATUS_20260611_CN.md`](FORMAL_TRANSFER_STATUS_20260611_CN.md)。
+原 `FORMAL_TRANSFER_STATUS_20260611_CN.md` 轻量记录未随当前 public 包保留；相关
+snapshot 数字已汇入 `docs/experiments/formal_protocol_late_regression_summary_20260612.csv`。

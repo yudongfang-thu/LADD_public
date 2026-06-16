@@ -1,0 +1,4 @@
+group,label,latest_epoch,latest_ap50,latest_ap,best_epoch,best_ap50,best_ap
+yolo11m,SAR baseline m mosaic close100 s0 (90),506,0.91604,0.63318,506,0.91604,0.63318
+yolo11m,RGB teacher m mosaic close100 s0 (90),507,0.94813,0.66684,506,0.94844,0.66702
+yolo11m,LADD m nomosaic yolo-init s0 (90),67,0.53175,0.26042,67,0.53175,0.26042

@@ -34,11 +34,8 @@ LADD diagnostics:
   LADD_KD_STOP_AFTER_EPOCH,
   LADD_B_LOSS_WARMUP_MODE=none|linear, LADD_B_LOSS_WARMUP_START_EPOCH,
   LADD_B_LOSS_WARMUP_END_EPOCH, LADD_B_LOSS_WARMUP_FINAL_MULT,
-  LADD_B_LOSS_WARMUP_SCOPE=core|extended,
+  LADD_B_LOSS_WARMUP_SCOPE=core,
   LADD_B_DET_ONLY=1, LADD_A2_DET_ONLY=1
-
-Reach anti-collapse overrides:
-  RANK_D_NEG_CAP, LAMBDA_ANTI_COLLAPSE, ANTI_COLLAPSE_FLOOR
 
 Note:
   Ultralytics close_mosaic means "number of final epochs with mosaic off".
@@ -129,9 +126,11 @@ PROJECT_DIR="${PROJECT_DIR:-runs_public/ogsod/${TASK}/ladd}"
 LOG_DIR="${LOG_DIR:-logs/ogsod_public/${TASK}_${RUN_TAG}_${PHASE}}"
 MASTER_LOG="${LOG_DIR}/master.log"
 MANIFEST="${LOG_DIR}/manifest.txt"
-TOOL="tools/train_teacher_student_decomposition_kd_phase_nrrl_teacher_u_aux.py"
 if [[ "$TASK" == "hbb" ]]; then
   TOOL="ladd/code_versions/current_hbb/tools/train_ladd_hbb.py"
+else
+  echo "Only HBB LADD is supported by the cleaned current_hbb phase launcher." >&2
+  exit 2
 fi
 
 GPU_ID="${GPU_ID:-0}"
@@ -152,15 +151,9 @@ LAMBDA_MATCH_INNER="${LAMBDA_MATCH_INNER:-1.0}"
 LAMBDA_RANK_INNER="${LAMBDA_RANK_INNER:-1.0}"
 DELTA="${DELTA:-0.2}"
 LAMBDA_REC="${LAMBDA_REC:-0.1}"
-LAMBDA_SEP="${LAMBDA_SEP:-0.05}"
 LAMBDA_TASKL="${LAMBDA_TASKL:-1.0}"
 ALPHA_KD="${ALPHA_KD:-1.0}"
 ALPHA_S_REC="${ALPHA_S_REC:-0.1}"
-ALPHA_SEP="${ALPHA_SEP:-0.05}"
-RESIDUAL_AUX_MODE="${RESIDUAL_AUX_MODE:-energy}"
-LAMBDA_RESIDUAL_AUX="${LAMBDA_RESIDUAL_AUX:-0.25}"
-TEACHER_PRIVATE_AUX_MODE="${TEACHER_PRIVATE_AUX_MODE:-energy}"
-LAMBDA_TEACHER_PRIVATE_AUX="${LAMBDA_TEACHER_PRIVATE_AUX:-0.25}"
 STUDENT_BRANCH_MODE="${STUDENT_BRANCH_MODE:-split}"
 TEACHER_FEATURE_MODE="${TEACHER_FEATURE_MODE:-decomposed}"
 REACH_INPUT_MODE="${REACH_INPUT_MODE:-adapter}"
@@ -309,12 +302,10 @@ mkdir -p "$LOG_DIR"
   echo "b_reset_student_from_scratch=${B_RESET_STUDENT_FROM_SCRATCH:-0}"
   echo "b_load_student_split=${B_LOAD_STUDENT_SPLIT:-0}"
   echo "b_load_student_reachability=${B_LOAD_STUDENT_REACHABILITY:-1}"
-  echo "b_load_student_aux=${B_LOAD_STUDENT_AUX:-0}"
   echo "alpha_kd=${ALPHA_KD}"
   echo "lambda_reach=${LAMBDA_REACH}"
   echo "lambda_match_inner=${LAMBDA_MATCH_INNER}"
   echo "lambda_rank_inner=${LAMBDA_RANK_INNER}"
-  echo "lambda_residual_aux=${LAMBDA_RESIDUAL_AUX}"
   echo "close_at_epoch=${CLOSE_AT_EPOCH:-}"
   echo "close_mosaic_raw=${CLOSE_MOSAIC:-}"
   echo "close_mosaic=${RESOLVED_CLOSE_MOSAIC}"
@@ -396,28 +387,20 @@ cmd=(
   --kd-target-mode "$KD_TARGET_MODE"
   --kd-calibration-mode "${KD_CALIBRATION_MODE:-none}"
   --lambda-rec "$LAMBDA_REC"
-  --lambda-sep "$LAMBDA_SEP"
   --lambda-taskL "$LAMBDA_TASKL"
   --alpha-kd "$ALPHA_KD"
   --alpha-s-rec "$ALPHA_S_REC"
-  --alpha-sep "$ALPHA_SEP"
   --lambda-reach "$LAMBDA_REACH"
   --lambda-match-inner "$LAMBDA_MATCH_INNER"
   --lambda-rank-inner "$LAMBDA_RANK_INNER"
   --delta "$DELTA"
   --rank-d-neg-cap "${RANK_D_NEG_CAP:-4.0}"
-  --lambda-anti-collapse "${LAMBDA_ANTI_COLLAPSE:-0.0}"
-  --anti-collapse-floor "${ANTI_COLLAPSE_FLOOR:-0.0}"
   --reach-input-mode "$REACH_INPUT_MODE"
   --student-detect-mode "${STUDENT_DETECT_MODE:-raw}"
   --student-branch-mode "$STUDENT_BRANCH_MODE"
   --teacher-feature-mode "$TEACHER_FEATURE_MODE"
   --kd-weight-mode "$KD_WEIGHT_MODE"
   --kd-aggregation-mode "$KD_AGGREGATION_MODE"
-  --residual-aux-mode "$RESIDUAL_AUX_MODE"
-  --lambda-residual-aux "$LAMBDA_RESIDUAL_AUX"
-  --teacher-private-aux-mode "$TEACHER_PRIVATE_AUX_MODE"
-  --lambda-teacher-private-aux "$LAMBDA_TEACHER_PRIVATE_AUX"
   --mosaic "${MOSAIC:-1.0}"
   --mixup "${MIXUP:-0.0}"
   --cutmix "${CUTMIX:-0.0}"
@@ -561,9 +544,6 @@ if [[ "${B_LOAD_STUDENT_REACHABILITY:-1}" == "1" ]]; then
   cmd+=(--b-load-student-reachability)
 else
   cmd+=(--no-b-load-student-reachability)
-fi
-if [[ "${B_LOAD_STUDENT_AUX:-0}" == "1" ]]; then
-  cmd+=(--b-load-student-aux)
 fi
 if [[ "$EXIST_OK" == "1" ]]; then
   cmd+=(--exist-ok)

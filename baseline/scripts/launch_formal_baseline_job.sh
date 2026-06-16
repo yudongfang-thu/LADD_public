@@ -4,13 +4,13 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  scripts/ogsod_public/formal_nomosaic_20260528/launch_formal_baseline_job.sh <job_id> <gpu_id>
+  bash baseline/scripts/launch_formal_baseline_job.sh <job_id> <gpu_id>
 
 Example:
-  scripts/ogsod_public/formal_nomosaic_20260528/launch_formal_baseline_job.sh sar_yolo11n_s0 2
+  bash baseline/scripts/launch_formal_baseline_job.sh sar_yolo11n_s0 2
 
 List jobs:
-  scripts/ogsod_public/formal_nomosaic_20260528/print_formal_baseline_jobs.sh
+  cat baseline/scripts/formal_baseline_jobs.tsv
 EOF
 }
 
@@ -26,9 +26,9 @@ if [[ -z "$JOB_ID" || -z "$GPU_ID" ]]; then
   exit 1
 fi
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
-JOBS="${ROOT_DIR}/scripts/ogsod_public/formal_nomosaic_20260528/formal_baseline_jobs.tsv"
-RUNNER="${ROOT_DIR}/scripts/ogsod_public/formal_nomosaic_20260528/run_formal_baseline.sh"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+JOBS="${ROOT_DIR}/baseline/scripts/formal_baseline_jobs.tsv"
+RUNNER="${ROOT_DIR}/baseline/scripts/run_formal_baseline.sh"
 
 if [[ ! -f "$JOBS" ]]; then
   echo "Missing jobs file: $JOBS" >&2
@@ -44,4 +44,3 @@ fi
 
 IFS=$'\t' read -r modality size seed <<< "$row"
 exec "$RUNNER" "$modality" "$size" "$seed" "$GPU_ID"
-

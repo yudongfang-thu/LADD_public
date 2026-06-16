@@ -1,0 +1,8 @@
+group,label,latest_common_epoch,method_ap50,method_ap,baseline_ap50_same_epoch,baseline_ap_same_epoch,delta_ap50,delta_ap,best_delta_epoch,best_delta_ap,note
+yolo11n,LADD n mosaic a2last s123,303,0.75701,0.48304,0.68759,0.43394,+0.06942,+0.04910,1,+0.29799,"same protocol, different seed baseline"
+yolo11n,LADD n nomosaic yolo-init s0,652,0.82822,0.54257,0.81551,0.55017,+0.01271,-0.00760,3,+0.11673,"same protocol, same seed"
+yolo11n,CMDistill n nomosaic s0,800,0.83932,0.56459,0.82340,0.55127,+0.01592,+0.01332,39,+0.03732,"same protocol, same seed"
+yolo11s,LADD s mosaic A1B skipA2 s0,39,0.73471,0.43503,0.49560,0.25600,+0.23911,+0.17903,2,+0.44345,"same protocol, same seed"
+yolo11s,LADD s mosaic A1A2B s123,134,0.80069,0.49983,0.64767,0.38548,+0.15302,+0.11435,1,+0.47211,"same protocol, different seed baseline"
+yolo11s,LADD s nomosaic yolo-init s0,177,0.50636,0.28862,0.75199,0.48282,-0.24563,-0.19420,3,+0.01332,"same protocol, same seed"
+yolo11s,CMDistill s nomosaic s0,800,0.90755,0.61904,0.90602,0.62233,+0.00153,-0.00329,40,+0.03556,"same protocol, same seed"

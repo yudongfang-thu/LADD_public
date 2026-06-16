@@ -1,0 +1,7 @@
+job_id	modality	size	seed
+sar_yolo11n_s0	sar	n	0
+rgb_yolo11n_s0	rgb	n	0
+sar_yolo11s_s0	sar	s	0
+rgb_yolo11s_s0	rgb	s	0
+sar_yolo11m_s0	sar	m	0
+rgb_yolo11m_s0	rgb	m	0

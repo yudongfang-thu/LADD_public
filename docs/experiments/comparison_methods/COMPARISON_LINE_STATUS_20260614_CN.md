@@ -10,14 +10,16 @@
 |---|---|---|
 | LD | 受控对比方法 | 已有训练证据，需要按 registry 和最新同步结果复核完成度 |
 | FGD | 受控对比方法 | normalization 修复后需要 smoke/正式 run 证据闭环 |
-| CCLKD | 受控对比方法 + 独立复现线 | YOLO11 controlled comparison 归入本线；paper reproduction 归入 CCLKD 线 |
-| HalluciDet | 受控/复现候选 | strict HalluciDet 与旧 HalluciDet-style 必须分开 |
+| CMDistill-style | 受控对比方法 | 非官方 paper-aligned adaptation，需按 current profile 与 smoke 规则核验 |
+| HalluciDet-YOLO adaptation | 受控对比方法 | standalone hallucination trainer；strict official HalluciDet 与旧 HalluciDet-style 必须分开 |
+| CCLKD online comparison | 受控对比方法 + 独立复现线 | LADD formal online comparison 归入本线；paper reproduction 归入 CCLKD 线 |
 | HalluciDet-style | 历史诊断 | 已废弃，不进入当前主表 |
 
 ## 2. Canonical 入口
 
 | 类型 | 路径 |
 |---|---|
+| 方法定义与实现入口 | [../../method/METHOD_DEFINITIONS_AND_IMPLEMENTATION_CN.md](../../method/METHOD_DEFINITIONS_AND_IMPLEMENTATION_CN.md) |
 | 方法总览 | [../../../comparison/README.md](../../../comparison/README.md) |
 | 方法代码映射 | [../COMPARISON_METHODS_RECORD_CN.md](../COMPARISON_METHODS_RECORD_CN.md) |
 | 当前状态草稿 | [../../../comparison/FINAL_STATUS_20260613.md](../../../comparison/FINAL_STATUS_20260613.md) |
@@ -29,7 +31,7 @@
 | 风险 | 影响 | 处理 |
 |---|---|---|
 | 旧 HalluciDet-style 和 strict HalluciDet 混名 | 会把废弃方法当正式对比 | 文档中统一标记 HalluciDet-style deprecated |
-| LD/FGD/CCLKD 训练长度不一致 | 不能直接比较 best/final | 主表只用 protocol-matched run |
+| LD/FGD/CMDistill/CCLKD 训练长度不一致 | 不能直接比较 best/final | 主表只用 protocol-matched run |
 | comparison evidence 和 LADD shutdown evidence 混放 | 容易重复计数 | 统一通过 registry 查 run |
 | `FINAL_STATUS_20260613.md` 带有预期值 | 不能作为结果表 | 只作为计划/状态草稿，最终数字另建 summary |
 
@@ -49,6 +51,5 @@
 |---|---|---|
 | P0 | 从 registry 提取 comparison family 的 canonical run 表 | 每个方法只有一个当前状态 |
 | P0 | 标注 HalluciDet-style 为 archive/diagnostic | 主表不会误引用 |
-| P1 | LD/FGD 结果核验 | 明确是否完成 800ep、是否 protocol matched |
+| P1 | LD/FGD/CMDistill/HalluciDet-YOLO 结果核验 | 明确是否完成 800ep、是否 protocol matched |
 | P1 | 将 CCLKD YOLO11 controlled comparison 与 CCLKD paper reproduction 分开汇报 | 两套表不混用 |
-

@@ -1,0 +1,6 @@
+group,label,latest_epoch,latest_ap50,latest_ap,best_epoch,best_ap50,best_ap
+yolo11n,SAR baseline n mosaic close100 s0,800,0.81755,0.53836,746,0.81816,0.54091
+yolo11n,SAR baseline n nomosaic s0,800,0.82340,0.55127,734,0.82462,0.55654
+yolo11n,LADD n mosaic a2last s123 (90),303,0.75701,0.48304,303,0.75701,0.48304
+yolo11n,LADD n nomosaic yolo-init s0 (AutoDL),652,0.82822,0.54257,615,0.83090,0.54678
+yolo11n,CMDistill n nomosaic s0 (AutoDL),800,0.83932,0.56459,729,0.84008,0.56777

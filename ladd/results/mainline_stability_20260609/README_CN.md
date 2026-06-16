@@ -74,4 +74,5 @@ YOLO11s 上，BN-freeze 没有完全解决后期退化：
 
 - 主线标准：[docs/experiments/LADD_MAINLINE_STANDARD_CN.md](../../../docs/experiments/LADD_MAINLINE_STANDARD_CN.md)
 - 主线结果汇总：[ladd/results/LADD_RESULTS_CN.md](../LADD_RESULTS_CN.md)
-- baseline/LADD 状态：[docs/experiments/BASELINE_LADD_STATUS_CN.md](../../../docs/experiments/BASELINE_LADD_STATUS_CN.md)
+- Baseline 规范与状态：[docs/experiments/BASELINE_STANDARD_CN.md](../../../docs/experiments/BASELINE_STANDARD_CN.md)
+- 方法定义与实现入口：[docs/method/METHOD_DEFINITIONS_AND_IMPLEMENTATION_CN.md](../../../docs/method/METHOD_DEFINITIONS_AND_IMPLEMENTATION_CN.md)

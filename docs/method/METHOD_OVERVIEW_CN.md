@@ -1,6 +1,8 @@
 # LADD 方法概览与当前理解
 
-最后更新：2026-06-01
+最后更新：2026-06-16
+
+> 2026-06-16 更新：当前主线方法口径已改为 `LADD-clean / LADD-A1B`，即 `A1 -> B`，不再把 A2 作为主线阶段。A2 相关内容保留为历史理解和诊断背景；新的准确定义见 `docs/ladd_clean_a1b_method_definition.md`。
 
 ## 1. 研究问题
 
@@ -19,19 +21,20 @@ LADD 解决的是 RGB 到 SAR 的跨模态目标检测蒸馏。训练时有配�
 
 ## 3. 当前正式主线
 
-当前 OGSOD HBB 正式主线定义为：
+当前 OGSOD HBB 主线定义已更新为：
 
 ```text
-最新收敛 baseline
-+ no-mosaic 800ep 正式训练协议
-+ A1 -> A2 -> B 完整阶段
-+ A2 检测稳定修正
-+ cap2 反坍缩 reach rank
+最新同协议 SAR/RGB baseline
++ mosaic_first100_close700 800ep 候选协议
++ A1 teacher decomposition warmup
++ B SAR detector training + z_s -> z_t KD
++ cap2 capped reach rank
++ sep/aux/debug losses removed
 ```
 
-也就是说，cap2 不再只是一个附加诊断项，而是当前更合理的主线默认设置；A2 检测稳定修正也属于正式主线配置。未加 cap2 的版本保留为消融实验，用于量化旧 rank loss 的几何退化是否影响检测性能。
+也就是说，cap2 仍是当前更合理的 reach rank 默认设置；A2 不再是主线必要阶段。旧 A1-A2-B、formal no-mosaic 和 B_A2_CORE 结果只能作为历史诊断、附录或消融，不应写作 clean A1B 主表结果。
 
-截至 2026-05-31，已经完整跑完的旧实验都不完全符合这个定义，因此只能作为历史可行性或诊断证据。正式结论应等待新 baseline 上的 cap2 LADD 完成。
+clean A1B 的完整 loss/冻结/launcher 定义见 `docs/ladd_clean_a1b_method_definition.md`。
 
 ## 4. 阶段划分
 
@@ -92,7 +95,7 @@ L_rank = softplus(delta + d_pos - d_neg_eff)
 
 - cap2 能显著改变几何状态，避免继续奖励完全反平行。
 - cap2 是当前正式主线默认设置，因为它是对旧 rank loss 几何目标的最小修正。
-- cap2 本身不是保证涨点的工具，过强的正交约束可能伤害性能；因此 original / stronger anti-collapse 仍应作为消融对照。
+- cap2 本身不是保证涨点的工具；clean A1B 当前只保留 cap2 rank 几何修正，不再保留额外 anti-collapse auxiliary loss。
 - OGSOD formal no-mosaic 上，cap2 无法单独修复 A2 NaN，因为 A2 NaN 首先来自检测 loss 数值失稳。
 
 ## 7. Formal No-Mosaic A2 修正

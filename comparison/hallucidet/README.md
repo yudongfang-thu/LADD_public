@@ -1,34 +1,47 @@
-# HalluciDet-style
+# HalluciDet-YOLO11 Adaptation
 
-Privileged modality hallucination for SAR object detection.
+最后更新：2026-06-16
+
+本目录是当前唯一有效的 HalluciDet 相关入口。旧
+`--comparison-kd-profile hallucidet_style` feature/response/margin KD baseline
+已经从 LADD comparison profile 系统移除。
 
 ## 方法
 
-训练期使用 paired RGB/SAR，RGB 作为 privileged information 指导 SAR student；
-推理期只输入 SAR。当前 portable profile 使用置信度/前景加权特征对齐、response
-map 对齐和 foreground-energy margin，但没有原文式显式 hallucination module。
-
-当前 profile 名称为：
+当前 standalone 协议为：
 
 ```text
---comparison-kd-profile hallucidet_style
+SAR image
+  -> hallucination network
+  -> 3-channel hallucinated representation
+  -> frozen RGB YOLO11 detector
+  -> detection loss / validation metrics
 ```
 
-旧 `hallucidet` 名称不再被 CLI/launcher 接受，避免被误写成 strict HalluciDet
-复现。
+训练时只更新 hallucination network；RGB YOLO11 detector 作为 frozen privileged
+detector。验证也走同一条 `SAR -> hallucination -> frozen RGB YOLO` 路径。
 
-因此论文中必须标注：
+有效入口：
 
-```text
-HalluciDet-style (detection-utility guided feature alignment,
-no explicit hallucination module)
+```bash
+python comparison/hallucidet/train_hallucidet.py \
+  --data shared/configs/datasets_public/ogsod1_sar_detect.yaml \
+  --teacher-data shared/configs/datasets_public/ogsod1_rgb_detect.yaml \
+  --teacher-weights <rgb_teacher_best.pt> \
+  --imgsz 256
 ```
 
-当前实现没有 image-space hallucination path，也没有 frozen RGB detector
-detection-loss-through-hallucinated-image 路径。若后续要做 strict HalluciDet，
-应新建独立入口，不复用当前 B-only frozen-teacher comparison launcher。
+## 边界
+
+- 这是 detection-loss-only HalluciDet-YOLO11 adaptation。
+- 不是 strict official HalluciDet reproduction；原文使用 Faster R-CNN/FCOS/RetinaNet
+  等检测器，本目录适配到 YOLO11。
+- 没有 RGB paired reconstruction loss、perceptual loss 或 image-level RGB target
+  matching objective。
+- 不是已移除的 `hallucidet_style` feature/response/margin KD baseline。
 
 ## 结果
 
-旧 `hallucidet` 结果只能作为 `hallucidet_style_old` 参考，不能作为 HalluciDet
-official reproduction。当前 profile 名称变更后需要重跑。
+旧 `hallucidet`/`hallucidet_style` 结果只能作为历史 diagnostic，不能作为当前
+HalluciDet-YOLO adaptation 或 official HalluciDet reproduction。详细实现与 smoke
+规则见 [`IMPLEMENTATION_GUIDE.md`](IMPLEMENTATION_GUIDE.md)。

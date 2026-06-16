@@ -16,7 +16,7 @@ Required:
 
 Defaults:
   imgsz=256, batch=64, seed=0, fg reach enabled.
-  A2 and B use the formal stability guard:
+  A2 and B use the formal stabilization schedule:
     optimizer=MuSGD, lr0=0.001, lrf=0.01, warmup_epochs=0,
     warmup_bias_lr=0.001.
   B phase uses cos_lr=True.
@@ -24,8 +24,7 @@ Defaults:
 Common overrides:
   GPU_ID, SEED, PROJECT_DIR, CHAIN_LOG_DIR, EPOCHS_A1, EPOCHS_A2, EPOCHS_B,
   BATCH_SIZE, WORKERS, PATIENCE_B, B_CLOSE_MOSAIC, B_CLOSE_AT_EPOCH,
-  RANK_D_NEG_CAP, LAMBDA_ANTI_COLLAPSE,
-  ANTI_COLLAPSE_FLOOR, A1_/A2_/B_ optimizer overrides, B_FREEZE_BN_AFTER_EPOCH,
+  RANK_D_NEG_CAP, A1_/A2_/B_ optimizer overrides, B_FREEZE_BN_AFTER_EPOCH,
   LADD_DIAG_LOG_BN, LADD_DIAG_LOG_GRAD, LADD_GRAD_CLIP_NORM,
   LADD_ASSERT_PHASE_FREEZE, LADD_DIAG_LOG_EVERY, LADD_CHAIN_PHASES, EXIST_OK=1,
   LADD_KD_DECAY_MODE, LADD_KD_DECAY_START_EPOCH, LADD_KD_DECAY_END_EPOCH,
@@ -35,7 +34,7 @@ Common overrides:
   LADD_B_LOSS_WARMUP_SCOPE, LADD_B_A2_CORE, LADD_B_DET_ONLY, LADD_A2_DET_ONLY,
   START_MODEL, VALIDATE_BEFORE_TRAIN, B_DETECTOR_SOURCE, B_DECOMP_SOURCE,
   B_SPLIT_LOAD_STRICT, B_RESET_STUDENT_FROM_SCRATCH, B_LOAD_STUDENT_SPLIT,
-  B_LOAD_STUDENT_REACHABILITY, B_LOAD_STUDENT_AUX
+  B_LOAD_STUDENT_REACHABILITY
 EOF
 }
 
@@ -102,12 +101,9 @@ manifest="${CHAIN_LOG_DIR}/manifest.txt"
   echo "b_close_at_epoch=${B_CLOSE_AT_EPOCH:-${EPOCHS_B}}"
   echo "alpha_kd=${ALPHA_KD:-1.0}"
   echo "alpha_s_rec=${ALPHA_S_REC:-0.1}"
-  echo "alpha_sep=${ALPHA_SEP:-0.05}"
   echo "lambda_reach=${LAMBDA_REACH:-1.0}"
   echo "lambda_match_inner=${LAMBDA_MATCH_INNER:-1.0}"
   echo "lambda_rank_inner=${LAMBDA_RANK_INNER:-1.0}"
-  echo "lambda_residual_aux=${LAMBDA_RESIDUAL_AUX:-0.25}"
-  echo "residual_aux_mode=${RESIDUAL_AUX_MODE:-energy}"
   echo "b_freeze_bn_after_epoch=${B_FREEZE_BN_AFTER_EPOCH:--1}"
   echo "ladd_diag_log_bn=${LADD_DIAG_LOG_BN:-1}"
   echo "ladd_diag_log_grad=${LADD_DIAG_LOG_GRAD:-0}"
@@ -134,10 +130,7 @@ manifest="${CHAIN_LOG_DIR}/manifest.txt"
   echo "b_reset_student_from_scratch=${B_RESET_STUDENT_FROM_SCRATCH:-0}"
   echo "b_load_student_split=${B_LOAD_STUDENT_SPLIT:-0}"
   echo "b_load_student_reachability=${B_LOAD_STUDENT_REACHABILITY:-1}"
-  echo "b_load_student_aux=${B_LOAD_STUDENT_AUX:-0}"
   echo "rank_d_neg_cap=${RANK_D_NEG_CAP:-4.0}"
-  echo "lambda_anti_collapse=${LAMBDA_ANTI_COLLAPSE:-0.0}"
-  echo "anti_collapse_floor=${ANTI_COLLAPSE_FLOOR:-0.0}"
 } > "$manifest"
 
 current_model="${START_MODEL:-$SAR_BASELINE}"
@@ -183,16 +176,11 @@ run_phase() {
     HSV_V="${HSV_V:-0.0}"
     ERASING="${ERASING:-0.0}"
     RANK_D_NEG_CAP="${RANK_D_NEG_CAP:-4.0}"
-    LAMBDA_ANTI_COLLAPSE="${LAMBDA_ANTI_COLLAPSE:-0.0}"
-    ANTI_COLLAPSE_FLOOR="${ANTI_COLLAPSE_FLOOR:-0.0}"
     ALPHA_KD="${ALPHA_KD:-1.0}"
     ALPHA_S_REC="${ALPHA_S_REC:-0.1}"
-    ALPHA_SEP="${ALPHA_SEP:-0.05}"
     LAMBDA_REACH="${LAMBDA_REACH:-1.0}"
     LAMBDA_MATCH_INNER="${LAMBDA_MATCH_INNER:-1.0}"
     LAMBDA_RANK_INNER="${LAMBDA_RANK_INNER:-1.0}"
-    LAMBDA_RESIDUAL_AUX="${LAMBDA_RESIDUAL_AUX:-0.25}"
-    RESIDUAL_AUX_MODE="${RESIDUAL_AUX_MODE:-energy}"
     EXIST_OK="${EXIST_OK:-0}"
   )
 
@@ -277,7 +265,6 @@ run_phase() {
       B_RESET_STUDENT_FROM_SCRATCH="${B_RESET_STUDENT_FROM_SCRATCH:-0}"
       B_LOAD_STUDENT_SPLIT="${B_LOAD_STUDENT_SPLIT:-0}"
       B_LOAD_STUDENT_REACHABILITY="${B_LOAD_STUDENT_REACHABILITY:-1}"
-      B_LOAD_STUDENT_AUX="${B_LOAD_STUDENT_AUX:-0}"
     )
   fi
 

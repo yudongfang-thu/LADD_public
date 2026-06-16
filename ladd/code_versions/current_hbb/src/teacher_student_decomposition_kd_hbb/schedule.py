@@ -6,32 +6,17 @@ from typing import Mapping
 
 NON_DETECTION_PHASE_LOSS_SCALES = (
     "rec",
-    "teacher_sep",
     "match",
     "unmatch",
     "task",
     "kd",
     "student_rec",
-    "student_sep",
-    "residual_aux",
-    "teacher_private_aux",
-    "mask",
-    "recon_task",
-    "rs_comp",
-    "r_obb",
-    "s_repel",
-    "path_b",
-    "r_sar",
-    "dkd",
-    "proto_cls",
 )
 
 
 TRACKED_LADD_WEIGHT_KEYS = (
     "alpha_kd",
     "alpha_s_rec",
-    "alpha_sep",
-    "lambda_residual_aux",
     "lambda_reach",
     "lambda_match_inner",
     "lambda_rank_inner",
@@ -40,8 +25,6 @@ TRACKED_LADD_WEIGHT_KEYS = (
 CORE_B_LADD_WARMUP_KEYS = (
     "alpha_kd",
     "alpha_s_rec",
-    "alpha_sep",
-    "lambda_residual_aux",
 )
 
 
@@ -231,7 +214,7 @@ def compute_effective_ladd_weights(
         if scope != "core":
             raise ValueError(
                 "Only core B loss warmup scope is implemented. "
-                "Supported core keys: alpha_kd, alpha_s_rec, alpha_sep, lambda_residual_aux."
+                "Supported core keys: alpha_kd, alpha_s_rec."
             )
         for key in CORE_B_LADD_WARMUP_KEYS:
             weights[key] *= b_loss_warmup_multiplier

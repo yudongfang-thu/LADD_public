@@ -1,6 +1,6 @@
 # LADD Public 精简仓库说明
 
-最后更新：2026-06-06 16:25 CST
+最后更新：2026-06-16 CST
 
 本文档说明当前公开仓库的范围。此前用于排查问题的大体量证据包已经移出当前
 public 分支；当前 public 分支只保留论文主线代码、协议文档、关键结果摘要和必要论文资料。
@@ -9,12 +9,13 @@ public 分支；当前 public 分支只保留论文主线代码、协议文档�
 
 | 模块 | 已放入内容 | 位置 |
 |---|---|---|
-| Baseline 说明 | 最新 baseline 数字、gap、缺口 | `baseline/results/BASELINE_RESULTS_CN.md`, `docs/experiments/BASELINE_LADD_STATUS_CN.md` |
+| Baseline 说明 | baseline 规范、结果数字、gap、缺口 | `docs/experiments/BASELINE_STANDARD_CN.md`, `baseline/results/BASELINE_RESULTS_CN.md` |
 | LADD 当前代码 | 当前 HBB LADD trainer/loss/model/train script/run scripts | `ladd/code_versions/current_hbb/` |
 | LADD 结果摘要 | 当前主线结果和主线规范 | `ladd/results/LADD_RESULTS_CN.md`, `docs/experiments/LADD_MAINLINE_STANDARD_CN.md` |
-| 受控对比 | FGD/LD 修正版、HalluciDet-style 与 CCLKD online-trainer gap 复核 | `comparison/IMPLEMENTATION_REVIEW_CN.md`, `comparison/{fgd,ld,cclkd,hallucidet}/` |
+| 方法定义 | LADD、FGD、LD、CMDistill、HalluciDet-YOLO、CCLKD 的当前定义和实现入口 | `docs/method/METHOD_DEFINITIONS_AND_IMPLEMENTATION_CN.md` |
+| 受控对比 | FGD/LD/CMDistill frozen-teacher profiles、HalluciDet-YOLO standalone、CCLKD online 入口与实现复核 | `comparison/`, `comparison/METHOD_CODE_MAP_CN.md`, `comparison/IMPLEMENTATION_REVIEW_CN.md` |
 | CCLKD 原文复现 | CCLKD 论文 PDF、400ep/数据增强/online trainer、YOLO11n 消融计划、旧失败运行的小型诊断快照 | `cclkd_reproduction/` |
-| 协议审计 | 双卡 4090 `nc=5` 事故、无效结果归档、CCLKD loss 修正与 online 缺口 | `docs/experiments/PROTOCOL_AND_CCLKD_AUDIT_20260605_CN.md` |
+| 实验地图 | 三条实验线、registry 和整理规则 | `docs/experiments/PROJECT_EXPERIMENT_MAP_20260614_CN.md`, `docs/experiments/registry/` |
 
 ## 2. 未放入或刻意排除
 
@@ -31,9 +32,10 @@ public 分支；当前 public 分支只保留论文主线代码、协议文档�
 1. LADD 的 B 阶段为什么在部分 seed/机器上出现后期塌缩，尤其是 BN running stats 是否被污染。
 2. A2 修复已经避免检测 loss 早期失控，但 B 阶段仍可能有长期退化，需要判断是否与 BN、EMA、batch 统计、teacher/student 输入分布或学习率日程有关。
 3. 4090D 上 YOLO11s LADD 当前明显低于 90 上 seed0 结果，需要复核协议/代码/数据增强差异。
-4. 双卡 4090 旧 smoke/formal partial runs 使用错误 `nc=5` yaml，已全部作废；请优先复核 `PROTOCOL_AND_CCLKD_AUDIT_20260605_CN.md`。
-5. FGD/LD 旧实验分别缺少 teacher attention、误用了分类 logits；请重点复核 2026-06-04 修正版。
-6. CCLKD 已在 2026-06-06 修正 LLD/FLD/RLD/CCL loss 语义，其中 CCL 现在使用 neck feature 而不是 DFL regression logits；请同时复核 `comparison/cclkd/README.md`、`cclkd_reproduction/` 和 loss 实现。
+4. 双卡 4090 旧 smoke/formal partial runs 使用错误 `nc=5` yaml，已全部作废。
+5. FGD/LD 旧实验分别缺少 teacher attention、误用了分类 logits；当前应复核 2026-06-10 后的 FGD-YOLO/LD-YOLO adaptation。
+6. CMDistill 是非官方 paper-aligned adaptation，正式结果必须标注为 `CMDistill-style`。
+7. CCLKD 必须区分原文复现和 LADD formal online comparison；frozen-teacher loss 组件不能单独写作 CCLKD 复现。
 
 ## 4. 安全检查状态
 

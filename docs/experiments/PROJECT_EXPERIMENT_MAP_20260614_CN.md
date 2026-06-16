@@ -9,7 +9,7 @@
 | 线 | 目标 | 当前状态 | 新入口 |
 |---|---|---|---|
 | CCLKD 复现消融线 | 验证 CCLKD paper formulation 与原文协议/受控协议下的有效性 | YOLO11 受控消融与 YOLOv5x 原文复现必须分开；旧错误 formulation 已作废 | [CCLKD_LINE_STATUS_20260614_CN.md](cclkd_reproduction/CCLKD_LINE_STATUS_20260614_CN.md) |
-| 其他对比方法线 | 维护 FGD / LD / HalluciDet / CCLKD 的对比方法实现与训练证据 | HalluciDet-style 已废弃；LD/FGD/HalluciDet 需要按 registry 重新核对可用证据 | [COMPARISON_LINE_STATUS_20260614_CN.md](comparison_methods/COMPARISON_LINE_STATUS_20260614_CN.md) |
+| 其他对比方法线 | 维护 FGD / LD / CMDistill / HalluciDet-YOLO / CCLKD 的对比方法实现与训练证据 | HalluciDet-style 已废弃；frozen-teacher KD、standalone HalluciDet 和 online CCLKD 必须分口径核验 | [COMPARISON_LINE_STATUS_20260614_CN.md](comparison_methods/COMPARISON_LINE_STATUS_20260614_CN.md) |
 | LADD 主线诊断线 | 复盘 LADD 主线从健康结果到当前崩溃/平台现象的因果链 | 已有大量 A2/B/BN/schedule/split-load 诊断；当前重点是 forensic review，而不是继续开新实验 | [LADD_LINE_FORENSIC_MAP_20260614_CN.md](ladd_mainline_diagnosis/LADD_LINE_FORENSIC_MAP_20260614_CN.md) |
 
 全局 registry 入口：

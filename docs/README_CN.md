@@ -1,23 +1,20 @@
 # LADD 文档入口
 
-最后更新：2026-06-09
+最后更新：2026-06-16
 
 ## 快速导航
 
 | 需要 | 文档 |
 |---|---|
 | 实验总索引 | [experiments/EXPERIMENT_INDEX_CN.md](experiments/EXPERIMENT_INDEX_CN.md) |
-| Baseline + LADD 最新台账 | [experiments/BASELINE_LADD_STATUS_CN.md](experiments/BASELINE_LADD_STATUS_CN.md) |
+| LADD-clean / A1B 主方法定义 | [ladd_clean_a1b_method_definition.md](ladd_clean_a1b_method_definition.md) |
+| 方法定义与实现入口 | [method/METHOD_DEFINITIONS_AND_IMPLEMENTATION_CN.md](method/METHOD_DEFINITIONS_AND_IMPLEMENTATION_CN.md) |
 | 对比方法来源、简介和 DOI | [experiments/COMPARISON_METHODS_RECORD_CN.md](experiments/COMPARISON_METHODS_RECORD_CN.md) |
 | 对比方法实现复核 | [../comparison/IMPLEMENTATION_REVIEW_CN.md](../comparison/IMPLEMENTATION_REVIEW_CN.md) |
 | Baseline 规范与状态 | [experiments/BASELINE_STANDARD_CN.md](experiments/BASELINE_STANDARD_CN.md) |
 | LADD 主线规范 | [experiments/LADD_MAINLINE_STANDARD_CN.md](experiments/LADD_MAINLINE_STANDARD_CN.md) |
-| LADD 主线稳定性诊断归档 | [../ladd/results/mainline_stability_20260609/README_CN.md](../ladd/results/mainline_stability_20260609/README_CN.md) |
-| 对比实验 | [experiments/COMPARISON_EXPERIMENTS_CN.md](experiments/COMPARISON_EXPERIMENTS_CN.md) |
+| 项目实验地图 | [experiments/PROJECT_EXPERIMENT_MAP_20260614_CN.md](experiments/PROJECT_EXPERIMENT_MAP_20260614_CN.md) |
 | CCLKD 原文复现 | [../cclkd_reproduction/README.md](../cclkd_reproduction/README.md) |
-| 消融计划 | [experiments/ABLATION_PLAN_CN.md](experiments/ABLATION_PLAN_CN.md) |
-| LADD LR/BN/schedule 诊断计划 | [experiments/LADD_LR_BN_DIAGNOSTIC_PLAN_20260609_CN.md](experiments/LADD_LR_BN_DIAGNOSTIC_PLAN_20260609_CN.md) |
-| LADD LR/BN/schedule 诊断 smoke 记录 | [experiments/LADD_LR_BN_DIAGNOSTIC_SMOKE_20260609_CN.md](experiments/LADD_LR_BN_DIAGNOSTIC_SMOKE_20260609_CN.md) |
 | LADD 方法概述 | [method/METHOD_OVERVIEW_CN.md](method/METHOD_OVERVIEW_CN.md) |
 | 相关工作 | [literature/RELATED_WORK_CN.md](literature/RELATED_WORK_CN.md) |
 
@@ -31,7 +28,8 @@
 
 ## 当前状态摘要
 
-1. 正式 OGSOD 协议：`imgsz=256, 800ep, cos_lr, full no-mosaic, default Albumentations`
-2. LADD 主线：A2/B 温和学习率 + cap2 + B BN-freeze；YOLO11n BN-freeze 三 seed 已形成正向证据
-3. 对比实验：当前只保留 FGD/LD/HalluciDet-style/CCLKD 四方法；CCLKD 先走独立原文复现目录，FGD/LD 修复前结果作废
-4. 服务器记录：公开分支保留结果摘要、关键 `results.csv`/`args.yaml` 证据和代码；权重与连接信息不发布
+1. 当前 LADD 主方法口径已切换为 `LADD-clean / LADD-A1B`：A1 后直接进 B，A2 只保留为历史诊断/消融
+2. 当前主协议候选：`imgsz=256, 800ep, mosaic=1.0, close_mosaic=700, cos_lr, deterministic`；baseline、LADD、comparison methods 必须同协议重跑
+3. 对比实验：当前方法口径为 FGD-style、LD、CMDistill-style、HalluciDet-YOLO adaptation、CCLKD online；旧 `hallucidet_style` profile 已移除
+4. CCLKD：原文复现走 `cclkd_reproduction/`，LADD 统一协议对比走 online launcher；frozen-teacher loss 组件不能单独写作 CCLKD 复现
+5. 服务器记录：公开分支保留结果摘要、关键 `results.csv`/`args.yaml` 证据和代码；权重与连接信息不发布
