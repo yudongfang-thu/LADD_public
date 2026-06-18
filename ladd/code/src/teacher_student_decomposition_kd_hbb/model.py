@@ -22,37 +22,6 @@ class TeacherDirectDecoder(WeakTaskDecoder):
     """Backward-compatible alias for older checkpoints serialized before the decoder rename."""
 
 
-class StudentResidualProjBlock(nn.Module):
-    """Scheme Y block: z_s = bottleneck projection(f_s), r_s = f_s - z_s (identity residual).
-
-    Semantics:
-        - z_s has a low-rank bottleneck so it cannot simply copy f_s
-        - r_s = f_s - z_s carries whatever z_s can't represent, 0 params
-        - student_rec_loss = ||z_s + r_s - f_s|| = 0 trivially (skip in loss)
-        - KD uses z_s ↔ z_t; r_s has no direct loss by default
-    """
-
-    def __init__(self, channels: int, bottleneck_ratio: float = 0.25):
-        super().__init__()
-        if bottleneck_ratio <= 0:
-            raise ValueError(f"bottleneck_ratio must be > 0, got {bottleneck_ratio}")
-        bottleneck_ch = max(1, int(round(channels * bottleneck_ratio)))
-        self.bottleneck_ratio = float(bottleneck_ratio)
-        self.pre = ConvNormAct(channels, channels, kernel_size=1)
-        self.z_proj = nn.Sequential(
-            ConvNormAct(channels, bottleneck_ch, kernel_size=1),
-            nn.Conv2d(bottleneck_ch, channels, kernel_size=1),
-        )
-
-    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-        h = self.pre(x)
-        z_s = self.z_proj(h)
-        r_s = x - z_s
-        fused = x  # = z_s + r_s trivially
-        recon = x  # trivial reconstruction (student_rec_loss will be skipped in residual mode)
-        return z_s, r_s, fused, recon
-
-
 class TeacherPrivateAwareDecompositionBlock(nn.Module):
     """Teacher decomposition with optional reduced-capacity unlearnable branch."""
 
@@ -92,50 +61,6 @@ class TeacherPrivateAwareDecompositionBlock(nn.Module):
         return z_t, u_t, mask, recon
 
 
-class TeacherResidualDecompositionBlock(nn.Module):
-    """Teacher Scheme Y: z_t = bottleneck projection(f_t), u_t = f_t - z_t.
-
-    Mirror of `StudentResidualProjBlock` on the teacher side. Replaces the
-    explicit unlearnable branch + reconstruction layer with a residual identity.
-
-    Properties:
-        - z_t has a low-rank bottleneck so it cannot trivially copy f_t.
-        - u_t = x - z_t carries whatever z_t cannot represent (0 params).
-        - recon = x is returned so t_rec_loss = ||recon - f_t|| = 0 by construction.
-        - mask_branch is preserved (independent of decomposition shape).
-    """
-
-    def __init__(self, channels: int, use_mask: bool = False, bottleneck_ratio: float = 0.25):
-        super().__init__()
-        if bottleneck_ratio <= 0:
-            raise ValueError(f"bottleneck_ratio must be > 0, got {bottleneck_ratio}")
-        bottleneck_ch = max(1, int(round(channels * bottleneck_ratio)))
-        self.bottleneck_ratio = float(bottleneck_ratio)
-        # Kept for trainer compatibility (no-op in residual mode)
-        self.unlearnable_hidden_ratio = 1.0
-        self.use_mask = use_mask
-        self.pre = ConvNormAct(channels, channels, kernel_size=1)
-        self.z_proj = nn.Sequential(
-            ConvNormAct(channels, bottleneck_ch, kernel_size=1),
-            nn.Conv2d(bottleneck_ch, channels, kernel_size=1),
-        )
-        if use_mask:
-            self.mask_branch = nn.Sequential(
-                ConvNormAct(channels, channels, kernel_size=1),
-                nn.Conv2d(channels, 1, 1),
-            )
-        else:
-            self.mask_branch = None
-
-    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor | None, torch.Tensor]:
-        h = self.pre(x)
-        z_t = self.z_proj(h)
-        u_t = x - z_t
-        mask = torch.sigmoid(self.mask_branch(h)) if self.mask_branch is not None else None
-        recon = x  # trivial: z_t + u_t == x (t_rec_loss is 0 by construction)
-        return z_t, u_t, mask, recon
-
-
 class TeacherStudentDecompositionKDNRRLTeacherUAuxModelHBB(TeacherStudentDecompositionKDModelHBB):
     """LADD HBB model with teacher decomposition and student common-space split."""
 
@@ -152,9 +77,6 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxModelHBB(TeacherStudentDecompo
         kd_calibration_mode: str = "none",
         student_branch_mode: str = "split",
         teacher_feature_mode: str = "decomposed",
-        student_z_bottleneck_ratio: float = 0.25,
-        teacher_branch_mode: str = "decomposed",
-        teacher_z_bottleneck_ratio: float = 0.25,
     ):
         super().__init__(
             cfg=cfg,
@@ -172,36 +94,23 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxModelHBB(TeacherStudentDecompo
         self.kd_calibration_mode = str(kd_calibration_mode)
         self.student_branch_mode = str(student_branch_mode)
         self.teacher_feature_mode = str(teacher_feature_mode)
-        self.student_z_bottleneck_ratio = float(student_z_bottleneck_ratio)
-        self.teacher_branch_mode = str(teacher_branch_mode)
-        self.teacher_z_bottleneck_ratio = float(teacher_z_bottleneck_ratio)
-        if self.teacher_branch_mode not in {"decomposed", "residual"}:
+        if self.student_branch_mode not in {"split", "raw", "single_proj"}:
             raise ValueError(
-                f"teacher_branch_mode must be 'decomposed' or 'residual', got {teacher_branch_mode!r}"
+                f"student_branch_mode must be 'split', 'raw', or 'single_proj', got {student_branch_mode!r}."
             )
-        if self.student_branch_mode == "residual":
-            self.student_split = nn.ModuleList(
-                StudentResidualProjBlock(c, bottleneck_ratio=self.student_z_bottleneck_ratio)
-                for c in feat_dims
+        if self.teacher_feature_mode not in {"decomposed", "raw", "projected_raw"}:
+            raise ValueError(
+                "teacher_feature_mode must be 'decomposed', 'raw', or 'projected_raw', "
+                f"got {teacher_feature_mode!r}."
             )
-        if self.teacher_branch_mode == "residual":
-            self.teacher_decomposition = nn.ModuleList(
-                TeacherResidualDecompositionBlock(
-                    c,
-                    use_mask=use_mask,
-                    bottleneck_ratio=self.teacher_z_bottleneck_ratio,
-                )
-                for c in feat_dims
+        self.teacher_decomposition = nn.ModuleList(
+            TeacherPrivateAwareDecompositionBlock(
+                c,
+                use_mask=use_mask,
+                unlearnable_hidden_ratio=unlearnable_hidden_ratio,
             )
-        else:
-            self.teacher_decomposition = nn.ModuleList(
-                TeacherPrivateAwareDecompositionBlock(
-                    c,
-                    use_mask=use_mask,
-                    unlearnable_hidden_ratio=unlearnable_hidden_ratio,
-                )
-                for c in feat_dims
-            )
+            for c in feat_dims
+        )
         self.teacher_decoder = nn.ModuleList(WeakTaskDecoder(c) for c in feat_dims)
         self.teacher_task_heads = nn.ModuleList(TeacherTaskHead(c, num_classes) for c in feat_dims)
         self.student_kd_calibration = nn.ModuleList(nn.Conv2d(c, c, kernel_size=1) for c in feat_dims)

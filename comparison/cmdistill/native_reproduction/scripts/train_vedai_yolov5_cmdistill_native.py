@@ -47,8 +47,8 @@ import val  # noqa: E402
 from models.experimental import attempt_download, attempt_load  # noqa: E402
 from models.yolo import Model  # noqa: E402
 from utils.callbacks import Callbacks  # noqa: E402
-from utils.dataloaders import create_dataloader  # noqa: E402
-from utils.augmentations import letterbox  # noqa: E402
+from utils.dataloaders import InfiniteDataLoader, LoadImagesAndLabels, create_dataloader, seed_worker  # noqa: E402
+from utils.augmentations import augment_hsv, box_candidates, letterbox  # noqa: E402
 from utils.general import (  # noqa: E402
     LOGGER,
     check_amp,
@@ -62,6 +62,8 @@ from utils.general import (  # noqa: E402
     labels_to_class_weights,
     one_cycle,
     strip_optimizer,
+    xywhn2xyxy,
+    xyxy2xywhn,
     yaml_save,
 )
 from utils.loss import ComputeLoss  # noqa: E402
@@ -170,6 +172,258 @@ def load_paired_teacher_batch(paths, imgsz, device, student_token="/images/ir/",
         ims.append(np.ascontiguousarray(im))
     batch = torch.from_numpy(np.stack(ims, axis=0)).to(device, non_blocking=True).float() / 255.0
     return batch
+
+
+def random_perspective_pair(student,
+                            teacher,
+                            targets=(),
+                            degrees=10,
+                            translate=.1,
+                            scale=.1,
+                            shear=10,
+                            perspective=0.0,
+                            border=(0, 0)):
+    """Apply one YOLOv5-style geometric transform to both modalities."""
+    height = student.shape[0] + border[0] * 2
+    width = student.shape[1] + border[1] * 2
+
+    c = np.eye(3)
+    c[0, 2] = -student.shape[1] / 2
+    c[1, 2] = -student.shape[0] / 2
+
+    p = np.eye(3)
+    p[2, 0] = random.uniform(-perspective, perspective)
+    p[2, 1] = random.uniform(-perspective, perspective)
+
+    r = np.eye(3)
+    a = random.uniform(-degrees, degrees)
+    s = random.uniform(1 - scale, 1 + scale)
+    r[:2] = cv2.getRotationMatrix2D(angle=a, center=(0, 0), scale=s)
+
+    sh = np.eye(3)
+    sh[0, 1] = math.tan(random.uniform(-shear, shear) * math.pi / 180)
+    sh[1, 0] = math.tan(random.uniform(-shear, shear) * math.pi / 180)
+
+    t = np.eye(3)
+    t[0, 2] = random.uniform(0.5 - translate, 0.5 + translate) * width
+    t[1, 2] = random.uniform(0.5 - translate, 0.5 + translate) * height
+
+    m = t @ sh @ r @ p @ c
+    if (border[0] != 0) or (border[1] != 0) or (m != np.eye(3)).any():
+        if perspective:
+            student = cv2.warpPerspective(student, m, dsize=(width, height), borderValue=(114, 114, 114))
+            teacher = cv2.warpPerspective(teacher, m, dsize=(width, height), borderValue=(114, 114, 114))
+        else:
+            student = cv2.warpAffine(student, m[:2], dsize=(width, height), borderValue=(114, 114, 114))
+            teacher = cv2.warpAffine(teacher, m[:2], dsize=(width, height), borderValue=(114, 114, 114))
+
+    n = len(targets)
+    if n:
+        xy = np.ones((n * 4, 3))
+        xy[:, :2] = targets[:, [1, 2, 3, 4, 1, 4, 3, 2]].reshape(n * 4, 2)
+        xy = xy @ m.T
+        xy = (xy[:, :2] / xy[:, 2:3] if perspective else xy[:, :2]).reshape(n, 8)
+        x = xy[:, [0, 2, 4, 6]]
+        y = xy[:, [1, 3, 5, 7]]
+        new = np.concatenate((x.min(1), y.min(1), x.max(1), y.max(1))).reshape(4, n).T
+        new[:, [0, 2]] = new[:, [0, 2]].clip(0, width)
+        new[:, [1, 3]] = new[:, [1, 3]].clip(0, height)
+        keep = box_candidates(box1=targets[:, 1:5].T * s, box2=new.T, area_thr=0.10)
+        targets = targets[keep]
+        targets[:, 1:5] = new[keep]
+
+    return student, teacher, targets
+
+
+class PairedLoadImagesAndLabels(LoadImagesAndLabels):
+    """YOLOv5 dataset that applies identical geometric augmentation to paired teacher images."""
+
+    def __init__(self, *args, student_token="/images/rgb/", teacher_token="/images/ir/", **kwargs):
+        super().__init__(*args, **kwargs)
+        self.student_token = student_token
+        self.teacher_token = teacher_token
+
+    def load_teacher_image(self, student_index, resized_hw):
+        teacher_path = resolve_teacher_path(self.im_files[student_index],
+                                            student_token=self.student_token,
+                                            teacher_token=self.teacher_token)
+        im = cv2.imread(str(teacher_path))
+        if im is None:
+            raise FileNotFoundError(f"Failed to read paired teacher image: {teacher_path}")
+        h, w = resized_hw
+        if im.shape[:2] != (h, w):
+            im = cv2.resize(im, (w, h), interpolation=cv2.INTER_LINEAR)
+        return im
+
+    def load_mosaic_pair(self, index):
+        labels4 = []
+        s = self.img_size
+        yc, xc = (int(random.uniform(-x, 2 * s + x)) for x in self.mosaic_border)
+        indices = [index] + random.choices(self.indices, k=3)
+        random.shuffle(indices)
+        img4 = teacher4 = None
+
+        for i, index in enumerate(indices):
+            img, _, (h, w) = self.load_image(index)
+            teacher = self.load_teacher_image(index, (h, w))
+
+            if i == 0:
+                img4 = np.full((s * 2, s * 2, img.shape[2]), 114, dtype=np.uint8)
+                teacher4 = np.full((s * 2, s * 2, teacher.shape[2]), 114, dtype=np.uint8)
+                x1a, y1a, x2a, y2a = max(xc - w, 0), max(yc - h, 0), xc, yc
+                x1b, y1b, x2b, y2b = w - (x2a - x1a), h - (y2a - y1a), w, h
+            elif i == 1:
+                x1a, y1a, x2a, y2a = xc, max(yc - h, 0), min(xc + w, s * 2), yc
+                x1b, y1b, x2b, y2b = 0, h - (y2a - y1a), min(w, x2a - x1a), h
+            elif i == 2:
+                x1a, y1a, x2a, y2a = max(xc - w, 0), yc, xc, min(s * 2, yc + h)
+                x1b, y1b, x2b, y2b = w - (x2a - x1a), 0, w, min(y2a - y1a, h)
+            else:
+                x1a, y1a, x2a, y2a = xc, yc, min(xc + w, s * 2), min(s * 2, yc + h)
+                x1b, y1b, x2b, y2b = 0, 0, min(w, x2a - x1a), min(y2a - y1a, h)
+
+            img4[y1a:y2a, x1a:x2a] = img[y1b:y2b, x1b:x2b]
+            teacher4[y1a:y2a, x1a:x2a] = teacher[y1b:y2b, x1b:x2b]
+            padw = x1a - x1b
+            padh = y1a - y1b
+
+            labels = self.labels[index].copy()
+            if labels.size:
+                labels[:, 1:] = xywhn2xyxy(labels[:, 1:], w, h, padw, padh)
+            labels4.append(labels)
+
+        labels4 = np.concatenate(labels4, 0) if labels4 else np.zeros((0, 5), dtype=np.float32)
+        if labels4.size:
+            np.clip(labels4[:, 1:], 0, 2 * s, out=labels4[:, 1:])
+
+        img4, teacher4, labels4 = random_perspective_pair(img4,
+                                                          teacher4,
+                                                          labels4,
+                                                          degrees=self.hyp["degrees"],
+                                                          translate=self.hyp["translate"],
+                                                          scale=self.hyp["scale"],
+                                                          shear=self.hyp["shear"],
+                                                          perspective=self.hyp["perspective"],
+                                                          border=self.mosaic_border)
+        return img4, teacher4, labels4
+
+    def __getitem__(self, index):
+        index = self.indices[index]
+        hyp = self.hyp
+        mosaic = self.mosaic and random.random() < hyp["mosaic"]
+
+        if mosaic:
+            img, teacher, labels = self.load_mosaic_pair(index)
+            shapes = None
+            if random.random() < hyp["mixup"]:
+                img2, teacher2, labels2 = self.load_mosaic_pair(random.randint(0, self.n - 1))
+                r = np.random.beta(32.0, 32.0)
+                img = (img * r + img2 * (1 - r)).astype(np.uint8)
+                teacher = (teacher * r + teacher2 * (1 - r)).astype(np.uint8)
+                labels = np.concatenate((labels, labels2), 0)
+        else:
+            img, (h0, w0), (h, w) = self.load_image(index)
+            teacher = self.load_teacher_image(index, (h, w))
+            shape = self.batch_shapes[self.batch[index]] if self.rect else self.img_size
+            img, ratio, pad = letterbox(img, shape, auto=False, scaleup=self.augment)
+            teacher, _, _ = letterbox(teacher, shape, auto=False, scaleup=self.augment)
+            shapes = (h0, w0), ((h / h0, w / w0), pad)
+
+            labels = self.labels[index].copy()
+            if labels.size:
+                labels[:, 1:] = xywhn2xyxy(labels[:, 1:], ratio[0] * w, ratio[1] * h,
+                                           padw=pad[0], padh=pad[1])
+
+            if self.augment:
+                img, teacher, labels = random_perspective_pair(img,
+                                                               teacher,
+                                                               labels,
+                                                               degrees=hyp["degrees"],
+                                                               translate=hyp["translate"],
+                                                               scale=hyp["scale"],
+                                                               shear=hyp["shear"],
+                                                               perspective=hyp["perspective"])
+
+        nl = len(labels)
+        if nl:
+            labels[:, 1:5] = xyxy2xywhn(labels[:, 1:5], w=img.shape[1], h=img.shape[0], clip=True, eps=1E-3)
+
+        if self.augment:
+            img, labels = self.albumentations(img, labels)
+            nl = len(labels)
+            augment_hsv(img, hgain=hyp["hsv_h"], sgain=hyp["hsv_s"], vgain=hyp["hsv_v"])
+
+            if random.random() < hyp["flipud"]:
+                img = np.flipud(img)
+                teacher = np.flipud(teacher)
+                if nl:
+                    labels[:, 2] = 1 - labels[:, 2]
+
+            if random.random() < hyp["fliplr"]:
+                img = np.fliplr(img)
+                teacher = np.fliplr(teacher)
+                if nl:
+                    labels[:, 1] = 1 - labels[:, 1]
+
+        labels_out = torch.zeros((nl, 6))
+        if nl:
+            labels_out[:, 1:] = torch.from_numpy(labels)
+
+        img = img.transpose((2, 0, 1))[::-1]
+        teacher = teacher.transpose((2, 0, 1))[::-1]
+        img = np.ascontiguousarray(img)
+        teacher = np.ascontiguousarray(teacher)
+        return torch.from_numpy(img), labels_out, self.im_files[index], shapes, torch.from_numpy(teacher)
+
+    @staticmethod
+    def collate_fn(batch):
+        im, label, path, shapes, teacher = zip(*batch)
+        for i, lb in enumerate(label):
+            lb[:, 0] = i
+        return torch.stack(im, 0), torch.cat(label, 0), path, shapes, torch.stack(teacher, 0)
+
+
+def create_paired_dataloader(path,
+                             imgsz,
+                             batch_size,
+                             stride,
+                             single_cls=False,
+                             hyp=None,
+                             augment=False,
+                             cache=False,
+                             rect=False,
+                             workers=8,
+                             prefix="",
+                             shuffle=False,
+                             student_token="/images/rgb/",
+                             teacher_token="/images/ir/"):
+    dataset = PairedLoadImagesAndLabels(path,
+                                        imgsz,
+                                        batch_size,
+                                        augment=augment,
+                                        hyp=hyp,
+                                        rect=rect,
+                                        cache_images=cache,
+                                        single_cls=single_cls,
+                                        stride=int(stride),
+                                        pad=0.0,
+                                        image_weights=False,
+                                        prefix=prefix,
+                                        student_token=student_token,
+                                        teacher_token=teacher_token)
+    batch_size = min(batch_size, len(dataset))
+    nd = torch.cuda.device_count()
+    nw = min([os.cpu_count() // max(nd, 1), batch_size if batch_size > 1 else 0, workers])
+    generator = torch.Generator()
+    generator.manual_seed(0)
+    return InfiniteDataLoader(dataset,
+                              batch_size=batch_size,
+                              shuffle=shuffle,
+                              num_workers=nw,
+                              pin_memory=True,
+                              collate_fn=PairedLoadImagesAndLabels.collate_fn,
+                              worker_init_fn=seed_worker,
+                              generator=generator), dataset
 
 
 def load_student_model(weights, cfg, nc, hyp, device, resume=False):
@@ -372,34 +626,35 @@ def decoded_output_distill_loss(student_preds,
                                 min_conf=0.05,
                                 topk=128):
     device = student_preds[0].device
-    total = torch.zeros((), device=device)
-    used = 0
-    student_decoded = decode_yolov5_train_outputs(student_preds, student_detect)
-    teacher_decoded = decode_yolov5_train_outputs(teacher_preds, teacher_detect).detach()
-    teacher_obj = teacher_decoded[..., 4:5]
-    teacher_cls = teacher_decoded[..., 5:]
-    teacher_score = teacher_obj * teacher_cls.max(dim=-1, keepdim=True).values
+    with torch.cuda.amp.autocast(enabled=False):
+        total = torch.zeros((), device=device)
+        used = 0
+        student_decoded = decode_yolov5_train_outputs([p.float() for p in student_preds], student_detect)
+        teacher_decoded = decode_yolov5_train_outputs([p.float() for p in teacher_preds], teacher_detect).detach()
+        teacher_obj = teacher_decoded[..., 4:5]
+        teacher_cls = teacher_decoded[..., 5:]
+        teacher_score = teacher_obj * teacher_cls.max(dim=-1, keepdim=True).values
 
-    for b in range(student_decoded.shape[0]):
-        mask = teacher_score[b, :, 0] >= min_conf
-        if topk > 0:
-            k = min(int(topk), teacher_score.shape[1])
-            top_idx = teacher_score[b, :, 0].topk(k).indices
-            top_mask = torch.zeros_like(mask)
-            top_mask[top_idx] = True
-            mask = mask | top_mask
-        if not mask.any():
-            continue
+        for b in range(student_decoded.shape[0]):
+            mask = teacher_score[b, :, 0] >= min_conf
+            if topk > 0:
+                k = min(int(topk), teacher_score.shape[1])
+                top_idx = teacher_score[b, :, 0].topk(k).indices
+                top_mask = torch.zeros_like(mask)
+                top_mask[top_idx] = True
+                mask = mask | top_mask
+            if not mask.any():
+                continue
 
-        s_sel = student_decoded[b, mask]
-        t_sel = teacher_decoded[b, mask]
-        iou = bbox_iou_xyxy_aligned(xywh_to_xyxy(s_sel[:, :4]), xywh_to_xyxy(t_sel[:, :4]))
-        box = (1.0 - iou).mean()
-        cls = F.binary_cross_entropy(s_sel[:, 5:].clamp(1e-6, 1 - 1e-6),
-                                     t_sel[:, 5:].clamp(1e-6, 1 - 1e-6))
-        total = total + box + cls
-        used += 1
-    return total / max(used, 1)
+            s_sel = student_decoded[b, mask]
+            t_sel = teacher_decoded[b, mask]
+            iou = bbox_iou_xyxy_aligned(xywh_to_xyxy(s_sel[:, :4]), xywh_to_xyxy(t_sel[:, :4]))
+            box = (1.0 - iou).mean()
+            cls = F.binary_cross_entropy(s_sel[:, 5:].clamp(1e-6, 1 - 1e-6),
+                                         t_sel[:, 5:].clamp(1e-6, 1 - 1e-6))
+            total = total + box + cls
+            used += 1
+        return total / max(used, 1)
 
 
 def append_csv(path, row):
@@ -446,6 +701,8 @@ def parse_opt():
                         help="disable mosaic/geometric/flip aug so paired IR teacher stays spatially aligned")
     parser.add_argument("--keep-color-aug", action="store_true",
                         help="with --aligned-no-geo, keep HSV color augmentation on the RGB student")
+    parser.add_argument("--paired-sync-geo", action="store_true",
+                        help="apply the same YOLOv5 mosaic/geometric/flip augmentations to the paired teacher image")
     parser.add_argument("--rgb-token", default="/images/rgb/")
     parser.add_argument("--ir-token", default="/images/ir/")
     parser.add_argument("--student-token", default=None)
@@ -534,22 +791,40 @@ def train(opt):
     scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lf)
     ema = ModelEMA(model)
     student_hook = DetectFeatureHook(model)
+    student_token = opt.student_token or opt.rgb_token
+    teacher_token = opt.teacher_token or opt.ir_token
 
-    train_loader, dataset = create_dataloader(train_path,
-                                              imgsz,
-                                              batch_size,
-                                              gs,
-                                              opt.single_cls,
-                                              hyp=hyp,
-                                              augment=True,
-                                              cache=opt.cache,
-                                              rect=opt.rect,
-                                              rank=-1,
-                                              workers=opt.workers,
-                                              image_weights=False,
-                                              quad=False,
-                                              prefix=colorstr("train: "),
-                                              shuffle=True)
+    if opt.paired_sync_geo:
+        train_loader, dataset = create_paired_dataloader(train_path,
+                                                         imgsz,
+                                                         batch_size,
+                                                         gs,
+                                                         opt.single_cls,
+                                                         hyp=hyp,
+                                                         augment=True,
+                                                         cache=opt.cache,
+                                                         rect=opt.rect,
+                                                         workers=opt.workers,
+                                                         prefix=colorstr("train: "),
+                                                         shuffle=True,
+                                                         student_token=student_token,
+                                                         teacher_token=teacher_token)
+    else:
+        train_loader, dataset = create_dataloader(train_path,
+                                                  imgsz,
+                                                  batch_size,
+                                                  gs,
+                                                  opt.single_cls,
+                                                  hyp=hyp,
+                                                  augment=True,
+                                                  cache=opt.cache,
+                                                  rect=opt.rect,
+                                                  rank=-1,
+                                                  workers=opt.workers,
+                                                  image_weights=False,
+                                                  quad=False,
+                                                  prefix=colorstr("train: "),
+                                                  shuffle=True)
     labels = np.concatenate(dataset.labels, 0)
     mlc = int(labels[:, 0].max())
     assert mlc < nc, f"Label class {mlc} exceeds nc={nc} in {opt.data}"
@@ -581,8 +856,6 @@ def train(opt):
     scaler = torch.cuda.amp.GradScaler(enabled=amp)
     stopper, stop = EarlyStopping(patience=opt.patience), False
     callbacks = Callbacks()
-    student_token = opt.student_token or opt.rgb_token
-    teacher_token = opt.teacher_token or opt.ir_token
 
     nb = len(train_loader)
     nw = max(round(hyp["warmup_epochs"] * nb), 100)
@@ -598,7 +871,8 @@ def train(opt):
                 f"Using {train_loader.num_workers} dataloader workers\n"
                 f"Logging results to {colorstr('bold', save_dir)}\n"
                 f"KD active={kd_active}, feature_layers={feature_indices}, relation_layer={relation_layer}, "
-                f"feature_adapt={model.cmdistill_adapters is not None}, raw_output_kd={opt.raw_output_kd}\n"
+                f"feature_adapt={model.cmdistill_adapters is not None}, raw_output_kd={opt.raw_output_kd}, "
+                f"paired_sync_geo={opt.paired_sync_geo}\n"
                 f"Starting CMDistill native training for {opt.epochs} epochs...")
 
     try:
@@ -610,7 +884,12 @@ def train(opt):
                          "kd_w"))
             pbar = tqdm(enumerate(train_loader), total=nb, bar_format="{l_bar}{bar:10}{r_bar}{bar:-10b}")
             optimizer.zero_grad()
-            for i, (imgs, targets, paths, _) in pbar:
+            for i, batch in pbar:
+                if opt.paired_sync_geo:
+                    imgs, targets, paths, _, teacher_imgs_batch = batch
+                else:
+                    imgs, targets, paths, _ = batch
+                    teacher_imgs_batch = None
                 ni = i + nb * epoch
                 imgs = imgs.to(device, non_blocking=True).float() / 255.0
                 targets = targets.to(device)
@@ -634,11 +913,14 @@ def train(opt):
                     kd_loss = torch.zeros((), device=device)
 
                     if kd_active:
-                        teacher_imgs = load_paired_teacher_batch(paths,
-                                                                 imgsz,
-                                                                 device,
-                                                                 student_token=student_token,
-                                                                 teacher_token=teacher_token)
+                        if teacher_imgs_batch is None:
+                            teacher_imgs = load_paired_teacher_batch(paths,
+                                                                     imgsz,
+                                                                     device,
+                                                                     student_token=student_token,
+                                                                     teacher_token=teacher_token)
+                        else:
+                            teacher_imgs = teacher_imgs_batch.to(device, non_blocking=True).float() / 255.0
                         with torch.no_grad():
                             teacher_hook.clear()
                             with torch.cuda.amp.autocast(amp):

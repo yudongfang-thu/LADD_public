@@ -62,7 +62,7 @@ class PhaseMinEarlyStopping:
 
 
 class TeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(DetectionTrainer):
-    """TSKD trainer with current residual-energy mainline plus teacher-side u_t controls."""
+    """LADD HBB trainer with phase-aware decomposition and KD controls."""
 
     def check_resume(self, overrides):
         """Resume from Ultralytics checkpoints while ignoring saved HBB custom trainer keys."""
@@ -141,9 +141,6 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(DetectionTrainer):
             "teacher_feature_mode": overrides.pop("teacher_feature_mode", "decomposed"),
             "kd_mechanism": overrides.pop("kd_mechanism", "mse"),
             "contrastive_temperature": float(overrides.pop("contrastive_temperature", 0.20)),
-            "student_z_bottleneck_ratio": float(overrides.pop("student_z_bottleneck_ratio", 0.25)),
-            "teacher_branch_mode": overrides.pop("teacher_branch_mode", "decomposed"),
-            "teacher_z_bottleneck_ratio": float(overrides.pop("teacher_z_bottleneck_ratio", 0.25)),
             "force_student_rec": int(overrides.pop("force_student_rec", 0)) > 0,
         }
         self.comparison_cfg = {
@@ -369,9 +366,6 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(DetectionTrainer):
             kd_calibration_mode=self.explore_cfg["kd_calibration_mode"],
             student_branch_mode=self.explore_cfg["student_branch_mode"],
             teacher_feature_mode=self.explore_cfg["teacher_feature_mode"],
-            student_z_bottleneck_ratio=self.explore_cfg["student_z_bottleneck_ratio"],
-            teacher_branch_mode=self.explore_cfg["teacher_branch_mode"],
-            teacher_z_bottleneck_ratio=self.explore_cfg["teacher_z_bottleneck_ratio"],
         )
         if weights:
             model.load(weights)
@@ -733,9 +727,6 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             kd_calibration_mode=self.explore_cfg["kd_calibration_mode"],
             student_branch_mode=self.explore_cfg["student_branch_mode"],
             teacher_feature_mode=self.explore_cfg["teacher_feature_mode"],
-            student_z_bottleneck_ratio=self.explore_cfg["student_z_bottleneck_ratio"],
-            teacher_branch_mode=self.explore_cfg["teacher_branch_mode"],
-            teacher_z_bottleneck_ratio=self.explore_cfg["teacher_z_bottleneck_ratio"],
         )
         reset_module_names = (
             "model",
@@ -880,7 +871,7 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
         phase = self.manual_phase_cfg["phase"]
         detect_mode = self._resolve_phase_detect_mode()
         det_scale = self._resolve_det_loss_scale()
-        student_branch_use_zs = self.explore_cfg["student_branch_mode"] in {"split", "single_proj", "residual"}
+        student_branch_use_zs = self.explore_cfg["student_branch_mode"] in {"split", "single_proj"}
         force_student_rec = self.explore_cfg.get("force_student_rec", False)
         enable_student_rec = self.explore_cfg["student_branch_mode"] == "split" or force_student_rec
         teacher_decomposed = self.explore_cfg["teacher_feature_mode"] == "decomposed"
@@ -888,7 +879,7 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
         if phase in {"a1", "a2"} and (not student_branch_use_zs or not teacher_decomposed):
             if self.explore_cfg["student_branch_mode"] != "raw":
                 raise ValueError(
-                    "A1/A2 only support student_branch_mode in {'split', 'single_proj', 'residual', 'raw'} and "
+                    "A1/A2 only support student_branch_mode in {'split', 'single_proj', 'raw'} and "
                     "teacher_feature_mode='decomposed'."
                 )
         use_reach_adapter = self.nrrl_cfg["reach_input_mode"] == "adapter"

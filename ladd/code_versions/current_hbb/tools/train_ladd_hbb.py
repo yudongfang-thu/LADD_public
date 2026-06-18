@@ -158,11 +158,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--use-mask", action="store_true")
 
     parser.add_argument("--student-detect-mode", choices=("fused", "mimic", "raw", "recon"), default="raw")
-    parser.add_argument("--student-branch-mode", choices=("split", "raw", "single_proj", "residual"), default="split")
-    parser.add_argument("--student-z-bottleneck-ratio", type=float, default=0.25)
+    parser.add_argument("--student-branch-mode", choices=("split", "raw", "single_proj"), default="split")
     parser.add_argument("--teacher-feature-mode", choices=("decomposed", "raw", "projected_raw"), default="decomposed")
-    parser.add_argument("--teacher-branch-mode", choices=("decomposed", "residual"), default="decomposed")
-    parser.add_argument("--teacher-z-bottleneck-ratio", type=float, default=0.25)
     parser.add_argument("--kd-mechanism", choices=("mse", "contrastive", "hybrid"), default="mse")
     parser.add_argument("--contrastive-temperature", type=float, default=0.20)
 
@@ -338,10 +335,7 @@ def main() -> None:
         use_mask=args.use_mask,
         student_detect_mode=args.student_detect_mode,
         student_branch_mode=args.student_branch_mode,
-        student_z_bottleneck_ratio=args.student_z_bottleneck_ratio,
         teacher_feature_mode=args.teacher_feature_mode,
-        teacher_branch_mode=args.teacher_branch_mode,
-        teacher_z_bottleneck_ratio=args.teacher_z_bottleneck_ratio,
         kd_mechanism=args.kd_mechanism,
         contrastive_temperature=args.contrastive_temperature,
         kd_weight_mode=args.kd_weight_mode,

@@ -316,7 +316,8 @@ B:  MODEL = A1 weights/best.pt
 2. `trainer.py` 的 `loss_names` 只包含 `box/cls/dfl/angle/t_rec/reach_match/reach_rank/task/kd/s_rec` 和 mask/reach 统计。
 3. `loss.py` 的 loss tensor 只返回 10 个 loss 项；comparison profile 只保留 `fgd/ld/cmdistill/cclkd`。
 4. `model.py` 不再实例化 residual aux、recon-task、r_obb、r_sar 辅助 head。
-5. `launch_ladd_clean_a1b_job.sh` 不传任何历史 loss 参数，且固定只跑 A1/B。
+5. `student_branch_mode=residual` 与 `teacher_branch_mode=residual` 已从 HBB LADD 代码删除；CLI 只接受 `split/raw/single_proj`，teacher 侧固定使用 explicit `z_t/u_t` decomposition。
+6. `launch_ladd_clean_a1b_job.sh` 不传任何历史 loss 参数，且固定只跑 A1/B。
 
 ## 8. clean 主表准入与 diagnostic 边界
 

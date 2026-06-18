@@ -301,9 +301,9 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
 
     @staticmethod
     def _validate_student_branch_mode(mode: str) -> str:
-        if mode not in {"split", "raw", "single_proj", "residual"}:
+        if mode not in {"split", "raw", "single_proj"}:
             raise ValueError(
-                f"student_branch_mode must be 'split', 'raw', 'single_proj', or 'residual', got {mode!r}."
+                f"student_branch_mode must be 'split', 'raw', or 'single_proj', got {mode!r}."
             )
         return mode
 
@@ -1299,7 +1299,7 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         target_teacher_decoder = target_modules.get("teacher_decoder", self.student_model.teacher_decoder)
         target_teacher_task_heads = target_modules.get("teacher_task_heads", self.student_model.teacher_task_heads)
         student_branch_split = self.student_branch_mode == "split"
-        student_branch_use_zs = self.student_branch_mode in {"split", "single_proj", "residual"}
+        student_branch_use_zs = self.student_branch_mode in {"split", "single_proj"}
         teacher_decomposed = self.teacher_feature_mode == "decomposed"
         teacher_projected_raw = self.teacher_feature_mode == "projected_raw"
 

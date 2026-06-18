@@ -72,6 +72,7 @@ KD_WARMUP_EPOCHS="${KD_WARMUP_EPOCHS:-0.0}"
 KD_GAIN="${KD_GAIN:-1.0}"
 ALIGNED_NO_GEO="${ALIGNED_NO_GEO:-1}"
 KEEP_COLOR_AUG="${KEEP_COLOR_AUG:-0}"
+PAIRED_SYNC_GEO="${PAIRED_SYNC_GEO:-0}"
 VAL_INTERVAL="${VAL_INTERVAL:-1}"
 
 if [[ ! -f "${STUDENT_DATA_YAML}" ]]; then
@@ -136,6 +137,9 @@ fi
 if [[ "${KEEP_COLOR_AUG}" == "1" ]]; then
   CMD+=(--keep-color-aug)
 fi
+if [[ "${PAIRED_SYNC_GEO}" == "1" ]]; then
+  CMD+=(--paired-sync-geo)
+fi
 if [[ "${FEATURE_ADAPT}" != "1" ]]; then
   CMD+=(--no-feature-adapt)
 fi
@@ -152,6 +156,7 @@ echo "teacher=${TEACHER_WEIGHTS}"
 echo "project=${PROJECT}"
 echo "name=${NAME}"
 echo "aligned_no_geo=${ALIGNED_NO_GEO}"
+echo "paired_sync_geo=${PAIRED_SYNC_GEO}"
 echo "feature_layers=${FEATURE_LAYERS}"
 echo "relation_layer=${RELATION_LAYER}"
 echo "feature_adapt=${FEATURE_ADAPT}"
