@@ -22,9 +22,9 @@ FORBIDDEN_PATTERNS = (
     ("legacy", re.compile(r"(^|[_\-/\s])legacy($|[_\-/\s])", re.IGNORECASE)),
     ("bn-freeze", re.compile(r"bn[-_]freeze", re.IGNORECASE)),
     ("a1-a2-b", re.compile(r"a1[-_]a2[-_]b", re.IGNORECASE)),
-    ("probe_only", re.compile(r"(^|[_\-/\s])probe_only($|[_\-/\s])", re.IGNORECASE)),
-    ("probe_run", re.compile(r"(^|[_\-/\s])probe_run($|[_\-/\s])", re.IGNORECASE)),
-    ("diagnostic_probe", re.compile(r"(^|[_\-/\s])diagnostic_probe($|[_\-/\s])", re.IGNORECASE)),
+    ("probe_only", re.compile(r"(^|[_\-/\s])probe[-_]only($|[_\-/\s])", re.IGNORECASE)),
+    ("probe_run", re.compile(r"(^|[_\-/\s])probe[-_]run($|[_\-/\s])", re.IGNORECASE)),
+    ("diagnostic_probe", re.compile(r"(^|[_\-/\s])diagnostic[-_]probe($|[_\-/\s])", re.IGNORECASE)),
 )
 LADD_FORBIDDEN_NOTE_PATTERNS = (
     ("a2", re.compile(r"(^|[_\-/\s])a2($|[_\-/\s])", re.IGNORECASE)),
@@ -67,6 +67,8 @@ REQUIRED_COLUMNS = [
     "claim_usable",
     "notes",
 ]
+AP_METRIC_FIELDS = ("best_ap50_95", "best_ap50", "final_ap50_95", "final_ap50")
+NUMERIC_REQUIRED_FIELDS = (*AP_METRIC_FIELDS, "best_epoch")
 
 
 def norm(value: object) -> str:
@@ -78,6 +80,13 @@ def is_float(value: str, expected: float) -> bool:
         return float(value) == expected
     except ValueError:
         return False
+
+
+def parse_number(value: str) -> float | None:
+    try:
+        return float(value)
+    except ValueError:
+        return None
 
 
 def row_text(row: dict[str, str]) -> str:
@@ -235,6 +244,19 @@ def validate_row(row: dict[str, str], line: int, *, csv_dir: Path, check_files: 
         errors.append(f"line {line}: claim_usable must be yes for a main-table row")
     if norm(row.get("status")).lower() not in {"complete", "verified", "main_table"}:
         errors.append(f"line {line}: status={norm(row.get('status'))!r}, expected complete/verified/main_table")
+    for field in NUMERIC_REQUIRED_FIELDS:
+        value = norm(row.get(field))
+        if not value:
+            errors.append(f"line {line}: missing required numeric metric field: {field}")
+            continue
+        number = parse_number(value)
+        if number is None:
+            errors.append(f"line {line}: {field}={value!r}, expected numeric value")
+            continue
+        if field in AP_METRIC_FIELDS and not (0.0 <= number <= 1.0):
+            errors.append(f"line {line}: {field}={value!r}, expected AP value in [0, 1]")
+        if field == "best_epoch" and number < 0:
+            errors.append(f"line {line}: best_epoch={value!r}, expected >= 0")
 
     for label in forbidden_labels(text):
         errors.append(f"line {line}: forbidden main-table pattern found: {label}")

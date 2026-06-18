@@ -5,6 +5,7 @@ import argparse
 import csv
 import glob
 import re
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -31,10 +32,21 @@ FORBIDDEN_PATTERNS = (
     ("legacy", re.compile(r"(^|[_\-/\s])legacy($|[_\-/\s])", re.IGNORECASE)),
     ("bn-freeze", re.compile(r"bn[-_]freeze", re.IGNORECASE)),
     ("a1-a2-b", re.compile(r"a1[-_]a2[-_]b", re.IGNORECASE)),
-    ("probe_only", re.compile(r"(^|[_\-/\s])probe_only($|[_\-/\s])", re.IGNORECASE)),
-    ("probe_run", re.compile(r"(^|[_\-/\s])probe_run($|[_\-/\s])", re.IGNORECASE)),
-    ("diagnostic_probe", re.compile(r"(^|[_\-/\s])diagnostic_probe($|[_\-/\s])", re.IGNORECASE)),
+    ("probe_only", re.compile(r"(^|[_\-/\s])probe[-_]only($|[_\-/\s])", re.IGNORECASE)),
+    ("probe_run", re.compile(r"(^|[_\-/\s])probe[-_]run($|[_\-/\s])", re.IGNORECASE)),
+    ("diagnostic_probe", re.compile(r"(^|[_\-/\s])diagnostic[-_]probe($|[_\-/\s])", re.IGNORECASE)),
 )
+
+
+@dataclass(frozen=True)
+class InputSpec:
+    target: str
+    base_dir: Path
+    args_yaml: str = ""
+    manifest: str = ""
+    data_yaml: str = ""
+    teacher_data_yaml: str = ""
+    student_data_yaml: str = ""
 
 FIELDS = [
     "dataset",
@@ -60,6 +72,9 @@ FIELDS = [
     "results_csv",
     "args_yaml",
     "manifest",
+    "data_yaml",
+    "teacher_data_yaml",
+    "student_data_yaml",
     "git_commit",
     "best_ap50_95",
     "best_ap50",
@@ -98,6 +113,19 @@ def read_text(path: Path | None) -> str:
     if path and path.is_file():
         return path.read_text(encoding="utf-8", errors="replace")
     return ""
+
+
+def resolve_path(value: str, base_dir: Path) -> Path:
+    path = Path(value)
+    if path.is_absolute():
+        return path
+    base_candidate = base_dir / path
+    if base_candidate.exists():
+        return base_candidate
+    root_candidate = ROOT / path
+    if root_candidate.exists():
+        return root_candidate
+    return base_candidate
 
 
 def parse_kv_text(text: str) -> dict[str, str]:
@@ -274,14 +302,27 @@ def gate_row(row: dict[str, str]) -> tuple[str, str, str]:
     return row["status"], "yes", ""
 
 
-def collect_one(results_csv: Path) -> dict[str, str]:
+def collect_one(spec: InputSpec) -> dict[str, str]:
+    results_csv = resolve_path(spec.target, spec.base_dir)
     run_dir = results_csv.parent
-    args_yaml = run_dir / "args.yaml"
-    if not args_yaml.is_file():
+    args_yaml = resolve_path(spec.args_yaml, spec.base_dir) if spec.args_yaml else run_dir / "args.yaml"
+    if not spec.args_yaml and not args_yaml.is_file():
         args_yaml = find_sidecar(run_dir, ("args.yaml",)) or args_yaml
-    manifest = find_sidecar(run_dir, ("paper_run_meta.env", "run_meta_clean_a1b.env", "manifest.txt"))
+    manifest = resolve_path(spec.manifest, spec.base_dir) if spec.manifest else find_sidecar(run_dir, ("paper_run_meta.env", "run_meta_clean_a1b.env", "manifest.txt"))
+    data_yaml = resolve_path(spec.data_yaml, spec.base_dir) if spec.data_yaml else None
+    teacher_data_yaml = resolve_path(spec.teacher_data_yaml, spec.base_dir) if spec.teacher_data_yaml else None
+    student_data_yaml = resolve_path(spec.student_data_yaml, spec.base_dir) if spec.student_data_yaml else None
     args_data = parse_yaml_simple(args_yaml if args_yaml.is_file() else None)
     meta = {**args_data, **parse_kv_text(read_text(manifest))}
+    if not data_yaml:
+        meta_data_yaml = first_value(meta.get("data_yaml"), meta.get("data_cfg"), meta.get("DATA_CFG"))
+        data_yaml = resolve_path(meta_data_yaml, spec.base_dir) if meta_data_yaml else None
+    if not teacher_data_yaml:
+        meta_teacher_yaml = first_value(meta.get("teacher_data_yaml"), meta.get("teacher_data_cfg"), meta.get("TEACHER_DATA_CFG"))
+        teacher_data_yaml = resolve_path(meta_teacher_yaml, spec.base_dir) if meta_teacher_yaml else None
+    if not student_data_yaml:
+        meta_student_yaml = first_value(meta.get("student_data_yaml"), meta.get("student_data_cfg"), meta.get("STUDENT_DATA_CFG"))
+        student_data_yaml = resolve_path(meta_student_yaml, spec.base_dir) if meta_student_yaml else None
 
     rows = load_results(results_csv)
     if not rows:
@@ -320,7 +361,10 @@ def collect_one(results_csv: Path) -> dict[str, str]:
         "project_dir": first_value(meta.get("project_dir"), args_data.get("project"), rel(run_dir.parent)),
         "results_csv": rel(results_csv),
         "args_yaml": rel(args_yaml) if args_yaml.is_file() else "",
-        "manifest": rel(manifest) if manifest else "",
+        "manifest": rel(manifest) if manifest and manifest.is_file() else "",
+        "data_yaml": rel(data_yaml) if data_yaml and data_yaml.is_file() else first_value(meta.get("data_yaml"), meta.get("data_cfg"), meta.get("DATA_CFG")),
+        "teacher_data_yaml": rel(teacher_data_yaml) if teacher_data_yaml and teacher_data_yaml.is_file() else first_value(meta.get("teacher_data_yaml"), meta.get("teacher_data_cfg"), meta.get("TEACHER_DATA_CFG")),
+        "student_data_yaml": rel(student_data_yaml) if student_data_yaml and student_data_yaml.is_file() else first_value(meta.get("student_data_yaml"), meta.get("student_data_cfg"), meta.get("STUDENT_DATA_CFG")),
         "git_commit": git_commit,
         "best_ap50_95": as_float_text(first_float(best_row, MAP_KEYS)),
         "best_ap50": as_float_text(first_float(best_row, MAP50_KEYS)),
@@ -339,27 +383,55 @@ def collect_one(results_csv: Path) -> dict[str, str]:
     return row
 
 
-def expand_results(paths: list[str]) -> list[Path]:
-    results: list[Path] = []
-    for item in paths:
-        matches = glob.glob(item, recursive=True) or [item]
+def expand_specs(specs: list[InputSpec]) -> list[InputSpec]:
+    results: list[InputSpec] = []
+    for spec in specs:
+        matches = glob.glob(str(resolve_path(spec.target, spec.base_dir)), recursive=True) or [str(resolve_path(spec.target, spec.base_dir))]
         for match in matches:
             path = Path(match)
             if path.is_dir():
                 path = path / "results.csv"
             if path.name == "results.csv" and path.is_file():
-                results.append(path)
-    return sorted(set(results))
+                results.append(
+                    InputSpec(
+                        target=str(path),
+                        base_dir=spec.base_dir,
+                        args_yaml=spec.args_yaml,
+                        manifest=spec.manifest,
+                        data_yaml=spec.data_yaml,
+                        teacher_data_yaml=spec.teacher_data_yaml,
+                        student_data_yaml=spec.student_data_yaml,
+                    )
+                )
+    seen: set[tuple[str, str, str]] = set()
+    unique: list[InputSpec] = []
+    for spec in sorted(results, key=lambda item: item.target):
+        key = (str(resolve_path(spec.target, spec.base_dir)), spec.args_yaml, spec.manifest)
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(spec)
+    return unique
 
 
-def registry_results(path: Path) -> list[str]:
+def registry_specs(path: Path) -> list[InputSpec]:
     with path.open(newline="", encoding="utf-8", errors="replace") as fh:
         rows = list(csv.DictReader(fh))
-    out: list[str] = []
+    out: list[InputSpec] = []
     for row in rows:
         candidate = first_value(row.get("results_csv"), row.get("canonical_path"), row.get("path"))
         if candidate:
-            out.append(candidate)
+            out.append(
+                InputSpec(
+                    target=candidate,
+                    base_dir=path.resolve().parent,
+                    args_yaml=first_value(row.get("args_yaml")),
+                    manifest=first_value(row.get("manifest"), row.get("paper_run_meta"), row.get("paper_run_meta_env"), row.get("meta_path")),
+                    data_yaml=first_value(row.get("data_yaml"), row.get("data_cfg"), row.get("DATA_CFG")),
+                    teacher_data_yaml=first_value(row.get("teacher_data_yaml"), row.get("teacher_data_cfg"), row.get("TEACHER_DATA_CFG")),
+                    student_data_yaml=first_value(row.get("student_data_yaml"), row.get("student_data_cfg"), row.get("STUDENT_DATA_CFG")),
+                )
+            )
     return out
 
 
@@ -372,17 +444,17 @@ def main() -> int:
     parser.add_argument("--out", required=True, type=Path)
     args = parser.parse_args()
 
-    inputs = list(args.runs) + list(args.glob)
+    specs = [InputSpec(target=item, base_dir=Path.cwd()) for item in list(args.runs) + list(args.glob)]
     for item in args.input:
         path = Path(item)
         if path.suffix == ".csv" and path.name != "results.csv" and path.is_file():
-            inputs.extend(registry_results(path))
+            specs.extend(registry_specs(path))
         else:
-            inputs.append(item)
+            specs.append(InputSpec(target=item, base_dir=Path.cwd()))
     if args.registry:
-        inputs.extend(registry_results(args.registry))
-    results_paths = expand_results(inputs)
-    rows = [collect_one(path) for path in results_paths]
+        specs.extend(registry_specs(args.registry))
+    result_specs = expand_specs(specs)
+    rows = [collect_one(spec) for spec in result_specs]
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
     with args.out.open("w", newline="", encoding="utf-8") as fh:

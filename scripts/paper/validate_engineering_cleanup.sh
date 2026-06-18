@@ -26,6 +26,7 @@ REQUIRED_FILES=(
   paper_results/validator_fixtures/valid_probea_name_variants.csv
   paper_results/validator_fixtures/invalid_legacy_variants.csv
   paper_results/validator_fixtures/invalid_wrong_yaml.csv
+  paper_results/validator_fixtures/invalid_missing_metrics.csv
   tools/paper_collect_results.py
   tools/paper_validate_main_table.py
 )
@@ -195,6 +196,14 @@ if [[ "$status" -eq 0 ]]; then
   exit 1
 fi
 set +e
+python3 tools/paper_validate_main_table.py paper_results/validator_fixtures/invalid_missing_metrics.csv >"$validator_negative_log" 2>&1
+status=$?
+set -e
+if [[ "$status" -eq 0 ]]; then
+  echo "Expected invalid_missing_metrics.csv to fail, but it passed." >&2
+  exit 1
+fi
+set +e
 python3 tools/paper_validate_main_table.py --check-yaml paper_results/validator_fixtures/invalid_wrong_yaml.csv >"$validator_negative_log" 2>&1
 status=$?
 set -e
@@ -268,6 +277,40 @@ status=verified
 EOF
 python3 tools/paper_collect_results.py --input "$collector_dir" --out "$collector_csv"
 python3 tools/paper_validate_main_table.py "$collector_csv"
+
+realistic_run_dir="${collector_bad_root}/runs_public/paper/ogsod_hbb_mosaic100/ladd_probea/yolo11n/seed0/RUN"
+realistic_log_dir="${collector_bad_root}/logs/paper/ogsod_hbb_mosaic100/ladd_probea/yolo11n/seed0/RUN"
+realistic_registry="${collector_bad_root}/registry.csv"
+write_minimal_collector_run "$realistic_run_dir"
+mkdir -p "$realistic_log_dir"
+cat > "${realistic_log_dir}/paper_run_meta.env" <<'EOF'
+paper_protocol_id=ogsod_hbb_mosaic100_clean_a1b_probea_20260618
+protocol_id=ogsod_hbb_mosaic100_clean_a1b_probea_20260618
+paper_run=1
+dataset=OGSOD-1.0
+task=hbb
+method=ladd_probea
+method_label=LADD Probe-A
+model_size=n
+seed=0
+phase_chain=A1->B
+ladd_a1b_mode=dynamic_probe
+run_tag=paper_clean_a1b_dynprobe_mosaic100_yolo11n_s0
+project_dir=runs_public/paper/example
+student_modality=SAR
+teacher_modality=RGB
+inference_modality=SAR
+data_cfg=configs/paper/datasets/ogsod_hbb_sar.yaml
+teacher_data_cfg=configs/paper/datasets/ogsod_hbb_rgb.yaml
+git_commit=deadbeef
+status=verified
+EOF
+cat > "$realistic_registry" <<EOF
+results_csv,args_yaml,manifest
+${realistic_run_dir}/results.csv,${realistic_run_dir}/args.yaml,${realistic_log_dir}/paper_run_meta.env
+EOF
+python3 tools/paper_collect_results.py --input "$realistic_registry" --out "$collector_csv"
+python3 tools/paper_validate_main_table.py --check-yaml "$collector_csv"
 
 archive_collector_dir="${collector_bad_root}/archive_legacy_ladd_20260618/clean_a1b_dynprobe"
 write_minimal_collector_run "$archive_collector_dir"

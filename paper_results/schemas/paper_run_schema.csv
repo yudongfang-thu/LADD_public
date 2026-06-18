@@ -22,6 +22,9 @@ project_dir,yes,project directory
 results_csv,yes,path to results.csv
 args_yaml,yes,path to args.yaml
 manifest,yes,path to manifest/meta
+data_yaml,no,path to student/inference dataset yaml
+teacher_data_yaml,no,path to teacher modality dataset yaml
+student_data_yaml,no,path to student dataset yaml when distinct from data_yaml
 git_commit,yes,git commit
 best_ap50_95,yes,best AP50-95
 best_ap50,no,best AP50
