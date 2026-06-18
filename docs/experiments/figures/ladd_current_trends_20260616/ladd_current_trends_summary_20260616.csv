@@ -1,0 +1,13 @@
+key,label,type,model,protocol,rows,best_ap,best_row_epoch,last_ap,last_row_epoch
+n_sar_base,n SAR baseline,baseline,n,mosaic100,800,0.54091,746,0.53836,800
+n_rgb_base,n RGB baseline,baseline,n,mosaic100,800,0.6161,758,0.61345,800
+n_s42_skip,n LADD s42 skipA2 done,ladd,n,mosaic100,800,0.56835,746,0.5643,800
+n_s0_a2last,n LADD s0 A2last done,ladd,n,mosaic100,800,0.56563,734,0.56076,800
+n_s123_a2last,n LADD s123 A2last active,ladd,n,mosaic100,308,0.48392,308,0.48392,308
+s_sar_base,s SAR baseline,baseline,s,mosaic100,800,0.61972,770,0.6157,800
+s_rgb_base,s RGB baseline,baseline,s,mosaic100,759,0.66029,679,0.65818,759
+s_s0_skip,s LADD s0 skipA2 active,ladd,s,mosaic100,49,0.46954,2,0.4529,49
+s_s123_a1a2b_autodl,s LADD s123 A1A2B AutoDL,ladd,s,mosaic_full_or_unclear,166,0.50421,166,0.50421,166
+m_sar_base,m SAR baseline active,baseline,m,mosaic100,523,0.63702,523,0.63702,523
+m_rgb_base,m RGB baseline active,baseline,m,mosaic100,524,0.66832,513,0.66805,524
+autodl_n_nomosaic_ba2core,n nomosaic yolo-init B_A2core AutoDL,ladd,n,nomosaic,677,0.54678,615,0.54245,677

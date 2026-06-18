@@ -217,6 +217,7 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(DetectionTrainer):
             "ladd_b_loss_warmup_final_mult": float(overrides.pop("ladd_b_loss_warmup_final_mult", 1.0)),
             "ladd_b_loss_warmup_scope": str(overrides.pop("ladd_b_loss_warmup_scope", "core")),
             "ladd_b_a2_core": int(overrides.pop("ladd_b_a2_core", 0)) > 0,
+            "ladd_b_frozen_reach_probe": int(overrides.pop("ladd_b_frozen_reach_probe", 0)) > 0,
             "ladd_b_det_only": int(overrides.pop("ladd_b_det_only", 0)) > 0,
             "ladd_a2_det_only": int(overrides.pop("ladd_a2_det_only", 0)) > 0,
         }
@@ -902,6 +903,7 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
         self._set_reach_student_detach(False)
 
         b_a2_core = bool(self.diagnostic_cfg.get("ladd_b_a2_core", False))
+        b_frozen_reach_probe = bool(self.diagnostic_cfg.get("ladd_b_frozen_reach_probe", False))
         if phase == "a1":
             self._set_module_requires_grad(model.model, False)
             self._set_module_requires_grad(model.student_split, False)
@@ -943,9 +945,13 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             self._set_module_requires_grad(model.student_split, student_branch_use_zs)
             self._set_module_requires_grad(model.teacher_decomposition, b_a2_core)
             self._set_module_requires_grad(model.teacher_decoder, b_a2_core or teacher_projected_raw)
-            self._set_module_requires_grad(model.student_reachability, b_a2_core and use_reach_adapter)
+            self._set_module_requires_grad(
+                model.student_reachability,
+                b_a2_core and use_reach_adapter and not b_frozen_reach_probe,
+            )
             self._set_module_requires_grad(model.teacher_task_heads, b_a2_core)
             self._set_reachability_enabled(b_a2_core)
+            self._set_reach_student_detach(b_a2_core and b_frozen_reach_probe)
             self._set_phase_target_modes(
                 reach_target_mode=("coupled" if b_a2_core else "detach"),
                 kd_target_mode="detach",
@@ -1103,7 +1109,10 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             if self.diagnostic_cfg.get("ladd_b_a2_core", False):
                 model.teacher_decomposition.train()
                 model.teacher_decoder.train()
-                model.student_reachability.train()
+                if self.diagnostic_cfg.get("ladd_b_frozen_reach_probe", False):
+                    model.student_reachability.eval()
+                else:
+                    model.student_reachability.train()
                 model.teacher_task_heads.train()
             else:
                 model.teacher_decomposition.eval()
@@ -1203,6 +1212,7 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             f"b_loss_warmup_multiplier={float(weights.get('b_loss_warmup_multiplier', 1.0))} "
             f"b_loss_warmup_active={bool(weights.get('b_loss_warmup_active', 0.0))} "
             f"ladd_b_a2_core={bool(self.diagnostic_cfg.get('ladd_b_a2_core', False))} "
+            f"ladd_b_frozen_reach_probe={bool(self.diagnostic_cfg.get('ladd_b_frozen_reach_probe', False))} "
             f"ladd_b_det_only={bool(self.diagnostic_cfg.get('ladd_b_det_only', False))} "
             f"ladd_a2_det_only={bool(self.diagnostic_cfg.get('ladd_a2_det_only', False))} "
             f"ladd_diag_log_grad={bool(self.diagnostic_cfg.get('ladd_diag_log_grad', False))} "
@@ -1453,6 +1463,7 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             "b_loss_warmup_multiplier": float(weights.get("b_loss_warmup_multiplier", 1.0)),
             "b_loss_warmup_active": int(bool(weights.get("b_loss_warmup_active", 0.0))),
             "ladd_b_a2_core": int(self.diagnostic_cfg.get("ladd_b_a2_core", False)),
+            "ladd_b_frozen_reach_probe": int(self.diagnostic_cfg.get("ladd_b_frozen_reach_probe", False)),
             "ladd_b_det_only": int(self.diagnostic_cfg.get("ladd_b_det_only", False)),
             "ladd_a2_det_only": int(self.diagnostic_cfg.get("ladd_a2_det_only", False)),
             "effective_alpha_s_rec": float(weights.get("alpha_s_rec", 0.0)),

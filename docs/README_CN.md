@@ -1,6 +1,6 @@
 # LADD 文档入口
 
-最后更新：2026-06-16
+最后更新：2026-06-18
 
 ## 快速导航
 
@@ -28,8 +28,8 @@
 
 ## 当前状态摘要
 
-1. 当前 LADD 主方法口径已切换为 `LADD-clean / LADD-A1B`：A1 后直接进 B，A2 只保留为历史诊断/消融
-2. 当前主协议候选：`imgsz=256, 800ep, mosaic=1.0, close_mosaic=700, cos_lr, deterministic`；baseline、LADD、comparison methods 必须同协议重跑
+1. 当前 LADD 主方法口径已固定为 `LADD Probe-A / LADD-clean A1B`：SAR baseline 初始化，A1 后直接进 B，B 阶段使用 dynamic teacher core + frozen reach probe，A2 只保留为历史诊断/消融
+2. 当前主协议固定为 mosaic100：`imgsz=256, 800ep, mosaic=1.0, close_mosaic=700, cos_lr, deterministic`；baseline、LADD、comparison methods 必须同协议重跑
 3. 对比实验：当前方法口径为 FGD-style、LD、CMDistill-style、HalluciDet-YOLO adaptation、CCLKD online；旧 `hallucidet_style` profile 已移除
 4. CCLKD：原文复现走 `cclkd_reproduction/`，LADD 统一协议对比走 online launcher；frozen-teacher loss 组件不能单独写作 CCLKD 复现
 5. 服务器记录：公开分支保留结果摘要、关键 `results.csv`/`args.yaml` 证据和代码；权重与连接信息不发布

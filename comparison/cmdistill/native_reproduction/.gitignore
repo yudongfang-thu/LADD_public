@@ -1,0 +1,9 @@
+data/
+runs/
+logs/
+weights/
+checkpoints/
+*.pt
+*.pth
+*.onnx
+*.engine

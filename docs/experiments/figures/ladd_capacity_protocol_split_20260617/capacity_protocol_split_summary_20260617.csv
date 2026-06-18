@@ -1,0 +1,18 @@
+group,label,rows,best_epoch,best_ap,last_epoch,last_ap,baseline_best_ap,last_minus_baseline_same_epoch,last_minus_baseline_best
+n_nomosaic,SAR baseline n no-mosaic,800,734,0.55654,800,0.55127,0.55654,0.00000,-0.00527
+n_nomosaic,Historical LADD-like n original s0 (sep/aux),800,730,0.57821,800,0.57517,0.55654,0.02390,0.01863
+n_nomosaic,Historical LADD-like n cap2 s0 (sep/aux),800,725,0.57662,800,0.57504,0.55654,0.02377,0.01850
+n_nomosaic,Historical LADD-like n cap2 s42 (sep/aux),800,735,0.57420,800,0.57293,0.55654,0.02166,0.01639
+n_nomosaic,Historical LADD-like n cap2 s0 BNfreeze (sep/aux),800,793,0.57276,800,0.57254,0.55654,0.02127,0.01600
+n_nomosaic,Historical LADD-like n cap2 s123 BNfreeze (sep/aux),800,779,0.57269,800,0.57219,0.55654,0.02092,0.01565
+n_nomosaic,Current diagnostic n yolo-init A1->B_A2core (sep/aux),684,615,0.54678,684,0.54206,0.55654,-0.01036,-0.01448
+n_nomosaic,CMDistill n no-mosaic,800,729,0.56777,800,0.56459,0.55654,0.01332,0.00805
+n_mosaic100,SAR baseline n mosaic100,800,746,0.54091,800,0.53836,0.54091,0.00000,-0.00255
+n_mosaic100,LADD-like n A2last s0 (sep/aux),800,734,0.56563,800,0.56076,0.54091,0.02240,0.01985
+n_mosaic100,LADD-like n skipA2 s42 (sep/aux),800,746,0.56835,800,0.56430,0.54091,0.02594,0.02339
+n_mosaic100,LADD-like n A2last s123 running (sep/aux),309,309,0.48414,309,0.48414,0.54091,0.04729,-0.05677
+s_nomosaic,SAR baseline s no-mosaic,800,729,0.62897,800,0.62233,0.62897,0.00000,-0.00664
+s_nomosaic,LADD-like s yolo-init (sep/aux),177,177,0.28862,177,0.28862,0.62897,-0.19420,-0.34035
+s_nomosaic,CMDistill s no-mosaic,800,690,0.62716,800,0.61904,0.62897,-0.00329,-0.00993
+s_mosaic100,SAR baseline s mosaic100,800,770,0.61972,800,0.61570,0.61972,0.00000,-0.00402
+s_mosaic100,LADD-like s skipA2 s0 running (sep/aux),52,2,0.46954,52,0.46159,0.61972,0.15990,-0.15813

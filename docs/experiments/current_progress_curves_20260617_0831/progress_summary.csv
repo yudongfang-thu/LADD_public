@@ -1,0 +1,14 @@
+model,label,kind,status,latest_epoch,latest_ap50,latest_ap,best_epoch,best_ap50_at_best_ap,best_ap,baseline_ap_same_latest_epoch,delta_ap_vs_baseline_same_latest_epoch,baseline_ap_same_best_epoch,delta_best_ap_vs_baseline_same_epoch,path
+n,SAR baseline s0,baseline,done,800,0.81755,0.53836,746,0.81816,0.54091,,,,,raw/autodl/n_sar_mosaic_baseline.csv
+n,clean A1B static s0 (AutoDL),ladd_clean,running,527,0.81195,0.53482,527,0.81195,0.53482,0.5066,0.028219999999999912,0.5066,0.028219999999999912,raw/autodl/n_static_clean_a1b_b.csv
+n,clean A1B dynamic s0 (AutoDL),ladd_clean,running,442,0.79663,0.51912,440,0.79488,0.51914,0.48487,0.03425,0.48393,0.03521000000000002,raw/autodl/n_dynamic_clean_a1b_b.csv
+n,A-scheme dynprobe s0 (4090),ladd_probe,running,67,0.65288,0.38298,1,0.6949,0.41367,0.24804,0.13493999999999998,0.0178,0.39587,raw/4090/n_dynprobe_a_scheme_b.csv
+n,legacy A2last s123 (90),legacy_ladd,running,405,0.78473,0.50725,402,0.78572,0.50777,0.47417,0.03308,0.47321,0.034560000000000035,raw/90/n_ladd_a2last_s123_b.csv
+s,SAR baseline s0,baseline,done,800,0.90576,0.6157,770,0.90739,0.61972,,,,,raw/90/s_sar_mosaic_baseline.csv
+s,clean A1B static s0 (4090),ladd_clean,running,485,0.87705,0.58027,485,0.87705,0.58027,0.5849,-0.004630000000000023,0.5849,-0.004630000000000023,raw/4090/s_static_clean_a1b_b.csv
+s,clean A1B dynamic s0 (4090),ladd_clean,running,376,0.88681,0.59624,375,0.88588,0.59628,0.55775,0.038490000000000024,0.55729,0.03899000000000008,raw/4090/s_dynamic_clean_a1b_b.csv
+s,A-scheme dynprobe s0 (AutoDL),ladd_probe,running,74,0.78376,0.47144,1,0.82855,0.49692,0.3325,0.13894,0.02777,0.46914999999999996,raw/autodl/s_dynprobe_a_scheme_b.csv
+s,legacy skipA2 s0 (90),legacy_ladd,running,257,0.86291,0.57199,257,0.86291,0.57199,0.5044,0.06759000000000004,0.5044,0.06759000000000004,raw/90/s_ladd_skipA2_b.csv
+s,legacy A1A2B s123 (AutoDL),legacy_ladd,running,746,0.89844,0.59928,712,0.90066,0.60373,0.61766,-0.018379999999999952,0.619,-0.015270000000000006,raw/autodl/s_ladd_a1a2b_s123_b.csv
+m,SAR baseline s0,baseline,running,793,0.92971,0.64251,713,0.9315,0.65092,,,,,raw/90/m_sar_mosaic_baseline_running.csv
+m,RGB teacher baseline s0 (stopped),teacher_baseline,early_stopped,680,0.94893,0.66845,600,0.95102,0.6734,0.64895,0.019499999999999962,0.64681,0.026590000000000003,raw/90/m_rgb_mosaic_baseline_stopped.csv

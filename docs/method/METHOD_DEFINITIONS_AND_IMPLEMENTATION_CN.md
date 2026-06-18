@@ -1,6 +1,6 @@
 # LADD 与对比方法定义/实现对照
 
-最后更新：2026-06-16
+最后更新：2026-06-18
 
 本文档作为当前 public 包的方法口径入口，回答三个问题：方法名应该怎么写、代码从哪里启动、当前实现与原论文或原方法定义有什么边界。实验结果、曲线和 run 状态不在这里展开，只引用本定义。
 
@@ -27,7 +27,7 @@ deterministic = true
 batch = n/s:64, m/l:32, x:16
 ```
 
-当前 `LADD-clean / LADD-A1B` 主线候选改用 mosaic-first100-close700 协议：
+当前 `LADD Probe-A / LADD-clean A1B` 固定主线使用 mosaic-first100-close700 协议：
 
 ```text
 dataset = OGSOD-1.0 HBB
@@ -41,7 +41,7 @@ deterministic = true
 batch = n/s:64, m/l:32, x:16
 ```
 
-Baseline、LADD 和对比方法必须使用同容量、同 seed、同增强协议。历史 no-mosaic、close@100、400ep 结果只能作为历史或附录，不能混入 clean A1B 主表。
+Baseline、LADD 和对比方法必须使用同容量、同 seed、同增强协议。历史 no-mosaic、close@100、400ep 结果只能作为历史或附录，不能混入 LADD Probe-A mosaic100 主表。
 
 ## 2. Baseline
 
@@ -82,14 +82,16 @@ LADD 的方法定义是 RGB-guided SAR object detection distillation：训练时
 | `ladd/scripts/launch_formal_ladd_job.sh` | 历史 formal no-mosaic A1-A2-B launcher |
 | `ladd/code_versions/current_hbb/` | 当前 HBB 代码快照，正式部署前应与 `ladd/code/` 保持同步 |
 
-当前正式 LADD-clean 主线：
+当前正式 LADD-clean 主线固定为 Probe-A：
 
 ```text
 latest same-protocol SAR/RGB baseline
 + A1 -> B only
 + RANK_D_NEG_CAP=2.0
 + sep/private/residual/debug auxiliary losses removed from current implementation
-+ B detector + z_s -> frozen z_t KD
++ B detector + z_s -> z_t KD
++ B dynamic teacher decomposition/reach/taskL
++ B frozen student reachability probe + detached q_s reach path
 ```
 
 阶段口径：
@@ -98,10 +100,10 @@ latest same-protocol SAR/RGB baseline
 |---|---|---|
 | A1 | 训练 teacher decomposition、reach adapter、teacher task head | 检测损失关闭；保留 reconstruction/reach/taskL |
 | A2 | 历史诊断/消融 | 不属于 clean 主线 |
-| B | 正式蒸馏与检测训练 | teacher decomposition 冻结；保留 detector/KD/student reconstruction |
+| B / Probe-A | 正式蒸馏与检测训练 | dynamic teacher core；frozen reach probe；保留 detector/KD/student reconstruction/teacher rec/reach/taskL |
 | C | 可选后续 fine-tuning/诊断 | 不属于当前主线必要阶段 |
 
-clean A1B 的完整定义、loss 开关和推荐实验协议见 `docs/ladd_clean_a1b_method_definition.md`。
+Probe-A / clean A1B 的完整定义、loss 开关和推荐实验协议见 `docs/ladd_clean_a1b_method_definition.md`。
 
 推理边界：正式报告中 LADD 是 SAR-only inference；当前 `student_detect_mode=raw` 表示检测头读取 raw SAR 检测特征，不读取 RGB teacher。当前模型类仍保留 student split/decomposition 相关模块以支持训练诊断，部署/导出时是否剥离需要单独说明。
 
@@ -153,7 +155,7 @@ sep/aux/debug loss 参数已从当前 HBB trainer 删除，不再需要也不能
 | 2026-06-10 前 FGD/LD 结果 | 修复前语义不同，不能代表当前实现 |
 | frozen-teacher CCLKD formal run | 不符合 CCLKD 原文 online 定义，不能写作 CCLKD official/paper reproduction |
 | 双卡 4090 上 `nc=5` yaml 的 CCLKD/HalluciDet 等结果 | HBB OGSOD 应为 `nc=3`，相关 run 作废 |
-| close@100 / 400ep / 旧高学习率 LADD | 可作历史诊断，不替代当前 no-mosaic formal 主线 |
+| close@100 / 400ep / 旧高学习率 LADD | 可作历史诊断，不替代当前 mosaic100 Probe-A 主线 |
 
 ## 6. 文档责任分工
 

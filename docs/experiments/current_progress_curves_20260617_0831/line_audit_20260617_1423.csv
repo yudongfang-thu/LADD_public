@@ -1,0 +1,14 @@
+model,label,path,rows,latest_epoch,latest_ap,best_epoch,best_ap
+n,n baseline,docs/experiments/current_progress_curves_20260617_0831/raw/autodl/n_sar_mosaic_baseline.csv,800,800,0.53836,746,0.54091
+n,n static clean,docs/experiments/current_progress_curves_20260617_0831/raw/autodl/n_static_clean_a1b_b.csv,527,527,0.53482,527,0.53482
+n,n dynamic clean,docs/experiments/current_progress_curves_20260617_0831/raw/autodl/n_dynamic_clean_a1b_b.csv,442,442,0.51912,440,0.51914
+n,n A-probe,docs/experiments/current_progress_curves_20260617_0831/raw/4090/n_dynprobe_a_scheme_b.csv,67,67,0.38298,1,0.41367
+n,n legacy A2last,docs/experiments/current_progress_curves_20260617_0831/raw/90/n_ladd_a2last_s123_b.csv,405,405,0.50725,402,0.50777
+s,s baseline,docs/experiments/current_progress_curves_20260617_0831/raw/90/s_sar_mosaic_baseline.csv,800,800,0.6157,770,0.61972
+s,s static clean,docs/experiments/current_progress_curves_20260617_0831/raw/4090/s_static_clean_a1b_b.csv,485,485,0.58027,485,0.58027
+s,s dynamic clean,docs/experiments/current_progress_curves_20260617_0831/raw/4090/s_dynamic_clean_a1b_b.csv,376,376,0.59624,375,0.59628
+s,s A-probe,docs/experiments/current_progress_curves_20260617_0831/raw/autodl/s_dynprobe_a_scheme_b.csv,74,74,0.47144,1,0.49692
+s,s legacy skipA2,docs/experiments/current_progress_curves_20260617_0831/raw/90/s_ladd_skipA2_b.csv,257,257,0.57199,257,0.57199
+s,s legacy A1A2B s123,docs/experiments/current_progress_curves_20260617_0831/raw/autodl/s_ladd_a1a2b_s123_b.csv,746,746,0.59928,712,0.60373
+m,m SAR baseline,docs/experiments/current_progress_curves_20260617_0831/raw/90/m_sar_mosaic_baseline_running.csv,793,793,0.64251,713,0.65092
+m,m RGB teacher,docs/experiments/current_progress_curves_20260617_0831/raw/90/m_rgb_mosaic_baseline_stopped.csv,680,680,0.66845,600,0.6734

@@ -1,0 +1,14 @@
+model,label,kind,status,latest_epoch,latest_ap50,latest_ap,best_epoch,best_ap50_at_best_ap,best_ap,baseline_ap_same_latest_epoch,delta_ap_vs_baseline_same_latest_epoch,baseline_ap_same_best_epoch,delta_best_ap_vs_baseline_same_epoch,path,etime,epoch_per_hour,eta_hours,finish_time
+n,SAR baseline s0,baseline,done,800,0.81755,0.53836,746,0.81816,0.54091,,,,,raw/autodl/n_sar_mosaic_baseline.csv,-,,0.0,done
+n,clean A1B static s0 (AutoDL),ladd_clean,running,527,0.81195,0.53482,527,0.81195,0.53482,0.5066,0.0282199999999999,0.5066,0.0282199999999999,raw/autodl/n_static_clean_a1b_b.csv,13:04:54,40.28538667346159,6.776650853889943,2026-06-17 21:09
+n,clean A1B dynamic s0 (AutoDL),ladd_clean,running,442,0.79663,0.51912,440,0.79488,0.51914,0.48487,0.03425,0.48393,0.03521,raw/autodl/n_dynamic_clean_a1b_b.csv,13:04:55,33.787026223590615,10.595783056812468,2026-06-18 00:58
+n,A-scheme dynprobe s0 (4090),ladd_probe,running,67,0.65288,0.38298,1,0.6949,0.41367,0.24804,0.1349399999999999,0.0178,0.39587,raw/4090/n_dynprobe_a_scheme_b.csv,02:23:44,27.968460111317253,26.20809286898839,2026-06-18 16:35
+n,legacy A2last s123 (90),legacy_ladd,running,405,0.78473,0.50725,402,0.78572,0.50777,0.47417,0.03308,0.47321,0.03456,raw/90/n_ladd_a2last_s123_b.csv,2-12:40:56,6.674112864833193,59.18389574759945,2026-06-20 01:34
+s,SAR baseline s0,baseline,done,800,0.90576,0.6157,770,0.90739,0.61972,,,,,raw/90/s_sar_mosaic_baseline.csv,-,,0.0,done
+s,clean A1B static s0 (4090),ladd_clean,running,485,0.87705,0.58027,485,0.87705,0.58027,0.5849,-0.00463,0.5849,-0.00463,raw/4090/s_static_clean_a1b_b.csv,13:05:14,37.059048265908224,8.499948453608248,2026-06-17 22:53
+s,clean A1B dynamic s0 (4090),ladd_clean,running,376,0.88681,0.59624,375,0.88588,0.59628,0.55775,0.03849,0.55729,0.03899,raw/4090/s_dynamic_clean_a1b_b.csv,13:05:11,28.73214323618688,14.756991725768321,2026-06-18 05:08
+s,A-scheme dynprobe s0 (AutoDL),ladd_probe,running,74,0.78376,0.47144,1,0.82855,0.49692,0.3325,0.13894,0.02777,0.4691499999999999,raw/autodl/s_dynprobe_a_scheme_b.csv,02:22:52,31.077928138124125,23.36063063063063,2026-06-18 13:44
+s,legacy skipA2 s0 (90),legacy_ladd,running,257,0.86291,0.57199,257,0.86291,0.57199,0.5044,0.06759,0.5044,0.06759,raw/90/s_ladd_skipA2_b.csv,17:56:15,14.32752613240418,37.89907587548638,2026-06-19 04:17
+s,legacy A1A2B s123 (AutoDL),legacy_ladd,running,746,0.89844,0.59928,712,0.90066,0.60373,0.61766,-0.0183799999999999,0.619,-0.01527,raw/autodl/s_ladd_a1a2b_s123_b.csv,18:47:49,39.687301423103634,1.3606367292225203,2026-06-17 15:44
+m,SAR baseline s0,baseline,running,793,0.92971,0.64251,713,0.9315,0.65092,,,,,raw/90/m_sar_mosaic_baseline_running.csv,no active process seen,,,unknown/not running
+m,RGB teacher baseline s0 (stopped),teacher_baseline,early_stopped,680,0.94893,0.66845,600,0.95102,0.6734,0.64895,0.0194999999999999,0.64681,0.02659,raw/90/m_rgb_mosaic_baseline_stopped.csv,no active process seen,,,unknown/not running

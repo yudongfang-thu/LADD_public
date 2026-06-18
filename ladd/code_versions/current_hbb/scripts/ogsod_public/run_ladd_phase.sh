@@ -294,6 +294,7 @@ mkdir -p "$LOG_DIR"
   echo "ladd_b_loss_warmup_final_mult=${LADD_B_LOSS_WARMUP_FINAL_MULT:-1.0}"
   echo "ladd_b_loss_warmup_scope=${LADD_B_LOSS_WARMUP_SCOPE:-core}"
   echo "ladd_b_a2_core=${LADD_B_A2_CORE:-0}"
+  echo "ladd_b_frozen_reach_probe=${LADD_B_FROZEN_REACH_PROBE:-0}"
   echo "ladd_b_det_only=${LADD_B_DET_ONLY:-0}"
   echo "ladd_a2_det_only=${LADD_A2_DET_ONLY:-0}"
   echo "b_detector_source=${B_DETECTOR_SOURCE:-}"
@@ -519,6 +520,9 @@ if [[ "${LADD_B_DET_ONLY:-0}" == "1" ]]; then
 fi
 if [[ "${LADD_B_A2_CORE:-0}" == "1" ]]; then
   cmd+=(--ladd-b-a2-core)
+fi
+if [[ "${LADD_B_FROZEN_REACH_PROBE:-0}" == "1" ]]; then
+  cmd+=(--ladd-b-frozen-reach-probe)
 fi
 if [[ "${LADD_A2_DET_ONLY:-0}" == "1" ]]; then
   cmd+=(--ladd-a2-det-only)

@@ -11,11 +11,13 @@ LADD-clean / LADD-A1B launcher:
   - does not run A2
   - keeps A1 reconstruction/reach/taskL and B detector/KD/student reconstruction
   - uses the cleaned LADD loss surface without sep/private/residual/debug auxiliary losses
-  - supports LADD_A1B_MODE=static or dynamic
+  - supports LADD_A1B_MODE=static, dynamic, or dynamic_probe
 
 Modes:
   static   B freezes teacher decomposition; B loss = det + KD + student rec
   dynamic  B keeps teacher decomposition/reach/taskL active via --ladd-b-a2-core
+  dynamic_probe
+           dynamic B, but freezes student_reachability q and detaches q_s in reach loss
 
 Required checkpoints:
   SAR_BASELINE=/path/to/sar/best.pt
@@ -37,6 +39,7 @@ Useful overrides:
   RUN_TAG_SUFFIX=_try1
   EXP_SUFFIX=try1
   LADD_A1B_MODE=dynamic
+  LADD_A1B_MODE=dynamic_probe
   EPOCHS_A1=1 EPOCHS_B=1
   PROJECT_DIR=/path/to/project
   CHAIN_LOG_DIR=/path/to/logs
@@ -72,15 +75,24 @@ case "$LADD_A1B_MODE" in
     MODE_TAG="clean_a1b"
     MODE_PROJECT_KEY="ladd_clean_a1b"
     LADD_B_A2_CORE_VALUE="0"
+    LADD_B_FROZEN_REACH_PROBE_VALUE="0"
     ;;
   dynamic|dyn)
     LADD_A1B_MODE="dynamic"
     MODE_TAG="clean_a1b_dyn"
     MODE_PROJECT_KEY="ladd_clean_a1b_dynamic"
     LADD_B_A2_CORE_VALUE="1"
+    LADD_B_FROZEN_REACH_PROBE_VALUE="${LADD_B_FROZEN_REACH_PROBE:-0}"
+    ;;
+  dynamic_probe|dyn_probe|probe)
+    LADD_A1B_MODE="dynamic_probe"
+    MODE_TAG="clean_a1b_dynprobe"
+    MODE_PROJECT_KEY="ladd_clean_a1b_dynamic_probe"
+    LADD_B_A2_CORE_VALUE="1"
+    LADD_B_FROZEN_REACH_PROBE_VALUE="1"
     ;;
   *)
-    echo "Unknown LADD_A1B_MODE=${LADD_A1B_MODE}. Use static or dynamic." >&2
+    echo "Unknown LADD_A1B_MODE=${LADD_A1B_MODE}. Use static, dynamic, or dynamic_probe." >&2
     exit 1
     ;;
 esac
@@ -250,6 +262,7 @@ write_meta() {
     printf 'use_fg_mask_for_reach=%q\n' "$USE_FG_MASK_FOR_REACH_VALUE"
     printf 'use_fg_mask_for_rec=%q\n' "$USE_FG_MASK_FOR_REC_VALUE"
     printf 'ladd_b_a2_core=%q\n' "$LADD_B_A2_CORE_VALUE"
+    printf 'ladd_b_frozen_reach_probe=%q\n' "$LADD_B_FROZEN_REACH_PROBE_VALUE"
     printf 'ladd_b_det_only=%q\n' "$LADD_B_DET_ONLY_VALUE"
     printf 'ladd_a2_det_only=%q\n' "$LADD_A2_DET_ONLY_VALUE"
     printf 'comparison_kd_profile=%q\n' "none"
@@ -355,6 +368,7 @@ run_phase() {
     "USE_FG_MASK_FOR_REACH=${USE_FG_MASK_FOR_REACH_VALUE}"
     "USE_FG_MASK_FOR_REC=${USE_FG_MASK_FOR_REC_VALUE}"
     "LADD_B_A2_CORE=${LADD_B_A2_CORE_VALUE}"
+    "LADD_B_FROZEN_REACH_PROBE=${LADD_B_FROZEN_REACH_PROBE_VALUE}"
     "LADD_B_DET_ONLY=${LADD_B_DET_ONLY_VALUE}"
     "LADD_A2_DET_ONLY=${LADD_A2_DET_ONLY_VALUE}"
     "COMPARISON_KD_PROFILE=none"

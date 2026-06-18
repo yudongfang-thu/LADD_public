@@ -1,8 +1,8 @@
 # LADD 方法概览与当前理解
 
-最后更新：2026-06-16
+最后更新：2026-06-18
 
-> 2026-06-16 更新：当前主线方法口径已改为 `LADD-clean / LADD-A1B`，即 `A1 -> B`，不再把 A2 作为主线阶段。A2 相关内容保留为历史理解和诊断背景；新的准确定义见 `docs/ladd_clean_a1b_method_definition.md`。
+> 2026-06-18 更新：当前主线方法口径已固定为 `LADD Probe-A / LADD-clean A1B`，即 `A1 -> B`，不再把 A2 作为主线阶段。Probe-A 在 B 阶段动态更新 teacher decomposition/reach/taskL，但冻结 A1 学到的 student reachability probe，并在 reach loss 中 detach `q_s`。A2 与 Static/Dynamic 只保留为历史诊断或消融；准确定义见 `docs/ladd_clean_a1b_method_definition.md`。
 
 ## 1. 研究问题
 
@@ -21,46 +21,46 @@ LADD 解决的是 RGB 到 SAR 的跨模态目标检测蒸馏。训练时有配�
 
 ## 3. 当前正式主线
 
-当前 OGSOD HBB 主线定义已更新为：
+当前 OGSOD HBB 主线定义已固定为：
 
 ```text
 最新同协议 SAR/RGB baseline
-+ mosaic_first100_close700 800ep 候选协议
++ mosaic_first100_close700 800ep 主协议
 + A1 teacher decomposition warmup
-+ B SAR detector training + z_s -> z_t KD
++ Probe-A B: SAR detector training + z_s -> z_t KD
++ B 中动态 teacher decomposition/reach/taskL
++ B 中 frozen student reachability probe + detached q_s reach path
 + cap2 capped reach rank
 + sep/aux/debug losses removed
 ```
 
-也就是说，cap2 仍是当前更合理的 reach rank 默认设置；A2 不再是主线必要阶段。旧 A1-A2-B、formal no-mosaic 和 B_A2_CORE 结果只能作为历史诊断、附录或消融，不应写作 clean A1B 主表结果。
+也就是说，cap2 仍是当前更合理的 reach rank 默认设置；A2 不再是主线必要阶段。Static `clean_a1b` 和完全 Dynamic `clean_a1b_dyn` 只作为消融；旧 A1-A2-B、formal no-mosaic 和未标记 Probe-A 的 B_A2_CORE 结果只能作为历史诊断、附录或消融，不应写作 LADD Probe-A 主表结果。
 
 clean A1B 的完整 loss/冻结/launcher 定义见 `docs/ladd_clean_a1b_method_definition.md`。
 
 ## 4. 阶段划分
 
-当前 OGSOD HBB 主线仍是三阶段：
+当前 OGSOD HBB 主线是两阶段：
 
 | 阶段 | 训练内容 | 作用 |
 |---|---|---|
 | A1 | 教师解耦、可达 adapter、辅助头；检测损失关闭 | 先学习教师侧分解和可达关系 |
-| A2 | 加入学生/检测损失；检测损失开启 | 让学生 backbone 适应可达/蒸馏目标，避免直接进 B 冲击过大 |
-| B | 固定教师侧分解，训练学生蒸馏与检测 | 正式蒸馏阶段 |
+| B / Probe-A | 检测 + KD + student reconstruction；继续 teacher reconstruction/reach/taskL；冻结 student reachability probe | 正式蒸馏与检测训练，并让 `z_t/u_t` 随 B 阶段适配 |
 
 重要经验：
 
-- A1 不能替代 A2。去掉 A2 后，进入后续阶段时蒸馏/检测冲击过大。
-- A2 必须有检测损失，否则学生 backbone 容易被可达目标拉偏。
-- formal no-mosaic 协议下，A2 对已收敛 detector 的更新更敏感，需要较小学习率。
+- A1 后直接进 B 是当前 clean 口径；A2 在多个历史 run 中表现为不稳定或等效跳过，因此不进入主线。
+- Static B 变量最少，但收益较弱；完全 Dynamic B 变量最多，s 模型曲线出现过不稳定。
+- Probe-A 保留动态 teacher core 的适配能力，同时冻结 reach probe，当前 n/s 曲线更稳定，作为固定主线。
 
 正式主线阶段设置：
 
 | 阶段 | epoch | 检测损失 | 主线作用 |
 |---|---:|---:|---|
 | A1 | `10` | `0.0` | 学教师侧解耦和 reach adapter |
-| A2 | `50` | `1.0` | 用检测监督稳定学生适配，防止 B 入口冲击过大 |
-| B | `800` | `1.0` | 冻结教师解耦网络，训练学生检测与蒸馏 |
+| B / Probe-A | `800` | `1.0` | 动态 teacher core + frozen reach probe，训练学生检测与蒸馏 |
 
-去掉 A2 时，B 入口 KD loss 更高且恢复更慢；带 A1+A2 的链路更容易恢复检测性能。原始诊断图已从精简 public 分支移除，保留文字结论。
+旧 A2、Static、Dynamic 的曲线和结果可以用于解释为什么选择 Probe-A，但不再作为主方法定义。
 
 ## 5. Reach Loss 与坍缩
 
@@ -98,9 +98,12 @@ L_rank = softplus(delta + d_pos - d_neg_eff)
 - cap2 本身不是保证涨点的工具；clean A1B 当前只保留 cap2 rank 几何修正，不再保留额外 anti-collapse auxiliary loss。
 - OGSOD formal no-mosaic 上，cap2 无法单独修复 A2 NaN，因为 A2 NaN 首先来自检测 loss 数值失稳。
 
-## 7. Formal No-Mosaic A2 修正
+## 7. 历史 Formal No-Mosaic A2 诊断
 
-formal no-mosaic `YOLO11n_s0` LADD 原始 A2 设置：
+下面内容保留为历史诊断，用于解释为什么当前主线不再使用 A2。它不是当前
+LADD Probe-A 主线的一部分。
+
+旧 formal no-mosaic `YOLO11n_s0` LADD 原始 A2 设置：
 
 ```text
 optimizer=auto -> MuSGD
@@ -114,7 +117,7 @@ warmup_epochs=3
 - `kd_loss` 记录为 0；
 - 首先变坏的是 `train/box_loss`、`train/cls_loss`、`train/dfl_loss` 以及对应 val loss。
 
-当前修正：
+当时的修正：
 
 ```text
 A2_OPTIMIZER=MuSGD
@@ -124,7 +127,7 @@ A2_WARMUP_EPOCHS=0
 A2_WARMUP_BIAS_LR=0.001
 ```
 
-该修正已让 formal no-mosaic `11n_s0` original/cap2 两个版本稳定跑完 A2，并进入 B。因此它已经计入当前正式 LADD 主线细节，而不是临时 workaround。
+该修正让旧 formal no-mosaic `11n_s0` original/cap2 两个版本稳定跑完 A2，并进入 B。但在 2026-06-18 的当前口径下，A2 已从主线移除；这段只作为历史诊断和消融背景，不再计入正式 LADD Probe-A 主线。
 
 旧 A2 默认配置在第 8 个 epoch 检测 loss 变为 NaN，mAP50-95 掉到 `0.04909`；修正版 A2 完整跑完 50 epoch，mAP50-95 最高 `0.56273@49`。同时 `reach_match_loss` 没有先爆，说明这次失稳主要来自检测分支更新过猛。原始诊断图已从精简 public 分支移除。
 

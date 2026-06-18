@@ -1,0 +1,4 @@
+run,rows,best_epoch,best_ap,last_epoch,last_ap
+SAR baseline s mosaic100,800,770,0.61972,800,0.61570
+90 s skipA2 s0 mosaic100 running,62,62,0.47491,62,0.47491
+AutoDL s A1A2B s123 close0 running,204,173,0.50600,204,0.50459

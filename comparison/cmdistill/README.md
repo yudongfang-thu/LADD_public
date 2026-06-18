@@ -15,6 +15,9 @@ The third review cleanup is tracked in
 The fourth pre-smoke review is tracked in
 [`REVIEW_ROUND4.md`](REVIEW_ROUND4.md).
 
+For the new native-benchmark evidence track, see
+[`native_reproduction/README_CN.md`](native_reproduction/README_CN.md).
+
 ## Paper Asset
 
 Primary paper:

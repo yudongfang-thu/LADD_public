@@ -121,6 +121,14 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--ladd-b-frozen-reach-probe",
+        action="store_true",
+        help=(
+            "In B phase with --ladd-b-a2-core, keep student_reachability frozen and detach q_s "
+            "inside reach loss so reach updates teacher-side decomposition only."
+        ),
+    )
+    parser.add_argument(
         "--ladd-b-det-only",
         action="store_true",
         help="In B phase, keep trainability unchanged but disable all non-detection LADD losses.",
@@ -290,6 +298,7 @@ def main() -> None:
         ladd_b_loss_warmup_final_mult=args.ladd_b_loss_warmup_final_mult,
         ladd_b_loss_warmup_scope=args.ladd_b_loss_warmup_scope,
         ladd_b_a2_core=int(bool(args.ladd_b_a2_core)),
+        ladd_b_frozen_reach_probe=int(bool(args.ladd_b_frozen_reach_probe)),
         ladd_b_det_only=int(bool(args.ladd_b_det_only)),
         ladd_a2_det_only=int(bool(args.ladd_a2_det_only)),
         data=str(args.data.resolve()),
