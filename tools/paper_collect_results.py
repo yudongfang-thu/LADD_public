@@ -210,8 +210,24 @@ def gate_row(row: dict[str, str]) -> tuple[str, str, str]:
     if not row["git_commit"]:
         reasons.append("missing_git_commit")
     text = " ".join(row.values()).lower()
-    for token in ("smoke", "partial", "snapshot", "diagnostic", "archive", "old"):
-        if token in text:
+    sanitized = text
+    for allowed in (
+        "ladd probe-a",
+        "ladd_probea",
+        "clean_a1b_dynprobe",
+        "clean_a1b_probea",
+        "dynamic_probe",
+        "ogsod_hbb_mosaic100_clean_a1b_probea_20260618",
+        "dynprobe",
+        "probea",
+    ):
+        sanitized = sanitized.replace(allowed, "")
+    for token in ("smoke", "probe", "partial", "snapshot", "diagnostic", "archive", "old", "legacy", "bn-freeze", "bn_freeze", "a1-a2-b"):
+        if token in {"bn-freeze", "bn_freeze", "a1-a2-b"}:
+            has_token = token in sanitized
+        else:
+            has_token = re.search(rf"(^|[^a-z0-9]){re.escape(token)}([^a-z0-9]|$)", sanitized) is not None
+        if has_token:
             reasons.append(f"forbidden_{token}")
     if row["method"] == "ladd_probea":
         if row["ladd_mode"] != "dynamic_probe":
@@ -316,6 +332,7 @@ def registry_results(path: Path) -> list[str]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Collect paper-facing result rows into canonical CSV.")
+    parser.add_argument("--input", nargs="*", default=[], help="Registry CSVs, run directories, or results.csv files.")
     parser.add_argument("--runs", nargs="*", default=[], help="Run directories or results.csv files.")
     parser.add_argument("--glob", action="append", default=[], help="Glob for run directories or results.csv files.")
     parser.add_argument("--registry", type=Path, help="Registry CSV with results paths.")
@@ -323,6 +340,12 @@ def main() -> int:
     args = parser.parse_args()
 
     inputs = list(args.runs) + list(args.glob)
+    for item in args.input:
+        path = Path(item)
+        if path.suffix == ".csv" and path.name != "results.csv" and path.is_file():
+            inputs.extend(registry_results(path))
+        else:
+            inputs.append(item)
     if args.registry:
         inputs.extend(registry_results(args.registry))
     results_paths = expand_results(inputs)

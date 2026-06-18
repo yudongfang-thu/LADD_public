@@ -11,3 +11,5 @@
 5. smoke / partial / diagnostic / archive / old protocol 默认不可进入主表。
 
 主表 schema 见 `paper_results/main_table_schema.csv`。
+
+`example_valid.csv` / `example_invalid.csv` 是 validator fixtures：前者必须通过，后者必须失败。

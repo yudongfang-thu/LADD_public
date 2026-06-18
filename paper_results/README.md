@@ -16,6 +16,7 @@ Files:
 |---|---|
 | `main_table_schema.csv` | Canonical main-table field definition |
 | `README_CN.md` | Chinese paper-results gate |
+| `example_valid.csv` / `example_invalid.csv` | Validator fixtures; the former must pass and the latter must fail |
 | `ogsod_mosaic100/baselines.csv` | Verified SAR/RGB paper baselines |
 | `ogsod_mosaic100/ladd_probea.csv` | Verified LADD Probe-A paper rows |
 | `ogsod_mosaic100/comparisons.csv` | Verified paper comparison rows |

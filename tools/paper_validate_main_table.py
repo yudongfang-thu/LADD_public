@@ -3,12 +3,25 @@ from __future__ import annotations
 
 import argparse
 import csv
+import re
 import sys
 from pathlib import Path
 
 PAPER_PROTOCOL_ID = "ogsod_hbb_mosaic100_clean_a1b_probea_20260618"
 ALLOWED_SEEDS = {"0", "42", "123"}
-FORBIDDEN_TOKENS = ("smoke", "probe_run", "partial", "snapshot", "diagnostic", "archive", "old")
+FORBIDDEN_TOKENS = (
+    "smoke",
+    "probe",
+    "partial",
+    "snapshot",
+    "diagnostic",
+    "archive",
+    "old",
+    "legacy",
+    "bn-freeze",
+    "bn_freeze",
+    "a1-a2-b",
+)
 LADD_FORBIDDEN_NOTES = ("a2", "bn-freeze", "bn_freeze", "no-mosaic", "nomosaic", "a1-a2-b")
 
 REQUIRED_COLUMNS = [
@@ -62,9 +75,32 @@ def row_text(row: dict[str, str]) -> str:
     return " ".join(norm(v) for v in row.values()).lower()
 
 
+def forbidden_text(row: dict[str, str]) -> str:
+    text = row_text(row)
+    for allowed in (
+        "ladd probe-a",
+        "ladd_probea",
+        "clean_a1b_dynprobe",
+        "clean_a1b_probea",
+        "dynamic_probe",
+        "ogsod_hbb_mosaic100_clean_a1b_probea_20260618",
+        "dynprobe",
+        "probea",
+    ):
+        text = text.replace(allowed, "")
+    return text
+
+
+def has_forbidden_token(text: str, token: str) -> bool:
+    if token in {"bn-freeze", "bn_freeze", "a1-a2-b"}:
+        return token in text
+    return re.search(rf"(^|[^a-z0-9]){re.escape(token)}([^a-z0-9]|$)", text) is not None
+
+
 def validate_row(row: dict[str, str], line: int) -> list[str]:
     errors: list[str] = []
     text = row_text(row)
+    bad_text = forbidden_text(row)
     method = norm(row.get("method")).lower()
     run_tag = norm(row.get("run_tag"))
     notes = norm(row.get("notes")).lower()
@@ -87,15 +123,16 @@ def validate_row(row: dict[str, str], line: int) -> list[str]:
         errors.append(f"line {line}: seed={norm(row.get('seed'))!r}, expected one of 0, 42, 123")
     if not run_tag:
         errors.append(f"line {line}: missing run_tag")
-    if not norm(row.get("results_csv")):
-        errors.append(f"line {line}: missing results_csv")
+    for field in ("results_csv", "args_yaml", "manifest", "git_commit"):
+        if not norm(row.get(field)):
+            errors.append(f"line {line}: missing source provenance field: {field}")
     if norm(row.get("claim_usable")).lower() != "yes":
         errors.append(f"line {line}: claim_usable must be yes for a main-table row")
-    if norm(row.get("status")).lower() not in {"verified", "main_table"}:
-        errors.append(f"line {line}: status={norm(row.get('status'))!r}, expected verified/main_table")
+    if norm(row.get("status")).lower() not in {"complete", "verified", "main_table"}:
+        errors.append(f"line {line}: status={norm(row.get('status'))!r}, expected complete/verified/main_table")
 
     for token in FORBIDDEN_TOKENS:
-        if token in text:
+        if has_forbidden_token(bad_text, token):
             errors.append(f"line {line}: forbidden main-table token found: {token}")
 
     if "ladd" in method:

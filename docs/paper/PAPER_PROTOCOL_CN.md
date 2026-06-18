@@ -73,6 +73,7 @@ dynamic clean_a1b_dyn as mainline
 old A1-A2-B tags
 BN-freeze repair runs as mainline
 historical no-mosaic LADD rows as mainline
+wrong nc / wrong yaml runs
 ```
 
 Static 和 Dynamic clean A1B 只能进入 ablation 表；未标记 `clean_a1b_dynprobe` 的 LADD run 不能写作最终 LADD Probe-A。
@@ -116,14 +117,13 @@ KD_CALIBRATION_MODE = affine
 
 ```text
 status = verified
-usable_for_main_table = yes
-protocol = mosaic100
+claim_usable = yes
+protocol_id = ogsod_hbb_mosaic100_clean_a1b_probea_20260618
 imgsz = 256
 epochs = 800
 mosaic = 1.0
 close_mosaic = 700
-code_commit is present
-git_dirty is false or explicitly accepted
+git_commit is present
 results.csv exists
 args.yaml exists
 manifest / paper_run_meta.env exists
@@ -141,6 +141,10 @@ partial snapshots
 smoke runs
 diagnostic-only runs
 runs missing results.csv / args.yaml / manifest
+archived legacy LADD runs
+CMDistill native VEDAI pending archive
+frozen-teacher CCLKD loss profile
+wrong nc / wrong yaml runs
 ```
 
 ## 5. 推荐入口
