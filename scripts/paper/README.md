@@ -1,6 +1,6 @@
 # Paper Launchers
 
-These launchers are the recommended entrypoints for paper-facing OGSOD HBB mosaic100 experiments.
+These launchers are the recommended entrypoints for paper-facing OGSOD HBB nomosaic experiments.
 
 Run from the repository root:
 
@@ -22,11 +22,11 @@ PAPER_STRICT_GIT=1
 
 Protocol invariants:
 
-- `protocol=mosaic100`
+- `protocol=nomosaic`
 - `imgsz=256`
 - `epochs=800`
-- `mosaic=1.0`
-- `close_mosaic=700`
+- `mosaic=0.0`
+- `close_mosaic=0`
 - seeds restricted to `0, 42, 123`
 - dataset YAMLs restricted to `configs/paper/datasets/`
 
@@ -37,6 +37,6 @@ bash scripts/paper/validate_engineering_cleanup.sh
 ```
 
 FGD/LD/HalluciDet wrappers use the locked implementations in
-`comparison/FINAL_LOCKED_METHODS_CN.md`. HalluciDet is P1-gated because the
-current standalone trainer does not implement `close_mosaic=700`. CCLKD online
-is optional and must not be mixed with the separate paper-protocol reproduction line.
+`comparison/FINAL_LOCKED_METHODS_CN.md`. HalluciDet is P1-gated and should be
+checked by dry-run/smoke before it enters a comparison table. CCLKD online is
+optional and must not be mixed with the separate paper-protocol reproduction line.

@@ -1,5 +1,5 @@
 imgsz: 256
 epochs: 800
 batch: 64
-mosaic: 0.0
-close_mosaic: 0
+mosaic: 1.0
+close_mosaic: 700

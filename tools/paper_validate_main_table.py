@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-PAPER_PROTOCOL_ID = "ogsod_hbb_mosaic100_clean_a1b_probea_20260618"
+PAPER_PROTOCOL_ID = "ogsod_hbb_nomosaic_clean_a1b_probea_20260619"
 ALLOWED_SEEDS = {"0", "42", "123"}
 EXPECTED_DATASET_NAMES = {"bridge", "harbor", "storage_tank"}
 INVALID_GIT_COMMITS = {"unknown", "dirty", "none", "null"}
@@ -29,7 +29,6 @@ FORBIDDEN_PATTERNS = (
 LADD_FORBIDDEN_NOTE_PATTERNS = (
     ("a2", re.compile(r"(^|[_\-/\s])a2($|[_\-/\s])", re.IGNORECASE)),
     ("bn-freeze", re.compile(r"bn[-_]freeze", re.IGNORECASE)),
-    ("no-mosaic", re.compile(r"no[-_]mosaic|nomosaic", re.IGNORECASE)),
     ("a1-a2-b", re.compile(r"a1[-_]a2[-_]b", re.IGNORECASE)),
 )
 
@@ -188,8 +187,8 @@ def check_args_yaml(path: Path, line: int) -> list[str]:
     expected = (
         ("imgsz", ("imgsz",), 256.0),
         ("epochs", ("epochs",), 800.0),
-        ("mosaic", ("mosaic",), 1.0),
-        ("close_mosaic", ("close_mosaic", "close-mosaic"), 700.0),
+        ("mosaic", ("mosaic",), 0.0),
+        ("close_mosaic", ("close_mosaic", "close-mosaic"), 0.0),
     )
     for label, keys, target in expected:
         value = yaml_value(data, *keys)
@@ -227,10 +226,10 @@ def validate_row(row: dict[str, str], line: int, *, csv_dir: Path, check_files: 
         if value != expected:
             errors.append(f"line {line}: {field}={value!r}, expected {expected!r}")
 
-    if not is_float(norm(row.get("mosaic")), 1.0):
-        errors.append(f"line {line}: mosaic={norm(row.get('mosaic'))!r}, expected 1.0")
-    if norm(row.get("close_mosaic")) != "700":
-        errors.append(f"line {line}: close_mosaic={norm(row.get('close_mosaic'))!r}, expected '700'")
+    if not is_float(norm(row.get("mosaic")), 0.0):
+        errors.append(f"line {line}: mosaic={norm(row.get('mosaic'))!r}, expected 0.0")
+    if norm(row.get("close_mosaic")) != "0":
+        errors.append(f"line {line}: close_mosaic={norm(row.get('close_mosaic'))!r}, expected '0'")
     if norm(row.get("seed")) not in ALLOWED_SEEDS:
         errors.append(f"line {line}: seed={norm(row.get('seed'))!r}, expected one of 0, 42, 123")
     if not run_tag:

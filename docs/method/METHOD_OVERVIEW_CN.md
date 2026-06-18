@@ -25,7 +25,7 @@ LADD 解决的是 RGB 到 SAR 的跨模态目标检测蒸馏。训练时有配�
 
 ```text
 最新同协议 SAR/RGB baseline
-+ mosaic_first100_close700 800ep 主协议
++ nomosaic 800ep 主协议
 + A1 teacher decomposition warmup
 + Probe-A B: SAR detector training + z_s -> z_t KD
 + B 中动态 teacher decomposition/reach/taskL

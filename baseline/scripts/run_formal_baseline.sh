@@ -20,7 +20,7 @@ Fixed batch by model size:
 
 Examples:
   bash baseline/scripts/run_formal_baseline.sh sar n 0 2
-  PROTOCOL=mosaic100 bash baseline/scripts/run_formal_baseline.sh rgb m 0 5
+  PROTOCOL=nomosaic bash baseline/scripts/run_formal_baseline.sh rgb m 0 5
 
 Set DRY_RUN=1 to print the command without launching.
 Set EXIST_OK=1 only when intentionally reusing an existing run directory.
@@ -92,8 +92,8 @@ case "$PROTOCOL" in
     ;;
 esac
 
-if [[ "${PAPER_RUN:-0}" == "1" && "$PROTOCOL_KEY" != "mosaic100" ]]; then
-  echo "PAPER_RUN=1 requires PROTOCOL=mosaic100; got ${PROTOCOL}." >&2
+if [[ "${PAPER_RUN:-0}" == "1" && "$PROTOCOL_KEY" != "nomosaic" ]]; then
+  echo "PAPER_RUN=1 requires PROTOCOL=nomosaic; got ${PROTOCOL}." >&2
   exit 2
 fi
 

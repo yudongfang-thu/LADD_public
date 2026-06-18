@@ -6,7 +6,7 @@ usage() {
 Usage:
   bash scripts/paper/run_paper_ladd_probea.sh <n|s|m|l|x> <seed> <gpu_id>
 
-Runs paper LADD Probe-A / clean_a1b_dynprobe under mosaic100.
+Runs paper LADD Probe-A / clean_a1b_dynprobe under nomosaic.
 Requires matching paper SAR/RGB baseline checkpoints unless DRY_RUN=1.
 EOF
 }
@@ -44,7 +44,7 @@ else
   paper_require_file "$RGB_TEACHER" "paper RGB teacher checkpoint"
 fi
 
-RUN_TAG="paper_clean_a1b_dynprobe_mosaic100_yolo11${SIZE}_s${SEED}${RUN_TAG_SUFFIX:-}"
+RUN_TAG="paper_clean_a1b_dynprobe_nomosaic_yolo11${SIZE}_s${SEED}${RUN_TAG_SUFFIX:-}"
 PROJECT_DIR="${PAPER_RUN_ROOT}/ladd_probea/yolo11${SIZE}/seed${SEED}"
 CHAIN_LOG_DIR="${PAPER_LOG_ROOT}/ladd_probea/yolo11${SIZE}/seed${SEED}/${RUN_TAG}"
 META_PATH="${CHAIN_LOG_DIR}/paper_run_meta.env"

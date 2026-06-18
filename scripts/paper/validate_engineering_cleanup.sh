@@ -7,7 +7,7 @@ cd "$ROOT_DIR"
 REQUIRED_FILES=(
   docs/paper/PAPER_PROTOCOL_CN.md
   docs/paper/METHOD_NAME_WHITELIST_CN.md
-  configs/paper/ogsod_hbb_mosaic100.yaml
+  configs/paper/ogsod_hbb_nomosaic.yaml
   configs/paper/datasets/ogsod_hbb_sar.yaml
   configs/paper/datasets/ogsod_hbb_rgb.yaml
   scripts/paper/paper_common.sh
@@ -82,37 +82,37 @@ collector_bad_root="$(mktemp -d)"
 collector_bad_csv="$(mktemp)"
 trap 'rm -f "$dry_log" "$valid_csv" "$invalid_csv" "$ladd_negative_log" "$comparison_negative_log" "$validator_negative_log" "$transfer_log" "$from_yolo_log" "$collector_csv" "$collector_bad_csv"; rm -rf "$collector_dir" "$collector_bad_root"' EXIT
 DRY_RUN=1 bash scripts/paper/dry_run_all_paper_entrypoints.sh | tee "$dry_log"
-DRY_RUN=1 PROTOCOL=mosaic100 bash comparison/code/launch_formal_transfer_kd_job.sh ld n 0 0 >"$transfer_log"
-grep -q "baseline_controls/mosaic_baselines_20260615" "$transfer_log"
-grep -q "MOSAIC=1.0" "$transfer_log"
-grep -q "CLOSE_MOSAIC=700" "$transfer_log"
+DRY_RUN=1 PROTOCOL=nomosaic bash comparison/code/launch_formal_transfer_kd_job.sh ld n 0 0 >"$transfer_log"
+grep -q "formal_nomosaic_20260528" "$transfer_log"
+grep -q "MOSAIC=0.0" "$transfer_log"
+grep -q "CLOSE_MOSAIC=0" "$transfer_log"
 grep -q "CLOSE_AT_EPOCH=" "$transfer_log"
 grep -q "INIT_TYPE=transferred_kd" "$transfer_log"
-if grep -q "formal_nomosaic_20260528" "$transfer_log"; then
-  echo "mosaic100 transfer dry-run still references formal_nomosaic_20260528" >&2
+if grep -q "baseline_controls/mosaic_baselines_20260615" "$transfer_log"; then
+  echo "nomosaic transfer dry-run still references mosaic baseline paths" >&2
   exit 1
 fi
 
-DRY_RUN=1 PROTOCOL=mosaic100 bash comparison/code/launch_formal_from_yolo_kd_job.sh ld n 0 0 >"$from_yolo_log"
-grep -q "baseline_controls/mosaic_baselines_20260615" "$from_yolo_log"
-grep -q "MOSAIC=1.0" "$from_yolo_log"
-grep -q "CLOSE_MOSAIC=700" "$from_yolo_log"
+DRY_RUN=1 PROTOCOL=nomosaic bash comparison/code/launch_formal_from_yolo_kd_job.sh ld n 0 0 >"$from_yolo_log"
+grep -q "formal_nomosaic_20260528" "$from_yolo_log"
+grep -q "MOSAIC=0.0" "$from_yolo_log"
+grep -q "CLOSE_MOSAIC=0" "$from_yolo_log"
 grep -q "CLOSE_AT_EPOCH=" "$from_yolo_log"
 grep -q "INIT_TYPE=from_yolo_pretrain" "$from_yolo_log"
-if grep -q "formal_nomosaic_20260528" "$from_yolo_log"; then
-  echo "mosaic100 from-YOLO dry-run still references formal_nomosaic_20260528" >&2
+if grep -q "baseline_controls/mosaic_baselines_20260615" "$from_yolo_log"; then
+  echo "nomosaic from-YOLO dry-run still references mosaic baseline paths" >&2
   exit 1
 fi
-DRY_RUN=1 PROTOCOL=mosaic100 bash comparison/code/launch_formal_online_cclkd_job.sh n 0 0 >/dev/null
+DRY_RUN=1 PROTOCOL=nomosaic bash comparison/code/launch_formal_online_cclkd_job.sh n 0 0 >/dev/null
 
-grep -q "mosaic=1.0" "$dry_log"
-grep -q "close_mosaic=700" "$dry_log"
+grep -q "mosaic=0.0" "$dry_log"
+grep -q "close_mosaic=0" "$dry_log"
 grep -q "LADD_A1B_MODE=dynamic_probe" "$dry_log"
 grep -q "KD_CALIBRATION_MODE=affine" "$dry_log"
-grep -q "PAPER_PROTOCOL_ID=ogsod_hbb_mosaic100_clean_a1b_probea_20260618" "$dry_log"
+grep -q "PAPER_PROTOCOL_ID=ogsod_hbb_nomosaic_clean_a1b_probea_20260619" "$dry_log"
 
-if grep -E "formal_nomosaic|no-mosaic|nomosaic" "$dry_log"; then
-  echo "Dry-run output references formal/no-mosaic paths." >&2
+if grep -E "mosaic_baselines|mosaic_first100|closeAt100" "$dry_log"; then
+  echo "Dry-run output references mosaic paths." >&2
   exit 1
 fi
 
@@ -122,17 +122,17 @@ if grep -E " a2 |phase a2|<a2|_a2_" "$dry_log"; then
 fi
 
 set +e
-PROTOCOL=nomosaic DRY_RUN=1 bash scripts/paper/run_paper_baseline.sh sar n 0 0 >"$comparison_negative_log" 2>&1
+PROTOCOL=mosaic100 DRY_RUN=1 bash scripts/paper/run_paper_baseline.sh sar n 0 0 >"$comparison_negative_log" 2>&1
 status=$?
 if [[ "$status" -eq 0 ]]; then
-  echo "Expected paper baseline nomosaic failure, but command succeeded." >&2
+  echo "Expected paper baseline mosaic100 failure, but command succeeded." >&2
   exit 1
 fi
 
-PAPER_RUN=1 PROTOCOL=nomosaic DRY_RUN=1 bash baseline/scripts/run_formal_baseline.sh sar n 0 0 >"$comparison_negative_log" 2>&1
+PAPER_RUN=1 PROTOCOL=mosaic100 DRY_RUN=1 bash baseline/scripts/run_formal_baseline.sh sar n 0 0 >"$comparison_negative_log" 2>&1
 status=$?
 if [[ "$status" -eq 0 ]]; then
-  echo "Expected lower-level baseline nomosaic PAPER_RUN failure, but command succeeded." >&2
+  echo "Expected lower-level baseline mosaic100 PAPER_RUN failure, but command succeeded." >&2
   exit 1
 fi
 
@@ -143,24 +143,24 @@ if [[ "$status" -eq 0 ]]; then
   exit 1
 fi
 
-PAPER_RUN=1 PROTOCOL=nomosaic DRY_RUN=1 bash comparison/code/launch_formal_transfer_kd_job.sh ld n 0 0 >"$comparison_negative_log" 2>&1
+PAPER_RUN=1 PROTOCOL=mosaic100 DRY_RUN=1 bash comparison/code/launch_formal_transfer_kd_job.sh ld n 0 0 >"$comparison_negative_log" 2>&1
 status=$?
 if [[ "$status" -eq 0 ]]; then
-  echo "Expected comparison nomosaic PAPER_RUN failure, but command succeeded." >&2
+  echo "Expected comparison mosaic100 PAPER_RUN failure, but command succeeded." >&2
   exit 1
 fi
 
-PAPER_RUN=1 PROTOCOL=nomosaic DRY_RUN=1 bash comparison/code/launch_formal_online_cclkd_job.sh n 0 0 >"$comparison_negative_log" 2>&1
+PAPER_RUN=1 PROTOCOL=mosaic100 DRY_RUN=1 bash comparison/code/launch_formal_online_cclkd_job.sh n 0 0 >"$comparison_negative_log" 2>&1
 status=$?
 if [[ "$status" -eq 0 ]]; then
-  echo "Expected CCLKD online nomosaic PAPER_RUN failure, but command succeeded." >&2
+  echo "Expected CCLKD online mosaic100 PAPER_RUN failure, but command succeeded." >&2
   exit 1
 fi
 set -e
 
 cat > "$valid_csv" <<'EOF'
 dataset,task,protocol_id,method,method_display,model_size,seed,init_type,student_modality,teacher_modality,inference_modality,imgsz,epochs,batch,mosaic,close_mosaic,phase_chain,ladd_mode,run_tag,project_dir,results_csv,args_yaml,manifest,git_commit,best_ap50_95,best_ap50,final_ap50_95,final_ap50,best_epoch,status,claim_usable,notes
-OGSOD-1.0,hbb,ogsod_hbb_mosaic100_clean_a1b_probea_20260618,ladd_probea,LADD Probe-A,n,0,sar_baseline,SAR,RGB,SAR,256,800,64,1.0,700,A1->B,dynamic_probe,paper_clean_a1b_dynprobe_mosaic100_yolo11n_s0,runs_public/paper/demo,results.csv,args.yaml,paper_run_meta.env,deadbeef,0.5,0.8,0.49,0.79,100,verified,yes,
+OGSOD-1.0,hbb,ogsod_hbb_nomosaic_clean_a1b_probea_20260619,ladd_probea,LADD Probe-A,n,0,sar_baseline,SAR,RGB,SAR,256,800,64,0.0,0,A1->B,dynamic_probe,paper_clean_a1b_dynprobe_nomosaic_yolo11n_s0,runs_public/paper/demo,results.csv,args.yaml,paper_run_meta.env,deadbeef,0.5,0.8,0.49,0.79,100,verified,yes,
 EOF
 python3 tools/paper_validate_main_table.py "$valid_csv"
 
@@ -224,8 +224,8 @@ EOF
 imgsz: 256
 epochs: 800
 batch: 64
-mosaic: 1.0
-close_mosaic: 700
+mosaic: 0.0
+close_mosaic: 0
 EOF
 }
 
@@ -252,12 +252,12 @@ cat > "${collector_dir}/args.yaml" <<'EOF'
 imgsz: 256
 epochs: 800
 batch: 64
-mosaic: 1.0
-close_mosaic: 700
+mosaic: 0.0
+close_mosaic: 0
 EOF
 cat > "${collector_dir}/paper_run_meta.env" <<'EOF'
-paper_protocol_id=ogsod_hbb_mosaic100_clean_a1b_probea_20260618
-protocol_id=ogsod_hbb_mosaic100_clean_a1b_probea_20260618
+paper_protocol_id=ogsod_hbb_nomosaic_clean_a1b_probea_20260619
+protocol_id=ogsod_hbb_nomosaic_clean_a1b_probea_20260619
 paper_run=1
 dataset=OGSOD-1.0
 task=hbb
@@ -267,7 +267,7 @@ model_size=n
 seed=0
 phase_chain=A1->B
 ladd_a1b_mode=dynamic_probe
-run_tag=paper_clean_a1b_dynprobe_mosaic100_yolo11n_s0
+run_tag=paper_clean_a1b_dynprobe_nomosaic_yolo11n_s0
 project_dir=runs_public/paper/example
 student_modality=SAR
 teacher_modality=RGB
@@ -278,14 +278,14 @@ EOF
 python3 tools/paper_collect_results.py --input "$collector_dir" --out "$collector_csv"
 python3 tools/paper_validate_main_table.py "$collector_csv"
 
-realistic_run_dir="${collector_bad_root}/runs_public/paper/ogsod_hbb_mosaic100/ladd_probea/yolo11n/seed0/RUN"
-realistic_log_dir="${collector_bad_root}/logs/paper/ogsod_hbb_mosaic100/ladd_probea/yolo11n/seed0/RUN"
+realistic_run_dir="${collector_bad_root}/runs_public/paper/ogsod_hbb_nomosaic/ladd_probea/yolo11n/seed0/RUN"
+realistic_log_dir="${collector_bad_root}/logs/paper/ogsod_hbb_nomosaic/ladd_probea/yolo11n/seed0/RUN"
 realistic_registry="${collector_bad_root}/registry.csv"
 write_minimal_collector_run "$realistic_run_dir"
 mkdir -p "$realistic_log_dir"
 cat > "${realistic_log_dir}/paper_run_meta.env" <<'EOF'
-paper_protocol_id=ogsod_hbb_mosaic100_clean_a1b_probea_20260618
-protocol_id=ogsod_hbb_mosaic100_clean_a1b_probea_20260618
+paper_protocol_id=ogsod_hbb_nomosaic_clean_a1b_probea_20260619
+protocol_id=ogsod_hbb_nomosaic_clean_a1b_probea_20260619
 paper_run=1
 dataset=OGSOD-1.0
 task=hbb
@@ -295,7 +295,7 @@ model_size=n
 seed=0
 phase_chain=A1->B
 ladd_a1b_mode=dynamic_probe
-run_tag=paper_clean_a1b_dynprobe_mosaic100_yolo11n_s0
+run_tag=paper_clean_a1b_dynprobe_nomosaic_yolo11n_s0
 project_dir=runs_public/paper/example
 student_modality=SAR
 teacher_modality=RGB
@@ -315,8 +315,8 @@ python3 tools/paper_validate_main_table.py --check-yaml "$collector_csv"
 archive_collector_dir="${collector_bad_root}/archive_legacy_ladd_20260618/clean_a1b_dynprobe"
 write_minimal_collector_run "$archive_collector_dir"
 cat > "${archive_collector_dir}/paper_run_meta.env" <<'EOF'
-paper_protocol_id=ogsod_hbb_mosaic100_clean_a1b_probea_20260618
-protocol_id=ogsod_hbb_mosaic100_clean_a1b_probea_20260618
+paper_protocol_id=ogsod_hbb_nomosaic_clean_a1b_probea_20260619
+protocol_id=ogsod_hbb_nomosaic_clean_a1b_probea_20260619
 paper_run=1
 dataset=OGSOD-1.0
 task=hbb
@@ -326,7 +326,7 @@ model_size=n
 seed=0
 phase_chain=A1->B
 ladd_a1b_mode=dynamic_probe
-run_tag=paper_clean_a1b_dynprobe_mosaic100_yolo11n_s0
+run_tag=paper_clean_a1b_dynprobe_nomosaic_yolo11n_s0
 project_dir=runs_public/paper/example
 student_modality=SAR
 teacher_modality=RGB
@@ -340,8 +340,8 @@ assert_no_claim_usable_yes "$collector_bad_csv"
 missing_git_dir="${collector_bad_root}/missing_git_clean_a1b_dynprobe"
 write_minimal_collector_run "$missing_git_dir"
 cat > "${missing_git_dir}/paper_run_meta.env" <<'EOF'
-paper_protocol_id=ogsod_hbb_mosaic100_clean_a1b_probea_20260618
-protocol_id=ogsod_hbb_mosaic100_clean_a1b_probea_20260618
+paper_protocol_id=ogsod_hbb_nomosaic_clean_a1b_probea_20260619
+protocol_id=ogsod_hbb_nomosaic_clean_a1b_probea_20260619
 paper_run=1
 dataset=OGSOD-1.0
 task=hbb
@@ -351,7 +351,7 @@ model_size=n
 seed=0
 phase_chain=A1->B
 ladd_a1b_mode=dynamic_probe
-run_tag=paper_clean_a1b_dynprobe_mosaic100_yolo11n_s0
+run_tag=paper_clean_a1b_dynprobe_nomosaic_yolo11n_s0
 project_dir=runs_public/paper/example
 student_modality=SAR
 teacher_modality=RGB

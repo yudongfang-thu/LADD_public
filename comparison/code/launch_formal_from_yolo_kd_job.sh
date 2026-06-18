@@ -9,7 +9,7 @@ Usage:
 Runs a from-YOLO-pretrain KD comparison under a selected OGSOD HBB protocol:
   student init = yolo11<size>.pt
   teacher = same-seed RGB baseline best.pt
-  default data/augmentation = historical no-mosaic; set PROTOCOL=mosaic100 for paper gate
+  default data/augmentation = paper no-mosaic; set PROTOCOL=mosaic100 only for diagnostics
   epochs default = 800; convergence is judged by the best checkpoint, not by train length.
 
 Optional:
@@ -102,8 +102,8 @@ case "$PROTOCOL" in
     ;;
 esac
 
-if [[ "${PAPER_RUN:-0}" == "1" && "$PROTOCOL_KEY" != "mosaic100" ]]; then
-  echo "PAPER_RUN=1 requires PROTOCOL=mosaic100." >&2
+if [[ "${PAPER_RUN:-0}" == "1" && "$PROTOCOL_KEY" != "nomosaic" ]]; then
+  echo "PAPER_RUN=1 requires PROTOCOL=nomosaic." >&2
   exit 2
 fi
 

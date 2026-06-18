@@ -3,20 +3,20 @@
 PAPER_COMMON_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PAPER_REPO_ROOT="$(cd "${PAPER_COMMON_DIR}/../.." && pwd)"
 
-PAPER_PROTOCOL_ID="ogsod_hbb_mosaic100_clean_a1b_probea_20260618"
-PAPER_PROTOCOL="mosaic100"
+PAPER_PROTOCOL_ID="ogsod_hbb_nomosaic_clean_a1b_probea_20260619"
+PAPER_PROTOCOL="nomosaic"
 PAPER_DATASET="OGSOD-1.0"
 PAPER_TASK="hbb"
 PAPER_IMGSZ="256"
 PAPER_EPOCHS="800"
 PAPER_A1_EPOCHS="10"
 PAPER_B_EPOCHS="800"
-PAPER_MOSAIC="1.0"
-PAPER_CLOSE_MOSAIC="700"
-PAPER_A1_MOSAIC="1.0"
+PAPER_MOSAIC="0.0"
+PAPER_CLOSE_MOSAIC="0"
+PAPER_A1_MOSAIC="0.0"
 PAPER_A1_CLOSE_MOSAIC="0"
-PAPER_B_MOSAIC="1.0"
-PAPER_B_CLOSE_MOSAIC="700"
+PAPER_B_MOSAIC="0.0"
+PAPER_B_CLOSE_MOSAIC="0"
 PAPER_MIXUP="0.0"
 PAPER_CUTMIX="0.0"
 PAPER_DEGREES="0.0"
@@ -36,8 +36,8 @@ PAPER_WARMUP_EPOCHS="3.0"
 PAPER_WARMUP_BIAS_LR="0.1"
 PAPER_WORKERS="${PAPER_WORKERS:-8}"
 PAPER_SAVE_PERIOD="${PAPER_SAVE_PERIOD:-100}"
-PAPER_RUN_ROOT="runs_public/paper/ogsod_hbb_mosaic100"
-PAPER_LOG_ROOT="logs/paper/ogsod_hbb_mosaic100"
+PAPER_RUN_ROOT="runs_public/paper/ogsod_hbb_nomosaic"
+PAPER_LOG_ROOT="logs/paper/ogsod_hbb_nomosaic"
 PAPER_SAR_DATA_CFG="configs/paper/datasets/ogsod_hbb_sar.yaml"
 PAPER_RGB_DATA_CFG="configs/paper/datasets/ogsod_hbb_rgb.yaml"
 
@@ -115,8 +115,8 @@ paper_baseline_pattern() {
   local seed="$3"
   local batch
   batch="$(paper_batch_for_size "$size")"
-  printf '%s/baselines/%s/yolo11%s/seed%s/paper_ogsod_hbb_mosaic100_%s_yolo11%s_e800_b%s_s%s*/weights/best.pt\n' \
-    "$PAPER_RUN_ROOT" "$modality" "$size" "$seed" "$modality" "$size" "$batch" "$seed"
+  printf 'runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/%s/%s_yolo11%s_hbb_800ep_cos_nomosaic_albu_b%s_s%s/weights/best.pt\n' \
+    "$modality" "$modality" "$size" "$batch" "$seed"
 }
 
 paper_find_baseline() {

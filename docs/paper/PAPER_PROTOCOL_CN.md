@@ -1,8 +1,8 @@
 # LADD Paper Protocol
 
-最后更新：2026-06-18
+最后更新：2026-06-19
 
-本文定义论文主表唯一准入协议。任何结果进入 OGSOD-1.0 HBB 主表前，必须同时满足本文协议、`paper_results/` schema 和 paper launcher metadata 检查。历史 no-mosaic、A1-A2-B、BN-freeze、400 epoch、close@100、partial、smoke、diagnostic run 只保留为归档、诊断或附录证据，不能直接混入主表。
+本文定义论文主表唯一准入协议。任何结果进入 OGSOD-1.0 HBB 主表前，必须同时满足本文协议、`paper_results/` schema 和 paper launcher metadata 检查。历史 mosaic100、A1-A2-B、BN-freeze、400 epoch、close@100、partial、smoke、diagnostic run 只保留为归档、诊断或附录证据，不能直接混入主表。
 
 ## 1. 主协议
 
@@ -20,8 +20,8 @@ lrf: 0.01
 cos_lr: true
 warmup_epochs: 3.0
 warmup_bias_lr: 0.1
-mosaic: 1.0
-close_mosaic: 700
+mosaic: 0.0
+close_mosaic: 0
 mixup: 0.0
 cutmix: 0.0
 degrees: 0.0
@@ -44,9 +44,9 @@ batch:
   yolo11x: 16
 ```
 
-`mosaic=1.0, close_mosaic=700` 表示 800 epoch 中前 100 epoch 开启 mosaic，后 700 epoch 关闭 mosaic。本文统一称为 `mosaic100`。
+`mosaic=0.0, close_mosaic=0` 表示全程关闭 mosaic。本文统一称为 `nomosaic`。
 
-机器可读版本位于 `configs/paper/ogsod_hbb_mosaic100.yaml`。Paper launcher 的共享常量位于 `scripts/paper/paper_common.sh`，每次修改协议后必须同步检查。
+机器可读版本位于 `configs/paper/ogsod_hbb_nomosaic.yaml`。Paper launcher 的共享常量位于 `scripts/paper/paper_common.sh`，每次修改协议后必须同步检查。
 
 ## 2. LADD 主方法准入
 
@@ -58,10 +58,10 @@ method_key: clean_a1b_dynprobe
 phase_chain: A1 -> B
 LADD_A1B_MODE: dynamic_probe
 RANK_D_NEG_CAP: 2.0
-A1_MOSAIC: 1.0
+A1_MOSAIC: 0.0
 A1_CLOSE_MOSAIC: 0
-B_MOSAIC: 1.0
-B_CLOSE_MOSAIC: 700
+B_MOSAIC: 0.0
+B_CLOSE_MOSAIC: 0
 ```
 
 不允许：
@@ -72,7 +72,7 @@ static clean_a1b as mainline
 dynamic clean_a1b_dyn as mainline
 old A1-A2-B tags
 BN-freeze repair runs as mainline
-historical no-mosaic LADD rows as mainline
+historical mosaic100 LADD rows as mainline
 wrong nc / wrong yaml runs
 ```
 
@@ -118,11 +118,11 @@ KD_CALIBRATION_MODE = affine
 ```text
 status = verified
 claim_usable = yes
-protocol_id = ogsod_hbb_mosaic100_clean_a1b_probea_20260618
+protocol_id = ogsod_hbb_nomosaic_clean_a1b_probea_20260619
 imgsz = 256
 epochs = 800
-mosaic = 1.0
-close_mosaic = 700
+mosaic = 0.0
+close_mosaic = 0
 git_commit is present
 results.csv exists
 args.yaml exists
@@ -132,7 +132,7 @@ manifest / paper_run_meta.env exists
 下列结果只能标记为 `archive / diagnostic / smoke / partial / invalid / robustness_appendix`：
 
 ```text
-no-mosaic runs
+mosaic100 runs
 A1-A2-B runs
 BN-freeze repair runs
 400ep runs

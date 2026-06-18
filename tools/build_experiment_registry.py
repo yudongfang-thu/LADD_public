@@ -292,7 +292,7 @@ def infer_protocol_fields(path: Path, family: str, validity: str, meta: dict[str
         role = "comparison"
         claim_usable = "yes" if protocol_id == "formal_nomosaic_800" else "partial"
     elif family == "ladd":
-        if is_clean_probea and protocol_id == "mosaic100_clean_a1b":
+        if is_clean_probea and protocol_id == "nomosaic_clean_a1b":
             role = "mainline_candidate"
             claim_usable = "yes"
         elif is_clean_static or is_clean_dynamic:

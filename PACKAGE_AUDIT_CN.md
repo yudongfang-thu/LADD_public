@@ -29,11 +29,11 @@ public 分支；当前 public 分支只保留论文主线代码、协议文档�
 
 ## 3. 当前 paper-facing 状态
 
-1. Paper mainline gate：主表只接受 `clean_a1b_dynprobe` + `LADD_A1B_MODE=dynamic_probe` + `mosaic100` + `A1 -> B` + no A2。
-2. Comparison gate：FGD / LD / CMDistill-style 必须使用同协议 `mosaic100`，并通过 paper wrapper 启动。
+1. Paper mainline gate：主表只接受 `clean_a1b_dynprobe` + `LADD_A1B_MODE=dynamic_probe` + `nomosaic` + `A1 -> B` + no A2。
+2. Comparison gate：FGD / LD / CMDistill-style 必须使用同协议 `nomosaic`，并通过 paper wrapper 启动。
 3. CCLKD gate：只有 online controlled comparison 可以进入受控对比；frozen-teacher CCLKD loss component 不能作为正式 CCLKD 结果。
 4. Result gate：论文主表结果必须先进入 `paper_results/` canonical schema，并通过 `tools/paper_validate_main_table.py`。
-5. 旧 A1-A2-B、no-mosaic、BN-freeze、short-B、loss-audit、repair、smoke、partial、snapshot 结果默认是 diagnostic/archive。
+5. 旧 A1-A2-B、mosaic100、BN-freeze、short-B、loss-audit、repair、smoke、partial、snapshot 结果默认是 diagnostic/archive。
 6. CMDistill native VEDAI track 只用于 CMDistill-style 可信度或跨数据集实验，不是 OGSOD 主表输入。
 
 ## 4. 安全检查状态

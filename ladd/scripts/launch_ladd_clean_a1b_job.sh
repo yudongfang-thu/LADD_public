@@ -25,12 +25,12 @@ Required checkpoints:
 
 If SAR_BASELINE/RGB_TEACHER are not set, the launcher tries to find matching
 weights under:
-  runs_public/ogsod/hbb/baseline_controls/mosaic_baselines_20260615/
+  runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/
 
 Defaults:
   A1 epochs=10
   B epochs=800
-  B mosaic=1.0, close_mosaic=700
+  A1/B mosaic=0.0, close_mosaic=0
   rank_d_neg_cap=2.0
   batch n/s=64, m/l=32, x=16
 
@@ -126,14 +126,14 @@ if [[ -z "${SAR_BASELINE:-}" ]]; then
   if [[ -n "${SAR_RUN_DIR:-}" ]]; then
     SAR_BASELINE="${SAR_RUN_DIR%/}/weights/best.pt"
   else
-    SAR_BASELINE="$(find_latest_weight "runs_public/ogsod/hbb/baseline_controls/mosaic_baselines_20260615/sar_yolo11${SIZE}_hbb_mosaicE800_closeAt100_s${SEED}_*/weights/best.pt" || true)"
+    SAR_BASELINE="$(find_latest_weight "runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/sar/sar_yolo11${SIZE}_hbb_800ep_cos_nomosaic_albu_b${BATCH_SIZE}_s${SEED}/weights/best.pt" || true)"
   fi
 fi
 if [[ -z "${RGB_TEACHER:-}" ]]; then
   if [[ -n "${RGB_RUN_DIR:-}" ]]; then
     RGB_TEACHER="${RGB_RUN_DIR%/}/weights/best.pt"
   else
-    RGB_TEACHER="$(find_latest_weight "runs_public/ogsod/hbb/baseline_controls/mosaic_baselines_20260615/rgb_yolo11${SIZE}_hbb_mosaicE800_closeAt100_s${SEED}_*/weights/best.pt" || true)"
+    RGB_TEACHER="$(find_latest_weight "runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/rgb/rgb_yolo11${SIZE}_hbb_800ep_cos_nomosaic_albu_b${BATCH_SIZE}_s${SEED}/weights/best.pt" || true)"
   fi
 fi
 
@@ -164,9 +164,9 @@ if [[ -n "${EXP_SUFFIX:-}" && -z "${RUN_TAG_SUFFIX:-}" ]]; then
 fi
 
 DATE_TAG="${DATE_TAG:-$(date +%Y%m%d_%H%M%S)}"
-RUN_TAG="${RUN_TAG:-${MODE_TAG}_yolo11${SIZE}_cap2_s${SEED}_mosaic_first100_close700${RUN_TAG_SUFFIX:-}_${DATE_TAG}}"
-PROJECT_DIR="${PROJECT_DIR:-runs_public/ogsod/hbb/${MODE_PROJECT_KEY}/mosaic_first100_close700/yolo11${SIZE}/cap2}"
-CHAIN_LOG_DIR="${CHAIN_LOG_DIR:-logs/${MODE_PROJECT_KEY}/mosaic_first100_close700/${RUN_TAG}_gpu${GPU_ID}}"
+RUN_TAG="${RUN_TAG:-${MODE_TAG}_yolo11${SIZE}_cap2_s${SEED}_nomosaic${RUN_TAG_SUFFIX:-}_${DATE_TAG}}"
+PROJECT_DIR="${PROJECT_DIR:-runs_public/ogsod/hbb/${MODE_PROJECT_KEY}/nomosaic/yolo11${SIZE}/cap2}"
+CHAIN_LOG_DIR="${CHAIN_LOG_DIR:-logs/${MODE_PROJECT_KEY}/nomosaic/${RUN_TAG}_gpu${GPU_ID}}"
 META_PATH="${CHAIN_LOG_DIR}/run_meta_clean_a1b.env"
 
 EPOCHS_A1_VALUE="${EPOCHS_A1:-10}"
@@ -196,10 +196,10 @@ USE_FG_MASK_FOR_REC_VALUE="${USE_FG_MASK_FOR_REC:-0}"
 LADD_B_DET_ONLY_VALUE="0"
 LADD_A2_DET_ONLY_VALUE="0"
 
-A1_MOSAIC_VALUE="${A1_MOSAIC:-1.0}"
+A1_MOSAIC_VALUE="${A1_MOSAIC:-0.0}"
 A1_CLOSE_MOSAIC_VALUE="${A1_CLOSE_MOSAIC:-0}"
-B_MOSAIC_VALUE="${B_MOSAIC:-1.0}"
-B_CLOSE_MOSAIC_VALUE="${B_CLOSE_MOSAIC:-700}"
+B_MOSAIC_VALUE="${B_MOSAIC:-0.0}"
+B_CLOSE_MOSAIC_VALUE="${B_CLOSE_MOSAIC:-0}"
 MIXUP_VALUE="${MIXUP:-0.0}"
 CUTMIX_VALUE="${CUTMIX:-0.0}"
 DEGREES_VALUE="${DEGREES:-0.0}"
@@ -235,8 +235,8 @@ if [[ "${PAPER_RUN:-0}" == "1" ]]; then
     echo "PAPER_RUN=1 requires EPOCHS_A1=10 and EPOCHS_B=800, got ${EPOCHS_A1_VALUE}/${EPOCHS_B_VALUE}." >&2
     exit 2
   fi
-  if [[ "$A1_MOSAIC_VALUE" != "1.0" || "$A1_CLOSE_MOSAIC_VALUE" != "0" || "$B_MOSAIC_VALUE" != "1.0" || "$B_CLOSE_MOSAIC_VALUE" != "700" ]]; then
-    echo "PAPER_RUN=1 requires A1 mosaic=1.0 close=0 and B mosaic=1.0 close=700." >&2
+  if [[ "$A1_MOSAIC_VALUE" != "0.0" || "$A1_CLOSE_MOSAIC_VALUE" != "0" || "$B_MOSAIC_VALUE" != "0.0" || "$B_CLOSE_MOSAIC_VALUE" != "0" ]]; then
+    echo "PAPER_RUN=1 requires A1/B mosaic=0.0 close=0." >&2
     exit 2
   fi
   if [[ "$RANK_D_NEG_CAP_VALUE" != "2.0" ]]; then

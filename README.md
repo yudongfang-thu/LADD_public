@@ -6,7 +6,7 @@ Last updated: 2026-06-18 CST.
 
 ## What To Read First
 
-1. [docs/paper/PAPER_PROTOCOL_CN.md](docs/paper/PAPER_PROTOCOL_CN.md): paper-facing OGSOD HBB mosaic100 protocol and main-table gate.
+1. [docs/paper/PAPER_PROTOCOL_CN.md](docs/paper/PAPER_PROTOCOL_CN.md): paper-facing OGSOD HBB nomosaic protocol and main-table gate.
 2. [docs/paper/METHOD_NAME_WHITELIST_CN.md](docs/paper/METHOD_NAME_WHITELIST_CN.md): allowed paper method names and forbidden historical labels.
 3. [paper_results/README.md](paper_results/README.md): canonical result schema and main-table candidate rules.
 4. [scripts/paper/README.md](scripts/paper/README.md): paper launchers and validation commands.
@@ -27,9 +27,9 @@ Last updated: 2026-06-18 CST.
 
 ## Paper-Facing Protocol
 
-The paper-facing main protocol is OGSOD HBB `mosaic100`: `imgsz=256`, `epochs=800`, `mosaic=1.0`, `close_mosaic=700`, deterministic training, and paired SAR/RGB baselines by capacity and seed. LADD main rows must be `LADD Probe-A / clean_a1b_dynprobe` with `A1 -> B` and no A2.
+The paper-facing main protocol is OGSOD HBB `nomosaic`: `imgsz=256`, `epochs=800`, `mosaic=0.0`, `close_mosaic=0`, deterministic training, and paired SAR/RGB baselines by capacity and seed. LADD main rows must be `LADD Probe-A / clean_a1b_dynprobe` with `A1 -> B` and no A2.
 
-Historical no-mosaic, A1-A2-B, BN-freeze, smoke, partial, close@100, 400ep, and diagnostic runs are retained only as archive/diagnostic evidence and are not used for main-table claims.
+Historical A1-A2-B, BN-freeze, smoke, partial, close@100, 400ep, mosaic100, and diagnostic runs are retained only as archive/diagnostic evidence and are not used for main-table claims.
 
 ## Direct Runtime Layout
 

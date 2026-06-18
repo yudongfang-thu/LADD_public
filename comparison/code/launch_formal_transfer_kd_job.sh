@@ -7,8 +7,8 @@ Usage:
   comparison/code/launch_formal_transfer_kd_job.sh <fgd|ld|cmdistill> <n|s|m|l|x> <seed> <gpu_id>
 
 Runs a B-only transferred KD comparison under a selected OGSOD HBB protocol.
-Default is the historical full no-mosaic protocol. Set PROTOCOL=mosaic100 for
-the paper-facing mosaic-first100-close700 protocol.
+Default is the paper-facing full no-mosaic protocol. Set PROTOCOL=mosaic100
+only for diagnostic compatibility runs.
 
 These are method-style transferred baselines, not official reproductions:
   fgd    - generic detector KD, foreground/background feature weighting + relation
@@ -108,8 +108,8 @@ case "$PROTOCOL" in
     ;;
 esac
 
-if [[ "${PAPER_RUN:-0}" == "1" && "$PROTOCOL_KEY" != "mosaic100" ]]; then
-  echo "PAPER_RUN=1 requires PROTOCOL=mosaic100." >&2
+if [[ "${PAPER_RUN:-0}" == "1" && "$PROTOCOL_KEY" != "nomosaic" ]]; then
+  echo "PAPER_RUN=1 requires PROTOCOL=nomosaic." >&2
   exit 2
 fi
 

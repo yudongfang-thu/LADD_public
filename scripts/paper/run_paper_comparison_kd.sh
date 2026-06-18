@@ -6,7 +6,7 @@ usage() {
 Usage:
   bash scripts/paper/run_paper_comparison_kd.sh <fgd|ld|cmdistill> <n|s|m|l|x> <seed> <gpu_id>
 
-Runs frozen-teacher KD comparisons under the paper OGSOD HBB mosaic100 gate.
+Runs frozen-teacher KD comparisons under the paper OGSOD HBB nomosaic gate.
 Requires matching paper SAR/RGB baseline checkpoints unless DRY_RUN=1.
 EOF
 }
@@ -34,8 +34,8 @@ paper_check_strict_git
 paper_require_file "$PAPER_SAR_DATA_CFG" "SAR paper dataset YAML"
 paper_require_file "$PAPER_RGB_DATA_CFG" "RGB paper dataset YAML"
 
-if [[ -n "${PROTOCOL:-}" && "$PROTOCOL" != "mosaic100" && "$PROTOCOL" != "mosaic_first100_close700" ]]; then
-  paper_die "Paper comparison wrapper requires PROTOCOL=mosaic100; got ${PROTOCOL}."
+if [[ -n "${PROTOCOL:-}" && "$PROTOCOL" != "nomosaic" && "$PROTOCOL" != "nomosaic" ]]; then
+  paper_die "Paper comparison wrapper requires PROTOCOL=nomosaic; got ${PROTOCOL}."
 fi
 INIT_TYPE="${INIT_TYPE:-transferred_kd}"
 if [[ "$INIT_TYPE" != "transferred_kd" && "$INIT_TYPE" != "from_yolo_pretrain" ]]; then
@@ -74,11 +74,11 @@ case "$METHOD" in
   cmdistill) METHOD_LABEL="CMDistill-style / paper-aligned adaptation" ;;
 esac
 
-RUN_TAG="paper_ogsod_hbb_mosaic100_${METHOD}_yolo11${SIZE}_e${PAPER_EPOCHS}_b${BATCH_SIZE}_s${SEED}${RUN_TAG_SUFFIX:-}"
+RUN_TAG="paper_ogsod_hbb_nomosaic_${METHOD}_yolo11${SIZE}_e${PAPER_EPOCHS}_b${BATCH_SIZE}_s${SEED}${RUN_TAG_SUFFIX:-}"
 PROJECT_DIR="${PAPER_RUN_ROOT}/comparisons/${METHOD}/yolo11${SIZE}/seed${SEED}"
 LOG_DIR="${PAPER_LOG_ROOT}/comparisons/${METHOD}/yolo11${SIZE}/seed${SEED}/${RUN_TAG}"
 PHASE_LOG_DIR="${LOG_DIR}/phase_b"
-RUN_NAME="paper_${METHOD}_hbb_ogsod11${SIZE}_mosaic100_b_e${PAPER_EPOCHS}_b${BATCH_SIZE}_s${SEED}_gpu${GPU_ID}"
+RUN_NAME="paper_${METHOD}_hbb_ogsod11${SIZE}_nomosaic_b_e${PAPER_EPOCHS}_b${BATCH_SIZE}_s${SEED}_gpu${GPU_ID}"
 RUN_DIR="${PROJECT_DIR}/${RUN_NAME}"
 OUTER_LOG="${LOG_DIR}/outer.log"
 PID_PATH="${LOG_DIR}/pid.txt"
@@ -88,7 +88,7 @@ cmd=(
   env
   "PAPER_RUN=1"
   "PAPER_PROTOCOL_ID=${PAPER_PROTOCOL_ID}"
-  "PROTOCOL=mosaic100"
+  "PROTOCOL=nomosaic"
   "INIT_TYPE=${INIT_TYPE}"
   "MODEL=${SAR_BASELINE}"
   "SAR_BASELINE=${SAR_BASELINE}"

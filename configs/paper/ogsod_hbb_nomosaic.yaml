@@ -1,7 +1,7 @@
-paper_protocol_id: ogsod_hbb_mosaic100_clean_a1b_probea_20260618
+paper_protocol_id: ogsod_hbb_nomosaic_clean_a1b_probea_20260619
 dataset: OGSOD-1.0
 task: hbb
-protocol: mosaic100
+protocol: nomosaic
 student_modality: sar
 teacher_modality: rgb
 inference_modality: sar
@@ -9,12 +9,12 @@ imgsz: 256
 epochs: 800
 a1_epochs: 10
 b_epochs: 800
-mosaic: 1.0
-close_mosaic: 700
-a1_mosaic: 1.0
+mosaic: 0.0
+close_mosaic: 0
+a1_mosaic: 0.0
 a1_close_mosaic: 0
-b_mosaic: 1.0
-b_close_mosaic: 700
+b_mosaic: 0.0
+b_close_mosaic: 0
 mixup: 0.0
 cutmix: 0.0
 degrees: 0.0

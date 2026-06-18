@@ -44,7 +44,7 @@ else
   paper_require_file "$RGB_TEACHER" "paper RGB teacher checkpoint"
 fi
 
-RUN_TAG="paper_ogsod_hbb_mosaic100_hallucidet_official_unet_yolo11${SIZE}_e${PAPER_EPOCHS}_b${BATCH_SIZE}_s${SEED}${RUN_TAG_SUFFIX:-}"
+RUN_TAG="paper_ogsod_hbb_nomosaic_hallucidet_official_unet_yolo11${SIZE}_e${PAPER_EPOCHS}_b${BATCH_SIZE}_s${SEED}${RUN_TAG_SUFFIX:-}"
 PROJECT_DIR="${PAPER_RUN_ROOT}/comparisons/hallucidet_yolo/yolo11${SIZE}/seed${SEED}"
 LOG_DIR="${PAPER_LOG_ROOT}/comparisons/hallucidet_yolo/yolo11${SIZE}/seed${SEED}/${RUN_TAG}"
 RUN_DIR="${PROJECT_DIR}/${RUN_TAG}"
