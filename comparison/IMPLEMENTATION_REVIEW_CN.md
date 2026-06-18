@@ -1,5 +1,8 @@
 # 对比方法实现复核
 
+> PAPER-FACING NOTE
+> 当前论文主表结果只接受 `scripts/paper/` 启动并通过 `paper_results/` gate 的 verified rows。本文仍可作为实现复核材料，但历史 no-mosaic、smoke、partial 或 diagnostic 记录不能直接作为主表来源。
+
 最后更新：2026-06-13
 
 本文档给外部老师复核当前受控对比方法的代码语义。当前正式方法为

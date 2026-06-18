@@ -2,15 +2,15 @@
 
 This repository is the paper-facing implementation for RGB-guided SAR object detection distillation. It keeps the current runnable implementation, experiment protocol, and compact result summaries. Historical raw logs, large diagnostic bundles, and deprecated-method archives have been removed from the public branch.
 
-Last updated: 2026-06-16 CST.
+Last updated: 2026-06-18 CST.
 
 ## What To Read First
 
-1. [PACKAGE_AUDIT_CN.md](PACKAGE_AUDIT_CN.md): what is included, what is intentionally excluded, and where each evidence block lives.
-2. [docs/method/METHOD_DEFINITIONS_AND_IMPLEMENTATION_CN.md](docs/method/METHOD_DEFINITIONS_AND_IMPLEMENTATION_CN.md): current method names, runnable entries, and implementation boundaries.
-3. [docs/experiments/LADD_MAINLINE_STANDARD_CN.md](docs/experiments/LADD_MAINLINE_STANDARD_CN.md): formal LADD mainline protocol.
-4. [comparison/IMPLEMENTATION_REVIEW_CN.md](comparison/IMPLEMENTATION_REVIEW_CN.md): comparison implementation audit, fixes, and remaining fidelity gaps.
-5. [cclkd_reproduction/README.md](cclkd_reproduction/README.md): CCLKD paper-protocol reproduction line.
+1. [docs/paper/PAPER_PROTOCOL_CN.md](docs/paper/PAPER_PROTOCOL_CN.md): paper-facing OGSOD HBB mosaic100 protocol and main-table gate.
+2. [docs/paper/METHOD_NAME_WHITELIST_CN.md](docs/paper/METHOD_NAME_WHITELIST_CN.md): allowed paper method names and forbidden historical labels.
+3. [paper_results/README.md](paper_results/README.md): canonical result schema and main-table candidate rules.
+4. [scripts/paper/README.md](scripts/paper/README.md): paper launchers and validation commands.
+5. [docs/ladd_clean_a1b_method_definition.md](docs/ladd_clean_a1b_method_definition.md): LADD Probe-A / clean A1B method definition.
 
 ## Directory Map
 
@@ -21,7 +21,15 @@ Last updated: 2026-06-16 CST.
 | `comparison/` | Current FGD/LD/CMDistill/HalluciDet-YOLO/CCLKD controlled-method review and notes. |
 | `cclkd_reproduction/` | Paper-aligned CCLKD reproduction protocol, paper PDF, online trainer, YOLO11n ablation plan, and compact diagnostics. |
 | `docs/` | Method notes, experiment status, literature survey, and public-facing summaries. |
+| `paper_results/` | Canonical paper-facing result schema and generated candidate tables. |
+| `scripts/paper/` | Paper-gated launchers and engineering validation. |
 | `shared/` | Dataset YAML templates, shared KD scaffolding, and vendored Ultralytics code. |
+
+## Paper-Facing Protocol
+
+The paper-facing main protocol is OGSOD HBB `mosaic100`: `imgsz=256`, `epochs=800`, `mosaic=1.0`, `close_mosaic=700`, deterministic training, and paired SAR/RGB baselines by capacity and seed. LADD main rows must be `LADD Probe-A / clean_a1b_dynprobe` with `A1 -> B` and no A2.
+
+Historical no-mosaic, A1-A2-B, BN-freeze, smoke, partial, close@100, 400ep, and diagnostic runs are retained only as archive/diagnostic evidence and are not used for main-table claims.
 
 ## Direct Runtime Layout
 
@@ -35,9 +43,9 @@ weights and generated runs remain untracked.
 
 ## Current High-Level Status
 
-- Baseline is stable: YOLO11n/s have SAR/RGB 3-seed formal no-mosaic baselines; YOLO11m/l/x have seed0 baselines.
-- LADD main evidence is strongest on YOLO11n: the current cap2 + B BN-freeze line has three positive seeds; larger capacities still have late-regression diagnostics.
-- Controlled comparisons are under audit. The current method set is FGD-style, LD, CMDistill-style, HalluciDet-YOLO adaptation, and CCLKD online comparison. CCLKD paper-aligned reproduction lives separately in `cclkd_reproduction/`; frozen-teacher CCLKD loss components are not sufficient for official CCLKD reporting. Dual-4090 smoke/formal partial runs with an erroneous `nc=5` yaml are invalid.
+- Paper-facing baseline/LADD/comparison runs must use `scripts/paper/` and pass `paper_results/` validation.
+- LADD mainline is `LADD Probe-A / LADD-clean A1B`: `clean_a1b_dynprobe`, `A1 -> B`, SAR-only inference, no A2.
+- Controlled comparisons are FGD-style, LD, CMDistill-style, HalluciDet-YOLO adaptation, and optional CCLKD online comparison. CCLKD paper-aligned reproduction lives separately in `cclkd_reproduction/`; frozen-teacher CCLKD loss components are not sufficient for official CCLKD reporting.
 
 ## Privacy / Security
 

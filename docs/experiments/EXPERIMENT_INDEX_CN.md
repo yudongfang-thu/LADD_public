@@ -13,6 +13,10 @@
 | 全局实验 registry | [registry/README_20260614_CN.md](registry/README_20260614_CN.md) |
 | 三条线 inventory CSV | [project_line_inventory_20260614.csv](project_line_inventory_20260614.csv) |
 | LADD clean A1B 方法定义 | [../ladd_clean_a1b_method_definition.md](../ladd_clean_a1b_method_definition.md) |
+| Paper 主协议与主表 gate | [../paper/PAPER_PROTOCOL_CN.md](../paper/PAPER_PROTOCOL_CN.md) |
+| Paper 结果 schema | [../../paper_results/README.md](../../paper_results/README.md) |
+| Paper launchers | [../../scripts/paper/README.md](../../scripts/paper/README.md) |
+| LADD Probe-A paper 结果页 | [../../ladd/results/LADD_PROBEA_MOSAIC100_RESULTS_CN.md](../../ladd/results/LADD_PROBEA_MOSAIC100_RESULTS_CN.md) |
 | LADD Probe-A 主线训练规范 | [LADD_MAINLINE_STANDARD_CN.md](LADD_MAINLINE_STANDARD_CN.md) |
 | LADD clean A1B 当前曲线 | [ladd_mosaic100_mainline_curves_20260618/](ladd_mosaic100_mainline_curves_20260618/) |
 | 旧 LADD 实验归档 | [archive_legacy_ladd_20260618/README_CN.md](archive_legacy_ladd_20260618/README_CN.md) |

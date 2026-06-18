@@ -1,5 +1,10 @@
 # OGSOD Baseline 训练规范与当前状态
 
+> ⚠️ ARCHIVED DIAGNOSTIC NOTE
+> This document records the older formal no-mosaic baseline protocol and historical status.
+> It is not the source of paper main-table results.
+> Use `paper_results/` and `docs/paper/PAPER_PROTOCOL_CN.md` for paper-facing results.
+
 最后更新：2026-06-02
 
 本文档是 OGSOD 正式 baseline 的统一规范、当前状态和跨机器对账。后续所有 LADD 主线、消融和对比方法实验都按本规范启动。

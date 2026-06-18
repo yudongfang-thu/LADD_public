@@ -1,0 +1,38 @@
+field,required,description
+paper_result_id,yes,unique id
+dataset,yes,OGSOD-1.0 / VEDAI / DroneVehicle
+protocol,yes,mosaic100 / vedai_cmdistill_like / etc.
+task,yes,hbb/obb
+method,yes,canonical method key
+method_label,yes,paper display name
+model_size,yes,n/s/m/l/x
+seed,yes,0/42/123
+student_modality,yes,SAR/RGB/IR
+teacher_modality,no,RGB/IR/none
+inference_modality,yes,SAR/RGB/IR
+imgsz,yes,input size
+epochs,yes,total epochs
+batch,yes,batch size
+mosaic,yes,mosaic value
+close_mosaic,yes,close_mosaic value
+phase_chain,no,A1->B / B-only / online / baseline
+student_init,yes,checkpoint or pretrain source
+teacher_init,no,checkpoint source
+run_tag,yes,run tag
+project_dir,yes,project directory
+run_dir,yes,actual run dir
+results_csv,yes,path to results.csv
+args_yaml,yes,path to args.yaml
+manifest,yes,path to manifest/meta
+code_commit,yes,git commit
+git_dirty,yes,true/false/unknown
+best_epoch,yes,best epoch
+best_AP50_95,yes,best AP50-95
+best_AP50,no,best AP50
+final_epoch,yes,final epoch
+final_AP50_95,yes,final AP50-95
+final_AP50,no,final AP50
+status,yes,verified/running/partial/smoke/diagnostic/invalid
+usable_for_main_table,yes,yes/no
+invalid_reason,no,reason if not usable
+notes,no,free text

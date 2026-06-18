@@ -1,0 +1,46 @@
+dataset: OGSOD-1.0
+task: hbb
+protocol: mosaic100
+imgsz: 256
+epochs: 800
+a1_epochs: 10
+b_epochs: 800
+mosaic: 1.0
+close_mosaic: 700
+a1_mosaic: 1.0
+a1_close_mosaic: 0
+b_mosaic: 1.0
+b_close_mosaic: 700
+mixup: 0.0
+cutmix: 0.0
+degrees: 0.0
+perspective: 0.0
+translate: 0.1
+scale: 0.5
+fliplr: 0.5
+flipud: 0.0
+hsv_h: 0.0
+hsv_s: 0.0
+hsv_v: 0.0
+erasing: 0.0
+cos_lr: true
+optimizer: auto
+lr0: 0.01
+lrf: 0.01
+warmup_epochs: 3.0
+warmup_bias_lr: 0.1
+deterministic: true
+seeds: [0, 42, 123]
+batch:
+  n: 64
+  s: 64
+  m: 32
+  l: 32
+  x: 16
+methods:
+  ladd_main: clean_a1b_dynprobe
+  phase_chain: "A1->B"
+  comparison_profiles: [fgd, ld, cmdistill]
+datasets:
+  sar: configs/paper/datasets/ogsod_hbb_sar.yaml
+  rgb: configs/paper/datasets/ogsod_hbb_rgb.yaml

@@ -1,5 +1,10 @@
 # LADD 主线结果
 
+> ⚠️ ARCHIVED DIAGNOSTIC NOTE
+> This document records historical no-mosaic / A1-A2-B / BN-freeze diagnostics.
+> It is not the source of paper main-table results.
+> Use `paper_results/` and `docs/paper/PAPER_PROTOCOL_CN.md` for paper-facing results.
+
 最后更新：2026-06-09 CST
 
 配置基线：`A1=10 -> A2=50 -> B=800, cap2 reach-rank, A2/B MuSGD lr0=0.001 no warmup`。最新稳定候选在 B 阶段额外启用 `FREEZE_BN_STATS=1`，冻结 BN running mean/var，保留 BN affine 参数梯度。

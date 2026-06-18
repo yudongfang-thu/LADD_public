@@ -1,5 +1,8 @@
 # LADD 项目实验地图（2026-06-18）
 
+> PAPER-FACING NOTE
+> 论文主表入口已迁移到 `docs/paper/PAPER_PROTOCOL_CN.md`、`scripts/paper/` 和 `paper_results/`。本文用于解释仓库历史证据与归档结构，不替代 paper gate。
+
 本文是当前本地仓库的实验入口页。目的不是替代各实验报告，而是把已经混杂在本地的证据分成清晰的工作线，防止重复计数、误用旧结果，或者把诊断实验当成主线结论。
 
 ## 0. 当前总判断

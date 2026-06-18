@@ -226,6 +226,25 @@ B_COS_LR_VALUE="${B_COS_LR:-1}"
 B_WARMUP_EPOCHS_VALUE="${B_WARMUP_EPOCHS:-3.0}"
 B_WARMUP_BIAS_LR_VALUE="${B_WARMUP_BIAS_LR:-0.1}"
 
+if [[ "${PAPER_RUN:-0}" == "1" ]]; then
+  if [[ "$LADD_A1B_MODE" != "dynamic_probe" ]]; then
+    echo "PAPER_RUN=1 requires LADD_A1B_MODE=dynamic_probe, got ${LADD_A1B_MODE}." >&2
+    exit 2
+  fi
+  if [[ "$EPOCHS_A1_VALUE" != "10" || "$EPOCHS_B_VALUE" != "800" ]]; then
+    echo "PAPER_RUN=1 requires EPOCHS_A1=10 and EPOCHS_B=800, got ${EPOCHS_A1_VALUE}/${EPOCHS_B_VALUE}." >&2
+    exit 2
+  fi
+  if [[ "$A1_MOSAIC_VALUE" != "1.0" || "$A1_CLOSE_MOSAIC_VALUE" != "0" || "$B_MOSAIC_VALUE" != "1.0" || "$B_CLOSE_MOSAIC_VALUE" != "700" ]]; then
+    echo "PAPER_RUN=1 requires A1 mosaic=1.0 close=0 and B mosaic=1.0 close=700." >&2
+    exit 2
+  fi
+  if [[ "$RANK_D_NEG_CAP_VALUE" != "2.0" ]]; then
+    echo "PAPER_RUN=1 requires RANK_D_NEG_CAP=2.0, got ${RANK_D_NEG_CAP_VALUE}." >&2
+    exit 2
+  fi
+fi
+
 write_meta() {
   {
     printf 'run_tag=%q\n' "$RUN_TAG"

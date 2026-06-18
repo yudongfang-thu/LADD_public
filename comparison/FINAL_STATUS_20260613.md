@@ -1,5 +1,10 @@
 # 对比方法最终状态（2026-06-13）
 
+> ⚠️ ARCHIVED DIAGNOSTIC NOTE
+> This document records historical comparison-method debugging status before the paper mosaic100 gate.
+> It is not the source of paper main-table results.
+> Use `paper_results/` and `docs/paper/PAPER_PROTOCOL_CN.md` for paper-facing results.
+
 **更新**: HalluciDet-style已废弃，使用新HalluciDet (paper reproduction)
 
 ---
@@ -20,7 +25,7 @@
 
 ### 方法1: LD (Localization Distillation)
 - **状态**: ✅ 训练中
-- **完成度**: 
+- **完成度**:
   - YOLO11n: 644/800 epoch (0.570 mAP)
   - YOLO11s: 613/800 epoch (0.644 mAP)
 - **预期完成**: 本周末
@@ -141,7 +146,7 @@
 
 ## ✅ 总结
 
-**当前状态**: 
+**当前状态**:
 - ✅ LD训练中，即将完成
 - ⚠️ FGD已修复，需验证
 - ✅ CCLKD实现完美，可选
