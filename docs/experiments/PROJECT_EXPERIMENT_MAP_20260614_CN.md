@@ -29,6 +29,11 @@ LADD 当前入口：
 - 当前 clean 曲线：[ladd_mosaic100_mainline_curves_20260618/](ladd_mosaic100_mainline_curves_20260618/)
 - 旧实验归档：[archive_legacy_ladd_20260618/README_CN.md](archive_legacy_ladd_20260618/README_CN.md)
 
+CMDistill pending 入口：
+
+- OGSOD/formal 进度归档：[archive_pending_cmdistill_20260618/README_CN.md](archive_pending_cmdistill_20260618/README_CN.md)
+- native VEDAI/other-dataset reproduction 归档：`comparison/cmdistill/archive_pending_20260618/`
+
 ## 1. 数据层级
 
 当前不建议大规模移动原始 evidence。先采用四层结构：
@@ -38,7 +43,7 @@ LADD 当前入口：
 | `raw / shutdown evidence` | 从服务器迁回的原始轻量证据 | `ladd/results/ladd4090_shutdown_sync_20260614/` | 只作 provenance，不直接作为论文数字来源 |
 | `curated summary` | 人工/脚本整理后的结果表 | `docs/experiments/*summary*.csv`, `ladd/results/*/summary/` | 优先用于汇报和复盘 |
 | `registry` | 全局扫描索引，负责去重和定位 | `docs/experiments/registry/` | 查 run 是否存在、是否重复、来自哪台服务器 |
-| `repo archive` | 旧 LADD A1-A2-B、旧 mosaic、历史诊断报告 | `docs/experiments/archive_legacy_ladd_20260618/`, `ladd/results/archive_legacy_ladd_20260618/` | 保留历史证据，但不作为当前主表入口 |
+| `repo archive` | 旧 LADD A1-A2-B、旧 mosaic、历史诊断报告，以及暂不确定是否继续的 CMDistill native/progress 线 | `docs/experiments/archive_legacy_ladd_20260618/`, `ladd/results/archive_legacy_ladd_20260618/`, `docs/experiments/archive_pending_cmdistill_20260618/` | 保留历史证据，但不作为当前主表入口 |
 
 ## 2. 统一使用规则
 

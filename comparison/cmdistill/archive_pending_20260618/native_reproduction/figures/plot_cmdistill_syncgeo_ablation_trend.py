@@ -23,6 +23,9 @@ RUNS = [
     ("syncgeo_featrel", "sync geo feat+rel KD", "syncgeo_featrel_partial_results.csv"),
     ("syncgeo_allkd_fix", "sync geo all KD fix", "syncgeo_allkd_fix_results.csv"),
     ("syncgeo_allkd_warm10_fix", "sync geo all KD warm10 fix", "syncgeo_allkd_warm10_fix_results.csv"),
+    ("syncgeo_logitonly_fix", "sync geo logit-only KD", "syncgeo_logitonly_fix_results.csv"),
+    ("syncgeo_featureonly_fix", "sync geo feature-only KD", "syncgeo_featureonly_fix_results.csv"),
+    ("syncgeo_relationonly_fix", "sync geo relation-only KD", "syncgeo_relationonly_fix_results.csv"),
 ]
 
 

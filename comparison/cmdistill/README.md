@@ -15,8 +15,9 @@ The third review cleanup is tracked in
 The fourth pre-smoke review is tracked in
 [`REVIEW_ROUND4.md`](REVIEW_ROUND4.md).
 
-For the new native-benchmark evidence track, see
-[`native_reproduction/README_CN.md`](native_reproduction/README_CN.md).
+The native VEDAI/other-dataset reproduction track is currently pending and has
+been moved out of the active entry path. For historical context, see
+[`archive_pending_20260618/native_reproduction/README_CN.md`](archive_pending_20260618/native_reproduction/README_CN.md).
 
 ## Paper Asset
 

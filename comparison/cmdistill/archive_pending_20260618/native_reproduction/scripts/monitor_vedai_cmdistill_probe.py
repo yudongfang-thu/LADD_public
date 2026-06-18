@@ -92,8 +92,10 @@ def decide(rows: list[dict[str, float]], args: argparse.Namespace) -> tuple[str,
         f"recent_best={recent_best:.4f} prev_best={prev_best:.4f} improve={improvement:.4f}"
     )
 
-    if last_epoch >= args.min_epoch and best < args.min_best_map50 and improvement < args.min_improvement:
-        return "STOP", reason + " below plateau threshold"
+    if last_epoch >= args.min_epoch and len(rows) > window and improvement < args.min_improvement:
+        if best < args.min_best_map50:
+            return "STOP", reason + " below plateau threshold"
+        return "STOP", reason + " plateau after reaching target threshold"
     return "CONTINUE", reason
 
 

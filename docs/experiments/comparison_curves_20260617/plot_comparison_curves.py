@@ -10,6 +10,11 @@ import pandas as pd
 
 REPO = Path(__file__).resolve().parents[3]
 OUT_DIR = Path(__file__).resolve().parent
+CMDISTILL_PENDING_SOURCE = (
+    REPO
+    / "docs/experiments/archive_pending_cmdistill_20260618/cmdistill_mainline_progress_20260616/source"
+)
+LEGACY_LADD_RESULTS = REPO / "ladd/results/archive_legacy_ladd_20260618"
 
 
 @dataclass(frozen=True)
@@ -27,7 +32,7 @@ RUNS = [
     RunSpec(
         "n",
         "SAR baseline",
-        REPO / "docs/experiments/cmdistill_mainline_progress_20260616/source/sar_yolo11n_baseline_results.csv",
+        CMDISTILL_PENDING_SOURCE / "sar_yolo11n_baseline_results.csv",
         "SAR-only detector, formal no-mosaic, b64, seed0",
         "--",
         "#7f7f7f",
@@ -36,7 +41,7 @@ RUNS = [
     RunSpec(
         "n",
         "RGB teacher",
-        REPO / "docs/experiments/cmdistill_mainline_progress_20260616/source/rgb_yolo11n_baseline_results.csv",
+        CMDISTILL_PENDING_SOURCE / "rgb_yolo11n_baseline_results.csv",
         "RGB-only detector reference, formal no-mosaic, b64, seed0",
         ":",
         "#8c564b",
@@ -45,7 +50,7 @@ RUNS = [
     RunSpec(
         "n",
         "FGD",
-        REPO / "ladd/results/ladd4090_shutdown_sync_20260614/evidence_raw/ladd4090/repo_root_snapshot/runs_public/ogsod/hbb/formal_nomosaic_20260528/comparisons/from_yolo_pretrain/yolo11n/fgd/transfer_fgd_hbb_ogsod11n_from_yolo_formal_nomosaic_yolo11n_fgd_v2_20260612_fgd_original_low_from_yolo_s0_b_e800_b64_s0_gpu0/results.csv",
+        LEGACY_LADD_RESULTS / "ladd4090_shutdown_sync_20260614/evidence_raw/ladd4090/repo_root_snapshot/runs_public/ogsod/hbb/formal_nomosaic_20260528/comparisons/from_yolo_pretrain/yolo11n/fgd/transfer_fgd_hbb_ogsod11n_from_yolo_formal_nomosaic_yolo11n_fgd_v2_20260612_fgd_original_low_from_yolo_s0_b_e800_b64_s0_gpu0/results.csv",
         "from YOLO pretrain, frozen RGB teacher, b64, seed0",
         "-",
         "#1f77b4",
@@ -53,7 +58,7 @@ RUNS = [
     RunSpec(
         "n",
         "LD",
-        REPO / "ladd/results/ladd4090_shutdown_sync_20260614/evidence_raw/ladd4090/repo_root_snapshot/runs_public/ogsod/hbb/formal_nomosaic_20260528/comparisons/from_yolo_pretrain/yolo11n/ld/transfer_ld_hbb_ogsod11n_from_yolo_formal_nomosaic_yolo11n_ld_v2_20260612_ld_from_yolo_clean_from_yolo_s0_b_e800_b64_s0_gpu1/results.csv",
+        LEGACY_LADD_RESULTS / "ladd4090_shutdown_sync_20260614/evidence_raw/ladd4090/repo_root_snapshot/runs_public/ogsod/hbb/formal_nomosaic_20260528/comparisons/from_yolo_pretrain/yolo11n/ld/transfer_ld_hbb_ogsod11n_from_yolo_formal_nomosaic_yolo11n_ld_v2_20260612_ld_from_yolo_clean_from_yolo_s0_b_e800_b64_s0_gpu1/results.csv",
         "from YOLO pretrain, frozen RGB teacher, b64, seed0",
         "-",
         "#ff7f0e",
@@ -78,7 +83,7 @@ RUNS = [
     RunSpec(
         "n",
         "LADD ref",
-        REPO / "docs/experiments/cmdistill_mainline_progress_20260616/source/prev_ladd_cap2_yolo11n_b800_s42_results.csv",
+        CMDISTILL_PENDING_SOURCE / "prev_ladd_cap2_yolo11n_b800_s42_results.csv",
         "LADD cap2 reference, formal no-mosaic, b64, seed42",
         "-",
         "#9467bd",
@@ -87,7 +92,7 @@ RUNS = [
     RunSpec(
         "s",
         "SAR baseline",
-        REPO / "docs/experiments/cmdistill_mainline_progress_20260616/source/sar_yolo11s_baseline_results.csv",
+        CMDISTILL_PENDING_SOURCE / "sar_yolo11s_baseline_results.csv",
         "SAR-only detector, formal no-mosaic, b64, seed0",
         "--",
         "#7f7f7f",
@@ -96,7 +101,7 @@ RUNS = [
     RunSpec(
         "s",
         "RGB teacher",
-        REPO / "docs/experiments/cmdistill_mainline_progress_20260616/source/rgb_yolo11s_baseline_results.csv",
+        CMDISTILL_PENDING_SOURCE / "rgb_yolo11s_baseline_results.csv",
         "RGB-only detector reference, formal no-mosaic, b64, seed0",
         ":",
         "#8c564b",
@@ -105,7 +110,7 @@ RUNS = [
     RunSpec(
         "s",
         "FGD",
-        REPO / "ladd/results/ladd4090_shutdown_sync_20260614/evidence_raw/ladd4090/repo_root_snapshot/runs_public/ogsod/hbb/formal_nomosaic_20260528/comparisons/from_yolo_pretrain/yolo11s/fgd/transfer_fgd_hbb_ogsod11s_from_yolo_formal_nomosaic_yolo11s_fgd_v2_20260612_fgd_original_low_from_yolo_from_yolo_s0_b_e800_b64_s0_gpu1/results.csv",
+        LEGACY_LADD_RESULTS / "ladd4090_shutdown_sync_20260614/evidence_raw/ladd4090/repo_root_snapshot/runs_public/ogsod/hbb/formal_nomosaic_20260528/comparisons/from_yolo_pretrain/yolo11s/fgd/transfer_fgd_hbb_ogsod11s_from_yolo_formal_nomosaic_yolo11s_fgd_v2_20260612_fgd_original_low_from_yolo_from_yolo_s0_b_e800_b64_s0_gpu1/results.csv",
         "from YOLO pretrain, frozen RGB teacher, b64, seed0",
         "-",
         "#1f77b4",
@@ -113,7 +118,7 @@ RUNS = [
     RunSpec(
         "s",
         "LD",
-        REPO / "ladd/results/ladd4090_shutdown_sync_20260614/evidence_raw/ladd4090/repo_root_snapshot/runs_public/ogsod/hbb/formal_nomosaic_20260528/comparisons/from_yolo_pretrain/yolo11s/ld/transfer_ld_hbb_ogsod11s_from_yolo_formal_nomosaic_yolo11s_ld_v2_20260612_ld_from_yolo_clean_from_yolo_s0_b_e800_b64_s0_gpu0/results.csv",
+        LEGACY_LADD_RESULTS / "ladd4090_shutdown_sync_20260614/evidence_raw/ladd4090/repo_root_snapshot/runs_public/ogsod/hbb/formal_nomosaic_20260528/comparisons/from_yolo_pretrain/yolo11s/ld/transfer_ld_hbb_ogsod11s_from_yolo_formal_nomosaic_yolo11s_ld_v2_20260612_ld_from_yolo_clean_from_yolo_s0_b_e800_b64_s0_gpu0/results.csv",
         "from YOLO pretrain, frozen RGB teacher, b64, seed0",
         "-",
         "#ff7f0e",
@@ -138,7 +143,7 @@ RUNS = [
     RunSpec(
         "s",
         "LADD ref",
-        REPO / "docs/experiments/cmdistill_mainline_progress_20260616/source/prev_ladd_cap2_yolo11s_b800_s0_results.csv",
+        CMDISTILL_PENDING_SOURCE / "prev_ladd_cap2_yolo11s_b800_s0_results.csv",
         "LADD cap2 reference, formal no-mosaic, b64, seed0",
         "-",
         "#9467bd",

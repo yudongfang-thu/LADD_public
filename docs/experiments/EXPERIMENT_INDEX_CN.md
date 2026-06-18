@@ -16,6 +16,7 @@
 | LADD Probe-A 主线训练规范 | [LADD_MAINLINE_STANDARD_CN.md](LADD_MAINLINE_STANDARD_CN.md) |
 | LADD clean A1B 当前曲线 | [ladd_mosaic100_mainline_curves_20260618/](ladd_mosaic100_mainline_curves_20260618/) |
 | 旧 LADD 实验归档 | [archive_legacy_ladd_20260618/README_CN.md](archive_legacy_ladd_20260618/README_CN.md) |
+| CMDistill 待定实验归档 | [archive_pending_cmdistill_20260618/README_CN.md](archive_pending_cmdistill_20260618/README_CN.md) |
 
 ## 1. 三条工作线
 
@@ -38,4 +39,5 @@ LADD 旧诊断入口：[archive_legacy_ladd_20260618/README_CN.md](archive_legac
 3. `smoke / probe / diag / snapshot / partial / old` 默认只能作为诊断证据。
 4. LADD 主线当前固定为 `clean_a1b_dynprobe`；`clean_a1b` static 与 `clean_a1b_dyn` dynamic 只能作为消融实验。
 5. 旧 A1-A2-B、旧 mosaic90、旧 no-mosaic/formal repair、BN-freeze、short-B、loss audit 等记录已归档到 [archive_legacy_ladd_20260618/](archive_legacy_ladd_20260618/)。
-6. 旧文档如与新入口冲突，以 clean A1B 方法定义、主线训练规范和本索引为准。
+6. CMDistill native / VEDAI 方向当前暂不作为主线入口，已移入 [archive_pending_cmdistill_20260618/](archive_pending_cmdistill_20260618/) 和 `comparison/cmdistill/archive_pending_20260618/`。
+7. 旧文档如与新入口冲突，以 clean A1B 方法定义、主线训练规范和本索引为准。
