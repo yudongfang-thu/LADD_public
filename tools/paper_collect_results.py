@@ -10,6 +10,31 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 PAPER_PROTOCOL_ID = "ogsod_hbb_mosaic100_clean_a1b_probea_20260618"
+INVALID_GIT_COMMITS = {"unknown", "dirty", "none", "null"}
+RECOGNIZED_METHODS = {
+    "ladd_probea",
+    "cmdistill",
+    "fgd",
+    "ld",
+    "hallucidet_yolo",
+    "cclkd_online",
+    "rgb_teacher",
+    "sar_baseline",
+}
+FORBIDDEN_PATTERNS = (
+    ("smoke", re.compile(r"(^|[_\-/\s])smoke($|[_\-/\s])", re.IGNORECASE)),
+    ("partial", re.compile(r"(^|[_\-/\s])partial($|[_\-/\s])", re.IGNORECASE)),
+    ("snapshot", re.compile(r"(^|[_\-/\s])snapshot($|[_\-/\s])", re.IGNORECASE)),
+    ("diagnostic", re.compile(r"(^|[_\-/\s])diagnostic($|[_\-/\s])", re.IGNORECASE)),
+    ("archive", re.compile(r"(^|[_\-/\s])archive($|[_\-/\s])", re.IGNORECASE)),
+    ("old", re.compile(r"(^|[_\-/\s])old($|[_\-/\s])", re.IGNORECASE)),
+    ("legacy", re.compile(r"(^|[_\-/\s])legacy($|[_\-/\s])", re.IGNORECASE)),
+    ("bn-freeze", re.compile(r"bn[-_]freeze", re.IGNORECASE)),
+    ("a1-a2-b", re.compile(r"a1[-_]a2[-_]b", re.IGNORECASE)),
+    ("probe_only", re.compile(r"(^|[_\-/\s])probe_only($|[_\-/\s])", re.IGNORECASE)),
+    ("probe_run", re.compile(r"(^|[_\-/\s])probe_run($|[_\-/\s])", re.IGNORECASE)),
+    ("diagnostic_probe", re.compile(r"(^|[_\-/\s])diagnostic_probe($|[_\-/\s])", re.IGNORECASE)),
+)
 
 FIELDS = [
     "dataset",
@@ -146,6 +171,19 @@ def as_float_text(value: Any) -> str:
         return str(value)
 
 
+def is_sha_like(value: str) -> bool:
+    lowered = str(value or "").strip().lower()
+    return lowered not in INVALID_GIT_COMMITS and re.fullmatch(r"[0-9a-f]{7,40}", lowered) is not None
+
+
+def is_truthy(value: Any) -> bool:
+    return str(value or "").strip().lower() in {"1", "true", "yes", "y"}
+
+
+def forbidden_labels(text: str) -> list[str]:
+    return [label for label, pattern in FORBIDDEN_PATTERNS if pattern.search(text)]
+
+
 def infer_model_seed(text: str, meta: dict[str, Any]) -> tuple[str, str]:
     model = first_value(meta.get("model_size"), meta.get("size"), meta.get("SIZE"))
     seed = first_value(meta.get("seed"), meta.get("SEED"))
@@ -207,28 +245,19 @@ def gate_row(row: dict[str, str]) -> tuple[str, str, str]:
         reasons.append("missing_args_yaml")
     if not row["manifest"]:
         reasons.append("missing_manifest")
+    if not row.get("_paper_run") or not is_truthy(row.get("_paper_run")):
+        reasons.append("not_paper_run")
     if not row["git_commit"]:
         reasons.append("missing_git_commit")
+    elif not is_sha_like(row["git_commit"]):
+        reasons.append("invalid_git_commit")
+    if row["method"] not in RECOGNIZED_METHODS:
+        reasons.append("method_unrecognized")
+    if row["status"] not in {"complete", "verified", "main_table"}:
+        reasons.append("status_not_verified")
     text = " ".join(row.values()).lower()
-    sanitized = text
-    for allowed in (
-        "ladd probe-a",
-        "ladd_probea",
-        "clean_a1b_dynprobe",
-        "clean_a1b_probea",
-        "dynamic_probe",
-        "ogsod_hbb_mosaic100_clean_a1b_probea_20260618",
-        "dynprobe",
-        "probea",
-    ):
-        sanitized = sanitized.replace(allowed, "")
-    for token in ("smoke", "probe", "partial", "snapshot", "diagnostic", "archive", "old", "legacy", "bn-freeze", "bn_freeze", "a1-a2-b"):
-        if token in {"bn-freeze", "bn_freeze", "a1-a2-b"}:
-            has_token = token in sanitized
-        else:
-            has_token = re.search(rf"(^|[^a-z0-9]){re.escape(token)}([^a-z0-9]|$)", sanitized) is not None
-        if has_token:
-            reasons.append(f"forbidden_{token}")
+    for label in forbidden_labels(text):
+        reasons.append(f"forbidden_{label}")
     if row["method"] == "ladd_probea":
         if row["ladd_mode"] != "dynamic_probe":
             reasons.append("ladd_not_dynamic_probe")
@@ -241,8 +270,8 @@ def gate_row(row: dict[str, str]) -> tuple[str, str, str]:
     if row["method"] == "cclkd_online" and ("online" not in text or "frozen" in text):
         reasons.append("cclkd_not_online_main")
     if reasons:
-        return "candidate_or_unknown", "no", ";".join(reasons)
-    return "verified", "yes", ""
+        return "collected_unverified", "no", ";".join(reasons)
+    return row["status"], "yes", ""
 
 
 def collect_one(results_csv: Path) -> dict[str, str]:
@@ -265,6 +294,9 @@ def collect_one(results_csv: Path) -> dict[str, str]:
     text = f"{run_dir} {results_csv} {meta}"
     model_size, seed = infer_model_seed(text, meta)
     method, method_display, phase_chain, ladd_mode, init_type = infer_method(text, meta)
+    git_commit = first_value(meta.get("git_commit"), meta.get("code_commit"))
+    if not is_sha_like(git_commit):
+        git_commit = ""
     row = {
         "dataset": first_value(meta.get("dataset"), "OGSOD-1.0"),
         "task": first_value(meta.get("task"), "hbb"),
@@ -289,15 +321,16 @@ def collect_one(results_csv: Path) -> dict[str, str]:
         "results_csv": rel(results_csv),
         "args_yaml": rel(args_yaml) if args_yaml.is_file() else "",
         "manifest": rel(manifest) if manifest else "",
-        "git_commit": first_value(meta.get("git_commit"), meta.get("code_commit")),
+        "git_commit": git_commit,
         "best_ap50_95": as_float_text(first_float(best_row, MAP_KEYS)),
         "best_ap50": as_float_text(first_float(best_row, MAP50_KEYS)),
         "final_ap50_95": as_float_text(first_float(final_row, MAP_KEYS)),
         "final_ap50": as_float_text(first_float(final_row, MAP50_KEYS)),
         "best_epoch": first_value(best_row.get("epoch"), str(best_idx)),
-        "status": "",
+        "status": first_value(meta.get("status"), meta.get("paper_status"), meta.get("claim_status")),
         "claim_usable": "",
         "notes": "",
+        "_paper_run": first_value(meta.get("paper_run"), meta.get("PAPER_RUN")),
     }
     status, usable, notes = gate_row(row)
     row["status"] = status

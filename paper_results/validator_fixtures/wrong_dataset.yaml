@@ -1,0 +1,10 @@
+path: /path/to/wrong
+train: images/train
+val: images/test
+nc: 5
+names:
+  0: bridge
+  1: ship
+  2: airplane
+  3: car
+  4: storage_tank

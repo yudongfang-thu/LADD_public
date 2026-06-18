@@ -12,4 +12,4 @@
 
 主表 schema 见 `paper_results/main_table_schema.csv`。
 
-`example_valid.csv` / `example_invalid.csv` 是 validator fixtures：前者必须通过，后者必须失败。
+`example_valid.csv` / `example_invalid.csv` / `validator_fixtures/` 是 validator fixtures：合法主线命名必须通过，legacy / wrong-yaml 变体必须失败。
