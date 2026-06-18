@@ -1,4 +1,4 @@
-# 本地实验数据整理方案（2026-06-14）
+# 本地实验数据整理方案（2026-06-18）
 
 ## 目标
 
@@ -8,9 +8,9 @@
 
 | 代号 | 说明 | 本地主要位置 |
 |---|---|---|
-| `ladd90` | 90 服务器，主要 baseline / LADD 主参考 | `ladd/results/ladd90_formal_baselines_20260612/`, `ladd/results/converged_mainline_ladd_20260613/` |
-| `ladd4090` | 双卡 4090，当前大量 shutdown snapshot 和 comparison/LADD 证据 | `ladd/results/ladd4090_shutdown_sync_20260614/`, `comparison/results_shutdown_sync_20260614/evidence_raw/ladd4090/` |
-| `autodl` | AutoDL / 4090D，关机前 critical backup | `remote_backups/autodl_20260614_critical/`, `ladd/results/autodl_shutdown_sync_20260614/` |
+| `ladd90` | 90 服务器，baseline / 旧 LADD / clean evidence 来源 | 旧 LADD 证据已进入 `ladd/results/archive_legacy_ladd_20260618/`；当前 clean 入口见 `docs/experiments/ladd_mosaic100_mainline_curves_20260618/` |
+| `ladd4090` | 双卡 4090，当前大量 shutdown snapshot 和 comparison/LADD 证据 | 旧 LADD 证据已进入 `ladd/results/archive_legacy_ladd_20260618/`；comparison evidence 保持原目录 |
+| `autodl` | AutoDL / 4090D，关机前 critical backup | `remote_backups/autodl_20260614_critical/`；旧 LADD shutdown 记录已进入 `ladd/results/archive_legacy_ladd_20260618/` |
 | `server117` | RTX 5880 Ada，旧 smoke / 环境证据 | 主要散落在旧 comparison 文档和少量 registry 条目 |
 
 ## 当前索引
@@ -32,28 +32,22 @@ python3 tools/build_experiment_registry.py --root . --out-dir docs/experiments/r
 
 | 项 | 数量 |
 |---|---:|
-| `results.csv` 总数 | 458 |
-| `ladd4090` 来源 | 314 |
-| `ladd90` 来源 | 54 |
-| `autodl` 来源 | 40 |
+| `results.csv` 总数 | 675 |
+| `ladd4090` 来源 | 484 |
+| `ladd90` 来源 | 67 |
+| `autodl` 来源 | 55 |
 | `dual4090_old` invalid/diagnostic 来源 | 20 |
 | `server117` 来源 | 4 |
-| 内容重复 hash 组 | 115 |
-| 位于重复组内的文件数 | 314 |
+| 内容重复 hash 组 | 181 |
+| 位于重复组内的文件数 | 547 |
 
 ## 关机同步大文件处理
 
-双卡 4090 关机前生成的轻量证据压缩包已经移出 Git 工作区，避免误提交：
+双卡 4090 关机前生成的轻量证据压缩包不进入 GitHub。旧 LADD 相关 evidence 已统一进入仓内 legacy archive：
 
 ```text
-/Users/yudongfang/Desktop/光sar/LADD_public_local_archives/ladd4090_shutdown_sync_20260614/
-```
-
-仓库内保留解压后的轻量 evidence 和指针文件：
-
-```text
-ladd/results/ladd4090_shutdown_sync_20260614/ARCHIVE_POINTER_20260614.txt
-ladd/results/ladd4090_shutdown_sync_20260614/evidence_raw/ladd4090/repo_root_snapshot/
+ladd/results/archive_legacy_ladd_20260618/
+docs/experiments/archive_legacy_ladd_20260618/
 ```
 
 当前本地仍有两类被 ignore 的 checkpoint 备份：
@@ -67,35 +61,28 @@ ladd/results/ladd4090_shutdown_sync_20260614/evidence_raw/ladd4090/repo_root_sna
 
 ## 整理原则
 
-1. `remote_backups/`、`ladd/results/*shutdown_sync*`、`comparison/results_shutdown_sync_20260614/` 作为 raw provenance 层，暂不移动、不删除。
+1. `remote_backups/` 和 `comparison/results_shutdown_sync_20260614/` 作为 raw provenance 层，暂不移动、不删除；旧 LADD 证据统一保留在 `archive_legacy_ladd_20260618/`。
 2. 后续分析优先读 registry 的 `canonical_path`，不要直接遍历所有 `results.csv`，否则会重复计数。
 3. `.pt` 权重单独保管。AutoDL raw backup 中的权重先留在 raw backup；主工作区 `weights/` 只保留明确需要复用的 baseline/关键 checkpoint。
-4. 过时文档移出 Git 工作区到本地 archive，不直接删除。
+4. 旧 LADD A1-A2-B、旧 mosaic、旧 repair/diagnostic 文档进入仓内 legacy archive，不直接删除。
 5. 论文表格或汇报数字应从 registry + curated summary CSV 生成，并显式标注 `validity`。
 
 ## 推荐后续结构
 
 ```text
 docs/experiments/registry/        # 全局 run 索引和重复映射
-local archive outside repo         # 过时报告、旧指令、紧急临时分析
-ladd/results/                     # LADD curated evidence / raw shutdown evidence
+docs/experiments/archive_legacy_ladd_20260618/
+ladd/results/archive_legacy_ladd_20260618/
 comparison/results_shutdown_sync_20260614/
 remote_backups/                   # 服务器关机前原始同步包
 weights/                          # 少量主动保留 checkpoint
 ```
 
-过时文档本地 archive 当前路径：
-
-```text
-/Users/yudongfang/Desktop/光sar/LADD_public_local_archives/docs_obsolete_20260614/
-/Users/yudongfang/Desktop/光sar/LADD_public_local_archives/docs_experiments_top_obsolete_20260614/
-```
-
-其中 `docs_experiments_top_obsolete_20260614/` 收纳了被新项目地图和三条线状态页覆盖的旧计划/旧状态页，例如旧 experiment plan、旧 running status、旧 diagnostic workspace map。
+旧 LADD 归档入口见 [archive_legacy_ladd_20260618/README_CN.md](archive_legacy_ladd_20260618/README_CN.md)。当前 LADD 主线入口见 [LADD_MAINLINE_STANDARD_CN.md](LADD_MAINLINE_STANDARD_CN.md)。
 
 ## 使用规则
 
 - 查某个 run 是否重复：先用 `results_hash` 在 `duplicate_results_20260614.csv` 中查 alias。
-- 查可用于主表的候选：筛 `family in {baseline,ladd,comparison,cclkd_yolov5x}` 且 `validity=candidate_or_unknown`，再人工复核协议。
+- 查可用于 LADD 主表的候选：筛 `experiment_line=ladd_clean_a1b_mainline` 且 `role=mainline_candidate`，再人工复核 baseline/comparison 是否同协议。
 - 查作废或历史诊断：筛 `validity in {diagnostic,invalid_or_diagnostic}`。
 - 新同步回来的服务器数据先放 raw 层，再重新运行 registry 脚本。

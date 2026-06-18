@@ -106,7 +106,8 @@ RUNS = [
         "sar",
         0,
         64,
-        ROOT / "docs/experiments/current_progress_curves_20260617_0831/raw/90/m_sar_mosaic_baseline_running.csv",
+        ROOT
+        / "docs/experiments/archive_legacy_ladd_20260618/a1a2b_and_bstage/current_progress_curves_20260617_0831/raw/90/m_sar_mosaic_baseline_running.csv",
         "90 remote confirmed latest snapshot; 793 epochs",
     ),
     RunSpec(
@@ -115,7 +116,8 @@ RUNS = [
         "rgb",
         0,
         64,
-        ROOT / "docs/experiments/current_progress_curves_20260617_0831/raw/90/m_rgb_mosaic_baseline_stopped.csv",
+        ROOT
+        / "docs/experiments/archive_legacy_ladd_20260618/a1a2b_and_bstage/current_progress_curves_20260617_0831/raw/90/m_rgb_mosaic_baseline_stopped.csv",
         "90 remote confirmed stopped snapshot; 680 epochs",
     ),
 ]

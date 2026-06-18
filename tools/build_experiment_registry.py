@@ -123,8 +123,12 @@ def infer_method(path: Path, family: str) -> str:
 
 def infer_validity(path: Path, family: str) -> str:
     s = str(path).lower()
+    if "archive_legacy_ladd_20260618" in s:
+        return "diagnostic"
     if "invalid" in s or "nc5" in s or "protocol_gap/server_artifacts/dual4090" in s:
         return "invalid_or_diagnostic"
+    if family == "ladd" and "clean_a1b" in s:
+        return "candidate_or_unknown"
     if any(k in s for k in ("smoke", "probe", "snapshot", "partial", "old", "diagnostic", "diag_")):
         return "diagnostic"
     if family in {"ladd", "comparison", "baseline", "cclkd_yolov5x"}:
@@ -211,16 +215,26 @@ def infer_epochs_planned(run_dir: Path, meta: dict[str, str]) -> str:
 def infer_protocol_fields(path: Path, family: str, validity: str, meta: dict[str, str]) -> dict[str, str]:
     s = str(path).lower()
     run_name = path.parent.name.lower()
+    is_ladd_archive = family == "ladd" and "archive_legacy_ladd_20260618" in s
+    is_clean_a1b = family == "ladd" and "clean_a1b" in s
+    is_clean_probea = is_clean_a1b and ("dynprobe" in s or "dynamic_probe" in s or "probea" in s)
+    is_clean_dynamic = is_clean_a1b and ("dynamic" in s or "_dyn" in s) and not is_clean_probea
+    is_clean_static = is_clean_a1b and not is_clean_probea and not is_clean_dynamic
     mosaic = infer_mosaic_value(path, meta)
     epochs = infer_epochs_planned(path.parent, meta)
     epochs_i = parse_intish(epochs) if epochs else None
 
-    smoke_like = any(k in s for k in ("smoke", "probe", "dryrun", "partial")) or (
+    probe_like = "probe" in s and not is_clean_probea
+    smoke_like = any(k in s for k in ("smoke", "dryrun", "partial")) or probe_like or (
         epochs_i is not None and epochs_i <= 20
     )
     mosaic_f = parse_floatish(mosaic) if mosaic else None
 
-    if smoke_like:
+    if is_clean_a1b and (mosaic_f == 0.0 or "nomosaic" in s):
+        protocol_id = "nomosaic_clean_a1b"
+    elif is_clean_a1b and (mosaic_f == 1.0 or "mosaic100" in s or "mosaic_first100" in s):
+        protocol_id = "mosaic100_clean_a1b"
+    elif smoke_like:
         protocol_id = "smoke_probe_partial"
     elif ("formal_nomosaic" in s or "nomosaic" in s or mosaic_f == 0.0) and epochs_i is not None and epochs_i >= 700:
         protocol_id = "formal_nomosaic_800"
@@ -249,7 +263,14 @@ def infer_protocol_fields(path: Path, family: str, validity: str, meta: dict[str
     elif family == "comparison":
         experiment_line = "comparison_methods"
     elif family == "ladd":
-        experiment_line = "ladd_mainline_diagnosis"
+        if is_ladd_archive:
+            experiment_line = "ladd_legacy_archive"
+        elif is_clean_probea:
+            experiment_line = "ladd_clean_a1b_mainline"
+        elif is_clean_a1b:
+            experiment_line = "ladd_clean_a1b_ablation"
+        else:
+            experiment_line = "ladd_legacy_or_unreviewed"
     elif family == "baseline":
         experiment_line = "baseline_reference"
     else:
@@ -257,6 +278,9 @@ def infer_protocol_fields(path: Path, family: str, validity: str, meta: dict[str
 
     if validity == "invalid_or_diagnostic":
         role = "archive_or_invalid"
+        claim_usable = "no"
+    elif is_ladd_archive:
+        role = "diagnostic"
         claim_usable = "no"
     elif validity == "diagnostic" or smoke_like:
         role = "diagnostic"
@@ -268,8 +292,18 @@ def infer_protocol_fields(path: Path, family: str, validity: str, meta: dict[str
         role = "comparison"
         claim_usable = "yes" if protocol_id == "formal_nomosaic_800" else "partial"
     elif family == "ladd":
-        role = "mainline_candidate" if protocol_id == "formal_nomosaic_800" else "diagnostic"
-        claim_usable = "yes" if role == "mainline_candidate" else "partial"
+        if is_clean_probea and protocol_id == "mosaic100_clean_a1b":
+            role = "mainline_candidate"
+            claim_usable = "yes"
+        elif is_clean_static or is_clean_dynamic:
+            role = "ablation"
+            claim_usable = "partial"
+        elif is_clean_probea:
+            role = "robustness_or_appendix"
+            claim_usable = "partial"
+        else:
+            role = "diagnostic"
+            claim_usable = "no"
     elif family.startswith("cclkd"):
         role = "cclkd_reproduction"
         claim_usable = "partial"
@@ -445,9 +479,42 @@ def write_csv(path: Path, rows: list[dict[str, str]]) -> None:
         return
     fieldnames = list(rows[0].keys())
     with path.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer = csv.DictWriter(f, fieldnames=fieldnames, lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
+
+
+def build_protocol_summary(records: list[dict[str, str]]) -> list[dict[str, str]]:
+    groups: dict[tuple[str, str, str, str, str], list[dict[str, str]]] = defaultdict(list)
+    for record in records:
+        key = (
+            record["experiment_line"],
+            record["protocol_id"],
+            record["schedule_class"],
+            record["role"],
+            record["claim_usable"],
+        )
+        groups[key].append(record)
+
+    def format_counter(counter: Counter[str]) -> str:
+        return ";".join(f"{key}:{value}" for key, value in counter.most_common())
+
+    rows: list[dict[str, str]] = []
+    for (line, protocol, schedule, role, claim_usable), group in sorted(groups.items()):
+        rows.append(
+            {
+                "experiment_line": line,
+                "protocol_id": protocol,
+                "schedule_class": schedule,
+                "role": role,
+                "claim_usable": claim_usable,
+                "num_runs": str(len(group)),
+                "families": format_counter(Counter(record["family"] for record in group)),
+                "methods": format_counter(Counter(record["method"] for record in group)),
+                "servers": format_counter(Counter(record["source_server"] for record in group)),
+            }
+        )
+    return rows
 
 
 def main() -> None:
@@ -461,6 +528,7 @@ def main() -> None:
     records, duplicates, summary = build_registry(root)
     write_csv(out_dir / "experiment_registry_20260614.csv", records)
     write_csv(out_dir / "duplicate_results_20260614.csv", duplicates)
+    write_csv(out_dir / "protocol_summary_20260614.csv", build_protocol_summary(records))
     (out_dir / "experiment_registry_summary_20260614.json").write_text(
         json.dumps(summary, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
