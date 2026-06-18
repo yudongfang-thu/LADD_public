@@ -47,6 +47,29 @@ weights and generated runs remain untracked.
 - LADD mainline is `LADD Probe-A / LADD-clean A1B`: `clean_a1b_dynprobe`, `A1 -> B`, SAR-only inference, no A2.
 - Controlled comparisons are FGD-style, LD, CMDistill-style, HalluciDet-YOLO adaptation, and optional CCLKD online comparison. CCLKD paper-aligned reproduction lives separately in `cclkd_reproduction/`; frozen-teacher CCLKD loss components are not sufficient for official CCLKD reporting.
 
+## Paper-Facing Entry Points
+
+Read first:
+
+1. [docs/paper/PAPER_PROTOCOL_CN.md](docs/paper/PAPER_PROTOCOL_CN.md)
+2. [docs/experiments/LADD_MAINLINE_STANDARD_CN.md](docs/experiments/LADD_MAINLINE_STANDARD_CN.md)
+3. [docs/ladd_clean_a1b_method_definition.md](docs/ladd_clean_a1b_method_definition.md)
+4. [docs/experiments/PROJECT_EXPERIMENT_MAP_20260614_CN.md](docs/experiments/PROJECT_EXPERIMENT_MAP_20260614_CN.md)
+
+Run paper experiments only through:
+
+- [scripts/paper/run_paper_baseline.sh](scripts/paper/run_paper_baseline.sh)
+- [scripts/paper/run_paper_ladd_probea.sh](scripts/paper/run_paper_ladd_probea.sh)
+- [scripts/paper/run_paper_comparison_kd.sh](scripts/paper/run_paper_comparison_kd.sh)
+
+Curate and validate paper table rows through:
+
+- [tools/paper_collect_results.py](tools/paper_collect_results.py)
+- [tools/paper_validate_main_table.py](tools/paper_validate_main_table.py)
+- [paper_results/](paper_results/)
+
+Raw historical run directories and legacy result summaries are not paper-table sources unless they pass paper validation.
+
 ## Privacy / Security
 
 This package intentionally excludes SSH passwords, private keys, full connection commands, datasets, checkpoint weights, raw run directories, and server logs.

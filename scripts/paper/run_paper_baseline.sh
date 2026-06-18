@@ -30,6 +30,10 @@ paper_require_seed "$SEED"
 [[ -n "$GPU_ID" ]] || paper_die "Missing gpu_id."
 paper_check_strict_git
 
+if [[ -n "${PROTOCOL:-}" && "$PROTOCOL" != "mosaic100" && "$PROTOCOL" != "mosaic_first100_close700" ]]; then
+  paper_die "Paper baseline wrapper requires PROTOCOL=mosaic100; got ${PROTOCOL}."
+fi
+
 BATCH_SIZE="$(paper_batch_for_size "$SIZE")"
 DATA_CFG="$PAPER_SAR_DATA_CFG"
 if [[ "$MODALITY" == "rgb" ]]; then
@@ -45,6 +49,8 @@ META_PATH="${LOG_DIR}/paper_run_meta.env"
 
 cmd=(
   env
+  "PAPER_RUN=1"
+  "PAPER_PROTOCOL_ID=${PAPER_PROTOCOL_ID}"
   "PROTOCOL=mosaic100"
   "DATA_CFG=${DATA_CFG}"
   "PROJECT=${PROJECT_DIR}"

@@ -13,7 +13,7 @@ formal OGSOD HBB protocol:
   teacher input = paired RGB
   student input = SAR
   inference/eval = SAR-only student
-  data/augmentation = formal no-mosaic comparison settings
+  data/augmentation = selected comparison protocol; default is historical no-mosaic
   epochs default = 800; convergence is judged by best checkpoint, not train length.
 
 This is NOT the 400ep paper reproduction launcher. Use
@@ -58,10 +58,9 @@ if [[ -d /root/miniconda3/bin ]]; then
 fi
 
 PYTHON="${PYTHON:-python3}"
-BASE_ROOT="runs_public/ogsod/hbb/formal_nomosaic_20260528"
 PRETRAIN="yolo11${SIZE}.pt"
-SAR_DATA="configs/datasets/ogsod_hbb_sar.yaml"
-RGB_DATA="configs/datasets/ogsod_hbb_rgb.yaml"
+SAR_DATA="${DATA_CFG:-configs/datasets/ogsod_hbb_sar.yaml}"
+RGB_DATA="${TEACHER_DATA_CFG:-configs/datasets/ogsod_hbb_rgb.yaml}"
 EPOCHS="${EPOCHS:-800}"
 case "$SIZE" in
   n|s) DEFAULT_BATCH=64 ;;
@@ -82,6 +81,33 @@ if [[ "$CCLKD_FORMULATION" != "adapted" ]]; then
   FORMULATION_SUFFIX="_${CCLKD_FORMULATION}"
 fi
 
+PROTOCOL="${PROTOCOL:-nomosaic}"
+case "$PROTOCOL" in
+  nomosaic|formal_nomosaic)
+    PROTOCOL_KEY="nomosaic"
+    MOSAIC_VALUE="0.0"
+    CLOSE_MOSAIC_VALUE="0"
+    BASE_ROOT="runs_public/ogsod/hbb/formal_nomosaic_20260528"
+    LOG_ROOT="logs/formal_nomosaic_20260528"
+    ;;
+  mosaic100|mosaic_first100_close700)
+    PROTOCOL_KEY="mosaic100"
+    MOSAIC_VALUE="1.0"
+    CLOSE_MOSAIC_VALUE="700"
+    BASE_ROOT="runs_public/ogsod/hbb/baseline_controls/mosaic_baselines_20260615"
+    LOG_ROOT="logs/baseline_controls/mosaic_baselines_20260615"
+    ;;
+  *)
+    echo "Unknown PROTOCOL=${PROTOCOL}. Use nomosaic or mosaic100." >&2
+    exit 1
+    ;;
+esac
+
+if [[ "${PAPER_RUN:-0}" == "1" && "$PROTOCOL_KEY" != "mosaic100" ]]; then
+  echo "PAPER_RUN=1 requires CCLKD online comparison to use mosaic100." >&2
+  exit 2
+fi
+
 if [[ "${DRY_RUN:-0}" != "1" && ! -f "$PRETRAIN" ]]; then
   echo "Missing YOLO pretrain checkpoint: $PRETRAIN" >&2
   exit 1
@@ -95,9 +121,9 @@ if [[ "${DRY_RUN:-0}" != "1" && ! -f "$RGB_DATA" ]]; then
   exit 1
 fi
 
-RUN_TAG="formal_nomosaic_yolo11${SIZE}_cclkd_online_from_yolo${FORMULATION_SUFFIX}_s${SEED}${RUN_TAG_SUFFIX:-}"
-PROJECT_DIR="${BASE_ROOT}/comparisons/online_cclkd/yolo11${SIZE}/cclkd"
-LOG_DIR="logs/formal_nomosaic_20260528/comparisons/online_cclkd"
+RUN_TAG="${RUN_TAG:-${PROTOCOL_KEY}_yolo11${SIZE}_cclkd_online_from_yolo${FORMULATION_SUFFIX}_s${SEED}${RUN_TAG_SUFFIX:-}}"
+PROJECT_DIR="${PROJECT_DIR:-${BASE_ROOT}/comparisons/${PROTOCOL_KEY}_online_cclkd/yolo11${SIZE}/cclkd}"
+LOG_DIR="${LOG_DIR:-${LOG_ROOT}/comparisons/${PROTOCOL_KEY}_online_cclkd}"
 OUTER_LOG="${LOG_DIR}/${RUN_TAG}_gpu${GPU_ID}.outer.log"
 PID_PATH="${LOG_DIR}/${RUN_TAG}_gpu${GPU_ID}.pid"
 RUN_NAME="online_cclkd_hbb_ogsod11${SIZE}_from_yolo_${RUN_TAG}_e${EPOCHS}_b${BATCH_SIZE}_s${SEED}_gpu${GPU_ID}"
@@ -134,10 +160,10 @@ cmd=(
   --lr0 "${LR0:-0.01}"
   --lrf "${LRF:-0.01}"
   --cos-lr
-  --mosaic 0.0
+  --mosaic "$MOSAIC_VALUE"
   --mixup 0.0
   --cutmix 0.0
-  --close-mosaic 0
+  --close-mosaic "$CLOSE_MOSAIC_VALUE"
   --degrees 0.0
   --perspective 0.0
   --translate 0.1

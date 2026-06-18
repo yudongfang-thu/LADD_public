@@ -34,18 +34,36 @@ paper_check_strict_git
 paper_require_file "$PAPER_SAR_DATA_CFG" "SAR paper dataset YAML"
 paper_require_file "$PAPER_RGB_DATA_CFG" "RGB paper dataset YAML"
 
+if [[ -n "${PROTOCOL:-}" && "$PROTOCOL" != "mosaic100" && "$PROTOCOL" != "mosaic_first100_close700" ]]; then
+  paper_die "Paper comparison wrapper requires PROTOCOL=mosaic100; got ${PROTOCOL}."
+fi
+INIT_TYPE="${INIT_TYPE:-transferred_kd}"
+if [[ "$INIT_TYPE" != "transferred_kd" && "$INIT_TYPE" != "from_yolo_pretrain" ]]; then
+  paper_die "INIT_TYPE must be transferred_kd or from_yolo_pretrain; got ${INIT_TYPE}."
+fi
+
 if [[ "$METHOD" == "cmdistill" && "${KD_CALIBRATION_MODE:-affine}" != "affine" ]]; then
   paper_die "CMDistill paper gate requires KD_CALIBRATION_MODE=affine."
 fi
 
 BATCH_SIZE="$(paper_batch_for_size "$SIZE")"
-SAR_BASELINE="${SAR_BASELINE:-$(paper_find_baseline sar "$SIZE" "$SEED" || true)}"
 RGB_TEACHER="${RGB_TEACHER:-$(paper_find_baseline rgb "$SIZE" "$SEED" || true)}"
+if [[ "$INIT_TYPE" == "transferred_kd" ]]; then
+  SAR_BASELINE="${SAR_BASELINE:-$(paper_find_baseline sar "$SIZE" "$SEED" || true)}"
+else
+  SAR_BASELINE="${MODEL:-yolo11${SIZE}.pt}"
+fi
 if [[ "${DRY_RUN:-0}" == "1" ]]; then
-  SAR_BASELINE="${SAR_BASELINE:-<paper_sar_yolo11${SIZE}_seed${SEED}_best.pt>}"
+  if [[ "$INIT_TYPE" == "transferred_kd" ]]; then
+    SAR_BASELINE="${SAR_BASELINE:-<paper_sar_yolo11${SIZE}_seed${SEED}_best.pt>}"
+  fi
   RGB_TEACHER="${RGB_TEACHER:-<paper_rgb_yolo11${SIZE}_seed${SEED}_best.pt>}"
 else
-  paper_require_file "$SAR_BASELINE" "paper SAR baseline checkpoint"
+  if [[ "$INIT_TYPE" == "transferred_kd" ]]; then
+    paper_require_file "$SAR_BASELINE" "paper SAR baseline checkpoint"
+  else
+    paper_require_file "$SAR_BASELINE" "YOLO student pretrain checkpoint"
+  fi
   paper_require_file "$RGB_TEACHER" "paper RGB teacher checkpoint"
 fi
 
@@ -69,6 +87,8 @@ META_PATH="${LOG_DIR}/paper_run_meta.env"
 cmd=(
   env
   "PAPER_RUN=1"
+  "PAPER_PROTOCOL_ID=${PAPER_PROTOCOL_ID}"
+  "PROTOCOL=mosaic100"
   "MODEL=${SAR_BASELINE}"
   "SAR_BASELINE=${SAR_BASELINE}"
   "RGB_TEACHER=${RGB_TEACHER}"
@@ -150,6 +170,7 @@ cmd+=(bash ladd/code_versions/current_hbb/scripts/ogsod_public/run_ladd_phase.sh
 paper_write_meta_common "$META_PATH" "$METHOD" "$METHOD_LABEL" "$SIZE" "$SEED" "$GPU_ID" "$BATCH_SIZE" "$RUN_TAG" "$PROJECT_DIR" "$RUN_DIR" "$(paper_command_text "${cmd[@]}")"
 {
   printf 'phase_chain=%q\n' "B-only"
+  printf 'init_type=%q\n' "$INIT_TYPE"
   printf 'sar_baseline=%q\n' "$SAR_BASELINE"
   printf 'rgb_teacher=%q\n' "$RGB_TEACHER"
   printf 'student_modality=%q\n' "SAR"

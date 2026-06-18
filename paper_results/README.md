@@ -4,16 +4,18 @@ This directory stores paper-facing canonical result CSVs. It is the only intende
 
 Rules:
 
-- OGSOD main-table rows must use `protocol=mosaic100`.
-- LADD main rows must use `method=ladd_probea`, `phase_chain=A1->B`, and `usable_for_main_table=yes`.
+- OGSOD main-table rows must use `protocol_id=ogsod_hbb_mosaic100_clean_a1b_probea_20260618`.
+- LADD main rows must use `method=ladd_probea`, `phase_chain=A1->B`, `ladd_mode=dynamic_probe`, `run_tag` containing `clean_a1b_dynprobe`, and `claim_usable=yes`.
 - Historical no-mosaic, A1-A2-B, BN-freeze, smoke, partial, close@100, 400ep, and diagnostic runs must be marked unusable for the main table.
+- Curated main-table CSVs must pass `tools/paper_validate_main_table.py`.
 - Checkpoints, TensorBoard events, W&B directories, datasets, and full raw run directories are not stored here.
 
 Files:
 
 | Path | Purpose |
 |---|---|
-| `schemas/paper_run_schema.csv` | Canonical field definition |
+| `main_table_schema.csv` | Canonical main-table field definition |
+| `README_CN.md` | Chinese paper-results gate |
 | `ogsod_mosaic100/baselines.csv` | Verified SAR/RGB paper baselines |
 | `ogsod_mosaic100/ladd_probea.csv` | Verified LADD Probe-A paper rows |
 | `ogsod_mosaic100/comparisons.csv` | Verified paper comparison rows |

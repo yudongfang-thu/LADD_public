@@ -1,6 +1,6 @@
 # LADD Public 精简仓库说明
 
-最后更新：2026-06-16 CST
+最后更新：2026-06-18 CST
 
 本文档说明当前公开仓库的范围。此前用于排查问题的大体量证据包已经移出当前
 public 分支；当前 public 分支只保留论文主线代码、协议文档、关键结果摘要和必要论文资料。
@@ -27,15 +27,15 @@ public 分支；当前 public 分支只保留论文主线代码、协议文档�
 | 私有服务器详细 IP/端口 | 不能公开；文档只保留 90/117/4090D 这种代号 |
 | 原始 run 目录、训练曲线图片、压缩日志、旧方法归档 | 已从 public 分支移除，避免仓库继续作为事故取证包膨胀；CCLKD 只保留小型 CSV / YAML / code 快照 |
 
-## 3. 公开排查重点
+## 3. 当前 paper-facing 状态
 
-1. LADD 的 B 阶段为什么在部分 seed/机器上出现后期塌缩，尤其是 BN running stats 是否被污染。
-2. A2 修复已经避免检测 loss 早期失控，但 B 阶段仍可能有长期退化，需要判断是否与 BN、EMA、batch 统计、teacher/student 输入分布或学习率日程有关。
-3. 4090D 上 YOLO11s LADD 当前明显低于 90 上 seed0 结果，需要复核协议/代码/数据增强差异。
-4. 双卡 4090 旧 smoke/formal partial runs 使用错误 `nc=5` yaml，已全部作废。
-5. FGD/LD 旧实验分别缺少 teacher attention、误用了分类 logits；当前应复核 2026-06-10 后的 FGD-YOLO/LD-YOLO adaptation。
-6. CMDistill 是非官方 paper-aligned adaptation，正式结果必须标注为 `CMDistill-style`。
-7. CCLKD 必须区分原文复现和 LADD formal online comparison；frozen-teacher loss 组件不能单独写作 CCLKD 复现。
+1. 当前主方法为 `LADD Probe-A / LADD-clean A1B`。
+2. 当前主表协议为 OGSOD HBB `mosaic100`，即 `mosaic=1.0, close_mosaic=700, epochs=800`。
+3. 主表只接受 `clean_a1b_dynprobe`、`LADD_A1B_MODE=dynamic_probe`、`A1 -> B`、no A2，并且需要同容量、同 seed、同 mosaic100 协议的 SAR/RGB baseline。
+4. 旧 A1-A2-B、no-mosaic、BN-freeze、short-B、loss-audit、repair、smoke、partial、snapshot 结果默认是 diagnostic/archive。
+5. CMDistill native VEDAI track 只用于 CMDistill-style 可信度或跨数据集实验，不是 OGSOD 主表输入。
+6. CCLKD 必须区分 paper reproduction、online controlled comparison 和 frozen-teacher loss component；frozen-teacher CCLKD loss component 不能作为正式 CCLKD 结果。
+7. 论文实验应通过 `scripts/paper/*` 启动，论文主表结果必须先进入 `paper_results/` canonical schema 并通过 `tools/paper_validate_main_table.py`。
 
 ## 4. 安全检查状态
 

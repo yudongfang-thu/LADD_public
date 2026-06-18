@@ -92,6 +92,11 @@ case "$PROTOCOL" in
     ;;
 esac
 
+if [[ "${PAPER_RUN:-0}" == "1" && "$PROTOCOL_KEY" != "mosaic100" ]]; then
+  echo "PAPER_RUN=1 requires PROTOCOL=mosaic100; got ${PROTOCOL}." >&2
+  exit 2
+fi
+
 MODEL="${MODEL:-yolo11${SIZE}.pt}"
 DATA="${DATA_CFG:-shared/configs/datasets_public/ogsod1_${MODALITY}_detect.yaml}"
 PROJECT="${PROJECT:-$PROJECT_DEFAULT}"
@@ -162,6 +167,10 @@ fi
 
 {
   printf 'RUN_NAME=%q\n' "$RUN_NAME"
+  printf 'PAPER_RUN=%q\n' "${PAPER_RUN:-0}"
+  printf 'PAPER_PROTOCOL_ID=%q\n' "${PAPER_PROTOCOL_ID:-}"
+  printf 'paper_protocol_id=%q\n' "${PAPER_PROTOCOL_ID:-}"
+  printf 'protocol_id=%q\n' "${PAPER_PROTOCOL_ID:-}"
   printf 'PROTOCOL=%q\n' "$PROTOCOL_KEY"
   printf 'MODALITY=%q\n' "$MODALITY"
   printf 'SIZE=%q\n' "$SIZE"

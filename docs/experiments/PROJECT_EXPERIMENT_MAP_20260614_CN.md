@@ -1,7 +1,7 @@
 # LADD 项目实验地图（2026-06-18）
 
 > PAPER-FACING NOTE
-> 论文主表入口已迁移到 `docs/paper/PAPER_PROTOCOL_CN.md`、`scripts/paper/` 和 `paper_results/`。本文用于解释仓库历史证据与归档结构，不替代 paper gate。
+> 论文主表入口已迁移到 `docs/paper/PAPER_PROTOCOL_CN.md`、`scripts/paper/` 和 `paper_results/`。本文用于解释仓库历史证据与归档结构，不替代 paper gate。论文实验不要直接调用 raw formal launcher；主表 CSV 必须通过 `tools/paper_validate_main_table.py`。
 
 本文是当前本地仓库的实验入口页。目的不是替代各实验报告，而是把已经混杂在本地的证据分成清晰的工作线，防止重复计数、误用旧结果，或者把诊断实验当成主线结论。
 
@@ -51,6 +51,7 @@ CMDistill pending 入口：
 ## 2. 统一使用规则
 
 1. 不要直接遍历全仓 `results.csv` 得出实验数量或主表数字；必须先查 registry 和分线 summary。
+1. 论文主表只接受 `paper_results/main_table_schema.csv` 兼容行，并通过 `tools/paper_validate_main_table.py`；raw launcher 输出不是主表来源。
 2. 每条结果进入当前结论前，必须至少能追到：`results.csv`、`args.yaml` 或命令、服务器来源、commit 或 manifest、是否含 diagnostics。
 3. 同一 run 的多个副本只保留一个 canonical 解释；副本通过 `duplicate_results_20260614.csv` 查。
 4. `smoke / probe / diag / snapshot / partial / old` 默认不是主线结果，除非文档显式说明它是某个诊断问题的证据。

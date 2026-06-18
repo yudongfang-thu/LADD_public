@@ -29,6 +29,10 @@ paper_check_strict_git
 paper_require_file "$PAPER_SAR_DATA_CFG" "SAR paper dataset YAML"
 paper_require_file "$PAPER_RGB_DATA_CFG" "RGB paper dataset YAML"
 
+if [[ -n "${LADD_A1B_MODE:-}" && "$LADD_A1B_MODE" != "dynamic_probe" && "$LADD_A1B_MODE" != "dyn_probe" && "$LADD_A1B_MODE" != "probe" ]]; then
+  paper_die "Paper LADD Probe-A wrapper requires LADD_A1B_MODE=dynamic_probe; got ${LADD_A1B_MODE}."
+fi
+
 BATCH_SIZE="$(paper_batch_for_size "$SIZE")"
 SAR_BASELINE="${SAR_BASELINE:-$(paper_find_baseline sar "$SIZE" "$SEED" || true)}"
 RGB_TEACHER="${RGB_TEACHER:-$(paper_find_baseline rgb "$SIZE" "$SEED" || true)}"
@@ -49,6 +53,7 @@ RUN_DIR="${PROJECT_DIR}/ladd_clean_a1b_dynprobe_ogsod11${SIZE}_${RUN_TAG}_b_e${P
 cmd=(
   env
   "PAPER_RUN=1"
+  "PAPER_PROTOCOL_ID=${PAPER_PROTOCOL_ID}"
   "LADD_A1B_MODE=dynamic_probe"
   "RANK_D_NEG_CAP=2.0"
   "SAR_BASELINE=${SAR_BASELINE}"

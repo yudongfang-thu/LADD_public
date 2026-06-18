@@ -247,6 +247,9 @@ fi
 
 write_meta() {
   {
+    printf 'paper_run=%q\n' "${PAPER_RUN:-0}"
+    printf 'paper_protocol_id=%q\n' "${PAPER_PROTOCOL_ID:-}"
+    printf 'protocol_id=%q\n' "${PAPER_PROTOCOL_ID:-}"
     printf 'run_tag=%q\n' "$RUN_TAG"
     printf 'ladd_a1b_mode=%q\n' "$LADD_A1B_MODE"
     printf 'size=%q\n' "$SIZE"
@@ -413,6 +416,8 @@ run_phase() {
 write_meta
 
 echo "[$(date '+%F %T')] LADD-clean/A1B mode=${LADD_A1B_MODE} yolo11${SIZE} seed=${SEED} gpu=${GPU_ID}"
+echo "paper_run=${PAPER_RUN:-0}"
+echo "paper_protocol_id=${PAPER_PROTOCOL_ID:-}"
 echo "sar_baseline=${SAR_BASELINE:-<not-found>}"
 echo "rgb_teacher=${RGB_TEACHER:-<not-found>}"
 echo "meta=${META_PATH}"

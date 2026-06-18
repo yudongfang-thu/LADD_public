@@ -7,6 +7,8 @@
 ## 0. 使用规则
 
 - 写论文主表或报告时，先按本文档确定方法名和有效入口。
+- 论文实验应使用 `scripts/paper/*`，不要直接调用 raw formal launcher；raw launcher 仅作为底层兼容入口。
+- Paper main table 必须通过 `paper_results/main_table_schema.csv` 和 `tools/paper_validate_main_table.py`。
 - `official reproduction`、`paper-aligned reimplementation`、`style/adaptation` 不混用。
 - 历史 run 只有在满足本文档入口和协议时才可进入当前主表；旧诊断结果必须标注为 archived diagnostic。
 - CCLKD 原文复现和 LADD 统一协议受控对比是两条线，不能混用结果。
@@ -42,6 +44,8 @@ batch = n/s:64, m/l:32, x:16
 ```
 
 Baseline、LADD 和对比方法必须使用同容量、同 seed、同增强协议。历史 no-mosaic、close@100、400ep 结果只能作为历史或附录，不能混入 LADD Probe-A mosaic100 主表。
+
+Paper-facing 启动入口为 `scripts/paper/run_paper_baseline.sh`、`scripts/paper/run_paper_ladd_probea.sh`、`scripts/paper/run_paper_comparison_kd.sh`。底层 `baseline/`、`ladd/`、`comparison/code/` launcher 保留 no-mosaic 兼容模式，但 `PAPER_RUN=1` 会强制 mosaic100。
 
 ## 2. Baseline
 
@@ -138,6 +142,8 @@ ALPHA_S_REC=0
 sep/aux/debug loss 参数已从当前 HBB trainer 删除，不再需要也不能通过配置打开。
 
 因此这些方法不应被描述为“LADD 分解方法的变体”，而应描述为同协议下的 detector KD baselines。
+
+FGD/LD/CMDistill-style 的 raw launcher 支持 no-mosaic 和 mosaic100；论文主表只能使用 paper wrapper 强制的 mosaic100。`run_paper_comparison_kd.sh` 默认使用 same-seed SAR baseline 初始化的 transferred KD 设置；from-YOLO pretrain 结果必须单独标注 `init_type=from_yolo_pretrain`，不能和 transferred KD 混进同一 comparison 表。
 
 ### 4.3 CCLKD 的两个入口不能混用
 

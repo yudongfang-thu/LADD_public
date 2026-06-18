@@ -3,6 +3,7 @@
 PAPER_COMMON_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PAPER_REPO_ROOT="$(cd "${PAPER_COMMON_DIR}/../.." && pwd)"
 
+PAPER_PROTOCOL_ID="ogsod_hbb_mosaic100_clean_a1b_probea_20260618"
 PAPER_PROTOCOL="mosaic100"
 PAPER_DATASET="OGSOD-1.0"
 PAPER_TASK="hbb"
@@ -52,7 +53,7 @@ paper_require_size() {
 paper_require_seed() {
   case "${1:-}" in
     0|42|123) ;;
-    *) paper_die "Paper seeds are restricted to 0, 42, 123; got: ${1:-<empty>}" ;;
+    *) [[ "${ALLOW_NONPAPER_SEED:-0}" == "1" ]] || paper_die "Paper seeds are restricted to 0, 42, 123; got: ${1:-<empty>}" ;;
   esac
 }
 
@@ -147,7 +148,10 @@ paper_write_meta_common() {
   mkdir -p "$(dirname "$path")"
   {
     printf 'paper_run=1\n'
+    printf 'paper_protocol_id=%q\n' "$PAPER_PROTOCOL_ID"
     printf 'paper_protocol=%q\n' "$PAPER_PROTOCOL"
+    printf 'protocol_id=%q\n' "$PAPER_PROTOCOL_ID"
+    printf 'protocol=%q\n' "$PAPER_PROTOCOL"
     printf 'method=%q\n' "$method"
     printf 'method_label=%q\n' "$method_label"
     printf 'dataset=%q\n' "$PAPER_DATASET"
