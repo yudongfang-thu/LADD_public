@@ -1,6 +1,6 @@
 # HalluciDet-YOLO11 Adaptation Guide
 
-**Date**: 2026-06-13
+**Date**: 2026-06-18
 
 This directory is the only active HalluciDet entry. The old
 `--comparison-kd-profile hallucidet_style` feature/response/margin baseline has been
@@ -12,7 +12,8 @@ Current standalone protocol:
 
 ```text
 SAR image
-  -> hallucination network
+  -> replicate3 input adapter
+  -> official-style U-Net hallucination network
   -> 3-channel hallucinated representation
   -> frozen RGB YOLO11 detector
   -> detection loss / detection result
@@ -26,6 +27,8 @@ to the hallucinated representation and then to the hallucination network.
 ## What This Is
 
 - Detection-loss-only HalluciDet-YOLO11 adaptation.
+- Fixed active implementation: `segmentation_models_pytorch.Unet(resnet34, imagenet)`,
+  `--hallucination-input-mode replicate3`.
 - Uses YOLO box/cls/dfl loss components as `cls + lambda_reg * (box + dfl)`.
 - Uses SAR labels and SAR images from the YOLO dataset yaml.
 - Uses the frozen RGB YOLO detector as privileged-modality supervision.
@@ -40,6 +43,7 @@ to the hallucinated representation and then to the hallucination network.
 - No perceptual loss.
 - No image-level RGB target matching objective.
 - Not the removed `hallucidet_style` feature/response/margin KD baseline.
+- Not the archived custom U-Net standalone implementation.
 
 ## Difference From Removed `hallucidet_style`
 
@@ -79,8 +83,8 @@ Train, validation, and model forward use the same policy:
 - otherwise keep the tensor as already normalized;
 - no per-batch min-max normalization.
 
-The hallucination network outputs `Tanh` in `[-1, 1]`, then maps to `[0, 1]` before
-feeding the frozen YOLO detector.
+The locked official-style U-Net uses a sigmoid output and directly produces `[0, 1]`
+images for the frozen YOLO detector.
 
 ## Smoke Checks
 
@@ -88,7 +92,6 @@ Local syntax and lightweight gradient checks:
 
 ```bash
 python3 -m py_compile comparison/hallucidet/*.py
-python3 comparison/hallucidet/hallucidet_model.py
 python3 comparison/hallucidet/test_gradient_smoke.py --device cpu
 python3 comparison/hallucidet/test_gradient_smoke.py --device cpu --resume-smoke
 ```
@@ -110,6 +113,7 @@ python3 comparison/hallucidet/train_hallucidet.py \
   --teacher-data shared/configs/datasets_public/ogsod1_rgb_detect.yaml \
   --teacher-weights <rgb_teacher_best.pt> \
   --imgsz 256 \
+  --hallucination-input-mode replicate3 \
   --epochs 1 \
   --batch 8 \
   --device 0 \
@@ -121,6 +125,7 @@ python3 comparison/hallucidet/train_hallucidet.py \
   --teacher-data shared/configs/datasets_public/ogsod1_rgb_detect.yaml \
   --teacher-weights <rgb_teacher_best.pt> \
   --imgsz 256 \
+  --hallucination-input-mode replicate3 \
   --epochs 2 \
   --batch 8 \
   --device 0 \

@@ -6,8 +6,9 @@ usage() {
 Usage:
   bash scripts/paper/run_paper_hallucidet.sh <n|s|m> <seed> <gpu_id>
 
-Paper-facing HalluciDet-YOLO adaptation wrapper. This is not an official
-HalluciDet reproduction and not the removed hallucidet_style KD profile.
+Paper-facing HalluciDet-YOLO official-style U-Net adaptation wrapper. This is
+not an official HalluciDet reproduction and not the removed hallucidet_style KD
+profile.
 
 The current standalone trainer lacks close_mosaic support, so real launches
 are P1-gated. Set ALLOW_P1_HALLUCIDET=1 to launch intentionally; dry-run is
@@ -43,7 +44,7 @@ else
   paper_require_file "$RGB_TEACHER" "paper RGB teacher checkpoint"
 fi
 
-RUN_TAG="paper_ogsod_hbb_mosaic100_hallucidet_yolo11${SIZE}_e${PAPER_EPOCHS}_b${BATCH_SIZE}_s${SEED}${RUN_TAG_SUFFIX:-}"
+RUN_TAG="paper_ogsod_hbb_mosaic100_hallucidet_official_unet_yolo11${SIZE}_e${PAPER_EPOCHS}_b${BATCH_SIZE}_s${SEED}${RUN_TAG_SUFFIX:-}"
 PROJECT_DIR="${PAPER_RUN_ROOT}/comparisons/hallucidet_yolo/yolo11${SIZE}/seed${SEED}"
 LOG_DIR="${PAPER_LOG_ROOT}/comparisons/hallucidet_yolo/yolo11${SIZE}/seed${SEED}/${RUN_TAG}"
 RUN_DIR="${PROJECT_DIR}/${RUN_TAG}"
@@ -66,12 +67,20 @@ cmd=(
   --seed "$SEED"
   --deterministic
   --mosaic "$PAPER_MOSAIC"
+  --hallucination-input-mode replicate3
+  --encoder-name resnet34
+  --encoder-weights imagenet
   --save-period "$PAPER_SAVE_PERIOD"
 )
 
-paper_write_meta_common "$META_PATH" "hallucidet_yolo" "HalluciDet-YOLO adaptation" "$SIZE" "$SEED" "$GPU_ID" "$BATCH_SIZE" "$RUN_TAG" "$PROJECT_DIR" "$RUN_DIR" "$(paper_command_text "${cmd[@]}")"
+paper_write_meta_common "$META_PATH" "hallucidet_yolo" "HalluciDet-YOLO official-style U-Net adaptation" "$SIZE" "$SEED" "$GPU_ID" "$BATCH_SIZE" "$RUN_TAG" "$PROJECT_DIR" "$RUN_DIR" "$(paper_command_text "${cmd[@]}")"
 {
   printf 'phase_chain=%q\n' "standalone"
+  printf 'comparison_impl_version=%q\n' "locked_hallucidet_yolo_official_unet_b64_20260618"
+  printf 'hallucination_arch=%q\n' "official_unet"
+  printf 'hallucination_input_mode=%q\n' "replicate3"
+  printf 'encoder_name=%q\n' "resnet34"
+  printf 'encoder_weights=%q\n' "imagenet"
   printf 'rgb_teacher=%q\n' "$RGB_TEACHER"
   printf 'student_modality=%q\n' "SAR"
   printf 'teacher_modality=%q\n' "RGB"
@@ -79,7 +88,7 @@ paper_write_meta_common "$META_PATH" "hallucidet_yolo" "HalluciDet-YOLO adaptati
   printf 'protocol_gate_status=%q\n' "p1_not_main_table_until_close_mosaic_supported"
 } >> "$META_PATH"
 
-echo "[$(date '+%F %T')] Prepared paper HalluciDet-YOLO adaptation yolo11${SIZE} seed=${SEED}"
+echo "[$(date '+%F %T')] Prepared paper HalluciDet-YOLO official-style U-Net yolo11${SIZE} seed=${SEED}"
 echo "meta=${META_PATH}"
 paper_print_command "${cmd[@]}"
 

@@ -113,10 +113,10 @@ Probe-A / clean A1B 的完整定义、loss 开关和推荐实验协议见 `docs/
 
 | 方法名应写作 | 有效入口 | 当前实现定义 | 必须注明的边界 |
 |---|---|---|---|
-| FGD-style / FGD-YOLO adaptation | `comparison/code/launch_formal_from_yolo_kd_job.sh fgd ...` 或 `launch_formal_transfer_kd_job.sh fgd ...` | `--comparison-kd-profile fgd`，fg/bg feature loss + spatial/channel attention mask；GT-box mask 默认启用 | 非 MMDetection 官方逐行复现；official trainable global relation 未实现，legacy batch relation 默认关闭 |
-| LD | `comparison/code/launch_formal_from_yolo_kd_job.sh ld ...` 或 `launch_formal_transfer_kd_job.sh ld ...` | `--comparison-kd-profile ld`，raw YOLO DFL logits 的 foreground/main LD + teacher-quality VLR-style candidate LD | YOLO11/DFL 适配；shape 异常 hard fail |
+| FGD-style / FGD-YOLO adaptation | `comparison/code/launch_formal_from_yolo_kd_job.sh fgd ...` 或 `launch_formal_transfer_kd_job.sh fgd ...` | `locked_fgd_yolo_gtbox_attention_20260618`：GT-box fg/bg feature loss + spatial/channel attention mask；无 legacy relation/normalization sweep | 非 MMDetection 官方逐行复现；official trainable global relation 未实现 |
+| LD | `comparison/code/launch_formal_from_yolo_kd_job.sh ld ...` 或 `launch_formal_transfer_kd_job.sh ld ...` | `locked_ld_yolo_dfl_vlr_20260618`：raw YOLO DFL logits 的 foreground/main LD + teacher-quality VLR-style candidate LD | YOLO11/DFL 适配；shape 异常 hard fail |
 | CMDistill-style / paper-aligned adaptation | `comparison/code/launch_formal_from_yolo_kd_job.sh cmdistill ...` 或 `launch_formal_transfer_kd_job.sh cmdistill ...` | `--comparison-kd-profile cmdistill`，PCCFD shallow/deep + deepest SLRD + full-output IBCLD | 非官方复现；未找到官方代码；正式 run 需 `KD_CALIBRATION_MODE=affine` |
-| HalluciDet-YOLO adaptation | `python comparison/hallucidet/train_hallucidet.py ...` | SAR image -> hallucination network -> 3-channel representation -> frozen RGB YOLO detector -> detection loss | standalone 方法；不是 `--comparison-kd-profile`；不是 official Faster R-CNN/FCOS/RetinaNet 复现 |
+| HalluciDet-YOLO adaptation | `python comparison/hallucidet/train_hallucidet.py ...` | `locked_hallucidet_yolo_official_unet_b64_20260618`：SAR -> replicate3 -> official-style U-Net(resnet34 ImageNet) -> frozen RGB YOLO detector -> detection loss | standalone 方法；不是 `--comparison-kd-profile`；不是 official Faster R-CNN/FCOS/RetinaNet 复现 |
 | CCLKD online comparison | `comparison/code/launch_formal_online_cclkd_job.sh <n|s> <seed> <gpu>` | online teacher-student：RGB teacher 与 SAR student 同步训练，student det + teacher det + CCLKD loss | 受控对比入口，不是原文 400ep 协议；只能与 `cclkd_reproduction/` 的原文复现结果分开使用 |
 | CCLKD paper-protocol reproduction | `cclkd_reproduction/code/launch_cclkd_paper_repro_job.sh` 和 `cclkd_reproduction/yolov5_sanity/` | 尽量对齐 CCLKD 原文协议和 online 方法定义 | 只用于回答“能否复现 CCLKD 原文”，不直接替代 LADD formal 主表 |
 
@@ -152,6 +152,9 @@ sep/aux/debug loss 参数已从当前 HBB trainer 删除，不再需要也不能
 |---|---|
 | `--comparison-kd-profile hallucidet_style` | 已移除；旧结果只能作为历史 diagnostic |
 | `hallucidet`/`HalluciDet-style` feature/response/margin KD | 不再作为当前 HalluciDet 方法发布 |
+| HalluciDet custom U-Net standalone | 已归档；当前 active 代码只保留 official-style U-Net |
+| FGD normalization/assigner-mask/batch-relation sweep | 已删除 active 可执行入口；当前 FGD 实现锁定 |
+| LD foreground-only/topk/VLR-weight sweep | 已从 active CLI/env/loss 配置面移除；当前 LD 实现锁定 |
 | 2026-06-10 前 FGD/LD 结果 | 修复前语义不同，不能代表当前实现 |
 | frozen-teacher CCLKD formal run | 不符合 CCLKD 原文 online 定义，不能写作 CCLKD official/paper reproduction |
 | 双卡 4090 上 `nc=5` yaml 的 CCLKD/HalluciDet 等结果 | HBB OGSOD 应为 `nc=3`，相关 run 作废 |

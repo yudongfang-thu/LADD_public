@@ -124,26 +124,12 @@ cmd=(
 case "$METHOD" in
   fgd)
     cmd+=(
-      "FGD_ALPHA=${FGD_ALPHA:-0.0001}"
-      "FGD_BETA=${FGD_BETA:-0.00005}"
-      "FGD_GAMMA=${FGD_GAMMA:-0.001}"
-      "FGD_LAMBDA=${FGD_LAMBDA:-${FGD_RELATION_WEIGHT:-0.0}}"
-      "FGD_NORMALIZATION_MODE=${FGD_NORMALIZATION_MODE:-original}"
-      "FGD_TEMPERATURE=${FGD_TEMPERATURE:-0.5}"
-      "FGD_MASK_MODE=${FGD_MASK_MODE:-gt_box}"
-      "FGD_BG_NORM=${FGD_BG_NORM:-1}"
+      "COMPARISON_IMPL_VERSION=locked_fgd_yolo_gtbox_attention_20260618"
     )
     ;;
   ld)
     cmd+=(
-      "LD_TEMPERATURE=${LD_TEMPERATURE:-10.0}"
-      "LD_USE_VLR=${LD_USE_VLR:-1}"
-      "LD_QUALITY_POWER=${LD_QUALITY_POWER:-1.0}"
-      "LD_MIN_VLR_WEIGHT=${LD_MIN_VLR_WEIGHT:-0.0}"
-      "LD_VLR_TOPK=${LD_VLR_TOPK:-0}"
-      "LD_VLR_WEIGHT=${LD_VLR_WEIGHT:-0.25}"
-      "LD_MAIN_WEIGHT=${LD_MAIN_WEIGHT:-0.25}"
-      "LD_ALLOW_EMPTY_VLR=${LD_ALLOW_EMPTY_VLR:-1}"
+      "COMPARISON_IMPL_VERSION=locked_ld_yolo_dfl_vlr_20260618"
     )
     ;;
   cmdistill)
@@ -173,6 +159,21 @@ paper_write_meta_common "$META_PATH" "$METHOD" "$METHOD_LABEL" "$SIZE" "$SEED" "
   printf 'student_branch_mode=%q\n' "raw"
   printf 'teacher_feature_mode=%q\n' "raw"
   printf 'kd_calibration_mode=%q\n' "$([[ "$METHOD" == "cmdistill" ]] && printf 'affine' || printf 'none')"
+  if [[ "$METHOD" == "fgd" ]]; then
+    printf 'comparison_impl_version=%q\n' "locked_fgd_yolo_gtbox_attention_20260618"
+    printf 'fgd_alpha=%q\n' "0.0001"
+    printf 'fgd_beta=%q\n' "0.00005"
+    printf 'fgd_gamma=%q\n' "0.001"
+    printf 'fgd_temperature=%q\n' "0.5"
+    printf 'fgd_mask_mode=%q\n' "gt_box"
+    printf 'fgd_relation=%q\n' "removed"
+  elif [[ "$METHOD" == "ld" ]]; then
+    printf 'comparison_impl_version=%q\n' "locked_ld_yolo_dfl_vlr_20260618"
+    printf 'ld_temperature=%q\n' "10.0"
+    printf 'ld_main_weight=%q\n' "0.25"
+    printf 'ld_vlr_weight=%q\n' "0.25"
+    printf 'ld_vlr_candidate=%q\n' "teacher_confidence_x_teacher_box_gt_iou"
+  fi
 } >> "$META_PATH"
 
 echo "[$(date '+%F %T')] Prepared paper comparison ${METHOD} yolo11${SIZE} seed=${SEED}"

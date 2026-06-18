@@ -36,4 +36,7 @@ Validation:
 bash scripts/paper/validate_engineering_cleanup.sh
 ```
 
-HalluciDet is P1-gated because the current standalone trainer does not implement `close_mosaic=700`. CCLKD online is optional and must not be mixed with the separate paper-protocol reproduction line.
+FGD/LD/HalluciDet wrappers use the locked implementations in
+`comparison/FINAL_LOCKED_METHODS_CN.md`. HalluciDet is P1-gated because the
+current standalone trainer does not implement `close_mosaic=700`. CCLKD online
+is optional and must not be mixed with the separate paper-protocol reproduction line.

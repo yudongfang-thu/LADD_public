@@ -114,6 +114,14 @@ def _masked_l1_loss(x: torch.Tensor, y: torch.Tensor, mask: torch.Tensor | None 
 class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
     """LADD HBB loss surface: detector, reconstruction, reachability, taskL, and KD."""
 
+    FGD_ALPHA = 0.0001
+    FGD_BETA = 0.00005
+    FGD_GAMMA = 0.001
+    FGD_TEMPERATURE = 0.5
+    LD_TEMPERATURE = 10.0
+    LD_MAIN_WEIGHT = 0.25
+    LD_VLR_WEIGHT = 0.25
+
     def __init__(
         self,
         model,
@@ -148,22 +156,6 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         comparison_kd_profile: str = "none",
         profile_kd_weight: float = 1.0,
         profile_kd_replace_base: bool = False,
-        fgd_alpha: float = 0.0001,
-        fgd_beta: float = 0.00005,
-        fgd_gamma: float = 0.001,
-        fgd_lambda: float = 0.0,
-        fgd_normalization_mode: str = "original",
-        fgd_temperature: float = 0.5,
-        fgd_mask_mode: str = "gt_box",
-        fgd_bg_norm: bool = True,
-        ld_temperature: float = 10.0,
-        ld_use_vlr: bool = True,
-        ld_quality_power: float = 1.0,
-        ld_min_vlr_weight: float = 0.0,
-        ld_vlr_topk: int = 0,
-        ld_vlr_weight: float = 0.25,
-        ld_main_weight: float = 0.25,
-        ld_allow_empty_vlr: bool = True,
         cmdistill_feature_weight: float = 1.0,
         cmdistill_relation_weight: float = 1.0,
         cmdistill_logit_weight: float = 1.0,
@@ -186,22 +178,6 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         self.comparison_kd_profile = self._validate_comparison_kd_profile(comparison_kd_profile)
         self.profile_kd_weight = float(profile_kd_weight)
         self.profile_kd_replace_base = bool(profile_kd_replace_base)
-        self.fgd_alpha = float(fgd_alpha)
-        self.fgd_beta = float(fgd_beta)
-        self.fgd_gamma = float(fgd_gamma)
-        self.fgd_lambda = max(float(fgd_lambda), 0.0)
-        self.fgd_temperature = max(float(fgd_temperature), 1e-6)
-        self.fgd_mask_mode = self._validate_fgd_mask_mode(fgd_mask_mode)
-        self.fgd_bg_norm = bool(fgd_bg_norm)
-        self.fgd_normalization_mode = self._validate_fgd_normalization_mode(fgd_normalization_mode)
-        self.ld_temperature = max(float(ld_temperature), 1e-6)
-        self.ld_use_vlr = bool(ld_use_vlr)
-        self.ld_quality_power = max(float(ld_quality_power), 0.0)
-        self.ld_min_vlr_weight = max(float(ld_min_vlr_weight), 0.0)
-        self.ld_vlr_topk = max(int(ld_vlr_topk), 0)
-        self.ld_vlr_weight = max(float(ld_vlr_weight), 0.0)
-        self.ld_main_weight = max(float(ld_main_weight), 0.0)
-        self.ld_allow_empty_vlr = bool(ld_allow_empty_vlr)
         self._ld_warned_missing_teacher_scores = False
         self.cmdistill_feature_weight = max(float(cmdistill_feature_weight), 0.0)
         self.cmdistill_relation_weight = max(float(cmdistill_relation_weight), 0.0)
@@ -329,18 +305,6 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
                 "{'none', 'fgd', 'ld', 'cmdistill', 'cclkd'}, got "
                 f"{mode!r}."
             )
-        return mode
-
-    @staticmethod
-    def _validate_fgd_mask_mode(mode: str) -> str:
-        if mode not in {"gt_box", "assigner"}:
-            raise ValueError(f"fgd_mask_mode must be 'gt_box' or 'assigner', got {mode!r}.")
-        return mode
-
-    @staticmethod
-    def _validate_fgd_normalization_mode(mode: str) -> str:
-        if mode not in {"original", "channel_mean"}:
-            raise ValueError(f"fgd_normalization_mode must be 'original' or 'channel_mean', got {mode!r}.")
         return mode
 
     def set_phase_loss_scales(self, **scales: float) -> None:
@@ -584,15 +548,6 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         channel = F.softmax(channel / max(float(temp), 1e-6), dim=1) * channels
         return spatial, channel
 
-    def _build_fgd_assigner_masks(self, fg_mask: torch.Tensor, height: int, width: int, dtype: torch.dtype) -> tuple[torch.Tensor, torch.Tensor]:
-        bsz = fg_mask.shape[0]
-        mask_fg = fg_mask.reshape(bsz, height, width).to(dtype)
-        mask_bg = torch.where(mask_fg > 0, torch.zeros_like(mask_fg), torch.ones_like(mask_fg))
-        if self.fgd_bg_norm:
-            bg_sum = mask_bg.flatten(1).sum(dim=1).clamp_min(1e-6).view(bsz, 1, 1)
-            mask_bg = mask_bg / bg_sum
-        return mask_fg, mask_bg
-
     def _build_fgd_gt_box_masks(
         self,
         gt_bboxes: torch.Tensor | None,
@@ -613,7 +568,7 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         height, width = output_size
         mask_fg = torch.zeros((bsz, height, width), device=device, dtype=dtype)
         if gt_bboxes is None or mask_gt is None or imgsz is None:
-            raise RuntimeError("FGD gt_box mask requires gt_bboxes, mask_gt, and imgsz; use fgd_mask_mode='assigner' for fallback masks.")
+            raise RuntimeError("FGD final implementation requires gt_bboxes, mask_gt, and imgsz for GT-box masks.")
         else:
             if gt_bboxes.dim() != 3 or gt_bboxes.shape[-1] < 4:
                 raise RuntimeError(f"FGD gt_box mask expects gt_bboxes [B, M, 4], got {tuple(gt_bboxes.shape)}.")
@@ -644,32 +599,14 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
                     region = mask_fg[b, y1[j] : y2[j] + 1, x1[j] : x2[j] + 1]
                     mask_fg[b, y1[j] : y2[j] + 1, x1[j] : x2[j] + 1] = torch.maximum(region, value)
             mask_bg = torch.where(mask_fg > 0, torch.zeros_like(mask_fg), torch.ones_like(mask_fg))
-        if self.fgd_bg_norm:
-            bg_sum = mask_bg.flatten(1).sum(dim=1).clamp_min(1e-6).view(bsz, 1, 1)
-            mask_bg = mask_bg / bg_sum
+        bg_sum = mask_bg.flatten(1).sum(dim=1).clamp_min(1e-6).view(bsz, 1, 1)
+        mask_bg = mask_bg / bg_sum
         return mask_fg, mask_bg
-
-    @staticmethod
-    def _fgd_batch_relation_legacy_loss(student_map: torch.Tensor, teacher_map: torch.Tensor) -> torch.Tensor:
-        """Legacy batch-wise relation approximation; disabled by default.
-
-        This is not the official FGD trainable global context relation module.
-        It remains opt-in through `fgd_lambda` only for ablation continuity.
-        """
-        bsz, channels, _, _ = student_map.shape
-        if bsz <= 1:
-            return student_map.new_zeros(())
-        student_flat = student_map.permute(0, 2, 3, 1).reshape(bsz, -1, channels)
-        teacher_flat = teacher_map.detach().permute(0, 2, 3, 1).reshape(bsz, -1, channels)
-        student_global = F.normalize(student_flat.mean(dim=1), dim=-1, eps=1e-6)
-        teacher_global = F.normalize(teacher_flat.mean(dim=1), dim=-1, eps=1e-6)
-        return F.mse_loss(student_global @ student_global.transpose(0, 1), teacher_global @ teacher_global.transpose(0, 1))
 
     def _fgd_style_loss(
         self,
         student_map: torch.Tensor,
         teacher_map: torch.Tensor,
-        assigner_fg_mask: torch.Tensor,
         gt_bboxes: torch.Tensor | None = None,
         mask_gt: torch.Tensor | None = None,
         imgsz: torch.Tensor | None = None,
@@ -679,17 +616,14 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
             raise RuntimeError(
                 "FGD requires matching student/teacher feature maps; explicit model-owned align conv is not implemented, got "
                 f"student={tuple(student_map.shape)} teacher={tuple(teacher_map.shape)}."
-            )
+        )
         bsz, _, height, width = student_map.shape
         teacher_map = teacher_map.detach()
-        s_t, c_t = self._fgd_get_attention(teacher_map, self.fgd_temperature)
-        s_s, c_s = self._fgd_get_attention(student_map, self.fgd_temperature)
-        if self.fgd_mask_mode == "gt_box":
-            mask_fg, mask_bg = self._build_fgd_gt_box_masks(
-                gt_bboxes, mask_gt, (height, width), imgsz, student_map.dtype, student_map.device, bsz
-            )
-        else:
-            mask_fg, mask_bg = self._build_fgd_assigner_masks(assigner_fg_mask, height, width, student_map.dtype)
+        s_t, c_t = self._fgd_get_attention(teacher_map, self.FGD_TEMPERATURE)
+        s_s, c_s = self._fgd_get_attention(student_map, self.FGD_TEMPERATURE)
+        mask_fg, mask_bg = self._build_fgd_gt_box_masks(
+            gt_bboxes, mask_gt, (height, width), imgsz, student_map.dtype, student_map.device, bsz
+        )
 
         s_t_sqrt = s_t.clamp_min(0).sqrt().unsqueeze(1)
         c_t_sqrt = c_t.clamp_min(0).sqrt().view(bsz, -1, 1, 1)
@@ -700,26 +634,10 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
 
         fg_raw = F.mse_loss(fea_s * fg_w, fea_t * fg_w, reduction="sum")
         bg_raw = F.mse_loss(fea_s * bg_w, fea_t * bg_w, reduction="sum")
-        if self.fgd_normalization_mode == "original":
-            # FGD-style mask values already encode spatial normalization.
-            fg_loss = fg_raw / max(bsz, 1)
-            bg_loss = bg_raw / max(bsz, 1)
-        else:
-            # Optional YOLO adaptation: keep spatial mask semantics, average only across channels.
-            _, channels, _, _ = student_map.shape
-            denom = max(bsz, 1) * max(channels, 1)
-            fg_loss = fg_raw / denom
-            bg_loss = bg_raw / denom
+        fg_loss = fg_raw / max(bsz, 1)
+        bg_loss = bg_raw / max(bsz, 1)
         mask_loss = (c_s - c_t).abs().sum() / max(bsz, 1) + (s_s - s_t).abs().sum() / max(bsz, 1)
-        relation_loss = (
-            self._fgd_batch_relation_legacy_loss(student_map, teacher_map) if self.fgd_lambda > 0 else student_map.new_zeros(())
-        )
-        return (
-            self.fgd_alpha * fg_loss
-            + self.fgd_beta * bg_loss
-            + self.fgd_gamma * mask_loss
-            + self.fgd_lambda * relation_loss
-        )
+        return self.FGD_ALPHA * fg_loss + self.FGD_BETA * bg_loss + self.FGD_GAMMA * mask_loss
 
     def _ld_style_loss(
         self,
@@ -749,7 +667,7 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
                 f"target_scores={tuple(target_scores.shape)} logits={tuple(student_distri.shape)}."
             )
 
-        temperature = self.ld_temperature
+        temperature = self.LD_TEMPERATURE
         reg_max = student_distri.shape[-1] // 4
         fg = fg_mask.reshape(student_distri.shape[:2]).bool()
         zero = student_distri.new_zeros(())
@@ -782,56 +700,41 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
             teacher_any_conf = torch.zeros_like(target_quality)
 
         main_weights = (target_quality * teacher_assigned_conf).clamp_min(0)
-        if self.ld_quality_power != 1.0:
-            main_weights = main_weights.pow(self.ld_quality_power)
         main_loss = weighted_dfl_kl(fg, main_weights) if fg.any() else zero
 
         vlr_loss = zero
-        if self.ld_use_vlr and self.ld_vlr_weight > 0:
-            vlr_weights = teacher_any_conf.clone()
-            if teacher_bboxes is not None and gt_bboxes is not None and mask_gt is not None and level_stride_tensor is not None:
-                if teacher_bboxes.shape[:2] != fg.shape:
-                    raise RuntimeError(
-                        f"LD VLR teacher_bboxes must align with logits, got teacher_bboxes={tuple(teacher_bboxes.shape)} "
-                        f"logits={tuple(student_distri.shape)}."
-                    )
-                if gt_bboxes.dim() != 3 or gt_bboxes.shape[-1] < 4 or mask_gt.shape[:2] != gt_bboxes.shape[:2]:
-                    raise RuntimeError(
-                        f"LD VLR expects gt_bboxes [B, M, 4] and compatible mask_gt, got "
-                        f"gt_bboxes={tuple(gt_bboxes.shape)} mask_gt={tuple(mask_gt.shape)}."
-                    )
-                stride = level_stride_tensor.reshape(1, -1, 1).to(teacher_bboxes.dtype)
-                teacher_boxes_px = teacher_bboxes.detach() * stride
-                iou_weights = torch.zeros_like(vlr_weights)
-                valid_gt = mask_gt.squeeze(-1).bool()
-                for b in range(student_distri.shape[0]):
-                    boxes_gt = gt_bboxes[b, valid_gt[b], :4].to(device=student_distri.device, dtype=teacher_boxes_px.dtype)
-                    if boxes_gt.numel() == 0:
-                        continue
-                    ious = _pairwise_iou_xyxy(teacher_boxes_px[b], boxes_gt)
-                    iou_weights[b] = ious.max(dim=1).values
-                if teacher_scores is not None:
-                    vlr_weights = vlr_weights * iou_weights
-                else:
-                    vlr_weights = iou_weights
+        vlr_weights = teacher_any_conf.clone()
+        if teacher_bboxes is not None and gt_bboxes is not None and mask_gt is not None and level_stride_tensor is not None:
+            if teacher_bboxes.shape[:2] != fg.shape:
+                raise RuntimeError(
+                    f"LD VLR teacher_bboxes must align with logits, got teacher_bboxes={tuple(teacher_bboxes.shape)} "
+                    f"logits={tuple(student_distri.shape)}."
+                )
+            if gt_bboxes.dim() != 3 or gt_bboxes.shape[-1] < 4 or mask_gt.shape[:2] != gt_bboxes.shape[:2]:
+                raise RuntimeError(
+                    f"LD VLR expects gt_bboxes [B, M, 4] and compatible mask_gt, got "
+                    f"gt_bboxes={tuple(gt_bboxes.shape)} mask_gt={tuple(mask_gt.shape)}."
+                )
+            stride = level_stride_tensor.reshape(1, -1, 1).to(teacher_bboxes.dtype)
+            teacher_boxes_px = teacher_bboxes.detach() * stride
+            iou_weights = torch.zeros_like(vlr_weights)
+            valid_gt = mask_gt.squeeze(-1).bool()
+            for b in range(student_distri.shape[0]):
+                boxes_gt = gt_bboxes[b, valid_gt[b], :4].to(device=student_distri.device, dtype=teacher_boxes_px.dtype)
+                if boxes_gt.numel() == 0:
+                    continue
+                ious = _pairwise_iou_xyxy(teacher_boxes_px[b], boxes_gt)
+                iou_weights[b] = ious.max(dim=1).values
+            if teacher_scores is not None:
+                vlr_weights = vlr_weights * iou_weights
+            else:
+                vlr_weights = iou_weights
 
-            vlr_mask = (~fg) & (vlr_weights > self.ld_min_vlr_weight)
-            if self.ld_vlr_topk > 0 and vlr_mask.any():
-                topk_mask = torch.zeros_like(vlr_mask)
-                for b in range(vlr_mask.shape[0]):
-                    idx = torch.where(vlr_mask[b])[0]
-                    if idx.numel() == 0:
-                        continue
-                    k = min(int(self.ld_vlr_topk), idx.numel())
-                    selected = idx[torch.topk(vlr_weights[b, idx], k=k, largest=True, sorted=False).indices]
-                    topk_mask[b, selected] = True
-                vlr_mask = topk_mask
-            if vlr_mask.any():
-                vlr_loss = weighted_dfl_kl(vlr_mask, vlr_weights)
-            elif not self.ld_allow_empty_vlr:
-                raise RuntimeError("LD VLR found no candidate anchors and ld_allow_empty_vlr=False.")
+        vlr_mask = (~fg) & (vlr_weights > 0)
+        if vlr_mask.any():
+            vlr_loss = weighted_dfl_kl(vlr_mask, vlr_weights)
 
-        return self.ld_main_weight * main_loss + self.ld_vlr_weight * vlr_loss
+        return self.LD_MAIN_WEIGHT * main_loss + self.LD_VLR_WEIGHT * vlr_loss
 
     def _cmdistill_style_loss(
         self,
@@ -1171,7 +1074,7 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         if self.comparison_kd_profile == "none" or self.profile_kd_weight <= 0:
             return student_map.new_zeros(())
         if self.comparison_kd_profile == "fgd":
-            return self._fgd_style_loss(student_map, teacher_map, fg_mask, gt_bboxes=gt_bboxes, mask_gt=mask_gt, imgsz=imgsz)
+            return self._fgd_style_loss(student_map, teacher_map, gt_bboxes=gt_bboxes, mask_gt=mask_gt, imgsz=imgsz)
         if self.comparison_kd_profile == "ld":
             return self._ld_style_loss(
                 student_distri,

@@ -4,14 +4,25 @@ Focal and Global Knowledge Distillation for Detectors, CVPR 2022.
 
 ## 方法
 
-当前修正版使用教师/学生特征导出的 spatial/channel attention、GT-box
+当前锁定版 `locked_fgd_yolo_gtbox_attention_20260618` 使用教师/学生特征导出的 spatial/channel attention、GT-box
 foreground/background mask、fg/bg feature loss 和 attention mask loss。它是
 便携的 `FGD-style` / FGD-YOLO adaptation，不是 MMDetection 官方实现的逐行复现。
 
 空间与通道 attention 按 FGD 官方代码均使用 softmax，并分别乘 `H*W` 和 `C`；
-默认 temperature 为 0.5。当前没有实现官方的可训练 Global KD context 模块；
-旧 batch-level relation 只作为 legacy opt-in，默认 `fgd_lambda=0.0` 关闭，
-因此仍必须标记 `FGD-style`。
+temperature 固定为 0.5。当前没有实现官方的可训练 Global KD context 模块；
+旧 batch-level relation、assigner-mask fallback 和 normalization sweep 已从 active
+代码面移除，因此仍必须标记 `FGD-style`。
+
+固定内部常量：
+
+```text
+alpha = 0.0001
+beta = 0.00005
+gamma = 0.001
+temperature = 0.5
+mask_mode = gt_box
+relation = removed
+```
 
 ## 代码位置
 
@@ -31,7 +42,7 @@ FGD 在本 public 包中不是独立训练器，使用统一入口：
 | YOLO11n seed123 | 4090 | 134 | 0.37024 current | 未完成 | validation OOM，不计完成 |
 | YOLO11s seed0 | 4090 | 192 | 0.50358 current | 未完成 | 历史 partial，当前不视为运行中 |
 
-这些结果来自 2026-06-10 FGD-YOLO focal+attention-mask 修复前的旧实现。
-它们仅作历史说明，不能代表当前修正版，也不能进入修正版主表。当前 FGD 必须重跑。
+这些结果来自锁定前的旧实现或修复期实验。它们仅作历史说明，不能代表当前
+`locked_fgd_yolo_gtbox_attention_20260618`，也不能进入当前主表。
 
 完整训练日志和旧 run 目录已从精简 public 分支移除，仅在历史 Git commit 中可追溯。

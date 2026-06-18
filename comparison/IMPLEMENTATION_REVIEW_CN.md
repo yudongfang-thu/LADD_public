@@ -3,7 +3,7 @@
 > PAPER-FACING NOTE
 > 当前论文主表结果只接受 `scripts/paper/` 启动并通过 `paper_results/` gate 的 verified rows。本文仍可作为实现复核材料，但历史 no-mosaic、smoke、partial 或 diagnostic 记录不能直接作为主表来源。
 
-最后更新：2026-06-13
+最后更新：2026-06-18
 
 本文档给外部老师复核当前受控对比方法的代码语义。当前正式方法为
 `FGD-style / LD / CCLKD / HalluciDet-YOLO adaptation`。其中 FGD-style、LD 使用
@@ -16,10 +16,10 @@ frozen-teacher 受控对比入口；HalluciDet-YOLO adaptation 使用独立
 
 | 方法 | 当前实现 | 可否直接作为严格复现 | 后续实验要求 |
 |---|---|---|---|
-| FGD-style | fg/bg feature loss + teacher/student attention mask loss；GT-box mask 默认启用；legacy batch relation 默认关闭 | 否，属于 FGD-YOLO adaptation | 修复前结果不能代表当前实现，需重跑 |
-| LD | raw YOLO11 DFL logits 的 foreground/main LD + teacher-quality VLR-style candidate LD，shape 异常直接失败 | 可以作为 LD 的 YOLO/DFL 适配 | 旧 foreground-only / soft-logit 结果作废，需重跑 |
+| FGD-style | locked GT-box fg/bg feature loss + teacher/student attention mask loss；legacy batch relation 已移除 | 否，属于 FGD-YOLO adaptation | 修复期 sweep 结果不能代表 locked 实现 |
+| LD | locked raw YOLO11 DFL logits foreground/main LD + teacher-quality VLR-style candidate LD，shape 异常直接失败 | 可以作为 LD 的 YOLO/DFL 适配 | 旧 foreground-only / soft-logit 结果作废 |
 | CCLKD paper-structured reimplementation | COP + entropy temperature + localization-only LLD / FLD-MSE / RLD feature-correlation / class-balanced CCL 的 YOLO11 loss 适配；online trainer 已补 | 否，需先完成原文协议 smoke/复现 | 暂不正式跑，先 smoke online 复现入口 |
-| HalluciDet-YOLO adaptation | SAR image -> hallucination network -> frozen RGB YOLO detector detection loss | 否，属于 YOLO11 adaptation，不是官方 Faster R-CNN/FCOS/RetinaNet 逐行复现 | 旧 `hallucidet_style` profile 已移除，避免干扰 |
+| HalluciDet-YOLO adaptation | SAR -> replicate3 -> official-style U-Net -> frozen RGB YOLO detector detection loss | 否，属于 YOLO11 adaptation，不是官方 Faster R-CNN/FCOS/RetinaNet 逐行复现 | 旧 `hallucidet_style` profile 和 custom U-Net 已移除/归档，避免干扰 |
 
 ## 2. 本次修复
 
@@ -50,9 +50,9 @@ VLR 是 YOLO 适配，不是官方 region selector 的逐行复现。
 
 Teacher 虽处于 eval 模式，但当前 Ultralytics Detect head 会返回
 `(decoded_predictions, raw_predictions_dict)`，本实现从第二项提取原始 DFL
-logits。当前增加了 fail-fast 检查，并使用独立 `ld_temperature=10.0`。
-默认 `ld_main_weight=0.25`、`ld_vlr_weight=0.25`，对齐官方 LD loss weight
-量级，同时保持 `ld_use_vlr=1`。
+logits。当前增加了 fail-fast 检查，并固定 `temperature=10.0`、
+`main_weight=0.25`、`vlr_weight=0.25`。foreground-only、topk、VLR 权重 sweep
+已从 active CLI/env/loss 配置面移除。
 
 ### FGD
 
@@ -61,17 +61,16 @@ logits。当前增加了 fail-fast 检查，并使用独立 `ld_temperature=10.0
 
 - teacher/student 都计算 spatial attention 和 channel attention；
 - feature loss 拆成 foreground loss 和 background loss；
-- 默认 `fgd_mask_mode=gt_box`，用 pixel xyxy GT boxes 投影到各层 feature map，
+- 固定 GT-box mask，用 pixel xyxy GT boxes 投影到各层 feature map，
   box 内填 `1 / area`，background mask 可归一化；
 - 新增 attention `mask_loss`，对齐 student 与 teacher attention；
-- 官方 trainable global relation 模块本轮不实现；旧 batch-wise relation 已改为
-  legacy opt-in，`fgd_lambda=0.0` 默认关闭，不能继续冒充官方 relation。
+- 官方 trainable global relation 模块本轮不实现；旧 batch-wise relation、
+  assigner-mask fallback 和 normalization sweep 已从 active 代码面移除。
 
 因此正式写作应使用 `FGD-style` 或 `FGD-YOLO adaptation`，并注明
 `focal + attention mask implemented; official trainable global relation disabled by default`。
-默认内部权重按官方量级设置：`fgd_alpha=0.001`、`fgd_beta=0.0005`、
-`fgd_gamma=0.001`、`fgd_lambda=0.0`。其中 `fgd_lambda` 保持为 0，因为当前未实现
-official trainable global relation，不能默认打开 legacy batch relation。
+固定内部权重为 `alpha=0.0001`、`beta=0.00005`、`gamma=0.001`、`temperature=0.5`。
+当前未实现 official trainable global relation，也不再保留 legacy relation 开关。
 
 ### CCLKD paper-structured reimplementation
 
@@ -153,7 +152,7 @@ python3 comparison/code/smoke_check_comparison_losses.py
 # comparison loss smoke checks passed
 
 python3 ladd/code_versions/current_hbb/tools/train_ladd_hbb.py --help | grep -E "fgd-alpha|fgd-mask-mode|ld-use-vlr"
-# 输出包含 fgd-alpha、fgd-mask-mode、ld-use-vlr；不再包含 hallucidet_style
+# 无输出；FGD/LD 旧变体参数已从 active CLI 移除
 
 bash -n comparison/code/launch_formal_from_yolo_kd_job.sh
 bash -n comparison/code/launch_formal_transfer_kd_job.sh

@@ -3,8 +3,9 @@
 HalluciDet: Hallucination Network for Cross-Modal Detection
 Based on WACV 2024 paper: "Hallucinating RGB Modality for Person Detection Through Privileged Information"
 
-This implementation follows the paper's architecture:
-1. U-Net-based hallucination network with attention blocks
+This implementation fixes the paper-facing YOLO adaptation to the final
+official-style U-Net variant used by the comparison experiments:
+1. segmentation_models_pytorch U-Net with ImageNet-pretrained encoder
 2. Frozen RGB detector (privileged information)
 3. Detection loss on hallucinated representations
 4. Training only updates the hallucination network
@@ -13,161 +14,6 @@ from __future__ import annotations
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-
-
-class AttentionBlock(nn.Module):
-    """Attention block for U-Net following paper Section 3"""
-
-    def __init__(self, channels: int):
-        super().__init__()
-        self.attention = nn.Sequential(
-            nn.Conv2d(channels, channels // 8, 1),
-            nn.BatchNorm2d(channels // 8),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(channels // 8, channels, 1),
-            nn.BatchNorm2d(channels),
-            nn.Sigmoid()
-        )
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        attention_weights = self.attention(x)
-        return x * attention_weights
-
-
-class ConvBlock(nn.Module):
-    """Convolutional block for U-Net encoder/decoder"""
-
-    def __init__(self, in_channels: int, out_channels: int, use_attention: bool = False):
-        super().__init__()
-        self.conv1 = nn.Conv2d(in_channels, out_channels, 3, padding=1, bias=False)
-        self.bn1 = nn.BatchNorm2d(out_channels)
-        self.conv2 = nn.Conv2d(out_channels, out_channels, 3, padding=1, bias=False)
-        self.bn2 = nn.BatchNorm2d(out_channels)
-        self.attention = AttentionBlock(out_channels) if use_attention else None
-        self.relu = nn.ReLU(inplace=True)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.relu(self.bn1(self.conv1(x)))
-        x = self.relu(self.bn2(self.conv2(x)))
-        if self.attention is not None:
-            x = self.attention(x)
-        return x
-
-
-class UpConvBlock(nn.Module):
-    """Upsampling block for U-Net decoder with skip connections"""
-
-    def __init__(self, in_channels: int, out_channels: int, use_attention: bool = False):
-        super().__init__()
-        self.up = nn.ConvTranspose2d(in_channels, in_channels // 2, 2, stride=2)
-        self.conv = ConvBlock(in_channels, out_channels, use_attention=use_attention)
-
-    def forward(self, x: torch.Tensor, skip: torch.Tensor) -> torch.Tensor:
-        x = self.up(x)
-        # Handle size mismatch
-        if x.shape != skip.shape:
-            x = F.interpolate(x, size=skip.shape[2:], mode='bilinear', align_corners=False)
-        x = torch.cat([x, skip], dim=1)
-        return self.conv(x)
-
-
-class HallucinationNetwork(nn.Module):
-    """
-    U-Net-based Hallucination Network following paper Figure 2 and Section 3
-
-    Architecture:
-    - Encoder: 4 levels with conv blocks
-    - Bottleneck: With attention
-    - Decoder: 4 levels with upconv blocks and skip connections
-    - Output: 3-channel pseudo-RGB representation
-
-    Args:
-        in_channels: Input channels (1 for grayscale SAR/IR)
-        out_channels: Output channels (3 for RGB-like representation)
-        base_channels: Base number of channels (default: 64)
-        use_attention: Whether to use attention blocks in decoder (default: True)
-    """
-
-    def __init__(
-        self,
-        in_channels: int = 1,
-        out_channels: int = 3,
-        base_channels: int = 64,
-        use_attention: bool = True
-    ):
-        super().__init__()
-
-        # Encoder (contracting path)
-        self.enc1 = ConvBlock(in_channels, base_channels)
-        self.pool1 = nn.MaxPool2d(2)
-
-        self.enc2 = ConvBlock(base_channels, base_channels * 2)
-        self.pool2 = nn.MaxPool2d(2)
-
-        self.enc3 = ConvBlock(base_channels * 2, base_channels * 4)
-        self.pool3 = nn.MaxPool2d(2)
-
-        self.enc4 = ConvBlock(base_channels * 4, base_channels * 8)
-        self.pool4 = nn.MaxPool2d(2)
-
-        # Bottleneck with attention
-        self.bottleneck = ConvBlock(base_channels * 8, base_channels * 16, use_attention=True)
-
-        # Decoder (expanding path)
-        self.dec4 = UpConvBlock(base_channels * 16, base_channels * 8, use_attention=use_attention)
-        self.dec3 = UpConvBlock(base_channels * 8, base_channels * 4, use_attention=use_attention)
-        self.dec2 = UpConvBlock(base_channels * 4, base_channels * 2, use_attention=use_attention)
-        self.dec1 = UpConvBlock(base_channels * 2, base_channels, use_attention=use_attention)
-
-        # Final output layer
-        self.final = nn.Sequential(
-            nn.Conv2d(base_channels, out_channels, 1),
-            nn.Tanh()  # Output in [-1, 1] range
-        )
-        self.input_channels = in_channels
-        self.outputs_unit_range = False
-
-        self._init_weights()
-
-    def _init_weights(self):
-        """Initialize weights following best practices"""
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
-            elif isinstance(m, nn.BatchNorm2d):
-                nn.init.constant_(m.weight, 1)
-                nn.init.constant_(m.bias, 0)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        Forward pass
-
-        Args:
-            x: Input SAR/IR image [B, 1, H, W]
-
-        Returns:
-            Hallucinated pseudo-RGB representation [B, 3, H, W]
-        """
-        # Encoder with skip connections
-        e1 = self.enc1(x)
-        e2 = self.enc2(self.pool1(e1))
-        e3 = self.enc3(self.pool2(e2))
-        e4 = self.enc4(self.pool3(e3))
-
-        # Bottleneck
-        b = self.bottleneck(self.pool4(e4))
-
-        # Decoder with skip connections
-        d4 = self.dec4(b, e4)
-        d3 = self.dec3(d4, e3)
-        d2 = self.dec2(d3, e2)
-        d1 = self.dec1(d2, e1)
-
-        # Final output
-        out = self.final(d1)
-
-        return out
 
 
 class OfficialStyleHallucinationNetwork(nn.Module):
@@ -175,9 +21,8 @@ class OfficialStyleHallucinationNetwork(nn.Module):
     HalluciDet-paper-aligned hallucination network.
 
     The official repository builds a segmentation_models U-Net with an
-    ImageNet-pretrained encoder and a sigmoid output head. This wrapper keeps
-    that behavior optional so existing custom-U-Net checkpoints remain
-    loadable, while allowing an official-style YOLO adaptation probe.
+    ImageNet-pretrained encoder and a sigmoid output head. This is the only
+    active HalluciDet-YOLO hallucination network in the paper-facing code.
     """
 
     def __init__(
@@ -227,16 +72,16 @@ class HalluciDetModel(nn.Module):
         hallucination_net: nn.Module,
         rgb_detector: nn.Module,
         normalize_input: bool = False,
-        hallucination_input_mode: str = "grayscale",
+        hallucination_input_mode: str = "replicate3",
     ):
         super().__init__()
         self.hallucination_net = hallucination_net
         self.rgb_detector = rgb_detector
         self.normalize_input = normalize_input
         self.hallucination_input_mode = hallucination_input_mode
-        if self.hallucination_input_mode not in {"grayscale", "replicate3", "rgb"}:
+        if self.hallucination_input_mode not in {"replicate3", "rgb"}:
             raise ValueError(
-                "hallucination_input_mode must be one of: grayscale, replicate3, rgb."
+                "hallucination_input_mode must be one of: replicate3, rgb."
             )
 
         # Freeze RGB detector
@@ -267,9 +112,7 @@ class HalluciDetModel(nn.Module):
                 "Normalize inputs with the dataloader path used for training."
             )
 
-        if self.hallucination_input_mode == "grayscale":
-            prepared = self._to_single_channel(sar_image)
-        elif self.hallucination_input_mode == "replicate3":
+        if self.hallucination_input_mode == "replicate3":
             prepared = self._to_single_channel(sar_image).repeat(1, 3, 1, 1)
         else:
             if sar_image.shape[1] == 1:
@@ -324,10 +167,9 @@ class HalluciDetModel(nn.Module):
 
 def build_hallucidet(
     rgb_detector_path: str,
-    in_channels: int = 1,
-    base_channels: int = 64,
-    use_attention: bool = True,
-    hallucination_input_mode: str = "grayscale",
+    hallucination_input_mode: str = "replicate3",
+    encoder_name: str = "resnet34",
+    encoder_weights: str | None = "imagenet",
     device: str = 'cuda'
 ) -> HalluciDetModel:
     """
@@ -335,9 +177,9 @@ def build_hallucidet(
 
     Args:
         rgb_detector_path: Path to pre-trained RGB detector weights
-        in_channels: Input channels (1 for SAR)
-        base_channels: Base channels for U-Net
-        use_attention: Use attention blocks
+        hallucination_input_mode: Input adapter, either replicate3 or rgb.
+        encoder_name: segmentation_models_pytorch encoder name.
+        encoder_weights: encoder weights, e.g. imagenet or None.
         device: Device to load model
 
     Returns:
@@ -345,12 +187,11 @@ def build_hallucidet(
     """
     from ultralytics import YOLO
 
-    # Build hallucination network
-    hallucination_net = HallucinationNetwork(
-        in_channels=in_channels,
+    hallucination_net = OfficialStyleHallucinationNetwork(
+        encoder_name=encoder_name,
+        encoder_weights=encoder_weights,
+        in_channels=3,
         out_channels=3,
-        base_channels=base_channels,
-        use_attention=use_attention
     )
 
     # Load frozen RGB detector
@@ -369,12 +210,10 @@ def build_hallucidet(
 
 
 if __name__ == "__main__":
-    # Test the hallucination network
-    print("Testing HallucinationNetwork...")
-    net = HallucinationNetwork(in_channels=1, out_channels=3, base_channels=32)
+    print("Testing OfficialStyleHallucinationNetwork...")
+    net = OfficialStyleHallucinationNetwork(encoder_weights=None)
 
-    # Test forward pass
-    x = torch.randn(2, 1, 256, 256)
+    x = torch.randn(2, 3, 256, 256)
     y = net(x)
 
     print(f"Input shape: {x.shape}")
@@ -382,4 +221,4 @@ if __name__ == "__main__":
     print(f"Output range: [{y.min():.3f}, {y.max():.3f}]")
     print(f"Parameters: {sum(p.numel() for p in net.parameters()):,}")
 
-    print("\nHallucinationNetwork test passed! ✅")
+    print("\nOfficialStyleHallucinationNetwork test passed.")

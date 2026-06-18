@@ -25,7 +25,7 @@ from ultralytics import YOLO
 from ultralytics.cfg import get_cfg
 from ultralytics.utils import DEFAULT_CFG
 
-from comparison.hallucidet.hallucidet_model import HalluciDetModel, HallucinationNetwork
+from comparison.hallucidet.hallucidet_model import HalluciDetModel
 from comparison.hallucidet.train_hallucidet import HalluciDetLoss, HalluciDetTrainer
 
 
@@ -46,6 +46,25 @@ class ToyDetector(nn.Module):
         return self.net(x)
 
 
+class ToyHallucinationNet(nn.Module):
+    """Small local surrogate for offline gradient tests; not a production method."""
+
+    input_channels = 3
+    outputs_unit_range = True
+
+    def __init__(self, channels: int = 16):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Conv2d(3, channels, 3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(channels, 3, 1),
+            nn.Sigmoid(),
+        )
+
+    def forward(self, x):
+        return self.net(x)
+
+
 def _grad_summary(module: nn.Module) -> tuple[int, int]:
     nonzero = 0
     total = 0
@@ -59,8 +78,8 @@ def _grad_summary(module: nn.Module) -> tuple[int, int]:
 
 def run_offline_smoke(device: torch.device) -> bool:
     print("[offline] Building toy HalluciDet chain")
-    hall = HallucinationNetwork(in_channels=1, out_channels=3, base_channels=16, use_attention=True).to(device)
-    model = HalluciDetModel(hall, ToyDetector().to(device)).to(device)
+    hall = ToyHallucinationNet().to(device)
+    model = HalluciDetModel(hall, ToyDetector().to(device), hallucination_input_mode="replicate3").to(device)
     sar = torch.randn(2, 1, 128, 128, device=device)
     preds, hallucinated = model(sar, return_hallucinated=True)
     loss = preds.mean() + hallucinated.mean() * 0.0
@@ -97,12 +116,12 @@ def run_yolo_loss_smoke(weights: str, device: torch.device, imgsz: int, lambda_r
     detector = YOLO(weights).model.to(device)
     detector.args = yolo_args
     detector.eval()
-    hall = HallucinationNetwork(in_channels=1, out_channels=3, base_channels=16, use_attention=True).to(device)
-    model = HalluciDetModel(hall, detector).to(device)
+    hall = ToyHallucinationNet().to(device)
+    model = HalluciDetModel(hall, detector, hallucination_input_mode="replicate3").to(device)
     criterion = HalluciDetLoss(model.rgb_detector, lambda_reg=lambda_reg).to(device)
     batch = _synthetic_yolo_batch(batch_size=2, imgsz=imgsz, device=device)
     sar = 0.299 * batch["img"][:, 0:1] + 0.587 * batch["img"][:, 1:2] + 0.114 * batch["img"][:, 2:3]
-    hallucinated = (model.hallucination_net(sar) + 1.0) / 2.0
+    hallucinated = model.hallucinate(sar)
     loss, items = criterion(hallucinated, batch)
     print(f"[yolo] loss={float(loss.detach()):.6f} box={float(items['box']):.6f} cls={float(items['cls']):.6f} dfl={float(items['dfl']):.6f}")
     loss.backward()
@@ -116,7 +135,7 @@ def run_yolo_loss_smoke(weights: str, device: torch.device, imgsz: int, lambda_r
 class _ResumeSmokeModel(nn.Module):
     def __init__(self):
         super().__init__()
-        self.hallucination_net = HallucinationNetwork(in_channels=1, out_channels=3, base_channels=8, use_attention=True)
+        self.hallucination_net = ToyHallucinationNet(channels=8)
 
 
 class _ResumeSmokeTrainer(HalluciDetTrainer):
@@ -148,7 +167,7 @@ class _ResumeSmokeTrainer(HalluciDetTrainer):
 
     def train_one_epoch(self):
         self.model.train()
-        x = torch.rand(1, 1, 32, 32, device=self.device)
+        x = torch.rand(1, 3, 32, 32, device=self.device)
         y = self.model.hallucination_net(x)
         loss = y.square().mean()
         self.optimizer.zero_grad()

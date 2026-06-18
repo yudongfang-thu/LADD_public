@@ -33,22 +33,6 @@ def make_loss(**overrides):
         TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB
     )
     defaults = {
-        "fgd_alpha": 0.0001,
-        "fgd_beta": 0.00005,
-        "fgd_gamma": 0.001,
-        "fgd_lambda": 0.0,
-        "fgd_normalization_mode": "original",
-        "fgd_temperature": 0.5,
-        "fgd_mask_mode": "gt_box",
-        "fgd_bg_norm": True,
-        "ld_temperature": 10.0,
-        "ld_use_vlr": True,
-        "ld_quality_power": 1.0,
-        "ld_min_vlr_weight": 0.0,
-        "ld_vlr_topk": 0,
-        "ld_vlr_weight": 0.25,
-        "ld_main_weight": 0.25,
-        "ld_allow_empty_vlr": True,
         "_ld_warned_missing_teacher_scores": False,
         "cmdistill_feature_weight": 1.0,
         "cmdistill_relation_weight": 1.0,
@@ -76,46 +60,13 @@ def check_fgd():
         ]
     )
     mask_gt = student.new_tensor([[[1.0], [0.0]], [[1.0], [1.0]]]).bool()
-    assigner_fg = torch.zeros(2, 64, dtype=torch.bool)
-    assigner_fg[:, :4] = True
     imgsz = student.new_tensor([64.0, 64.0])
-    loss = criterion._fgd_style_loss(student, teacher, assigner_fg, gt_bboxes, mask_gt, imgsz)
+    loss = criterion._fgd_style_loss(student, teacher, gt_bboxes, mask_gt, imgsz)
     assert torch.isfinite(loss), loss
     assert loss.item() > 0, loss.item()
     loss.backward()
     assert student.grad is not None and torch.isfinite(student.grad).all()
     assert teacher.grad is None
-
-    criterion_no_mask = make_loss(fgd_gamma=0.0)
-    loss_no_mask = criterion_no_mask._fgd_style_loss(
-        student.detach().clone().requires_grad_(True),
-        teacher.detach().clone().requires_grad_(True),
-        assigner_fg,
-        gt_bboxes,
-        mask_gt,
-        imgsz,
-    )
-    assert torch.isfinite(loss_no_mask)
-    assert not torch.isclose(loss.detach(), loss_no_mask.detach())
-
-    criterion_assigner = make_loss(fgd_mask_mode="assigner")
-    loss_assigner = criterion_assigner._fgd_style_loss(
-        student.detach().clone().requires_grad_(True),
-        teacher.detach().clone(),
-        assigner_fg,
-    )
-    assert torch.isfinite(loss_assigner) and loss_assigner.item() > 0
-
-    criterion_channel = make_loss(fgd_normalization_mode="channel_mean")
-    loss_channel = criterion_channel._fgd_style_loss(
-        student.detach().clone().requires_grad_(True),
-        teacher.detach().clone(),
-        assigner_fg,
-        gt_bboxes,
-        mask_gt,
-        imgsz,
-    )
-    assert torch.isfinite(loss_channel) and loss_channel.item() > 0
 
 
 def check_ld():
@@ -141,15 +92,14 @@ def check_ld():
     teacher_bboxes[:, :, :] = student.new_tensor([2.0, 2.0, 10.0, 10.0])
     stride = student.new_ones(n_tokens, 1)
 
-    main_only = make_loss(ld_use_vlr=False)
-    loss_main = main_only._ld_style_loss(student, teacher, fg, target_scores, teacher_scores)
+    criterion = make_loss()
+    loss_main = criterion._ld_style_loss(student, teacher, fg, target_scores, teacher_scores)
     assert torch.isfinite(loss_main) and loss_main.item() > 0
     loss_main.backward(retain_graph=True)
     assert student.grad is not None and torch.isfinite(student.grad).all()
 
     student.grad.zero_()
-    with_vlr = make_loss(ld_use_vlr=True)
-    loss_vlr = with_vlr._ld_style_loss(
+    loss_vlr = criterion._ld_style_loss(
         student,
         teacher,
         fg,
@@ -165,7 +115,7 @@ def check_ld():
     assert torch.isfinite(student.grad).all()
 
     try:
-        with_vlr._ld_style_loss(student, teacher[:, :-1], fg, target_scores, teacher_scores)
+        criterion._ld_style_loss(student, teacher[:, :-1], fg, target_scores, teacher_scores)
     except RuntimeError:
         pass
     else:

@@ -4,7 +4,7 @@ Localization Distillation，CVPR 2022 / TPAMI 2023，经典检测 KD baseline。
 
 ## 方法
 
-当前修正版直接蒸馏 YOLO11 检测头的 DFL regression logits，并包含
+当前锁定版 `locked_ld_yolo_dfl_vlr_20260618` 直接蒸馏 YOLO11 检测头的 DFL regression logits，并包含
 foreground/main LD 与 teacher-quality VLR-style candidate LD：
 
 ```text
@@ -13,7 +13,7 @@ foreground assigned anchors -> quality-weighted temperature KL
 non-foreground teacher-quality candidates -> VLR-style temperature KL
 ```
 
-默认 `ld_temperature=10.0`，与 LD 官方配置一致。Teacher eval forward 的 tuple
+固定 `temperature=10.0, main_weight=0.25, vlr_weight=0.25`。Teacher eval forward 的 tuple
 第二项保留原始 DFL logits；当前代码会在无法取得匹配 logits 时直接失败，而不是
 静默返回零 loss。
 
@@ -23,7 +23,7 @@ YOLO11 TaskAlignedAssigner 不暴露官方 LD/ATSS 的 `get_vlr_region()` API；
 
 2026-06-04 以前的 `_ld_style_loss()` 实际蒸馏分类 logits，属于 soft-logit KD；
 2026-06-10 以前的修正版也只有 foreground KL，没有 VLR-style candidate LD。
-旧实验结果全部作废，必须使用当前修正版重跑。
+foreground-only、topk、VLR 权重 sweep 已从 active CLI/env/loss 配置面移除。旧实验结果全部作废。
 
 ## 结果
 

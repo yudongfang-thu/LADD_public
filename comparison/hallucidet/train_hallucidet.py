@@ -28,7 +28,6 @@ sys.path.insert(0, str(REPO_ROOT / 'shared'))
 sys.path.insert(0, str(REPO_ROOT / 'shared' / 'yolo'))
 
 from comparison.hallucidet.hallucidet_model import (
-    HallucinationNetwork,
     HalluciDetModel,
     OfficialStyleHallucinationNetwork,
 )
@@ -454,17 +453,10 @@ def parse_args():
     parser.add_argument('--batch', type=int, default=32, help='Batch size')
     parser.add_argument('--lr', type=float, default=1e-4, help='Learning rate')
     parser.add_argument('--lambda-reg', type=float, default=1.0, help='Regression loss weight')
-    parser.add_argument('--base-channels', type=int, default=64, help='U-Net base channels')
-    parser.add_argument(
-        '--hallucination-arch',
-        choices=('custom_unet', 'official_unet'),
-        default='custom_unet',
-        help='Hallucination network architecture. official_unet uses segmentation_models_pytorch U-Net.',
-    )
     parser.add_argument(
         '--hallucination-input-mode',
-        choices=('grayscale', 'replicate3', 'rgb'),
-        default='grayscale',
+        choices=('replicate3', 'rgb'),
+        default='replicate3',
         help='Input channel adapter before the hallucination network.',
     )
     parser.add_argument('--encoder-name', type=str, default='resnet34', help='official_unet encoder name')
@@ -498,25 +490,12 @@ def main():
     # Build model
     print("Building HalluciDet model...")
     encoder_weights = None if str(args.encoder_weights).lower() in {"", "none", "null"} else args.encoder_weights
-    if args.hallucination_arch == "official_unet":
-        if args.hallucination_input_mode == "grayscale":
-            raise RuntimeError(
-                "official_unet expects 3-channel input. Use --hallucination-input-mode replicate3 or rgb."
-            )
-        hallucination_net = OfficialStyleHallucinationNetwork(
-            encoder_name=args.encoder_name,
-            encoder_weights=encoder_weights,
-            in_channels=3,
-            out_channels=3,
-        )
-    else:
-        expected_in_channels = 1 if args.hallucination_input_mode == "grayscale" else 3
-        hallucination_net = HallucinationNetwork(
-            in_channels=expected_in_channels,
-            out_channels=3,
-            base_channels=args.base_channels,
-            use_attention=True
-        )
+    hallucination_net = OfficialStyleHallucinationNetwork(
+        encoder_name=args.encoder_name,
+        encoder_weights=encoder_weights,
+        in_channels=3,
+        out_channels=3,
+    )
 
     rgb_detector = YOLO(args.teacher_weights).model
     rgb_detector.args = yolo_args
@@ -548,7 +527,7 @@ def main():
         'grad_clip': 10.0,
         'save_dir': Path(args.project) / args.name,
         'save_period': args.save_period,
-        'hallucination_arch': args.hallucination_arch,
+        'hallucination_arch': 'official_unet',
         'hallucination_input_mode': args.hallucination_input_mode,
         'encoder_name': args.encoder_name,
         'encoder_weights': encoder_weights,

@@ -81,12 +81,11 @@ if [[ "${DRY_RUN:-0}" != "1" && ! -f "$RGB_TEACHER" ]]; then
   exit 1
 fi
 
-if [[ -z "${COMPARISON_IMPL_VERSION:-}" ]]; then
-  case "$METHOD" in
-    cmdistill) COMPARISON_IMPL_VERSION="v3_smoke_ready_20260615" ;;
-    *) COMPARISON_IMPL_VERSION="v2_20260610" ;;
-  esac
-fi
+case "$METHOD" in
+  fgd) COMPARISON_IMPL_VERSION="locked_fgd_yolo_gtbox_attention_20260618" ;;
+  ld) COMPARISON_IMPL_VERSION="locked_ld_yolo_dfl_vlr_20260618" ;;
+  cmdistill) COMPARISON_IMPL_VERSION="${COMPARISON_IMPL_VERSION:-v3_smoke_ready_20260615}" ;;
+esac
 RUN_TAG="formal_nomosaic_yolo11${SIZE}_${METHOD}_${COMPARISON_IMPL_VERSION}_transfer_s${SEED}${RUN_TAG_SUFFIX:-}"
 PROJECT_DIR="${BASE_ROOT}/comparisons/transferred_kd/yolo11${SIZE}/${METHOD}"
 LOG_DIR="logs/formal_nomosaic_20260528/comparisons/transferred_kd"
@@ -164,26 +163,12 @@ fi
 case "$METHOD" in
   fgd)
     cmd+=(
-      "FGD_ALPHA=${FGD_ALPHA:-0.0001}"
-      "FGD_BETA=${FGD_BETA:-0.00005}"
-      "FGD_GAMMA=${FGD_GAMMA:-0.001}"
-      "FGD_LAMBDA=${FGD_LAMBDA:-${FGD_RELATION_WEIGHT:-0.0}}"
-      "FGD_NORMALIZATION_MODE=${FGD_NORMALIZATION_MODE:-original}"
-      "FGD_TEMPERATURE=${FGD_TEMPERATURE:-0.5}"
-      "FGD_MASK_MODE=${FGD_MASK_MODE:-gt_box}"
-      "FGD_BG_NORM=${FGD_BG_NORM:-1}"
+      "COMPARISON_IMPL_VERSION=locked_fgd_yolo_gtbox_attention_20260618"
     )
     ;;
   ld)
     cmd+=(
-      "LD_TEMPERATURE=${LD_TEMPERATURE:-10.0}"
-      "LD_USE_VLR=${LD_USE_VLR:-1}"
-      "LD_QUALITY_POWER=${LD_QUALITY_POWER:-1.0}"
-      "LD_MIN_VLR_WEIGHT=${LD_MIN_VLR_WEIGHT:-0.0}"
-      "LD_VLR_TOPK=${LD_VLR_TOPK:-0}"
-      "LD_VLR_WEIGHT=${LD_VLR_WEIGHT:-0.25}"
-      "LD_MAIN_WEIGHT=${LD_MAIN_WEIGHT:-0.25}"
-      "LD_ALLOW_EMPTY_VLR=${LD_ALLOW_EMPTY_VLR:-1}"
+      "COMPARISON_IMPL_VERSION=locked_ld_yolo_dfl_vlr_20260618"
     )
     ;;
   cmdistill)

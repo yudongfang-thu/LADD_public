@@ -191,23 +191,6 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Use the selected comparison profile instead of the base feature-KD term inside kd_loss.",
     )
-    parser.add_argument("--fgd-alpha", type=float, default=0.0001)
-    parser.add_argument("--fgd-beta", type=float, default=0.00005)
-    parser.add_argument("--fgd-gamma", type=float, default=0.001)
-    parser.add_argument("--fgd-lambda", type=float, default=0.0)
-    parser.add_argument("--fgd-relation-weight", type=float, default=None, help="Deprecated alias for --fgd-lambda.")
-    parser.add_argument("--fgd-normalization-mode", choices=("original", "channel_mean"), default="original")
-    parser.add_argument("--fgd-temperature", type=float, default=0.5)
-    parser.add_argument("--fgd-mask-mode", choices=("gt_box", "assigner"), default="gt_box")
-    parser.add_argument("--fgd-bg-norm", type=int, default=1)
-    parser.add_argument("--ld-temperature", type=float, default=10.0)
-    parser.add_argument("--ld-use-vlr", type=int, default=1)
-    parser.add_argument("--ld-quality-power", type=float, default=1.0)
-    parser.add_argument("--ld-min-vlr-weight", type=float, default=0.0)
-    parser.add_argument("--ld-vlr-topk", type=int, default=0)
-    parser.add_argument("--ld-vlr-weight", type=float, default=0.25)
-    parser.add_argument("--ld-main-weight", type=float, default=0.25)
-    parser.add_argument("--ld-allow-empty-vlr", type=int, default=1)
     parser.add_argument("--cmdistill-feature-weight", type=float, default=1.0)
     parser.add_argument("--cmdistill-relation-weight", type=float, default=1.0)
     parser.add_argument("--cmdistill-logit-weight", type=float, default=1.0)
@@ -349,22 +332,6 @@ def main() -> None:
         comparison_kd_profile=args.comparison_kd_profile,
         profile_kd_weight=args.profile_kd_weight,
         profile_kd_replace_base=int(bool(args.profile_kd_replace_base)),
-        fgd_alpha=args.fgd_alpha,
-        fgd_beta=args.fgd_beta,
-        fgd_gamma=args.fgd_gamma,
-        fgd_lambda=args.fgd_lambda if args.fgd_relation_weight is None else args.fgd_relation_weight,
-        fgd_normalization_mode=args.fgd_normalization_mode,
-        fgd_temperature=args.fgd_temperature,
-        fgd_mask_mode=args.fgd_mask_mode,
-        fgd_bg_norm=int(bool(args.fgd_bg_norm)),
-        ld_temperature=args.ld_temperature,
-        ld_use_vlr=int(bool(args.ld_use_vlr)),
-        ld_quality_power=args.ld_quality_power,
-        ld_min_vlr_weight=args.ld_min_vlr_weight,
-        ld_vlr_topk=args.ld_vlr_topk,
-        ld_vlr_weight=args.ld_vlr_weight,
-        ld_main_weight=args.ld_main_weight,
-        ld_allow_empty_vlr=int(bool(args.ld_allow_empty_vlr)),
         cmdistill_feature_weight=args.cmdistill_feature_weight,
         cmdistill_relation_weight=args.cmdistill_relation_weight,
         cmdistill_logit_weight=args.cmdistill_logit_weight,

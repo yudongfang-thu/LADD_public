@@ -14,19 +14,19 @@
 | `src/teacher_student_decomposition_kd_hbb/loss.py` | LADD loss、cap2 reach-rank、FGD/LD/CMDistill/CCLKD loss profiles |
 | `src/teacher_student_decomposition_kd_hbb/trainer.py` | A/B 阶段训练逻辑、BN-freeze |
 
-已包含的稳定性相关开关：
+已包含的稳定性/对比方法相关开关：
 
 ```text
 --freeze-bn-stats
 --comparison-kd-profile {none,fgd,ld,cmdistill,cclkd}
---fgd-alpha 0.0001 --fgd-beta 0.00005 --fgd-gamma 0.001 --fgd-lambda 0.0
---fgd-temperature 0.5
---ld-temperature 10.0
---ld-use-vlr 1
 --cmdistill-feature-weight 1.0 --cmdistill-relation-weight 1.0 --cmdistill-logit-weight 1.0
 --cclkd-logit-weight 1.0
 --cclkd-max-tokens 512
 ```
+
+FGD 和 LD 的内部实现已锁定，不能再通过 CLI/env 修改 normalization、relation、mask
+mode、VLR/topk/weight 等历史分支。具体锁定口径见
+`../../comparison/FINAL_LOCKED_METHODS_CN.md`。
 
 此前此目录比 `code_versions/current_hbb/` 旧，会缺少 BN-freeze。2026-06-13
 已移除旧 HalluciDet-style KD profile；HalluciDet 只保留
