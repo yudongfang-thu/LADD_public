@@ -1,4 +1,4 @@
-# LADD Probe-A Nomosaic Seed0 Mainline Summary
+# LADD Nomosaic Seed0 Mainline Summary
 
 Metric: AP50-95. Gap closed = (LADD - SAR baseline) / (RGB teacher - SAR baseline).
 

@@ -12,12 +12,12 @@
 | 本地数据整理方案 | [DATA_ORGANIZATION_PLAN_20260614_CN.md](DATA_ORGANIZATION_PLAN_20260614_CN.md) |
 | 全局实验 registry | [registry/README_20260614_CN.md](registry/README_20260614_CN.md) |
 | 三条线 inventory CSV | [project_line_inventory_20260614.csv](project_line_inventory_20260614.csv) |
-| LADD clean A1B 方法定义 | [../ladd_clean_a1b_method_definition.md](../ladd_clean_a1b_method_definition.md) |
+| LADD clean A1B 方法定义 | [../ladd_method_definition.md](../ladd_method_definition.md) |
 | Paper 主协议与主表 gate | [../paper/PAPER_PROTOCOL_CN.md](../paper/PAPER_PROTOCOL_CN.md) |
 | Paper 结果 schema | [../../paper_results/README.md](../../paper_results/README.md) |
 | Paper launchers | [../../scripts/paper/README.md](../../scripts/paper/README.md) |
-| LADD Probe-A paper 结果页 | [../../ladd/results/LADD_PROBEA_MOSAIC100_RESULTS_CN.md](../../ladd/results/LADD_PROBEA_MOSAIC100_RESULTS_CN.md) |
-| LADD Probe-A 主线训练规范 | [LADD_MAINLINE_STANDARD_CN.md](LADD_MAINLINE_STANDARD_CN.md) |
+| LADD paper 结果页 | [../../ladd/results/LADD_PROBEA_MOSAIC100_RESULTS_CN.md](../../ladd/results/LADD_PROBEA_MOSAIC100_RESULTS_CN.md) |
+| LADD 主线训练规范 | [LADD_MAINLINE_STANDARD_CN.md](LADD_MAINLINE_STANDARD_CN.md) |
 | LADD clean A1B 当前曲线 | [ladd_mosaic100_mainline_curves_20260618/](ladd_mosaic100_mainline_curves_20260618/) |
 | 旧 LADD 实验归档 | [archive_legacy_ladd_20260618/README_CN.md](archive_legacy_ladd_20260618/README_CN.md) |
 | CMDistill 待定实验归档 | [archive_pending_cmdistill_20260618/README_CN.md](archive_pending_cmdistill_20260618/README_CN.md) |
@@ -28,9 +28,9 @@
 |---|---|---|
 | CCLKD 复现消融线 | [cclkd_reproduction/CCLKD_LINE_STATUS_20260614_CN.md](cclkd_reproduction/CCLKD_LINE_STATUS_20260614_CN.md) | 区分 YOLOv5x paper reproduction gate 与 YOLO11 controlled comparison |
 | 其他对比方法线 | [comparison_methods/COMPARISON_LINE_STATUS_20260614_CN.md](comparison_methods/COMPARISON_LINE_STATUS_20260614_CN.md) | 管理 LD / FGD / HalluciDet / CCLKD 受控对比 |
-| LADD Probe-A 主线 | [LADD_MAINLINE_STANDARD_CN.md](LADD_MAINLINE_STANDARD_CN.md) | 当前主方法为 `clean_a1b_dynprobe`，即 A1 -> B / Probe-A，不经过 A2 |
+| LADD 主线 | [LADD_MAINLINE_STANDARD_CN.md](LADD_MAINLINE_STANDARD_CN.md) | 当前主方法为 `clean_a1b_dynprobe`，即 A -> B / LADD，不经过 A2 |
 
-LADD 当前主方法定义：[../ladd_clean_a1b_method_definition.md](../ladd_clean_a1b_method_definition.md)
+LADD 当前主方法定义：[../ladd_method_definition.md](../ladd_method_definition.md)
 
 LADD 当前结果入口：[ladd_mosaic100_mainline_curves_20260618/](ladd_mosaic100_mainline_curves_20260618/)
 

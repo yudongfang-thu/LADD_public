@@ -1,4 +1,4 @@
-# Relative Protocol Comparison: LADD Probe-A seed0
+# Relative Protocol Comparison: LADD seed0
 
 This table intentionally compares only same-protocol relative quantities. Main formulas:
 

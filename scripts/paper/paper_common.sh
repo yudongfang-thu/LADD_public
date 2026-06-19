@@ -3,7 +3,7 @@
 PAPER_COMMON_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PAPER_REPO_ROOT="$(cd "${PAPER_COMMON_DIR}/../.." && pwd)"
 
-PAPER_PROTOCOL_ID="ogsod_hbb_mosaic100_clean_a1b_probea_20260619"
+PAPER_PROTOCOL_ID="ogsod_hbb_mosaic100_ladd_20260619"
 PAPER_PROTOCOL="mosaic100"
 PAPER_DATASET="OGSOD-1.0"
 PAPER_TASK="hbb"

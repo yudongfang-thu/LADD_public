@@ -6,7 +6,7 @@ Run from the repository root:
 
 ```bash
 bash scripts/paper/run_paper_baseline.sh <sar|rgb> <n|s|m|l|x> <seed> <gpu_id>
-bash scripts/paper/run_paper_ladd_probea.sh <n|s|m|l|x> <seed> <gpu_id>
+bash scripts/paper/run_paper_ladd.sh <n|s|m|l|x> <seed> <gpu_id>
 bash scripts/paper/run_paper_comparison_kd.sh <fgd|ld|cmdistill> <n|s|m|l|x> <seed> <gpu_id>
 bash scripts/paper/run_paper_hallucidet.sh <n|s|m> <seed> <gpu_id>
 bash scripts/paper/run_paper_cclkd_online.sh <n|s> <seed> <gpu_id>

@@ -1,4 +1,4 @@
-paper_protocol_id: ogsod_hbb_nomosaic_clean_a1b_probea_20260619
+paper_protocol_id: ogsod_hbb_nomosaic_ladd_20260619
 dataset: OGSOD-1.0
 task: hbb
 protocol: nomosaic
@@ -7,14 +7,14 @@ teacher_modality: rgb
 inference_modality: sar
 imgsz: 256
 epochs: 800
-a1_epochs: 10
-b_epochs: 800
+stage_a_epochs: 10
+stage_b_epochs: 800
 mosaic: 0.0
 close_mosaic: 0
-a1_mosaic: 0.0
-a1_close_mosaic: 0
-b_mosaic: 0.0
-b_close_mosaic: 0
+stage_a_mosaic: 0.0
+stage_a_close_mosaic: 0
+stage_b_mosaic: 0.0
+stage_b_close_mosaic: 0
 mixup: 0.0
 cutmix: 0.0
 degrees: 0.0
@@ -49,11 +49,11 @@ batch_by_size:
   x: 16
 methods:
   ladd_main: clean_a1b_dynprobe
-  phase_chain: "A1->B"
+  phase_chain: "A->B"
   comparison_profiles: [fgd, ld, cmdistill]
 valid_ladd_mode: dynamic_probe
 valid_ladd_run_tag_substring: clean_a1b_dynprobe
-valid_phase_chain: "A1->B"
+valid_phase_chain: "A->B"
 allow_a2: false
 main_table_requires_same_protocol: true
 datasets:

@@ -1,8 +1,8 @@
-# LADD Probe-A Mosaic100 Results
+# LADD Mosaic100 Results
 
 最后更新：2026-06-18
 
-本文只记录符合 paper gate 的 LADD Probe-A / `clean_a1b_dynprobe` / mosaic100 结果。旧 A1-A2-B、no-mosaic、BN-freeze、close@100、400ep、partial、smoke 和 diagnostic 结果只放链接或归档说明，不在本文中形成主表结论。
+本文只记录符合 paper gate 的 LADD / `clean_a1b_dynprobe` / mosaic100 结果。旧 A1-A2-B、no-mosaic、BN-freeze、close@100、400ep、partial、smoke 和 diagnostic 结果只放链接或归档说明，不在本文中形成主表结论。
 
 ## Validity Rule
 
@@ -14,8 +14,8 @@ imgsz = 256
 epochs_B = 800
 mosaic = 1.0
 close_mosaic = 700
-phase_chain = A1 -> B
-method = LADD Probe-A / clean_a1b_dynprobe
+phase_chain = A -> B
+method = LADD
 LADD_A1B_MODE = dynamic_probe
 no A2
 same model size
@@ -32,7 +32,7 @@ usable_for_main_table = yes
 
 Canonical CSV 来源：
 
-- `paper_results/ogsod_mosaic100/ladd_probea.csv`
+- `paper_results/ogsod_mosaic100/ladd.csv`
 - `paper_results/ogsod_mosaic100/main_table_candidate.csv`
 
 ## YOLO11n

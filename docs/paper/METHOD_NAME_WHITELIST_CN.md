@@ -16,7 +16,7 @@
 | `cmdistill` | CMDistill-style / paper-aligned adaptation | 受控实现，必须 `KD_CALIBRATION_MODE=affine` |
 | `hallucidet_yolo` | HalluciDet-YOLO adaptation | standalone adaptation，不是 `hallucidet_style` KD profile |
 | `cclkd_online` | CCLKD online comparison | optional；必须走 online trainer，不是 frozen-teacher profile |
-| `ladd_probea` | LADD Probe-A / LADD-clean A1B, ours | `clean_a1b_dynprobe`, A1 -> B, no A2 |
+| `ladd` | LADD, ours | `clean_a1b_dynprobe`, A -> B, no A2 |
 | `ladd_static_ablation` | LADD Static ablation | `clean_a1b`，只用于消融 |
 | `ladd_dynamic_ablation` | LADD Dynamic ablation | `clean_a1b_dyn`，只用于消融 |
 

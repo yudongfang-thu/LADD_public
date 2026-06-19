@@ -33,17 +33,17 @@ plt.rcParams.update(
 COLORS = {
     "Static": "#1f77b4",
     "Dynamic": "#ff7f0e",
-    "Probe-A": "#2ca02c",
+    "LADD": "#2ca02c",
     "Static-90": "#1f77b4",
 }
 LINESTYLES = {
     "Static": "-",
     "Dynamic": "-",
-    "Probe-A": "-",
+    "LADD": "-",
     "Static-90": "--",
 }
 INCOMPLETE_STATUS = {
-    ("n", "Probe-A"): "stopped",
+    ("n", "LADD"): "stopped",
     ("s", "Dynamic"): "running",
 }
 
@@ -60,10 +60,10 @@ class RunSpec:
 RUNS = [
     RunSpec("n", "Static", DATA / "n_static_results.csv", "Static"),
     RunSpec("n", "Dynamic", DATA / "n_dynamic_results.csv", "Dynamic"),
-    RunSpec("n", "Probe-A", DATA / "n_probeA_results.csv", "Probe-A"),
+    RunSpec("n", "LADD", DATA / "n_ladd_results.csv", "LADD"),
     RunSpec("s", "Static", DATA / "s_static_4090_results.csv", "Static"),
     RunSpec("s", "Dynamic", DATA / "s_dynamic_4090_results.csv", "Dynamic"),
-    RunSpec("s", "Probe-A", DATA / "s_probeA_results.csv", "Probe-A"),
+    RunSpec("s", "LADD", DATA / "s_ladd_results.csv", "LADD"),
 ]
 
 BASELINES = {
@@ -486,8 +486,8 @@ def plot_model(model: str):
         ax.legend([h for h, _ in uniq], [l for _, l in uniq], loc="best", frameon=False)
 
     missing = {
-        "n": "Probe-A is the 4090 run interrupted at epoch 347; the green curve is short because the experiment has not been resumed.",
-        "s": "Static and Probe-A are completed. Dynamic was resumed on 4090 and is shown up to the latest synced epoch.",
+        "n": "LADD is the 4090 run interrupted at epoch 347; the green curve is short because the experiment has not been resumed.",
+        "s": "Static and LADD are completed. Dynamic was resumed on 4090 and is shown up to the latest synced epoch.",
     }[model]
     fig.text(
         0.01,

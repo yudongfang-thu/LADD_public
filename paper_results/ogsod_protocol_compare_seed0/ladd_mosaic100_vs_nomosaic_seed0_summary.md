@@ -1,4 +1,4 @@
-# LADD Probe-A Protocol Comparison: mosaic100 vs no-mosaic
+# LADD Protocol Comparison: mosaic100 vs no-mosaic
 
 Metric: AP50-95. `Gap closed = (LADD - SAR) / (RGB - SAR)`. Rows marked `partial` are snapshots, not completed 800-epoch evidence.
 

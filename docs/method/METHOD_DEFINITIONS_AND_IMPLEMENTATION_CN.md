@@ -29,9 +29,9 @@ deterministic = true
 batch = n/s:64, m/l:32, x:16
 ```
 
-Baseline、LADD 和对比方法必须使用同容量、同 seed、同增强协议。no-mosaic 结果只能作为 fallback / robustness appendix，不能混入 LADD Probe-A mosaic100 主表。
+Baseline、LADD 和对比方法必须使用同容量、同 seed、同增强协议。no-mosaic 结果只能作为 fallback / robustness appendix，不能混入 LADD mosaic100 主表。
 
-Paper-facing 启动入口为 `scripts/paper/run_paper_baseline.sh`、`scripts/paper/run_paper_ladd_probea.sh`、`scripts/paper/run_paper_comparison_kd.sh`。底层 `baseline/`、`ladd/`、`comparison/code/` launcher 保留 no-mosaic 兼容模式，但 `PAPER_RUN=1` 会强制 mosaic100。
+Paper-facing 启动入口为 `scripts/paper/run_paper_baseline.sh`、`scripts/paper/run_paper_ladd.sh`、`scripts/paper/run_paper_comparison_kd.sh`。底层 `baseline/`、`ladd/`、`comparison/code/` launcher 保留 no-mosaic 兼容模式，但 `PAPER_RUN=1` 会强制 mosaic100。
 
 ## 2. Baseline
 
@@ -47,7 +47,7 @@ Baseline 是单模态 YOLO11 HBB 检测训练：
 
 ## 3. LADD
 
-LADD 的方法定义是 cross-modal object detection distillation with learnability-aware decomposition。OGSOD 主线是 RGB-guided SAR detection：训练时使用 paired RGB/SAR，推理时只使用 SAR；VEDAI / DroneVehicle 扩展则按 CCLKD YOLO11n 协议在 visible/infrared 方向上验证同一 Probe-A 机制。核心思想是把 teacher 特征拆成 student 可学习的 common 部分和 teacher/private 部分，再只蒸馏可学习部分。
+LADD 的方法定义是 cross-modal object detection distillation with learnability-aware decomposition。OGSOD 主线是 RGB-guided SAR detection：训练时使用 paired RGB/SAR，推理时只使用 SAR；VEDAI / DroneVehicle 扩展则按 CCLKD YOLO11n 协议在 visible/infrared 方向上验证同一 LADD 机制。核心思想是把 teacher 特征拆成 student 可学习的 common 部分和 teacher/private 部分，再只蒸馏可学习部分。
 
 每个 FPN/neck 特征层上的当前实现：
 
@@ -68,15 +68,15 @@ LADD 的方法定义是 cross-modal object detection distillation with learnabil
 | `ladd/code/src/teacher_student_decomposition_kd_hbb/model.py` | HBB LADD 模型与分解模块 |
 | `ladd/code/src/teacher_student_decomposition_kd_hbb/loss.py` | LADD loss、cap2、KD profile |
 | `ladd/code/src/teacher_student_decomposition_kd_hbb/trainer.py` | phase freeze、paired RGB/SAR batch、BN-freeze、diagnostics |
-| `ladd/scripts/launch_ladd_clean_a1b_job.sh` | clean A1B 主线 launcher |
+| `ladd/scripts/launch_ladd_clean_a1b_job.sh` | LADD 主线 launcher |
 | `ladd/scripts/launch_formal_ladd_job.sh` | 历史 formal no-mosaic A1-A2-B launcher |
 | `ladd/code_versions/current_hbb/` | 当前 HBB 代码快照，正式部署前应与 `ladd/code/` 保持同步 |
 
-当前正式 LADD-clean 主线固定为 Probe-A：
+当前正式 LADD-clean 主线固定为 LADD：
 
 ```text
 latest same-protocol SAR/RGB baseline
-+ A1 -> B only
++ A -> B only
 + RANK_D_NEG_CAP=2.0
 + sep/private/residual/debug auxiliary losses removed from current implementation
 + B detector + z_s -> z_t KD
@@ -88,12 +88,12 @@ latest same-protocol SAR/RGB baseline
 
 | 阶段 | 作用 | 当前主线 |
 |---|---|---|
-| A1 | 训练 teacher decomposition、reach adapter、teacher task head | 检测损失关闭；保留 reconstruction/reach/taskL |
+| Stage A | 训练 teacher decomposition、reach adapter、teacher task head | 检测损失关闭；保留 reconstruction/reach/taskL |
 | A2 | 历史诊断/消融 | 不属于 clean 主线 |
-| B / Probe-A | 正式蒸馏与检测训练 | dynamic teacher core；frozen reach probe；保留 detector/KD/student reconstruction/teacher rec/reach/taskL |
+| B | 正式蒸馏与检测训练 | dynamic teacher core；frozen reach probe；保留 detector/KD/student reconstruction/teacher rec/reach/taskL |
 | C | 可选后续 fine-tuning/诊断 | 不属于当前主线必要阶段 |
 
-Probe-A / clean A1B 的完整定义、loss 开关和推荐实验协议见 `docs/ladd_clean_a1b_method_definition.md`。
+LADD 的完整定义、loss 开关和推荐实验协议见 `docs/ladd_method_definition.md`。
 
 推理边界：正式报告中 LADD 是 SAR-only inference；当前 `student_detect_mode=raw` 表示检测头读取 raw SAR 检测特征，不读取 RGB teacher。当前模型类仍保留 student split/decomposition 相关模块以支持训练诊断，部署/导出时是否剥离需要单独说明。
 
@@ -150,8 +150,8 @@ FGD/LD/CMDistill-style 的 raw launcher 支持 nomosaic 和 mosaic100 兼容分�
 | 2026-06-10 前 FGD/LD 结果 | 修复前语义不同，不能代表当前实现 |
 | frozen-teacher CCLKD formal run | 不符合 CCLKD 原文 online 定义，不能写作 CCLKD official/paper reproduction |
 | 双卡 4090 上 `nc=5` yaml 的 CCLKD/HalluciDet 等结果 | HBB OGSOD 应为 `nc=3`，相关 run 作废 |
-| no-mosaic Probe-A | fallback / robustness appendix，不替代当前 mosaic100 Probe-A 主线 |
-| close@100 / 400ep / 旧高学习率 LADD | 可作历史诊断，不替代当前 mosaic100 Probe-A 主线 |
+| no-mosaic LADD | fallback / robustness appendix，不替代当前 mosaic100 LADD 主线 |
+| close@100 / 400ep / 旧高学习率 LADD | 可作历史诊断，不替代当前 mosaic100 LADD 主线 |
 
 ## 6. 文档责任分工
 

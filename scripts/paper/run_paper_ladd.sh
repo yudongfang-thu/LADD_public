@@ -4,9 +4,9 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  bash scripts/paper/run_paper_ladd_probea.sh <n|s|m|l|x> <seed> <gpu_id>
+  bash scripts/paper/run_paper_ladd.sh <n|s|m|l|x> <seed> <gpu_id>
 
-Runs paper LADD Probe-A / clean_a1b_dynprobe under mosaic100.
+Runs paper LADD under mosaic100.
 Requires matching paper SAR/RGB baseline checkpoints unless DRY_RUN=1.
 EOF
 }
@@ -30,7 +30,7 @@ paper_require_file "$PAPER_SAR_DATA_CFG" "SAR paper dataset YAML"
 paper_require_file "$PAPER_RGB_DATA_CFG" "RGB paper dataset YAML"
 
 if [[ -n "${LADD_A1B_MODE:-}" && "$LADD_A1B_MODE" != "dynamic_probe" && "$LADD_A1B_MODE" != "dyn_probe" && "$LADD_A1B_MODE" != "probe" ]]; then
-  paper_die "Paper LADD Probe-A wrapper requires LADD_A1B_MODE=dynamic_probe; got ${LADD_A1B_MODE}."
+  paper_die "Paper LADD wrapper requires LADD_A1B_MODE=dynamic_probe; got ${LADD_A1B_MODE}."
 fi
 
 BATCH_SIZE="$(paper_batch_for_size "$SIZE")"
@@ -45,8 +45,8 @@ else
 fi
 
 RUN_TAG="paper_clean_a1b_dynprobe_mosaic100_yolo11${SIZE}_s${SEED}${RUN_TAG_SUFFIX:-}"
-PROJECT_DIR="${PAPER_RUN_ROOT}/ladd_probea/yolo11${SIZE}/seed${SEED}"
-CHAIN_LOG_DIR="${PAPER_LOG_ROOT}/ladd_probea/yolo11${SIZE}/seed${SEED}/${RUN_TAG}"
+PROJECT_DIR="${PAPER_RUN_ROOT}/ladd/yolo11${SIZE}/seed${SEED}"
+CHAIN_LOG_DIR="${PAPER_LOG_ROOT}/ladd/yolo11${SIZE}/seed${SEED}/${RUN_TAG}"
 META_PATH="${CHAIN_LOG_DIR}/paper_run_meta.env"
 RUN_DIR="${PROJECT_DIR}/ladd_clean_a1b_dynprobe_ogsod11${SIZE}_${RUN_TAG}_b_e${PAPER_B_EPOCHS}_b${BATCH_SIZE}_s${SEED}_gpu${GPU_ID}"
 
@@ -101,9 +101,9 @@ cmd=(
   bash ladd/scripts/launch_ladd_clean_a1b_job.sh "$SIZE" "$SEED" "$GPU_ID"
 )
 
-paper_write_meta_common "$META_PATH" "ladd_probea" "LADD Probe-A / LADD-clean A1B, ours" "$SIZE" "$SEED" "$GPU_ID" "$BATCH_SIZE" "$RUN_TAG" "$PROJECT_DIR" "$RUN_DIR" "$(paper_command_text "${cmd[@]}")"
+paper_write_meta_common "$META_PATH" "ladd" "LADD, ours" "$SIZE" "$SEED" "$GPU_ID" "$BATCH_SIZE" "$RUN_TAG" "$PROJECT_DIR" "$RUN_DIR" "$(paper_command_text "${cmd[@]}")"
 {
-  printf 'phase_chain=%q\n' "A1->B"
+  printf 'phase_chain=%q\n' "A->B"
   printf 'ladd_a1b_mode=%q\n' "dynamic_probe"
   printf 'sar_baseline=%q\n' "$SAR_BASELINE"
   printf 'rgb_teacher=%q\n' "$RGB_TEACHER"
@@ -112,7 +112,7 @@ paper_write_meta_common "$META_PATH" "ladd_probea" "LADD Probe-A / LADD-clean A1
   printf 'inference_modality=%q\n' "SAR"
 } >> "$META_PATH"
 
-echo "[$(date '+%F %T')] Prepared paper LADD Probe-A yolo11${SIZE} seed=${SEED}"
+echo "[$(date '+%F %T')] Prepared paper LADD yolo11${SIZE} seed=${SEED}"
 echo "sar_baseline=${SAR_BASELINE}"
 echo "rgb_teacher=${RGB_TEACHER}"
 echo "meta=${META_PATH}"

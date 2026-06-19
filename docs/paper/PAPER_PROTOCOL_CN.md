@@ -12,8 +12,8 @@ modalities: RGB teacher -> SAR student
 inference: SAR-only
 imgsz: 256
 epochs: 800
-A1 epochs: 10
-B epochs: 800
+stage A epochs: 10
+stage B epochs: 800
 optimizer: auto
 lr0: 0.01
 lrf: 0.01
@@ -53,15 +53,15 @@ batch:
 LADD 主表只接受：
 
 ```text
-method: LADD Probe-A / LADD-clean A1B
-method_key: clean_a1b_dynprobe
-phase_chain: A1 -> B
-LADD_A1B_MODE: dynamic_probe
+method: LADD
+internal_profile: clean_a1b_dynprobe
+phase_chain: A -> B
+implementation_mode: dynamic_probe
 RANK_D_NEG_CAP: 2.0
-A1_MOSAIC: 1.0
-A1_CLOSE_MOSAIC: 0
-B_MOSAIC: 1.0
-B_CLOSE_MOSAIC: 700
+stage A mosaic: 1.0
+stage A close_mosaic: 0
+stage B mosaic: 1.0
+stage B close_mosaic: 700
 ```
 
 不允许：
@@ -76,7 +76,7 @@ no-mosaic rows as mosaic100 mainline
 wrong nc / wrong yaml runs
 ```
 
-Static 和 Dynamic clean A1B 只能进入 ablation 表；未标记 `clean_a1b_dynprobe` 的 LADD run 不能写作最终 LADD Probe-A。
+Static 和 Dynamic LADD 只能进入 ablation 表；未标记 `clean_a1b_dynprobe` 的 LADD run 不能写作最终 LADD。
 
 ## 3. Baseline 与对比方法准入
 
@@ -118,7 +118,7 @@ KD_CALIBRATION_MODE = affine
 ```text
 status = verified
 claim_usable = yes
-protocol_id = ogsod_hbb_mosaic100_clean_a1b_probea_20260619
+protocol_id = ogsod_hbb_mosaic100_ladd_20260619
 imgsz = 256
 epochs = 800
 mosaic = 1.0
@@ -153,7 +153,7 @@ wrong nc / wrong yaml runs
 
 ```bash
 bash scripts/paper/run_paper_baseline.sh <sar|rgb> <n|s|m|l|x> <seed> <gpu_id>
-bash scripts/paper/run_paper_ladd_probea.sh <n|s|m|l|x> <seed> <gpu_id>
+bash scripts/paper/run_paper_ladd.sh <n|s|m|l|x> <seed> <gpu_id>
 bash scripts/paper/run_paper_comparison_kd.sh <fgd|ld|cmdistill> <n|s|m|l|x> <seed> <gpu_id>
 bash scripts/paper/run_paper_hallucidet.sh <n|s|m> <seed> <gpu_id>
 bash scripts/paper/run_paper_cclkd_online.sh <n|s> <seed> <gpu_id>

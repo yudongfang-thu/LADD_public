@@ -15,7 +15,7 @@ epochs,yes,total paper epochs
 batch,yes,batch size
 mosaic,yes,mosaic value
 close_mosaic,yes,close_mosaic value
-phase_chain,yes,A1->B / B-only / online / standalone / baseline
+phase_chain,yes,A->B / B-only / online / standalone / baseline
 ladd_mode,no,dynamic_probe for LADD main rows
 run_tag,yes,run tag
 project_dir,yes,project directory

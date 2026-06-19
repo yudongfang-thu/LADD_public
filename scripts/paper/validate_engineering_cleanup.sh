@@ -13,7 +13,7 @@ REQUIRED_FILES=(
   scripts/paper/paper_common.sh
   scripts/paper/dry_run_all_paper_entrypoints.sh
   scripts/paper/run_paper_baseline.sh
-  scripts/paper/run_paper_ladd_probea.sh
+  scripts/paper/run_paper_ladd.sh
   scripts/paper/run_paper_comparison_kd.sh
   scripts/paper/run_paper_cclkd_online.sh
   scripts/paper/run_paper_hallucidet.sh
@@ -23,7 +23,7 @@ REQUIRED_FILES=(
   paper_results/main_table_schema.csv
   paper_results/example_valid.csv
   paper_results/example_invalid.csv
-  paper_results/validator_fixtures/valid_probea_name_variants.csv
+  paper_results/validator_fixtures/valid_ladd_name_variants.csv
   paper_results/validator_fixtures/invalid_legacy_variants.csv
   paper_results/validator_fixtures/invalid_wrong_yaml.csv
   paper_results/validator_fixtures/invalid_missing_metrics.csv
@@ -35,7 +35,7 @@ for path in "${REQUIRED_FILES[@]}"; do
   test -f "$path" || { echo "missing required paper file: $path" >&2; exit 1; }
 done
 
-grep -q "LADD Probe-A / LADD-clean A1B" README.md
+grep -q "LADD" README.md
 grep -q "clean_a1b_dynprobe" README.md
 grep -q "Paper mainline gate" PACKAGE_AUDIT_CN.md
 grep -q "tools/paper_validate_main_table.py" PACKAGE_AUDIT_CN.md
@@ -54,7 +54,7 @@ python3 -m py_compile \
 
 bash -n scripts/paper/paper_common.sh
 bash -n scripts/paper/run_paper_baseline.sh
-bash -n scripts/paper/run_paper_ladd_probea.sh
+bash -n scripts/paper/run_paper_ladd.sh
 bash -n scripts/paper/run_paper_comparison_kd.sh
 bash -n scripts/paper/run_paper_hallucidet.sh
 bash -n scripts/paper/run_paper_cclkd_online.sh
@@ -109,7 +109,7 @@ grep -q "mosaic=1.0" "$dry_log"
 grep -q "close_mosaic=700" "$dry_log"
 grep -q "LADD_A1B_MODE=dynamic_probe" "$dry_log"
 grep -q "KD_CALIBRATION_MODE=affine" "$dry_log"
-grep -q "PAPER_PROTOCOL_ID=ogsod_hbb_mosaic100_clean_a1b_probea_20260619" "$dry_log"
+grep -q "PAPER_PROTOCOL_ID=ogsod_hbb_mosaic100_ladd_20260619" "$dry_log"
 
 if grep -E "formal_nomosaic|cos_nomosaic|_nomosaic" "$dry_log"; then
   echo "Dry-run output references no-mosaic paths." >&2
@@ -160,13 +160,13 @@ set -e
 
 cat > "$valid_csv" <<'EOF'
 dataset,task,protocol_id,method,method_display,model_size,seed,init_type,student_modality,teacher_modality,inference_modality,imgsz,epochs,batch,mosaic,close_mosaic,phase_chain,ladd_mode,run_tag,project_dir,results_csv,args_yaml,manifest,git_commit,best_ap50_95,best_ap50,final_ap50_95,final_ap50,best_epoch,status,claim_usable,notes
-OGSOD-1.0,hbb,ogsod_hbb_mosaic100_clean_a1b_probea_20260619,ladd_probea,LADD Probe-A,n,0,sar_baseline,SAR,RGB,SAR,256,800,64,1.0,700,A1->B,dynamic_probe,paper_clean_a1b_dynprobe_mosaic100_yolo11n_s0,runs_public/paper/demo,results.csv,args.yaml,paper_run_meta.env,deadbeef,0.5,0.8,0.49,0.79,100,verified,yes,
+OGSOD-1.0,hbb,ogsod_hbb_mosaic100_ladd_20260619,ladd,LADD,n,0,sar_baseline,SAR,RGB,SAR,256,800,64,1.0,700,A->B,dynamic_probe,paper_clean_a1b_dynprobe_mosaic100_yolo11n_s0,runs_public/paper/demo,results.csv,args.yaml,paper_run_meta.env,deadbeef,0.5,0.8,0.49,0.79,100,verified,yes,
 EOF
 python3 tools/paper_validate_main_table.py "$valid_csv"
 
 cat > "$invalid_csv" <<'EOF'
 dataset,task,protocol_id,method,method_display,model_size,seed,init_type,student_modality,teacher_modality,inference_modality,imgsz,epochs,batch,mosaic,close_mosaic,phase_chain,ladd_mode,run_tag,project_dir,results_csv,args_yaml,manifest,git_commit,best_ap50_95,best_ap50,final_ap50_95,final_ap50,best_epoch,status,claim_usable,notes
-OGSOD-1.0,hbb,wrong,ladd_probea,LADD Probe-A,n,0,sar_baseline,SAR,RGB,SAR,256,800,64,1.0,700,A1-A2-B,static,old_a1a2b_nomosaic,runs_public/old,results.csv,args.yaml,manifest.txt,deadbeef,0.5,0.8,0.49,0.79,100,verified,yes,A2 BN-freeze no-mosaic
+OGSOD-1.0,hbb,wrong,ladd,LADD,n,0,sar_baseline,SAR,RGB,SAR,256,800,64,1.0,700,A1-A2-B,static,old_a1a2b_nomosaic,runs_public/old,results.csv,args.yaml,manifest.txt,deadbeef,0.5,0.8,0.49,0.79,100,verified,yes,A2 BN-freeze no-mosaic
 EOF
 set +e
 python3 tools/paper_validate_main_table.py "$invalid_csv" >"$validator_negative_log" 2>&1
@@ -178,7 +178,7 @@ if [[ "$status" -eq 0 ]]; then
 fi
 
 python3 tools/paper_validate_main_table.py paper_results/example_valid.csv
-python3 tools/paper_validate_main_table.py paper_results/validator_fixtures/valid_probea_name_variants.csv
+python3 tools/paper_validate_main_table.py paper_results/validator_fixtures/valid_ladd_name_variants.csv
 set +e
 python3 tools/paper_validate_main_table.py paper_results/example_invalid.csv >"$validator_negative_log" 2>&1
 status=$?
@@ -256,16 +256,16 @@ mosaic: 1.0
 close_mosaic: 700
 EOF
 cat > "${collector_dir}/paper_run_meta.env" <<'EOF'
-paper_protocol_id=ogsod_hbb_mosaic100_clean_a1b_probea_20260619
-protocol_id=ogsod_hbb_mosaic100_clean_a1b_probea_20260619
+paper_protocol_id=ogsod_hbb_mosaic100_ladd_20260619
+protocol_id=ogsod_hbb_mosaic100_ladd_20260619
 paper_run=1
 dataset=OGSOD-1.0
 task=hbb
-method=ladd_probea
-method_label=LADD Probe-A
+method=ladd
+method_label=LADD
 model_size=n
 seed=0
-phase_chain=A1->B
+phase_chain=A->B
 ladd_a1b_mode=dynamic_probe
 run_tag=paper_clean_a1b_dynprobe_mosaic100_yolo11n_s0
 project_dir=runs_public/paper/example
@@ -278,22 +278,22 @@ EOF
 python3 tools/paper_collect_results.py --input "$collector_dir" --out "$collector_csv"
 python3 tools/paper_validate_main_table.py "$collector_csv"
 
-realistic_run_dir="${collector_bad_root}/runs_public/paper/ogsod_hbb_mosaic100/ladd_probea/yolo11n/seed0/RUN"
-realistic_log_dir="${collector_bad_root}/logs/paper/ogsod_hbb_mosaic100/ladd_probea/yolo11n/seed0/RUN"
+realistic_run_dir="${collector_bad_root}/runs_public/paper/ogsod_hbb_mosaic100/ladd/yolo11n/seed0/RUN"
+realistic_log_dir="${collector_bad_root}/logs/paper/ogsod_hbb_mosaic100/ladd/yolo11n/seed0/RUN"
 realistic_registry="${collector_bad_root}/registry.csv"
 write_minimal_collector_run "$realistic_run_dir"
 mkdir -p "$realistic_log_dir"
 cat > "${realistic_log_dir}/paper_run_meta.env" <<'EOF'
-paper_protocol_id=ogsod_hbb_mosaic100_clean_a1b_probea_20260619
-protocol_id=ogsod_hbb_mosaic100_clean_a1b_probea_20260619
+paper_protocol_id=ogsod_hbb_mosaic100_ladd_20260619
+protocol_id=ogsod_hbb_mosaic100_ladd_20260619
 paper_run=1
 dataset=OGSOD-1.0
 task=hbb
-method=ladd_probea
-method_label=LADD Probe-A
+method=ladd
+method_label=LADD
 model_size=n
 seed=0
-phase_chain=A1->B
+phase_chain=A->B
 ladd_a1b_mode=dynamic_probe
 run_tag=paper_clean_a1b_dynprobe_mosaic100_yolo11n_s0
 project_dir=runs_public/paper/example
@@ -315,16 +315,16 @@ python3 tools/paper_validate_main_table.py --check-yaml "$collector_csv"
 archive_collector_dir="${collector_bad_root}/archive_legacy_ladd_20260618/clean_a1b_dynprobe"
 write_minimal_collector_run "$archive_collector_dir"
 cat > "${archive_collector_dir}/paper_run_meta.env" <<'EOF'
-paper_protocol_id=ogsod_hbb_mosaic100_clean_a1b_probea_20260619
-protocol_id=ogsod_hbb_mosaic100_clean_a1b_probea_20260619
+paper_protocol_id=ogsod_hbb_mosaic100_ladd_20260619
+protocol_id=ogsod_hbb_mosaic100_ladd_20260619
 paper_run=1
 dataset=OGSOD-1.0
 task=hbb
-method=ladd_probea
-method_label=LADD Probe-A
+method=ladd
+method_label=LADD
 model_size=n
 seed=0
-phase_chain=A1->B
+phase_chain=A->B
 ladd_a1b_mode=dynamic_probe
 run_tag=paper_clean_a1b_dynprobe_mosaic100_yolo11n_s0
 project_dir=runs_public/paper/example
@@ -340,16 +340,16 @@ assert_no_claim_usable_yes "$collector_bad_csv"
 missing_git_dir="${collector_bad_root}/missing_git_clean_a1b_dynprobe"
 write_minimal_collector_run "$missing_git_dir"
 cat > "${missing_git_dir}/paper_run_meta.env" <<'EOF'
-paper_protocol_id=ogsod_hbb_mosaic100_clean_a1b_probea_20260619
-protocol_id=ogsod_hbb_mosaic100_clean_a1b_probea_20260619
+paper_protocol_id=ogsod_hbb_mosaic100_ladd_20260619
+protocol_id=ogsod_hbb_mosaic100_ladd_20260619
 paper_run=1
 dataset=OGSOD-1.0
 task=hbb
-method=ladd_probea
-method_label=LADD Probe-A
+method=ladd
+method_label=LADD
 model_size=n
 seed=0
-phase_chain=A1->B
+phase_chain=A->B
 ladd_a1b_mode=dynamic_probe
 run_tag=paper_clean_a1b_dynprobe_mosaic100_yolo11n_s0
 project_dir=runs_public/paper/example

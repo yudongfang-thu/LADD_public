@@ -5,7 +5,7 @@
 本文档固定 LADD 在 VEDAI / DroneVehicle 上的外部泛化实验口径。该实验只用于回答：
 
 ```text
-LADD Probe-A 在 CCLKD 论文的 YOLO11n 跨数据集协议下是否仍能取得有效增益？
+LADD 在 CCLKD 论文的 YOLO11n 跨数据集协议下是否仍能取得有效增益？
 ```
 
 它不替代 OGSOD mosaic100 主线，也不进入 OGSOD 主表。
@@ -19,7 +19,7 @@ LADD Probe-A 在 CCLKD 论文的 YOLO11n 跨数据集协议下是否仍能取得
 | VEDAI | Table 9, YOLO11n | visible -> infrared | IR | RGB / visible |
 | DroneVehicle | Table 10, YOLO11n | infrared -> visible | RGB / visible | IR |
 
-对比方法使用 CCLKD 论文 reported results。我们自己的实验只报告同协议下的 student baseline、teacher baseline 和 LADD Probe-A。
+对比方法使用 CCLKD 论文 reported results。我们自己的实验只报告同协议下的 student baseline、teacher baseline 和 LADD。
 
 ## 2. 固定协议
 
@@ -28,9 +28,9 @@ LADD Probe-A 在 CCLKD 论文的 YOLO11n 跨数据集协议下是否仍能取得
 | model | YOLO11n |
 | input size | 512 |
 | baseline epochs | 200 |
-| LADD chain | A1 -> B, no A2 |
-| A1 epochs | 10 |
-| B epochs | 200 |
+| LADD chain | A -> B, no A2 |
+| Stage A epochs | 10 |
+| Stage B epochs | 200 |
 | batch | 16 |
 | optimizer | SGD |
 | lr | 0.01 |
@@ -38,14 +38,14 @@ LADD Probe-A 在 CCLKD 论文的 YOLO11n 跨数据集协议下是否仍能取得
 | weight decay | 0.0005 |
 | mosaic | 1.0 |
 | baseline close mosaic | 10 |
-| A1 close mosaic | 0 |
-| B close mosaic | 10 |
+| Stage A close mosaic | 0 |
+| Stage B close mosaic | 10 |
 | mixup | 0.1 |
 | seed | 0 first |
 
 配置文件：`configs/paper/cclkd_yolo11n_cross_dataset.yaml`。
 
-说明：A1 是 LADD 内部 warmup，只有 10 epoch；如果对 A1 也设置 `close_mosaic=10`，Ultralytics 会让 A1 全程关闭 mosaic。因此 A1 使用 `close_mosaic=0`，B 阶段和 baseline 使用 CCLKD-aligned `close_mosaic=10`。
+说明：Stage A 是 LADD 内部 warmup，只有 10 epoch；如果对 Stage A 也设置 `close_mosaic=10`，Ultralytics 会让 Stage A 全程关闭 mosaic。因此 Stage A 使用 `close_mosaic=0`，Stage B 和 baseline 使用 CCLKD-aligned `close_mosaic=10`。
 
 ## 3. 报告边界
 
@@ -67,11 +67,11 @@ All comparison methods were rerun by us.
 
 ## 4. OGSOD 为什么不使用 CCLKD 协议
 
-OGSOD 是当前论文主线受控实验，已经固定为 LADD Probe-A 的 OGSOD HBB `mosaic100` 协议：`imgsz=256`、`epochs=800`、`mosaic=1.0`、`close_mosaic=700`。重新切换 OGSOD 到 CCLKD protocol 会重开整套主表，且会混淆已经稳定下来的 OGSOD 主线协议。
+OGSOD 是当前论文主线受控实验，已经固定为 LADD 的 OGSOD HBB `mosaic100` 协议：`imgsz=256`、`epochs=800`、`mosaic=1.0`、`close_mosaic=700`。重新切换 OGSOD 到 CCLKD protocol 会重开整套主表，且会混淆已经稳定下来的 OGSOD 主线协议。
 
 因此：
 
-- OGSOD：保留 LADD Probe-A / OGSOD HBB `mosaic100` 主线。
+- OGSOD：保留 LADD / OGSOD HBB `mosaic100` 主线。
 - VEDAI / DroneVehicle：作为外部泛化表，对齐 CCLKD YOLO11n 协议。
 
 ## 5. 最小实验矩阵
@@ -80,9 +80,9 @@ OGSOD 是当前论文主线受控实验，已经固定为 LADD Probe-A 的 OGSOD
 |---|---|---|---|
 | P0 | VEDAI | IR student baseline | LADD 下界 |
 | P0 | VEDAI | RGB teacher baseline | teacher upper bound |
-| P0 | VEDAI | LADD Probe-A | 对齐 Table 9 YOLO11n |
+| P0 | VEDAI | LADD | 对齐 Table 9 YOLO11n |
 | P1 | DroneVehicle | RGB student baseline | LADD 下界 |
 | P1 | DroneVehicle | IR teacher baseline | teacher upper bound |
-| P1 | DroneVehicle | LADD Probe-A | 对齐 Table 10 YOLO11n |
+| P1 | DroneVehicle | LADD | 对齐 Table 10 YOLO11n |
 
 先跑 VEDAI，因为本仓已有 VEDAI 512 数据准备记录。DroneVehicle 需要先确认官方数据下载、pair、label 和 split。

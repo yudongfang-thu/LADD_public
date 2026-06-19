@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-PAPER_PROTOCOL_ID = "ogsod_hbb_mosaic100_clean_a1b_probea_20260619"
+PAPER_PROTOCOL_ID = "ogsod_hbb_mosaic100_ladd_20260619"
 ALLOWED_SEEDS = {"0", "42", "123"}
 EXPECTED_DATASET_NAMES = {"bridge", "harbor", "storage_tank"}
 INVALID_GIT_COMMITS = {"unknown", "dirty", "none", "null"}
@@ -21,7 +21,7 @@ FORBIDDEN_PATTERNS = (
     ("old", re.compile(r"(^|[_\-/\s])old($|[_\-/\s])", re.IGNORECASE)),
     ("legacy", re.compile(r"(^|[_\-/\s])legacy($|[_\-/\s])", re.IGNORECASE)),
     ("bn-freeze", re.compile(r"bn[-_]freeze", re.IGNORECASE)),
-    ("a1-a2-b", re.compile(r"a1[-_]a2[-_]b", re.IGNORECASE)),
+    ("a2-chain", re.compile(r"a1?[-_]a2[-_]b", re.IGNORECASE)),
     ("probe_only", re.compile(r"(^|[_\-/\s])probe[-_]only($|[_\-/\s])", re.IGNORECASE)),
     ("probe_run", re.compile(r"(^|[_\-/\s])probe[-_]run($|[_\-/\s])", re.IGNORECASE)),
     ("diagnostic_probe", re.compile(r"(^|[_\-/\s])diagnostic[-_]probe($|[_\-/\s])", re.IGNORECASE)),
@@ -29,7 +29,7 @@ FORBIDDEN_PATTERNS = (
 LADD_FORBIDDEN_NOTE_PATTERNS = (
     ("a2", re.compile(r"(^|[_\-/\s])a2($|[_\-/\s])", re.IGNORECASE)),
     ("bn-freeze", re.compile(r"bn[-_]freeze", re.IGNORECASE)),
-    ("a1-a2-b", re.compile(r"a1[-_]a2[-_]b", re.IGNORECASE)),
+    ("a2-chain", re.compile(r"a1?[-_]a2[-_]b", re.IGNORECASE)),
 )
 
 REQUIRED_COLUMNS = [
@@ -265,8 +265,8 @@ def validate_row(row: dict[str, str], line: int, *, csv_dir: Path, check_files: 
             errors.append(f"line {line}: LADD row must use ladd_mode=dynamic_probe")
         if "clean_a1b_dynprobe" not in run_tag:
             errors.append(f"line {line}: LADD run_tag must contain clean_a1b_dynprobe")
-        if norm(row.get("phase_chain")) != "A1->B":
-            errors.append(f"line {line}: LADD row must use phase_chain=A1->B")
+        if norm(row.get("phase_chain")) != "A->B":
+            errors.append(f"line {line}: LADD row must use phase_chain=A->B")
         for label, pattern in LADD_FORBIDDEN_NOTE_PATTERNS:
             if pattern.search(notes):
                 errors.append(f"line {line}: LADD notes contain forbidden historical pattern: {label}")

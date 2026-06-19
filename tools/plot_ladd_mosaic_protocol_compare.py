@@ -60,11 +60,11 @@ RUNS = [
     ),
     RunSpec(
         "new_ladd_s42",
-        "current s42, A1-best skip A2 -> B",
+        "current s42, Stage A-best skip A2 -> B",
         "mnt/dataY/ydf/projects/LADD_public/runs_public/ogsod/hbb/ladd_mosaic_a2last_20260615/ladd_hbb_ogsod11n_mosaic_a1best_skipa2_cap2_s42_b_e800_b64_s42_gpu1/results.csv",
         "new_ladd",
         42,
-        "A1 best, skip A2",
+        "Stage A best, skip A2",
         "#d62728",
     ),
     RunSpec(

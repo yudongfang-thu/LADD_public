@@ -5,8 +5,8 @@ Snapshot time: 2026-06-18 00:43 +08.
 This folder compares the current mosaic100 LADD mainline candidates by model
 capacity:
 
-- YOLO11n: Static, Dynamic, Probe-A snapshot.
-- YOLO11s: Static, Dynamic snapshot, Probe-A.
+- YOLO11n: Static, Dynamic, LADD snapshot.
+- YOLO11s: Static, Dynamic snapshot, LADD.
 
 The performance panels include same-capacity SAR and RGB baseline curves, and
 also mark their best AP/AP50 as horizontal reference lines. In this report,
@@ -18,12 +18,12 @@ the LADD setting: SAR-only detector baseline and RGB teacher/reference baseline.
 The 4090 server SSH authentication failed during this refresh. For YOLO11s,
 Static/Dynamic curves are therefore taken from the latest local 4090 sync, and
 star markers indicate later status snapshots beyond the synced curves. For
-YOLO11n Probe-A, only the latest snapshot marker is available until 4090 access
+YOLO11n LADD, only the latest snapshot marker is available until 4090 access
 is restored.
 
 Older 90-server Static/skip-A2 curves are intentionally not used as substitutes
 in the cleaned mainline figures, because they are not the same evidence line as
-the current clean A1->B runs.
+the current clean A->B runs.
 
 ## Outputs
 

@@ -1,6 +1,6 @@
 # LADD Public 精简仓库说明
 
-最后更新：2026-06-18 CST
+最后更新：2026-06-19 CST
 
 本文档说明当前公开仓库的范围。此前用于排查问题的大体量证据包已经移出当前
 public 分支；当前 public 分支只保留论文主线代码、协议文档、关键结果摘要和必要论文资料。
@@ -29,7 +29,7 @@ public 分支；当前 public 分支只保留论文主线代码、协议文档�
 
 ## 3. 当前 paper-facing 状态
 
-1. Paper mainline gate：主表只接受 `clean_a1b_dynprobe` + `LADD_A1B_MODE=dynamic_probe` + `mosaic100` + `A1 -> B` + no A2。
+1. Paper mainline gate：主表只接受 `method=LADD` + 内部 `clean_a1b_dynprobe` / `LADD_A1B_MODE=dynamic_probe` + `mosaic100` + `A -> B` + no A2。
 2. Comparison gate：FGD / LD / CMDistill-style 必须使用同协议 `mosaic100`，并通过 paper wrapper 启动。
 3. CCLKD gate：只有 online controlled comparison 可以进入受控对比；frozen-teacher CCLKD loss component 不能作为正式 CCLKD 结果。
 4. Result gate：论文主表结果必须先进入 `paper_results/` canonical schema，并通过 `tools/paper_validate_main_table.py`。

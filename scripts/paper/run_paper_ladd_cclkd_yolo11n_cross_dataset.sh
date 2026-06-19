@@ -6,8 +6,8 @@ usage() {
 Usage:
   bash scripts/paper/run_paper_ladd_cclkd_yolo11n_cross_dataset.sh <vedai|dronevehicle> <seed> <gpu_id>
 
-Runs LADD Probe-A / clean A1B under the CCLKD YOLO11n cross-dataset protocol:
-  model=yolo11n, imgsz=512, A1=10, B=200, batch=16, SGD lr=0.01,
+Runs LADD under the CCLKD YOLO11n cross-dataset protocol:
+  model=yolo11n, imgsz=512, Stage A=10, Stage B=200, batch=16, SGD lr=0.01,
   momentum=0.937, mosaic=1.0, close_mosaic=10, mixup=0.1.
 
 Dataset directions:
@@ -114,9 +114,9 @@ if [[ "${DRY_RUN:-0}" != "1" ]]; then
   done
 fi
 
-RUN_TAG="${RUN_TAG:-cclkdproto_${DATASET}_ladd_probea_yolo11n_${STUDENT_MODALITY}_student_${TEACHER_MODALITY}_teacher_s${SEED}_${DATE_TAG}}"
-PROJECT_DIR="${PROJECT_DIR:-runs_public/cross_dataset/cclkd_yolo11n/${DATASET}/ladd_probea}"
-CHAIN_LOG_DIR="${CHAIN_LOG_DIR:-logs/cross_dataset/cclkd_yolo11n/${DATASET}/ladd_probea/${RUN_TAG}_gpu${GPU_ID}}"
+RUN_TAG="${RUN_TAG:-cclkdproto_${DATASET}_ladd_yolo11n_${STUDENT_MODALITY}_student_${TEACHER_MODALITY}_teacher_s${SEED}_${DATE_TAG}}"
+PROJECT_DIR="${PROJECT_DIR:-runs_public/cross_dataset/cclkd_yolo11n/${DATASET}/ladd}"
+CHAIN_LOG_DIR="${CHAIN_LOG_DIR:-logs/cross_dataset/cclkd_yolo11n/${DATASET}/ladd/${RUN_TAG}_gpu${GPU_ID}}"
 META_PATH="${CHAIN_LOG_DIR}/cross_dataset_meta.env"
 mkdir -p "$CHAIN_LOG_DIR"
 
@@ -132,9 +132,9 @@ mkdir -p "$CHAIN_LOG_DIR"
   printf 'seed=%q\n' "$SEED"
   printf 'gpu_id=%q\n' "$GPU_ID"
   printf 'model_size=%q\n' "n"
-  printf 'method=%q\n' "ladd_probea"
+  printf 'method=%q\n' "ladd"
   printf 'ladd_mode=%q\n' "dynamic_probe"
-  printf 'phase_chain=%q\n' "A1->B"
+  printf 'phase_chain=%q\n' "A->B"
   printf 'student_baseline=%q\n' "$STUDENT_BASELINE"
   printf 'teacher_baseline=%q\n' "$TEACHER_BASELINE"
   printf 'student_data_cfg=%q\n' "$STUDENT_DATA_CFG"

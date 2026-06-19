@@ -13,7 +13,7 @@
 |---|---|---|---|
 | CCLKD 复现消融线 | 验证 CCLKD paper formulation 与原文协议/受控协议下的有效性 | YOLO11 受控消融与 YOLOv5x 原文复现必须分开；旧错误 formulation 已作废 | [CCLKD_LINE_STATUS_20260614_CN.md](cclkd_reproduction/CCLKD_LINE_STATUS_20260614_CN.md) |
 | 其他对比方法线 | 维护 FGD / LD / CMDistill / HalluciDet-YOLO / CCLKD 的对比方法实现与训练证据 | HalluciDet-style 已废弃；frozen-teacher KD、standalone HalluciDet 和 online CCLKD 必须分口径核验 | [COMPARISON_LINE_STATUS_20260614_CN.md](comparison_methods/COMPARISON_LINE_STATUS_20260614_CN.md) |
-| LADD Probe-A 主线 | 固定 clean A1B 主方法并维护同协议结果 | 当前主线是 `clean_a1b_dynprobe`，即 A1 -> B / Probe-A；`clean_a1b` static 与 `clean_a1b_dyn` dynamic 只作为消融 | [LADD_MAINLINE_STANDARD_CN.md](LADD_MAINLINE_STANDARD_CN.md) |
+| LADD 主线 | 固定 clean A1B 主方法并维护同协议结果 | 当前主线是 `clean_a1b_dynprobe`，即 A -> B / LADD；`clean_a1b` static 与 `clean_a1b_dyn` dynamic 只作为消融 | [LADD_MAINLINE_STANDARD_CN.md](LADD_MAINLINE_STANDARD_CN.md) |
 
 全局 registry 入口：
 
@@ -27,7 +27,7 @@
 
 LADD 当前入口：
 
-- 方法定义：[../ladd_clean_a1b_method_definition.md](../ladd_clean_a1b_method_definition.md)
+- 方法定义：[../ladd_method_definition.md](../ladd_method_definition.md)
 - 主线规范：[LADD_MAINLINE_STANDARD_CN.md](LADD_MAINLINE_STANDARD_CN.md)
 - 当前 clean 曲线：[ladd_mosaic100_mainline_curves_20260618/](ladd_mosaic100_mainline_curves_20260618/)
 - 旧实验归档：[archive_legacy_ladd_20260618/README_CN.md](archive_legacy_ladd_20260618/README_CN.md)
@@ -74,5 +74,5 @@ CMDistill pending 入口：
 
 1. CCLKD 线已经明确区分了 paper reproduction gate 与 LADD controlled comparison，旧错误 formulation 结果不再混用。
 2. 对比方法线已经形成方法实现/证据框架，但部分训练结果需要重新按 registry 核验。
-3. LADD 主线已经重新定义为 clean A1B / Probe-A；旧 A1-A2-B 与旧 mosaic 实验只作为历史诊断。
+3. LADD 主线已经重新定义为 clean A1B / LADD；旧 A1-A2-B 与旧 mosaic 实验只作为历史诊断。
 4. 当前主表只从 `clean_a1b_dynprobe` 与同协议 baseline/comparison results 中取数；static/dynamic clean 只作为消融解释。

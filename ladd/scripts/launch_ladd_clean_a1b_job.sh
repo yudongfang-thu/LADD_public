@@ -6,10 +6,10 @@ usage() {
 Usage:
   bash ladd/scripts/launch_ladd_clean_a1b_job.sh <n|s|m|l|x> <seed> <gpu_id>
 
-LADD-clean / LADD-A1B launcher:
-  - runs A1, then directly runs B from A1 weights/best.pt
+LADD launcher:
+  - runs Stage A, then directly runs Stage B from Stage A weights/best.pt
   - does not run A2
-  - keeps A1 reconstruction/reach/taskL and B detector/KD/student reconstruction
+  - keeps Stage A reconstruction/reach/taskL and Stage B detector/KD/student reconstruction
   - uses the cleaned LADD loss surface without sep/private/residual/debug auxiliary losses
   - supports LADD_A1B_MODE=static, dynamic, or dynamic_probe
 
@@ -28,9 +28,9 @@ weights under:
   runs_public/ogsod/hbb/formal_nomosaic_20260528/baselines/
 
 Defaults:
-  A1 epochs=10
-  B epochs=800
-  raw default A1/B mosaic=0.0, close_mosaic=0; PAPER_RUN=1 requires mosaic100
+  Stage A epochs=10
+  Stage B epochs=800
+  raw default Stage A/B mosaic=0.0, close_mosaic=0; PAPER_RUN=1 requires mosaic100
   rank_d_neg_cap=2.0
   batch n/s=64, m/l=32, x=16
 
@@ -237,7 +237,7 @@ if [[ "${PAPER_RUN:-0}" == "1" ]]; then
     exit 2
   fi
   if [[ "$A1_MOSAIC_VALUE" != "1.0" || "$A1_CLOSE_MOSAIC_VALUE" != "0" || "$B_MOSAIC_VALUE" != "1.0" || "$B_CLOSE_MOSAIC_VALUE" != "700" ]]; then
-    echo "PAPER_RUN=1 requires A1 mosaic=1.0 close=0 and B mosaic=1.0 close=700." >&2
+    echo "PAPER_RUN=1 requires Stage A mosaic=1.0 close=0 and Stage B mosaic=1.0 close=700." >&2
     exit 2
   fi
   if [[ "$RANK_D_NEG_CAP_VALUE" != "2.0" ]]; then
@@ -408,7 +408,13 @@ run_phase() {
   )
 
   echo
-  echo "[$(date '+%F %T')] Prepared LADD-clean phase ${phase}: ${run_name}"
+  local stage_label="$phase"
+  if [[ "$phase" == "a1" ]]; then
+    stage_label="Stage A"
+  elif [[ "$phase" == "b" ]]; then
+    stage_label="Stage B"
+  fi
+  echo "[$(date '+%F %T')] Prepared LADD ${stage_label}: ${run_name}"
   printf 'Command:'
   printf ' %q' "${cmd[@]}"
   printf '\n'
@@ -421,7 +427,7 @@ run_phase() {
 
 write_meta
 
-echo "[$(date '+%F %T')] LADD-clean/A1B mode=${LADD_A1B_MODE} yolo11${SIZE} seed=${SEED} gpu=${GPU_ID}"
+echo "[$(date '+%F %T')] LADD implementation_mode=${LADD_A1B_MODE} yolo11${SIZE} seed=${SEED} gpu=${GPU_ID}"
 echo "paper_run=${PAPER_RUN:-0}"
 echo "paper_protocol_id=${PAPER_PROTOCOL_ID:-}"
 echo "sar_baseline=${SAR_BASELINE:-<not-found>}"
@@ -429,7 +435,7 @@ echo "rgb_teacher=${RGB_TEACHER:-<not-found>}"
 echo "meta=${META_PATH}"
 
 if [[ -e "${PROJECT_DIR}/${A1_RUN_NAME}" && "${EXIST_OK:-0}" != "1" && "${DRY_RUN:-0}" != "1" ]]; then
-  echo "A1 run directory already exists: ${PROJECT_DIR}/${A1_RUN_NAME}" >&2
+  echo "Stage A run directory already exists: ${PROJECT_DIR}/${A1_RUN_NAME}" >&2
   echo "Set EXIST_OK=1 only if intentional." >&2
   exit 1
 fi
@@ -457,11 +463,11 @@ run_phase \
   "$A1_WARMUP_BIAS_LR_VALUE"
 
 if [[ "${DRY_RUN:-0}" == "1" ]]; then
-  A1_BEST="<A1 actual_run_dir>/weights/best.pt"
+  A1_BEST="<Stage A actual_run_dir>/weights/best.pt"
 else
   A1_ACTUAL_RUN_DIR="$(cat "${A1_LOG_DIR}/actual_run_dir.txt")"
   A1_BEST="${A1_ACTUAL_RUN_DIR}/weights/best.pt"
-  require_file "$A1_BEST" "A1 best checkpoint"
+  require_file "$A1_BEST" "Stage A best checkpoint"
   {
     printf 'a1_actual_run_dir=%q\n' "$A1_ACTUAL_RUN_DIR"
     printf 'a1_best=%q\n' "$A1_BEST"
@@ -487,7 +493,7 @@ run_phase \
 
 if [[ "${DRY_RUN:-0}" == "1" ]]; then
   echo
-  echo "DRY_RUN=1, not launching A1/B."
+  echo "DRY_RUN=1, not launching Stage A/B."
   exit 0
 fi
 
@@ -498,7 +504,7 @@ B_ACTUAL_RUN_DIR="$(cat "${B_LOG_DIR}/actual_run_dir.txt")"
 } >> "$META_PATH"
 
 echo
-echo "[$(date '+%F %T')] LADD-clean/A1B finished."
-echo "A1 best: ${A1_BEST}"
+echo "[$(date '+%F %T')] LADD finished."
+echo "Stage A best: ${A1_BEST}"
 echo "B run:   ${B_ACTUAL_RUN_DIR}"
 echo "Meta:    ${META_PATH}"

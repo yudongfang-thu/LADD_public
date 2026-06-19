@@ -1,9 +1,9 @@
-# OGSOD LADD Probe-A 主线训练规范
+# OGSOD LADD 主线训练规范
 
 最后更新：2026-06-19
 
 本文档记录当前 OGSOD HBB 上 LADD 的正式主线设置。自本版起，主线固定为
-`LADD Probe-A / LADD-clean A1B`。旧 A1-A2-B、BN-freeze、A2
+`LADD`。旧 A1-A2-B、BN-freeze、A2
 稳定学习率等内容保留为历史诊断，不再作为当前主线规范。
 
 ## 1. 主线定义
@@ -13,8 +13,8 @@
 ```text
 latest same-protocol SAR/RGB baseline
 + OGSOD mosaic100 protocol: mosaic=1.0, close_mosaic=700, 800 epoch
-+ A1 teacher decomposition warmup
-+ B / Probe-A:
++ Stage A teacher decomposition warmup
++ Stage B:
    - detector + z_s -> z_t KD + student reconstruction
    - dynamic teacher decomposition/reach/taskL
    - frozen student reachability probe
@@ -24,8 +24,7 @@ latest same-protocol SAR/RGB baseline
 + historical sep/private/residual/debug losses removed
 ```
 
-主方法报告中默认写作 `LADD Probe-A` 或 `LADD-clean A1B (Probe-A)`。
-对应 launcher mode 为：
+主方法报告中默认写作 `LADD`。对应内部 launcher mode 为：
 
 ```bash
 LADD_A1B_MODE=dynamic_probe
@@ -51,21 +50,21 @@ LADD 必须从同协议 baseline 出发：
 
 ```text
 SAR(size, seed k, mosaic100) + RGB(size, seed k, mosaic100)
--> LADD Probe-A(size, seed k, mosaic100)
+-> LADD(size, seed k, mosaic100)
 ```
 
 已完成 no-mosaic baseline / LADD 可作为 fallback 或 robustness appendix，但不能混入当前 OGSOD mosaic100 主表。
 
 ## 3. 阶段设置
 
-当前主线只跑 A1 和 B，不跑 A2：
+当前主线只跑 Stage A 和 B，不跑 A2：
 
 | 阶段 | epoch | 检测损失 | 主要训练对象 | 作用 |
 |---|---:|---:|---|---|
-| A1 | `10` | `0.0` | teacher decomposition、teacher decoder、student reachability probe、teacher task heads | 学习 `z_t/u_t` 分解和 reach probe |
-| B / Probe-A | `800` | `1.0` | SAR detector、student split、teacher decomposition、teacher decoder、teacher task heads | SAR 检测 + KD，并让 teacher common target 随 B 阶段适配 |
+| Stage A | `10` | `0.0` | teacher decomposition、teacher decoder、student reachability probe、teacher task heads | 学习 `z_t/u_t` 分解和 reach probe |
+| B | `800` | `1.0` | SAR detector、student split、teacher decomposition、teacher decoder、teacher task heads | SAR 检测 + KD，并让 teacher common target 随 B 阶段适配 |
 
-Probe-A 在 B 阶段的关键点：
+LADD 在 B 阶段的关键点：
 
 | 模块/路径 | B 状态 |
 |---|---|
@@ -77,21 +76,21 @@ Probe-A 在 B 阶段的关键点：
 | `student_reachability` | frozen/eval |
 | reach loss 中的 `q_s` | detach |
 
-这一区别使 Probe-A 既保留 Dynamic 的 `z_t/u_t` 适配能力，又避免 B 阶段 reach
+这一区别使 LADD 既保留 Dynamic 的 `z_t/u_t` 适配能力，又避免 B 阶段 reach
 loss 继续拉动学生 reach probe。当前曲线证据显示它比完全 Dynamic 更稳定。
 
 ## 4. Loss 口径
 
-A1:
+Stage A:
 
 ```text
-L_A1 = lambda_rec * L_t_rec
+L_A = lambda_rec * L_t_rec
      + lambda_reach * (lambda_match_inner * L_reach_match
                      + lambda_rank_inner * L_reach_rank_cap)
      + lambda_taskL * L_task
 ```
 
-B / Probe-A:
+Stage B:
 
 ```text
 L_B = L_det
@@ -199,9 +198,9 @@ LADD_A1B_MODE=dynamic \
 
 | 优先级 | 实验 | 目的 |
 |---|---|---|
-| P0 | mosaic100 Probe-A `n/m` | 补齐当前缺口；`s` 已有完整 Probe-A |
+| P0 | mosaic100 LADD `n/m` | 补齐当前缺口；`s` 已有完整 LADD |
 | P1 | mosaic100 SAR/RGB `m` baseline 补完 | 当前 m reference 有 partial 风险，需补完整 baseline |
-| P2 | no-mosaic Probe-A `n/s/m` | 已验证 fallback / robustness appendix |
+| P2 | no-mosaic LADD `n/s/m` | 已验证 fallback / robustness appendix |
 | P3 | Static/Dynamic `n/s` | 消融：teacher core 动态适配与 reach probe 冻结的贡献 |
 
 ## 8. 主表准入
@@ -210,7 +209,7 @@ LADD_A1B_MODE=dynamic \
 
 1. run tag 包含 `clean_a1b_dynprobe`；
 2. `LADD_A1B_MODE=dynamic_probe`；
-3. phase chain 是 `A1 -> B`，没有 A2；
+3. phase chain 是 `A -> B`，没有 A2；
 4. 使用当前 cleaned HBB LADD 代码；
 5. baseline、LADD、comparison methods 使用同容量、同 seed、同 mosaic100 协议；
 6. 结果包不包含 checkpoint 权重或其他大文件。
@@ -220,7 +219,7 @@ LADD_A1B_MODE=dynamic \
 | 结果类型 | 处理 |
 |---|---|
 | 旧 A1-A2-B full chain | 历史诊断 |
-| no-mosaic Probe-A | 已验证 fallback / robustness appendix |
+| no-mosaic LADD | 已验证 fallback / robustness appendix |
 | Static `clean_a1b` | 消融 |
 | Dynamic `clean_a1b_dyn` | 消融/诊断 |
 | 旧 close@100 / 400ep / BN-freeze runs | 历史诊断 |

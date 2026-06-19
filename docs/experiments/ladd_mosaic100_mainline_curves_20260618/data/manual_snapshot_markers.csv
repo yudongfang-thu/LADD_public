@@ -1,5 +1,5 @@
 model,method,epoch,ap50,ap,note
-n,Probe-A,347,0.77260,0.49778,4090 latest snapshot from 2026-06-18 00:31; full curve unavailable because 4090 SSH auth failed
+n,LADD,347,0.77260,0.49778,4090 latest snapshot from 2026-06-18 00:31; full curve unavailable because 4090 SSH auth failed
 s,Static,739,0.91141,0.62716,4090 best snapshot from completed run; full curve unavailable because 4090 SSH auth failed
 s,Static-final,800,0.91334,0.62425,4090 final snapshot from completed run; full curve unavailable because 4090 SSH auth failed
 s,Dynamic,656,0.92053,0.63647,4090 latest/best snapshot from 2026-06-18 00:31; full curve unavailable because 4090 SSH auth failed

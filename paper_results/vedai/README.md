@@ -6,7 +6,7 @@ Current active extension:
 
 ```text
 protocol_id: cclkd_yolo11n_cross_dataset_20260619
-method under test: LADD Probe-A / clean_a1b_dynprobe
+method under test: LADD
 reference protocol: CCLKD YOLO11n extension tables
 datasets: VEDAI, DroneVehicle
 ```
@@ -24,6 +24,6 @@ Reporting rules:
 
 - VEDAI direction: RGB / visible teacher -> IR student.
 - DroneVehicle direction: IR teacher -> RGB / visible student.
-- Our rows should include student baseline, teacher baseline, and LADD Probe-A.
+- Our rows should include student baseline, teacher baseline, and LADD.
 - CCLKD / CMDistill YOLO11n rows copied from the CCLKD paper must be marked as reported results.
 - Do not merge these rows into the OGSOD mosaic100 main table.

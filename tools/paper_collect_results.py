@@ -10,10 +10,10 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-PAPER_PROTOCOL_ID = "ogsod_hbb_mosaic100_clean_a1b_probea_20260619"
+PAPER_PROTOCOL_ID = "ogsod_hbb_mosaic100_ladd_20260619"
 INVALID_GIT_COMMITS = {"unknown", "dirty", "none", "null"}
 RECOGNIZED_METHODS = {
-    "ladd_probea",
+    "ladd",
     "cmdistill",
     "fgd",
     "ld",
@@ -31,7 +31,7 @@ FORBIDDEN_PATTERNS = (
     ("old", re.compile(r"(^|[_\-/\s])old($|[_\-/\s])", re.IGNORECASE)),
     ("legacy", re.compile(r"(^|[_\-/\s])legacy($|[_\-/\s])", re.IGNORECASE)),
     ("bn-freeze", re.compile(r"bn[-_]freeze", re.IGNORECASE)),
-    ("a1-a2-b", re.compile(r"a1[-_]a2[-_]b", re.IGNORECASE)),
+    ("a2-chain", re.compile(r"a1?[-_]a2[-_]b", re.IGNORECASE)),
     ("probe_only", re.compile(r"(^|[_\-/\s])probe[-_]only($|[_\-/\s])", re.IGNORECASE)),
     ("probe_run", re.compile(r"(^|[_\-/\s])probe[-_]run($|[_\-/\s])", re.IGNORECASE)),
     ("diagnostic_probe", re.compile(r"(^|[_\-/\s])diagnostic[-_]probe($|[_\-/\s])", re.IGNORECASE)),
@@ -229,8 +229,8 @@ def infer_model_seed(text: str, meta: dict[str, Any]) -> tuple[str, str]:
 def infer_method(text: str, meta: dict[str, Any]) -> tuple[str, str, str, str, str]:
     method = first_value(meta.get("method"), meta.get("paper_method"), meta.get("comparison_kd_profile"))
     lower = f"{text} {method}".lower()
-    if "clean_a1b_dynprobe" in lower or "dynamic_probe" in lower or "ladd_probea" in lower:
-        return "ladd_probea", "LADD Probe-A / LADD-clean A1B", "A1->B", "dynamic_probe", "sar_baseline"
+    if method.lower() == "ladd" or "clean_a1b_dynprobe" in lower or "dynamic_probe" in lower:
+        return "ladd", "LADD", "A->B", "dynamic_probe", "sar_baseline"
     if "cmdistill" in lower:
         return "cmdistill", "CMDistill-style / paper-aligned adaptation", "B-only", "", "transferred_kd"
     if re.search(r"(^|[/_\-])fgd([/_\-]|$)", lower):
@@ -246,6 +246,13 @@ def infer_method(text: str, meta: dict[str, Any]) -> tuple[str, str, str, str, s
     if "sar" in lower and "baseline" in lower:
         return "sar_baseline", "SAR baseline", "baseline", "", "yolo_pretrain"
     return first_value(method, "unknown"), first_value(meta.get("method_label"), "unknown"), first_value(meta.get("phase_chain"), ""), "", ""
+
+
+def normalize_phase_chain(value: str) -> str:
+    text = first_value(value).strip()
+    if text in {"A1->B", "A1 -> B"}:
+        return "A->B"
+    return text
 
 
 def load_results(path: Path) -> list[dict[str, str]]:
@@ -286,13 +293,13 @@ def gate_row(row: dict[str, str]) -> tuple[str, str, str]:
     text = " ".join(row.values()).lower()
     for label in forbidden_labels(text):
         reasons.append(f"forbidden_{label}")
-    if row["method"] == "ladd_probea":
+    if row["method"] == "ladd":
         if row["ladd_mode"] != "dynamic_probe":
             reasons.append("ladd_not_dynamic_probe")
         if "clean_a1b_dynprobe" not in row["run_tag"]:
             reasons.append("ladd_tag_missing_dynprobe")
-        if row["phase_chain"] != "A1->B":
-            reasons.append("ladd_not_a1b")
+        if row["phase_chain"] != "A->B":
+            reasons.append("ladd_not_ab")
     if row["method"] == "cmdistill" and "vedai" in text:
         reasons.append("cmdistill_vedai_not_ogsod_main")
     if row["method"] == "cclkd_online" and ("online" not in text or "frozen" in text):
@@ -355,7 +362,7 @@ def collect_one(spec: InputSpec) -> dict[str, str]:
         "batch": first_value(meta.get("batch"), meta.get("batch_size"), meta.get("BATCH_SIZE"), args_data.get("batch")),
         "mosaic": first_value(meta.get("mosaic"), meta.get("b_mosaic"), meta.get("MOSAIC"), args_data.get("mosaic")),
         "close_mosaic": first_value(meta.get("close_mosaic"), meta.get("b_close_mosaic"), meta.get("CLOSE_MOSAIC"), args_data.get("close_mosaic")),
-        "phase_chain": first_value(meta.get("phase_chain"), phase_chain),
+        "phase_chain": normalize_phase_chain(first_value(meta.get("phase_chain"), phase_chain)),
         "ladd_mode": first_value(meta.get("ladd_mode"), meta.get("ladd_a1b_mode"), meta.get("LADD_A1B_MODE"), ladd_mode),
         "run_tag": first_value(meta.get("run_tag"), run_dir.name),
         "project_dir": first_value(meta.get("project_dir"), args_data.get("project"), rel(run_dir.parent)),

@@ -4,7 +4,7 @@ reference_method: CCLKD
 reference_tables:
   vedai: CCLKD Table 9 YOLOv11n
   dronevehicle: CCLKD Table 10 YOLOv11n
-method_under_test: LADD Probe-A / LADD-clean A1B
+method_under_test: LADD
 internal_tag: clean_a1b_dynprobe
 model_size: n
 model: yolo11n.pt
@@ -12,8 +12,8 @@ detector_family: YOLOv11n
 task: hbb
 imgsz: 512
 baseline_epochs: 200
-a1_epochs: 10
-b_epochs: 200
+stage_a_epochs: 10
+stage_b_epochs: 200
 batch: 16
 optimizer: SGD
 lr0: 0.01
@@ -23,8 +23,8 @@ weight_decay: 0.0005
 cos_lr: true
 mosaic: 1.0
 baseline_close_mosaic: 10
-a1_close_mosaic: 0
-b_close_mosaic: 10
+stage_a_close_mosaic: 0
+stage_b_close_mosaic: 10
 mixup: 0.1
 cutmix: 0.0
 degrees: 0.0
@@ -64,4 +64,4 @@ datasets:
 notes:
   - This protocol is separate from the OGSOD mosaic100 LADD main table.
   - External comparison rows from CCLKD are reported results, not locally rerun results.
-  - LADD rows must report student-only baseline, teacher-only upper bound, and LADD Probe-A under this protocol.
+  - LADD rows must report student-only baseline, teacher-only upper bound, and LADD under this protocol.
