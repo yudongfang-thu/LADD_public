@@ -1,0 +1,67 @@
+paper_protocol_id: cclkd_yolo11n_cross_dataset_20260619
+scope: cross_dataset_extension
+reference_method: CCLKD
+reference_tables:
+  vedai: CCLKD Table 9 YOLOv11n
+  dronevehicle: CCLKD Table 10 YOLOv11n
+method_under_test: LADD Probe-A / LADD-clean A1B
+internal_tag: clean_a1b_dynprobe
+model_size: n
+model: yolo11n.pt
+detector_family: YOLOv11n
+task: hbb
+imgsz: 512
+baseline_epochs: 200
+a1_epochs: 10
+b_epochs: 200
+batch: 16
+optimizer: SGD
+lr0: 0.01
+lrf: 0.01
+momentum: 0.937
+weight_decay: 0.0005
+cos_lr: true
+mosaic: 1.0
+baseline_close_mosaic: 10
+a1_close_mosaic: 0
+b_close_mosaic: 10
+mixup: 0.1
+cutmix: 0.0
+degrees: 0.0
+perspective: 0.0
+translate: 0.1
+scale: 0.5
+fliplr: 0.5
+flipud: 0.0
+hsv_h: 0.0
+hsv_s: 0.0
+hsv_v: 0.0
+erasing: 0.0
+seeds: [0]
+datasets:
+  vedai:
+    transfer_direction: visible_to_infrared
+    student_modality: ir
+    teacher_modality: rgb
+    split: paper80_seed0
+    default_student_data_yaml: comparison/cmdistill/native_reproduction/data/processed/VEDAI512_paper8_hbb_paper80_seed0/configs/vedai512_ir_hbb.yaml
+    default_teacher_data_yaml: comparison/cmdistill/native_reproduction/data/processed/VEDAI512_paper8_hbb_paper80_seed0/configs/vedai512_rgb_hbb.yaml
+    reported_cclkd_yolo11n_map50: 65.8
+    reported_cclkd_yolo11n_map: 38.5
+    reported_cmdistill_yolo11n_map50: 65.1
+    reported_cmdistill_yolo11n_map: 38.2
+  dronevehicle:
+    transfer_direction: infrared_to_visible
+    student_modality: rgb
+    teacher_modality: ir
+    split: official_train_val_or_reproducible_validation
+    default_student_data_yaml: comparison/cmdistill/native_reproduction/data/processed/DroneVehicle_cclkd_hbb/configs/dronevehicle_rgb_hbb.yaml
+    default_teacher_data_yaml: comparison/cmdistill/native_reproduction/data/processed/DroneVehicle_cclkd_hbb/configs/dronevehicle_ir_hbb.yaml
+    reported_cclkd_yolo11n_map50: 79.7
+    reported_cclkd_yolo11n_map: 57.8
+    reported_cmdistill_yolo11n_map50: 78.2
+    reported_cmdistill_yolo11n_map: 55.2
+notes:
+  - This protocol is separate from the OGSOD mosaic100 LADD main table.
+  - External comparison rows from CCLKD are reported results, not locally rerun results.
+  - LADD rows must report student-only baseline, teacher-only upper bound, and LADD Probe-A under this protocol.

@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-PAPER_PROTOCOL_ID = "ogsod_hbb_nomosaic_clean_a1b_probea_20260619"
+PAPER_PROTOCOL_ID = "ogsod_hbb_mosaic100_clean_a1b_probea_20260619"
 INVALID_GIT_COMMITS = {"unknown", "dirty", "none", "null"}
 RECOGNIZED_METHODS = {
     "ladd_probea",
@@ -261,10 +261,10 @@ def gate_row(row: dict[str, str]) -> tuple[str, str, str]:
         reasons.append("imgsz_not_256")
     if row["epochs"] != "800":
         reasons.append("epochs_not_800")
-    if as_float_text(row["mosaic"]) not in {"0", "0.0"}:
-        reasons.append("mosaic_not_0.0")
-    if row["close_mosaic"] != "0":
-        reasons.append("close_mosaic_not_0")
+    if as_float_text(row["mosaic"]) not in {"1", "1.0"}:
+        reasons.append("mosaic_not_1.0")
+    if as_float_text(row["close_mosaic"]) != "700":
+        reasons.append("close_mosaic_not_700")
     if row["seed"] not in {"0", "42", "123"}:
         reasons.append("nonpaper_seed")
     if not row["results_csv"]:

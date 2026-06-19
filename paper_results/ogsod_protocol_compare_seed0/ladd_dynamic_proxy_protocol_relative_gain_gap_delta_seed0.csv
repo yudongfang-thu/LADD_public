@@ -1,0 +1,4 @@
+model,mosaic_ladd_source,mosaic_substitute_for_probea,mosaic_status,nomosaic_gain,mosaic_proxy_gain,mosaic_proxy_minus_nomosaic_gain,nomosaic_gap_closed_pct,mosaic_proxy_gap_closed_pct,mosaic_proxy_minus_nomosaic_gap_pct
+YOLO11n,Dynamic LADD clean_a1b_dyn proxy,yes,complete,0.01779,0.03453,0.01674,24.16,45.92,21.76
+YOLO11s,Dynamic LADD clean_a1b_dyn proxy,yes,partial,0.01176,0.01675,0.00499,40.96,41.29,0.33
+YOLO11m,Probe-A clean_a1b_dynprobe partial; no local dynamic proxy found,no_dynamic_available,partial,0.01402,0.00528,-0.00874,60.2,23.49,-36.71

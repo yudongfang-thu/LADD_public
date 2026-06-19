@@ -275,6 +275,8 @@ mkdir -p "$LOG_DIR"
   echo "cos_lr=${COS_LR:-0}"
   echo "lr0=${LR0:-}"
   echo "lrf=${LRF:-}"
+  echo "momentum=${MOMENTUM:-}"
+  echo "weight_decay=${WEIGHT_DECAY:-}"
   echo "optimizer=${OPTIMIZER:-}"
   echo "warmup_epochs=${WARMUP_EPOCHS:-}"
   echo "warmup_bias_lr=${WARMUP_BIAS_LR:-}"
@@ -455,6 +457,12 @@ if [[ -n "${LR0:-}" ]]; then
 fi
 if [[ -n "${LRF:-}" ]]; then
   cmd+=(--lrf "$LRF")
+fi
+if [[ -n "${MOMENTUM:-}" ]]; then
+  cmd+=(--momentum "$MOMENTUM")
+fi
+if [[ -n "${WEIGHT_DECAY:-}" ]]; then
+  cmd+=(--weight-decay "$WEIGHT_DECAY")
 fi
 if [[ "${COS_LR:-0}" == "1" ]]; then
   cmd+=(--cos-lr)

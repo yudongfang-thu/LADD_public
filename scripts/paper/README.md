@@ -1,6 +1,6 @@
 # Paper Launchers
 
-These launchers are the recommended entrypoints for paper-facing OGSOD HBB nomosaic experiments.
+These launchers are the recommended entrypoints for paper-facing OGSOD HBB mosaic100 experiments.
 
 Run from the repository root:
 
@@ -10,6 +10,13 @@ bash scripts/paper/run_paper_ladd_probea.sh <n|s|m|l|x> <seed> <gpu_id>
 bash scripts/paper/run_paper_comparison_kd.sh <fgd|ld|cmdistill> <n|s|m|l|x> <seed> <gpu_id>
 bash scripts/paper/run_paper_hallucidet.sh <n|s|m> <seed> <gpu_id>
 bash scripts/paper/run_paper_cclkd_online.sh <n|s> <seed> <gpu_id>
+```
+
+Optional cross-dataset extension, separate from OGSOD main-table runs:
+
+```bash
+bash scripts/paper/run_paper_cclkd_yolo11n_cross_baseline.sh <vedai|dronevehicle> <student|teacher> <seed> <gpu_id>
+bash scripts/paper/run_paper_ladd_cclkd_yolo11n_cross_dataset.sh <vedai|dronevehicle> <seed> <gpu_id>
 ```
 
 All paper launchers support:
@@ -22,13 +29,24 @@ PAPER_STRICT_GIT=1
 
 Protocol invariants:
 
-- `protocol=nomosaic`
+- `protocol=mosaic100`
 - `imgsz=256`
 - `epochs=800`
-- `mosaic=0.0`
-- `close_mosaic=0`
+- `mosaic=1.0`
+- `close_mosaic=700`
 - seeds restricted to `0, 42, 123`
 - dataset YAMLs restricted to `configs/paper/datasets/`
+
+The VEDAI / DroneVehicle extension deliberately uses a different protocol:
+
+- `protocol_id=cclkd_yolo11n_cross_dataset_20260619`
+- `imgsz=512`
+- `epochs=200`
+- `batch=16`
+- `optimizer=SGD`
+- `model=YOLO11n`
+
+Those rows belong in a cross-dataset or appendix table, not the OGSOD mosaic100 main table.
 
 Validation:
 

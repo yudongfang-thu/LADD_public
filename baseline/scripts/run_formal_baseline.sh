@@ -92,8 +92,8 @@ case "$PROTOCOL" in
     ;;
 esac
 
-if [[ "${PAPER_RUN:-0}" == "1" && "$PROTOCOL_KEY" != "nomosaic" ]]; then
-  echo "PAPER_RUN=1 requires PROTOCOL=nomosaic; got ${PROTOCOL}." >&2
+if [[ "${PAPER_RUN:-0}" == "1" && "$PROTOCOL_KEY" != "mosaic100" ]]; then
+  echo "PAPER_RUN=1 requires PROTOCOL=mosaic100; got ${PROTOCOL}." >&2
   exit 2
 fi
 

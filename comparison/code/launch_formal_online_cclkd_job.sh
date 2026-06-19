@@ -103,8 +103,8 @@ case "$PROTOCOL" in
     ;;
 esac
 
-if [[ "${PAPER_RUN:-0}" == "1" && "$PROTOCOL_KEY" != "nomosaic" ]]; then
-  echo "PAPER_RUN=1 requires CCLKD online comparison to use nomosaic." >&2
+if [[ "${PAPER_RUN:-0}" == "1" && "$PROTOCOL_KEY" != "mosaic100" ]]; then
+  echo "PAPER_RUN=1 requires CCLKD online comparison to use mosaic100." >&2
   exit 2
 fi
 

@@ -2,7 +2,7 @@
 
 最后更新：2026-06-19
 
-本文定义论文主表唯一准入协议。任何结果进入 OGSOD-1.0 HBB 主表前，必须同时满足本文协议、`paper_results/` schema 和 paper launcher metadata 检查。历史 mosaic100、A1-A2-B、BN-freeze、400 epoch、close@100、partial、smoke、diagnostic run 只保留为归档、诊断或附录证据，不能直接混入主表。
+本文定义论文主表唯一准入协议。任何结果进入 OGSOD-1.0 HBB 主表前，必须同时满足本文协议、`paper_results/` schema 和 paper launcher metadata 检查。no-mosaic 结果作为已验证 fallback / robustness 证据保留；A1-A2-B、BN-freeze、400 epoch、partial、smoke、diagnostic run 只保留为归档、诊断或附录证据，不能直接混入主表。
 
 ## 1. 主协议
 
@@ -20,8 +20,8 @@ lrf: 0.01
 cos_lr: true
 warmup_epochs: 3.0
 warmup_bias_lr: 0.1
-mosaic: 0.0
-close_mosaic: 0
+mosaic: 1.0
+close_mosaic: 700
 mixup: 0.0
 cutmix: 0.0
 degrees: 0.0
@@ -44,9 +44,9 @@ batch:
   yolo11x: 16
 ```
 
-`mosaic=0.0, close_mosaic=0` 表示全程关闭 mosaic。本文统一称为 `nomosaic`。
+`mosaic=1.0, close_mosaic=700` 表示 800 epoch 训练中前 100 epoch 使用 mosaic，后 700 epoch 关闭 mosaic。本文统一称为 `mosaic100`。
 
-机器可读版本位于 `configs/paper/ogsod_hbb_nomosaic.yaml`。Paper launcher 的共享常量位于 `scripts/paper/paper_common.sh`，每次修改协议后必须同步检查。
+机器可读版本位于 `configs/paper/ogsod_hbb_mosaic100.yaml`。Paper launcher 的共享常量位于 `scripts/paper/paper_common.sh`，每次修改协议后必须同步检查。
 
 ## 2. LADD 主方法准入
 
@@ -58,10 +58,10 @@ method_key: clean_a1b_dynprobe
 phase_chain: A1 -> B
 LADD_A1B_MODE: dynamic_probe
 RANK_D_NEG_CAP: 2.0
-A1_MOSAIC: 0.0
+A1_MOSAIC: 1.0
 A1_CLOSE_MOSAIC: 0
-B_MOSAIC: 0.0
-B_CLOSE_MOSAIC: 0
+B_MOSAIC: 1.0
+B_CLOSE_MOSAIC: 700
 ```
 
 不允许：
@@ -72,7 +72,7 @@ static clean_a1b as mainline
 dynamic clean_a1b_dyn as mainline
 old A1-A2-B tags
 BN-freeze repair runs as mainline
-historical mosaic100 LADD rows as mainline
+no-mosaic rows as mosaic100 mainline
 wrong nc / wrong yaml runs
 ```
 
@@ -118,11 +118,11 @@ KD_CALIBRATION_MODE = affine
 ```text
 status = verified
 claim_usable = yes
-protocol_id = ogsod_hbb_nomosaic_clean_a1b_probea_20260619
+protocol_id = ogsod_hbb_mosaic100_clean_a1b_probea_20260619
 imgsz = 256
 epochs = 800
-mosaic = 0.0
-close_mosaic = 0
+mosaic = 1.0
+close_mosaic = 700
 git_commit is present
 results.csv exists
 args.yaml exists
@@ -132,7 +132,7 @@ manifest / paper_run_meta.env exists
 下列结果只能标记为 `archive / diagnostic / smoke / partial / invalid / robustness_appendix`：
 
 ```text
-mosaic100 runs
+no-mosaic runs, unless explicitly marked robustness / fallback
 A1-A2-B runs
 BN-freeze repair runs
 400ep runs
@@ -160,3 +160,31 @@ bash scripts/paper/run_paper_cclkd_online.sh <n|s> <seed> <gpu_id>
 ```
 
 旧 launcher 保留为历史兼容或诊断入口，不作为论文主表直接入口。
+
+## 6. 外部数据集扩展
+
+VEDAI / DroneVehicle 不属于本文 OGSOD-1.0 HBB 主表准入协议。它们是独立的跨数据集泛化实验，用于对齐 CCLKD 论文的 YOLO11n extension 表：
+
+```text
+protocol_id: cclkd_yolo11n_cross_dataset_20260619
+model: YOLO11n
+imgsz: 512
+epochs: 200
+batch: 16
+optimizer: SGD
+lr0: 0.01
+momentum: 0.937
+mosaic: 1.0
+mixup: 0.1
+```
+
+对应文档和入口：
+
+```text
+docs/paper/CCLKD_YOLO11N_CROSS_DATASET_PROTOCOL_CN.md
+configs/paper/cclkd_yolo11n_cross_dataset.yaml
+scripts/paper/run_paper_cclkd_yolo11n_cross_baseline.sh
+scripts/paper/run_paper_ladd_cclkd_yolo11n_cross_dataset.sh
+```
+
+这些结果应进入 cross-dataset 表或附录表。不要把它们和 OGSOD mosaic100 主表直接合并，也不要写成我们重跑了 CCLKD 论文中的全部对比方法；其他方法若未重跑，只能标为 reported results。

@@ -10,7 +10,7 @@ LADD-clean / LADD-A1B = A1 teacher decomposition warmup -> B SAR detector traini
 
 A2 只保留为历史诊断和消融入口，不再作为主线阶段，不应把旧 A1-A2-B 结果写作 clean A1B 结果。
 
-当前主表协议固定为 `mosaic100`：800 epoch 中前 100 epoch 开 mosaic，后 700 epoch 关闭。全程 no-mosaic 只作为鲁棒性/附录协议，不与 mosaic100 主表直接混合。
+当前 OGSOD 主表协议固定为 `mosaic100`：`mosaic=1.0, close_mosaic=700`。已完成 no-mosaic 结果作为 verified fallback / robustness appendix 保留，不与当前 OGSOD mosaic100 主表直接混合。
 
 ## 1. 方法名称
 
@@ -227,14 +227,14 @@ Dynamic 的潜在优点是 `z_t/u_t` 和 reach probe 都可以随 SAR detector �
 
 ## 6. 推荐实验协议
 
-主线协议采用 mosaic-first100-close700，并要求 baseline、LADD、comparison methods 同协议重跑：
+OGSOD 主线协议采用 paper-facing mosaic100，并要求 baseline、LADD、comparison methods 同协议重跑：
 
 ```text
 dataset = OGSOD-1.0 HBB
 imgsz = 256
 epochs_B = 800
 mosaic = 1.0
-close_mosaic = 700   # 800 epoch 中前 100 epoch mosaic on，后 700 epoch mosaic off
+close_mosaic = 700   # 前 100 epoch mosaic on，后 700 epoch mosaic off
 cos_lr = true
 optimizer = auto
 lr0 = 0.01
@@ -246,17 +246,19 @@ batch = n/s:64, m/l:32, x:16
 rank_d_neg_cap = 2.0
 ```
 
-旧 formal no-mosaic 结果和旧 close@100/400ep 结果可以作为历史或附录，不应和 mosaic clean A1B 结果混在主表中直接比较。当前 no-mosaic Probe-A 可以作为“同方法在旧 formal 协议下是否仍稳定”的鲁棒性证据，但不能替代 mosaic100 主表。
+no-mosaic Probe-A 结果可以作为 fallback / robustness appendix；旧 close@100/400ep、A1-A2-B、BN-freeze 结果可以作为历史或附录，不应和当前 mosaic100 clean A1B 主表直接混合。
+
+VEDAI / DroneVehicle 是单独的外部泛化线，不使用 OGSOD 主协议。该线对齐 CCLKD 论文 YOLO11n extension 表，固定为 `imgsz=512, epochs=200, batch=16, optimizer=SGD`，详见 `docs/paper/CCLKD_YOLO11N_CROSS_DATASET_PROTOCOL_CN.md`。
 
 当前优先级是先补齐 Probe-A 的 `n/s/m` 容量曲线。Static/Dynamic 已经不再是必须铺开的主线，只保留为消融证据：
 
 | 优先级 | 容量 | 主线 | 前置条件 |
 |---|---|---|---|
-| P0 | `n` | Probe-A `clean_a1b_dynprobe` | `n` SAR/RGB mosaic100 baseline 已可用；当前 4090 run 中断，需补齐 |
-| P0 | `s` | Probe-A `clean_a1b_dynprobe` | `s` SAR/RGB mosaic100 baseline 已可用；mosaic100 已完成一条 |
-| P1 | `m` | Probe-A `clean_a1b_dynprobe` | 等 `m` SAR/RGB mosaic100 baseline 完成 |
+| P0 | `n` | Probe-A `clean_a1b_dynprobe` | mosaic100 Probe-A 当前未完整，需要优先补齐 |
+| P0 | `m` | Probe-A `clean_a1b_dynprobe` | mosaic100 Probe-A / m reference 当前 partial，需要补齐 |
+| P1 | `s` | Probe-A `clean_a1b_dynprobe` | mosaic100 Probe-A 已有完整 seed0，可先不重复 |
 | P2 | `n/s` | Static/Dynamic 消融 | 只在需要分析 B teacher core / reach probe 贡献时补充 |
-| P3 | `n/s` | no-mosaic Probe-A | 旧 formal 协议鲁棒性，不进 mosaic100 主表 |
+| P3 | `vedai/dronevehicle` | CCLKD YOLO11n cross-dataset Probe-A | 单独外部泛化表，不进入 OGSOD 主表 |
 
 ## 7. clean launcher profile
 
@@ -336,7 +338,7 @@ B:  MODEL = A1 weights/best.pt
 |---|---|
 | 旧 A1-A2-B full chain | 历史/附录/消融，不写作 clean A1B |
 | A2 best/last 选择实验 | A2 稳定性诊断 |
-| no-mosaic formal LADD | 鲁棒性/附录；不能与 mosaic 主表直接比较 |
+| no-mosaic Probe-A | fallback / robustness appendix；不能与 mosaic100 主表直接比较 |
 | Static `clean_a1b` | 消融：固定 teacher target 的影响 |
 | Dynamic `clean_a1b_dyn` | 消融：完全动态 teacher core + reach probe 的影响 |
 | 未标记 `clean_a1b_dynprobe` 的主方法 run | 不能写作最终 LADD Probe-A 主线 |

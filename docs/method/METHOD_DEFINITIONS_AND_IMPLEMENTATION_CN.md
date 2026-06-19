@@ -15,23 +15,23 @@
 
 ## 1. Formal OGSOD HBB 协议
 
-当前论文主表固定使用 formal no-mosaic 协议：
+当前论文主表固定使用 mosaic100 协议：
 
 ```text
 dataset = OGSOD-1.0 HBB
 imgsz = 256
 epochs = 800
 cos_lr = true
-mosaic = 0.0
-close_mosaic = 0
+mosaic = 1.0
+close_mosaic = 700
 default Albumentations
 deterministic = true
 batch = n/s:64, m/l:32, x:16
 ```
 
-Baseline、LADD 和对比方法必须使用同容量、同 seed、同增强协议。历史 mosaic100、close@100、400ep 结果只能作为历史或附录，不能混入 LADD Probe-A nomosaic 主表。
+Baseline、LADD 和对比方法必须使用同容量、同 seed、同增强协议。no-mosaic 结果只能作为 fallback / robustness appendix，不能混入 LADD Probe-A mosaic100 主表。
 
-Paper-facing 启动入口为 `scripts/paper/run_paper_baseline.sh`、`scripts/paper/run_paper_ladd_probea.sh`、`scripts/paper/run_paper_comparison_kd.sh`。底层 `baseline/`、`ladd/`、`comparison/code/` launcher 保留 no-mosaic 兼容模式，但 `PAPER_RUN=1` 会强制 nomosaic。
+Paper-facing 启动入口为 `scripts/paper/run_paper_baseline.sh`、`scripts/paper/run_paper_ladd_probea.sh`、`scripts/paper/run_paper_comparison_kd.sh`。底层 `baseline/`、`ladd/`、`comparison/code/` launcher 保留 no-mosaic 兼容模式，但 `PAPER_RUN=1` 会强制 mosaic100。
 
 ## 2. Baseline
 
@@ -129,7 +129,7 @@ sep/aux/debug loss 参数已从当前 HBB trainer 删除，不再需要也不能
 
 因此这些方法不应被描述为“LADD 分解方法的变体”，而应描述为同协议下的 detector KD baselines。
 
-FGD/LD/CMDistill-style 的 raw launcher 支持 nomosaic 和 mosaic100 兼容分支；论文主表只能使用 paper wrapper 强制的 nomosaic。`run_paper_comparison_kd.sh` 默认使用 same-seed SAR baseline 初始化的 transferred KD 设置；from-YOLO pretrain 结果必须单独标注 `init_type=from_yolo_pretrain`，不能和 transferred KD 混进同一 comparison 表。
+FGD/LD/CMDistill-style 的 raw launcher 支持 nomosaic 和 mosaic100 兼容分支；论文主表只能使用 paper wrapper 强制的 mosaic100。`run_paper_comparison_kd.sh` 默认使用 same-seed SAR baseline 初始化的 transferred KD 设置；from-YOLO pretrain 结果必须单独标注 `init_type=from_yolo_pretrain`，不能和 transferred KD 混进同一 comparison 表。
 
 ### 4.3 CCLKD 的两个入口不能混用
 
@@ -150,7 +150,8 @@ FGD/LD/CMDistill-style 的 raw launcher 支持 nomosaic 和 mosaic100 兼容分�
 | 2026-06-10 前 FGD/LD 结果 | 修复前语义不同，不能代表当前实现 |
 | frozen-teacher CCLKD formal run | 不符合 CCLKD 原文 online 定义，不能写作 CCLKD official/paper reproduction |
 | 双卡 4090 上 `nc=5` yaml 的 CCLKD/HalluciDet 等结果 | HBB OGSOD 应为 `nc=3`，相关 run 作废 |
-| close@100 / 400ep / 旧高学习率 LADD | 可作历史诊断，不替代当前 nomosaic Probe-A 主线 |
+| no-mosaic Probe-A | fallback / robustness appendix，不替代当前 mosaic100 Probe-A 主线 |
+| close@100 / 400ep / 旧高学习率 LADD | 可作历史诊断，不替代当前 mosaic100 Probe-A 主线 |
 
 ## 6. 文档责任分工
 

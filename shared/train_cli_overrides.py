@@ -7,6 +7,7 @@ _FLOAT_OVERRIDE_ARGS = (
     "lr0",
     "lrf",
     "momentum",
+    "weight_decay",
     "warmup_epochs",
     "warmup_momentum",
     "warmup_bias_lr",

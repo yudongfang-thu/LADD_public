@@ -1,9 +1,9 @@
 # OGSOD LADD Probe-A 主线训练规范
 
-最后更新：2026-06-18
+最后更新：2026-06-19
 
 本文档记录当前 OGSOD HBB 上 LADD 的正式主线设置。自本版起，主线固定为
-`LADD Probe-A / LADD-clean A1B`。旧 no-mosaic A1-A2-B、BN-freeze、A2
+`LADD Probe-A / LADD-clean A1B`。旧 A1-A2-B、BN-freeze、A2
 稳定学习率等内容保留为历史诊断，不再作为当前主线规范。
 
 ## 1. 主线定义
@@ -12,7 +12,7 @@
 
 ```text
 latest same-protocol SAR/RGB baseline
-+ mosaic100 protocol: mosaic=1.0, close_mosaic=700, 800 epoch
++ OGSOD mosaic100 protocol: mosaic=1.0, close_mosaic=700, 800 epoch
 + A1 teacher decomposition warmup
 + B / Probe-A:
    - detector + z_s -> z_t KD + student reconstruction
@@ -54,7 +54,7 @@ SAR(size, seed k, mosaic100) + RGB(size, seed k, mosaic100)
 -> LADD Probe-A(size, seed k, mosaic100)
 ```
 
-旧 formal no-mosaic baseline 可用于鲁棒性/附录实验，但不能混入 mosaic100 主表。
+已完成 no-mosaic baseline / LADD 可作为 fallback 或 robustness appendix，但不能混入当前 OGSOD mosaic100 主表。
 
 ## 3. 阶段设置
 
@@ -153,14 +153,18 @@ deterministic = true
 batch = n/s:64, m/l:32, x:16
 ```
 
-no-mosaic Probe-A 可作为鲁棒性/附录协议：
+VEDAI / DroneVehicle 是单独的外部泛化协议，不使用 OGSOD 主线设置：
 
 ```text
-mosaic = 0.0
-close_mosaic = 0
+protocol_id = cclkd_yolo11n_cross_dataset_20260619
+model = YOLO11n
+imgsz = 512
+epochs = 200
+batch = 16
+optimizer = SGD
 ```
 
-但 no-mosaic 结果不进入 mosaic100 主表，也不能与 mosaic100 baseline 直接计算 gap。
+这些结果只能进入 cross-dataset / appendix 表，不能与 OGSOD mosaic100 主表合并。
 
 ## 6. 有效入口
 
@@ -195,9 +199,9 @@ LADD_A1B_MODE=dynamic \
 
 | 优先级 | 实验 | 目的 |
 |---|---|---|
-| P0 | mosaic100 Probe-A `n/s` | 固定主线的最小容量证据 |
-| P1 | mosaic100 Probe-A `m` | 容量扩展；依赖 `m` SAR/RGB mosaic100 baseline |
-| P2 | no-mosaic Probe-A `n/s` | 检查旧 formal 协议下是否仍稳定 |
+| P0 | mosaic100 Probe-A `n/m` | 补齐当前缺口；`s` 已有完整 Probe-A |
+| P1 | mosaic100 SAR/RGB `m` baseline 补完 | 当前 m reference 有 partial 风险，需补完整 baseline |
+| P2 | no-mosaic Probe-A `n/s/m` | 已验证 fallback / robustness appendix |
 | P3 | Static/Dynamic `n/s` | 消融：teacher core 动态适配与 reach probe 冻结的贡献 |
 
 ## 8. 主表准入
@@ -216,7 +220,7 @@ LADD_A1B_MODE=dynamic \
 | 结果类型 | 处理 |
 |---|---|
 | 旧 A1-A2-B full chain | 历史诊断 |
-| old formal no-mosaic LADD | 鲁棒性/附录 |
+| no-mosaic Probe-A | 已验证 fallback / robustness appendix |
 | Static `clean_a1b` | 消融 |
 | Dynamic `clean_a1b_dyn` | 消融/诊断 |
 | 旧 close@100 / 400ep / BN-freeze runs | 历史诊断 |

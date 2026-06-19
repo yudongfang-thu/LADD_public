@@ -1,0 +1,4 @@
+Model,No-mosaic gain,Mosaic100 gain,Mosaic - no,No status,Mosaic status,Interpretation
+YOLO11n,+0.01779,-0.04313,-0.06092,complete,partial,no-mosaic higher / mosaic incomplete
+YOLO11s,+0.01176,+0.01515,+0.00339,complete,complete,mosaic higher
+YOLO11m,+0.01402,+0.00528,-0.00874,complete,partial,no-mosaic higher / mosaic incomplete

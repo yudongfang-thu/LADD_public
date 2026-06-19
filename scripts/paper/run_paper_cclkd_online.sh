@@ -30,7 +30,7 @@ paper_require_file "$PAPER_SAR_DATA_CFG" "SAR paper dataset YAML"
 paper_require_file "$PAPER_RGB_DATA_CFG" "RGB paper dataset YAML"
 
 BATCH_SIZE="$(paper_batch_for_size "$SIZE")"
-RUN_TAG="paper_ogsod_hbb_nomosaic_cclkd_online_yolo11${SIZE}_e${PAPER_EPOCHS}_b${BATCH_SIZE}_s${SEED}${RUN_TAG_SUFFIX:-}"
+RUN_TAG="paper_ogsod_hbb_mosaic100_cclkd_online_yolo11${SIZE}_e${PAPER_EPOCHS}_b${BATCH_SIZE}_s${SEED}${RUN_TAG_SUFFIX:-}"
 PROJECT_DIR="${PAPER_RUN_ROOT}/comparisons/cclkd_online/yolo11${SIZE}/seed${SEED}"
 LOG_DIR="${PAPER_LOG_ROOT}/comparisons/cclkd_online/yolo11${SIZE}/seed${SEED}/${RUN_TAG}"
 RUN_DIR="${PROJECT_DIR}/${RUN_TAG}"

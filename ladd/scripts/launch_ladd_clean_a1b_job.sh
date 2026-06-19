@@ -30,7 +30,7 @@ weights under:
 Defaults:
   A1 epochs=10
   B epochs=800
-  A1/B mosaic=0.0, close_mosaic=0
+  raw default A1/B mosaic=0.0, close_mosaic=0; PAPER_RUN=1 requires mosaic100
   rank_d_neg_cap=2.0
   batch n/s=64, m/l=32, x=16
 
@@ -165,6 +165,7 @@ fi
 
 DATE_TAG="${DATE_TAG:-$(date +%Y%m%d_%H%M%S)}"
 RUN_TAG="${RUN_TAG:-${MODE_TAG}_yolo11${SIZE}_cap2_s${SEED}_nomosaic${RUN_TAG_SUFFIX:-}_${DATE_TAG}}"
+DATASET_TAG="${DATASET_TAG:-ogsod11${SIZE}}"
 PROJECT_DIR="${PROJECT_DIR:-runs_public/ogsod/hbb/${MODE_PROJECT_KEY}/nomosaic/yolo11${SIZE}/cap2}"
 CHAIN_LOG_DIR="${CHAIN_LOG_DIR:-logs/${MODE_PROJECT_KEY}/nomosaic/${RUN_TAG}_gpu${GPU_ID}}"
 META_PATH="${CHAIN_LOG_DIR}/run_meta_clean_a1b.env"
@@ -175,8 +176,8 @@ PATIENCE_A_VALUE="${PATIENCE_A:-200}"
 PATIENCE_B_VALUE="${PATIENCE_B:-$EPOCHS_B_VALUE}"
 SAVE_PERIOD_VALUE="${SAVE_PERIOD:-100}"
 
-A1_RUN_NAME="ladd_${MODE_TAG}_ogsod11${SIZE}_${RUN_TAG}_a1_e${EPOCHS_A1_VALUE}_b${BATCH_SIZE}_s${SEED}_gpu${GPU_ID}"
-B_RUN_NAME="ladd_${MODE_TAG}_ogsod11${SIZE}_${RUN_TAG}_b_e${EPOCHS_B_VALUE}_b${BATCH_SIZE}_s${SEED}_gpu${GPU_ID}"
+A1_RUN_NAME="ladd_${MODE_TAG}_${DATASET_TAG}_${RUN_TAG}_a1_e${EPOCHS_A1_VALUE}_b${BATCH_SIZE}_s${SEED}_gpu${GPU_ID}"
+B_RUN_NAME="ladd_${MODE_TAG}_${DATASET_TAG}_${RUN_TAG}_b_e${EPOCHS_B_VALUE}_b${BATCH_SIZE}_s${SEED}_gpu${GPU_ID}"
 A1_LOG_DIR="${CHAIN_LOG_DIR}/a1"
 B_LOG_DIR="${CHAIN_LOG_DIR}/b"
 
@@ -235,8 +236,8 @@ if [[ "${PAPER_RUN:-0}" == "1" ]]; then
     echo "PAPER_RUN=1 requires EPOCHS_A1=10 and EPOCHS_B=800, got ${EPOCHS_A1_VALUE}/${EPOCHS_B_VALUE}." >&2
     exit 2
   fi
-  if [[ "$A1_MOSAIC_VALUE" != "0.0" || "$A1_CLOSE_MOSAIC_VALUE" != "0" || "$B_MOSAIC_VALUE" != "0.0" || "$B_CLOSE_MOSAIC_VALUE" != "0" ]]; then
-    echo "PAPER_RUN=1 requires A1/B mosaic=0.0 close=0." >&2
+  if [[ "$A1_MOSAIC_VALUE" != "1.0" || "$A1_CLOSE_MOSAIC_VALUE" != "0" || "$B_MOSAIC_VALUE" != "1.0" || "$B_CLOSE_MOSAIC_VALUE" != "700" ]]; then
+    echo "PAPER_RUN=1 requires A1 mosaic=1.0 close=0 and B mosaic=1.0 close=700." >&2
     exit 2
   fi
   if [[ "$RANK_D_NEG_CAP_VALUE" != "2.0" ]]; then
@@ -251,6 +252,7 @@ write_meta() {
     printf 'paper_protocol_id=%q\n' "${PAPER_PROTOCOL_ID:-}"
     printf 'protocol_id=%q\n' "${PAPER_PROTOCOL_ID:-}"
     printf 'run_tag=%q\n' "$RUN_TAG"
+    printf 'dataset_tag=%q\n' "$DATASET_TAG"
     printf 'ladd_a1b_mode=%q\n' "$LADD_A1B_MODE"
     printf 'size=%q\n' "$SIZE"
     printf 'seed=%q\n' "$SEED"
@@ -309,6 +311,8 @@ write_meta() {
     printf 'optimizer_a1=%q\n' "$A1_OPTIMIZER_VALUE"
     printf 'lr0_a1=%q\n' "$A1_LR0_VALUE"
     printf 'lrf_a1=%q\n' "$A1_LRF_VALUE"
+    printf 'momentum=%q\n' "${MOMENTUM:-}"
+    printf 'weight_decay=%q\n' "${WEIGHT_DECAY:-}"
     printf 'cos_lr_a1=%q\n' "$A1_COS_LR_VALUE"
     printf 'warmup_epochs_a1=%q\n' "$A1_WARMUP_EPOCHS_VALUE"
     printf 'warmup_bias_lr_a1=%q\n' "$A1_WARMUP_BIAS_LR_VALUE"
@@ -374,6 +378,8 @@ run_phase() {
     "OPTIMIZER=${optimizer}"
     "LR0=${lr0}"
     "LRF=${lrf}"
+    "MOMENTUM=${MOMENTUM:-}"
+    "WEIGHT_DECAY=${WEIGHT_DECAY:-}"
     "COS_LR=${cos_lr}"
     "WARMUP_EPOCHS=${warmup_epochs}"
     "WARMUP_BIAS_LR=${warmup_bias_lr}"

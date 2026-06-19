@@ -40,7 +40,9 @@ class PairedOBBDataset(YOLODataset):
         else:
             self.teacher_root = None
         super().__init__(*args, data=data, task=task, **kwargs)
-        self.student_root = Path(self.im_files[0]).resolve().parents[0]
+        # Keep symlink names intact for datasets such as VEDAI where paired
+        # RGB/IR links share a basename but point to *_co.png / *_ir.png files.
+        self.student_root = Path(self.im_files[0]).expanduser().absolute().parent
 
     # ------------------------------------------------------------------
     # Transforms
@@ -76,7 +78,7 @@ class PairedOBBDataset(YOLODataset):
         label = super().get_image_and_label(index)
         if not self.pair_teacher:
             return label
-        teacher_file = self._resolve_teacher_file(Path(label["im_file"]).resolve())
+        teacher_file = self._resolve_teacher_file(Path(label["im_file"]).expanduser().absolute())
         teacher_img = self._load_teacher_image(teacher_file, target_shape=label["resized_shape"])
         label["teacher_img"] = teacher_img  # numpy HWC — flows through paired transforms
         label["teacher_im_file"] = str(teacher_file)

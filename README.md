@@ -6,11 +6,12 @@ Last updated: 2026-06-18 CST.
 
 ## What To Read First
 
-1. [docs/paper/PAPER_PROTOCOL_CN.md](docs/paper/PAPER_PROTOCOL_CN.md): paper-facing OGSOD HBB nomosaic protocol and main-table gate.
+1. [docs/paper/PAPER_PROTOCOL_CN.md](docs/paper/PAPER_PROTOCOL_CN.md): paper-facing OGSOD HBB mosaic100 protocol and main-table gate.
 2. [docs/paper/METHOD_NAME_WHITELIST_CN.md](docs/paper/METHOD_NAME_WHITELIST_CN.md): allowed paper method names and forbidden historical labels.
 3. [paper_results/README.md](paper_results/README.md): canonical result schema and main-table candidate rules.
 4. [scripts/paper/README.md](scripts/paper/README.md): paper launchers and validation commands.
 5. [docs/ladd_clean_a1b_method_definition.md](docs/ladd_clean_a1b_method_definition.md): LADD Probe-A / clean A1B method definition.
+6. [docs/paper/CCLKD_YOLO11N_CROSS_DATASET_PROTOCOL_CN.md](docs/paper/CCLKD_YOLO11N_CROSS_DATASET_PROTOCOL_CN.md): optional VEDAI / DroneVehicle LADD extension aligned to the CCLKD YOLO11n protocol.
 
 ## Directory Map
 
@@ -27,9 +28,11 @@ Last updated: 2026-06-18 CST.
 
 ## Paper-Facing Protocol
 
-The paper-facing main protocol is OGSOD HBB `nomosaic`: `imgsz=256`, `epochs=800`, `mosaic=0.0`, `close_mosaic=0`, deterministic training, and paired SAR/RGB baselines by capacity and seed. LADD main rows must be `LADD Probe-A / clean_a1b_dynprobe` with `A1 -> B` and no A2.
+The paper-facing main protocol is OGSOD HBB `mosaic100`: `imgsz=256`, `epochs=800`, `mosaic=1.0`, `close_mosaic=700`, deterministic training, and paired SAR/RGB baselines by capacity and seed. LADD main rows must be `LADD Probe-A / clean_a1b_dynprobe` with `A1 -> B` and no A2.
 
-Historical A1-A2-B, BN-freeze, smoke, partial, close@100, 400ep, mosaic100, and diagnostic runs are retained only as archive/diagnostic evidence and are not used for main-table claims.
+No-mosaic Probe-A is retained as verified fallback / robustness evidence. Historical A1-A2-B, BN-freeze, smoke, partial, 400ep, and diagnostic runs are retained only as archive/diagnostic evidence and are not used for main-table claims.
+
+VEDAI and DroneVehicle are optional cross-dataset extensions, not OGSOD main-table rows. They use the separate CCLKD YOLO11n protocol (`imgsz=512`, `epochs=200`, `batch=16`, SGD) and compare LADD Probe-A against reported CCLKD YOLO11n table numbers.
 
 ## Direct Runtime Layout
 
@@ -46,6 +49,7 @@ weights and generated runs remain untracked.
 - Paper-facing baseline/LADD/comparison runs must use `scripts/paper/` and pass `paper_results/` validation.
 - LADD mainline is `LADD Probe-A / LADD-clean A1B`: `clean_a1b_dynprobe`, `A1 -> B`, SAR-only inference, no A2.
 - Controlled comparisons are FGD-style, LD, CMDistill-style, HalluciDet-YOLO adaptation, and optional CCLKD online comparison. CCLKD paper-aligned reproduction lives separately in `cclkd_reproduction/`; frozen-teacher CCLKD loss components are not sufficient for official CCLKD reporting.
+- VEDAI / DroneVehicle LADD extension runs are separate CCLKD YOLO11n protocol runs, not OGSOD mosaic100 paper-gate rows.
 
 ## Paper-Facing Entry Points
 
@@ -61,6 +65,8 @@ Run paper experiments only through:
 - [scripts/paper/run_paper_baseline.sh](scripts/paper/run_paper_baseline.sh)
 - [scripts/paper/run_paper_ladd_probea.sh](scripts/paper/run_paper_ladd_probea.sh)
 - [scripts/paper/run_paper_comparison_kd.sh](scripts/paper/run_paper_comparison_kd.sh)
+- [scripts/paper/run_paper_cclkd_yolo11n_cross_baseline.sh](scripts/paper/run_paper_cclkd_yolo11n_cross_baseline.sh) for VEDAI / DroneVehicle extension baselines only
+- [scripts/paper/run_paper_ladd_cclkd_yolo11n_cross_dataset.sh](scripts/paper/run_paper_ladd_cclkd_yolo11n_cross_dataset.sh) for VEDAI / DroneVehicle LADD extension only
 
 Curate and validate paper table rows through:
 

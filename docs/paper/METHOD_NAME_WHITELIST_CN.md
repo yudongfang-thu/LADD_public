@@ -32,7 +32,7 @@ frozen-teacher CCLKD official result
 HalluciDet-style KD profile
 old LADD A1-A2-B mainline
 BN-freeze mainline
-formal no-mosaic mainline
+formal no-mosaic as current mainline
 ```
 
 如果需要讨论这些历史记录，必须标注为 diagnostic、archive、robustness appendix 或 reproduction-side evidence。

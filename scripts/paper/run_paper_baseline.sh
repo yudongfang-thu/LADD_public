@@ -6,7 +6,7 @@ usage() {
 Usage:
   bash scripts/paper/run_paper_baseline.sh <sar|rgb> <n|s|m|l|x> <seed> <gpu_id>
 
-Runs the paper OGSOD HBB nomosaic SAR/RGB baseline.
+Runs the paper OGSOD HBB mosaic100 SAR/RGB baseline.
 Set DRY_RUN=1 to print the command without launching.
 EOF
 }
@@ -30,8 +30,8 @@ paper_require_seed "$SEED"
 [[ -n "$GPU_ID" ]] || paper_die "Missing gpu_id."
 paper_check_strict_git
 
-if [[ -n "${PROTOCOL:-}" && "$PROTOCOL" != "nomosaic" && "$PROTOCOL" != "nomosaic" ]]; then
-  paper_die "Paper baseline wrapper requires PROTOCOL=nomosaic; got ${PROTOCOL}."
+if [[ -n "${PROTOCOL:-}" && "$PROTOCOL" != "mosaic100" && "$PROTOCOL" != "mosaic_first100_close700" ]]; then
+  paper_die "Paper baseline wrapper requires PROTOCOL=mosaic100; got ${PROTOCOL}."
 fi
 
 BATCH_SIZE="$(paper_batch_for_size "$SIZE")"
@@ -41,7 +41,7 @@ if [[ "$MODALITY" == "rgb" ]]; then
 fi
 paper_require_file "$DATA_CFG" "${MODALITY} paper dataset YAML"
 
-RUN_TAG="paper_ogsod_hbb_nomosaic_${MODALITY}_yolo11${SIZE}_e${PAPER_EPOCHS}_b${BATCH_SIZE}_s${SEED}${RUN_TAG_SUFFIX:-}"
+RUN_TAG="paper_ogsod_hbb_mosaic100_${MODALITY}_yolo11${SIZE}_e${PAPER_EPOCHS}_b${BATCH_SIZE}_s${SEED}${RUN_TAG_SUFFIX:-}"
 PROJECT_DIR="${PAPER_RUN_ROOT}/baselines/${MODALITY}/yolo11${SIZE}/seed${SEED}"
 LOG_DIR="${PAPER_LOG_ROOT}/baselines/${MODALITY}/yolo11${SIZE}/seed${SEED}/${RUN_TAG}"
 RUN_DIR="${PROJECT_DIR}/${RUN_TAG}"
@@ -51,7 +51,7 @@ cmd=(
   env
   "PAPER_RUN=1"
   "PAPER_PROTOCOL_ID=${PAPER_PROTOCOL_ID}"
-  "PROTOCOL=nomosaic"
+  "PROTOCOL=mosaic100"
   "DATA_CFG=${DATA_CFG}"
   "PROJECT=${PROJECT_DIR}"
   "LOG_DIR=${LOG_DIR}"
