@@ -402,7 +402,7 @@ def build_args(args):
         "classes": None,
         "fraction": args.fraction,
         "mosaic": args.mosaic,
-        "close_mosaic": 0,
+        "close_mosaic": args.close_mosaic,
         "multi_scale": 0.0,
         "plots": False,
         "val": True,
@@ -470,6 +470,7 @@ def parse_args():
     parser.add_argument('--cache', default=False, help='Ultralytics dataset cache setting')
     parser.add_argument('--fraction', type=float, default=1.0, help='Training data fraction')
     parser.add_argument('--mosaic', type=float, default=0.0, help='Mosaic augmentation probability')
+    parser.add_argument('--close-mosaic', type=int, default=0, help='Disable mosaic augmentation for final N epochs')
     parser.add_argument('--save-period', type=int, default=10, help='Checkpoint save period')
     parser.add_argument('--resume', type=str, default='', help='Resume from HalluciDet checkpoint path')
     parser.add_argument('--conf', type=float, default=0.001, help='Validation confidence threshold')

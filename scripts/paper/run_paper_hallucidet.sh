@@ -9,10 +9,6 @@ Usage:
 Paper-facing HalluciDet-YOLO official-style U-Net adaptation wrapper. This is
 not an official HalluciDet reproduction and not the removed hallucidet_style KD
 profile.
-
-The current standalone trainer lacks close_mosaic support, so real launches
-are P1-gated. Set ALLOW_P1_HALLUCIDET=1 to launch intentionally; dry-run is
-always allowed.
 EOF
 }
 
@@ -38,8 +34,6 @@ BATCH_SIZE="$(paper_batch_for_size "$SIZE")"
 RGB_TEACHER="${RGB_TEACHER:-$(paper_find_baseline rgb "$SIZE" "$SEED" || true)}"
 if [[ "${DRY_RUN:-0}" == "1" ]]; then
   RGB_TEACHER="${RGB_TEACHER:-<paper_rgb_yolo11${SIZE}_seed${SEED}_best.pt>}"
-elif [[ "${ALLOW_P1_HALLUCIDET:-0}" != "1" ]]; then
-  paper_die "HalluciDet trainer lacks close_mosaic support; set ALLOW_P1_HALLUCIDET=1 for an intentional P1 run."
 else
   paper_require_file "$RGB_TEACHER" "paper RGB teacher checkpoint"
 fi
@@ -67,6 +61,7 @@ cmd=(
   --seed "$SEED"
   --deterministic
   --mosaic "$PAPER_MOSAIC"
+  --close-mosaic "$PAPER_CLOSE_MOSAIC"
   --hallucination-input-mode replicate3
   --encoder-name resnet34
   --encoder-weights imagenet
@@ -85,7 +80,7 @@ paper_write_meta_common "$META_PATH" "hallucidet_yolo" "HalluciDet-YOLO official
   printf 'student_modality=%q\n' "SAR"
   printf 'teacher_modality=%q\n' "RGB"
   printf 'inference_modality=%q\n' "SAR"
-  printf 'protocol_gate_status=%q\n' "p1_not_main_table_until_close_mosaic_supported"
+  printf 'protocol_gate_status=%q\n' "paper_mosaic100"
 } >> "$META_PATH"
 
 echo "[$(date '+%F %T')] Prepared paper HalluciDet-YOLO official-style U-Net yolo11${SIZE} seed=${SEED}"
