@@ -65,13 +65,13 @@ All comparison methods were rerun by us.
 
 除非后续真的重跑了全部对比方法。
 
-## 4. OGSOD 为什么不切换
+## 4. OGSOD 为什么不使用 CCLKD 协议
 
-OGSOD 是当前论文主线受控实验，已经按 LADD no-mosaic 协议完成或接近完成 baseline / LADD 主结果。重新切换 OGSOD 到 CCLKD protocol 会重开整套主表，且会混淆已经稳定的 LADD 主线。
+OGSOD 是当前论文主线受控实验，已经固定为 LADD Probe-A 的 OGSOD HBB `mosaic100` 协议：`imgsz=256`、`epochs=800`、`mosaic=1.0`、`close_mosaic=700`。重新切换 OGSOD 到 CCLKD protocol 会重开整套主表，且会混淆已经稳定下来的 OGSOD 主线协议。
 
 因此：
 
-- OGSOD：保留 LADD no-mosaic 主线。
+- OGSOD：保留 LADD Probe-A / OGSOD HBB `mosaic100` 主线。
 - VEDAI / DroneVehicle：作为外部泛化表，对齐 CCLKD YOLO11n 协议。
 
 ## 5. 最小实验矩阵

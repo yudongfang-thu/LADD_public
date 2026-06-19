@@ -47,7 +47,7 @@ Baseline 是单模态 YOLO11 HBB 检测训练：
 
 ## 3. LADD
 
-LADD 的方法定义是 RGB-guided SAR object detection distillation：训练时使用 paired RGB/SAR，推理时只使用 SAR。核心思想是把 RGB teacher 特征拆成 SAR 可学习部分和 RGB 私有部分，再只蒸馏可学习部分。
+LADD 的方法定义是 cross-modal object detection distillation with learnability-aware decomposition。OGSOD 主线是 RGB-guided SAR detection：训练时使用 paired RGB/SAR，推理时只使用 SAR；VEDAI / DroneVehicle 扩展则按 CCLKD YOLO11n 协议在 visible/infrared 方向上验证同一 Probe-A 机制。核心思想是把 teacher 特征拆成 student 可学习的 common 部分和 teacher/private 部分，再只蒸馏可学习部分。
 
 每个 FPN/neck 特征层上的当前实现：
 

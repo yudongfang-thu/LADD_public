@@ -1,8 +1,8 @@
 # LADD: Learnability-Aware Decomposition Distillation
 
-This repository is the paper-facing implementation for RGB-guided SAR object detection distillation. It keeps the current runnable implementation, experiment protocol, and compact result summaries. Historical raw logs, large diagnostic bundles, and deprecated-method archives have been removed from the public branch.
+This repository is the paper-facing implementation for cross-modal object detection distillation with learnability-aware feature decomposition. The main OGSOD track studies RGB-guided SAR detection, while the VEDAI and DroneVehicle extensions evaluate the same LADD Probe-A idea under CCLKD-aligned visible/infrared transfer protocols. The repository keeps the current runnable implementation, experiment protocol, and compact result summaries. Historical raw logs, large diagnostic bundles, and deprecated-method archives have been removed from the public branch.
 
-Last updated: 2026-06-18 CST.
+Last updated: 2026-06-19 CST.
 
 ## What To Read First
 
