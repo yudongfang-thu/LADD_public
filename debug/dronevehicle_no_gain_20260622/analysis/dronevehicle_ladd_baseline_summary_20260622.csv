@@ -1,0 +1,4 @@
+method,epochs_done,last_epoch,best_ap50_95,best_ap50_95_epoch,final_or_latest_ap50_95,best_ap50,best_ap50_epoch,final_or_latest_ap50,latest_precision,latest_recall,best_ap50_95_gain_vs_student,best_ap50_95_teacher_gap_closure,final_or_latest_ap50_95_gain_vs_student,final_or_latest_ap50_95_teacher_gap_closure
+RGB student baseline,200,200,0.51053,192,0.51007,0.74821,199,0.74816,0.77003,0.69189,,,,
+IR teacher baseline,200,200,0.56964,186,0.56889,0.7934,189,0.79327,0.77872,0.74492,,,,
+LADD (IR -> RGB),181,181,0.50992,145,0.50589,0.75114,140,0.74692,0.77015,0.68971,-0.0006099999999999994,-0.010319742852309246,-0.0041800000000000725,-0.0710642638558326

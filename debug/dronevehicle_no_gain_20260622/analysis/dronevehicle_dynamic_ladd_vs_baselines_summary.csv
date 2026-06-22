@@ -1,0 +1,4 @@
+name,epochs,AP50-95_best,AP50-95_best_epoch,AP50-95_final,AP50_best,AP50_best_epoch,AP50_final
+Student RGB baseline,200,0.51053,192,0.51007,0.74821,199,0.74816
+IR teacher baseline,200,0.56964,186,0.56889,0.7934,189,0.79327
+"Dynamic LADD (B, running)",89,0.50536,89,0.50536,0.74602,89,0.74602
