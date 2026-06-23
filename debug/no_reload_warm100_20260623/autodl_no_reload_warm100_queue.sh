@@ -15,6 +15,8 @@ TS="${TS:-$(date +%Y%m%d_%H%M%S)}"
 SIZE="${SIZE:-n}"
 SEED="${SEED:-0}"
 BATCH_SIZE="${BATCH_SIZE:-64}"
+WARM_TOTAL_EPOCHS="${WARM_TOTAL_EPOCHS:-800}"
+WARM_STOP_EPOCH="${WARM_STOP_EPOCH:-100}"
 DATA_CFG="${DATA_CFG:-configs/paper/datasets/ogsod_hbb_sar.yaml}"
 TEACHER_DATA_CFG="${TEACHER_DATA_CFG:-configs/paper/datasets/ogsod_hbb_rgb.yaml}"
 
@@ -27,9 +29,11 @@ LOG_ROOT="logs/paper/ogsod_hbb_mosaic100/no_reload_warm100/yolo11${SIZE}/seed${S
 mkdir -p "$RUN_ROOT" "$LOG_ROOT"
 
 WARM_PROJECT="${RUN_ROOT}/detector_warm100"
-WARM_NAME="sar_yolo11${SIZE}_no_reload_warm100_mosaic_on_e100_b${BATCH_SIZE}_s${SEED}_${TS}"
+WARM_NAME="sar_yolo11${SIZE}_no_reload_warm100_mosaic_on_cos${WARM_TOTAL_EPOCHS}_stop${WARM_STOP_EPOCH}_b${BATCH_SIZE}_s${SEED}_${TS}"
 WARM_DIR="${WARM_PROJECT}/${WARM_NAME}"
 WARM_LOG="${LOG_ROOT}/warm100_detector_gpu0.log"
+WARM_WATCH_LOG="${LOG_ROOT}/warm100_stop_watcher.log"
+WARM_STOP_CKPT="${WARM_DIR}/weights/warm_stop_epoch${WARM_STOP_EPOCH}.pt"
 
 A1_PROJECT="${RUN_ROOT}/a1_decomp_cache"
 A1_TAG="a1_decomp_from_sar_baseline_yolo11${SIZE}_s${SEED}_${TS}"
@@ -45,6 +49,8 @@ write_meta() {
     printf 'size=%q\n' "$SIZE"
     printf 'seed=%q\n' "$SEED"
     printf 'batch_size=%q\n' "$BATCH_SIZE"
+    printf 'warm_total_epochs=%q\n' "$WARM_TOTAL_EPOCHS"
+    printf 'warm_stop_epoch=%q\n' "$WARM_STOP_EPOCH"
     printf 'sar_baseline=%q\n' "$SAR_BASELINE"
     printf 'rgb_teacher=%q\n' "$RGB_TEACHER"
     printf 'data_cfg=%q\n' "$DATA_CFG"
@@ -57,7 +63,7 @@ write_meta() {
     printf 'a1_log_dir=%q\n' "$A1_LOG_DIR"
     printf 'run_root=%q\n' "$RUN_ROOT"
     printf 'log_root=%q\n' "$LOG_ROOT"
-    printf 'protocol_note=%q\n' "warm100 detector from yolo11n.pt; A1 decomp from SAR baseline; B700 detector from warm100 last.pt and decomp split-loaded from A1"
+    printf 'protocol_note=%q\n' "warm100 detector from yolo11n.pt with 800-epoch cosine schedule, stopped at epoch 100; A1 decomp from SAR baseline; B700 detector from warm_stop_epoch100.pt and decomp split-loaded from A1"
   } > "${LOG_ROOT}/no_reload_warm100_meta.env"
 }
 
@@ -71,7 +77,7 @@ launch_warm100() {
       --model yolo11${SIZE}.pt \
       --data '$DATA_CFG' \
       --imgsz 256 \
-      --epochs 100 \
+      --epochs '$WARM_TOTAL_EPOCHS' \
       --batch '$BATCH_SIZE' \
       --workers 8 \
       --device 0 \
@@ -95,10 +101,44 @@ launch_warm100() {
       --mixup 0.0 \
       --cutmix 0.0 \
       --erasing 0.0 \
-      --save-period 100 \
+      --save-period '$WARM_STOP_EPOCH' \
       --seed '$SEED' \
       --deterministic \
       > '$WARM_LOG' 2>&1
+  "
+}
+
+launch_warm_stop_watcher() {
+  screen -dmS "nl_warmwatch_${SIZE}_s${SEED}_${TS}" bash -lc "
+    set -euo pipefail
+    cd '$REPO'
+    warm_screen='nl_warm100_${SIZE}_s${SEED}_g0_${TS}'
+    results='$WARM_DIR/results.csv'
+    stop_ckpt='$WARM_STOP_CKPT'
+    echo '[warm-watcher] waiting for epoch >= $WARM_STOP_EPOCH from an $WARM_TOTAL_EPOCHS-epoch cosine schedule' | tee -a '$WARM_WATCH_LOG'
+    while true; do
+      latest=0
+      if [[ -s \"\$results\" ]]; then
+        latest=\$(tail -n 1 \"\$results\" | cut -d, -f1)
+      fi
+      if [[ \"\$latest\" =~ ^[0-9]+$ && \"\$latest\" -ge '$WARM_STOP_EPOCH' ]]; then
+        mkdir -p '$(dirname "$WARM_STOP_CKPT")'
+        src=''
+        if [[ -s '$WARM_DIR/weights/epoch${WARM_STOP_EPOCH}.pt' ]]; then
+          src='$WARM_DIR/weights/epoch${WARM_STOP_EPOCH}.pt'
+        elif [[ -s '$WARM_DIR/weights/last.pt' ]]; then
+          src='$WARM_DIR/weights/last.pt'
+        fi
+        if [[ -n \"\$src\" ]]; then
+          cp -f \"\$src\" \"\$stop_ckpt\"
+          echo \"[warm-watcher] copied \$src to \$stop_ckpt at epoch \$latest\" | tee -a '$WARM_WATCH_LOG'
+          screen -S \"\$warm_screen\" -X quit 2>/dev/null || true
+          echo '[warm-watcher] stopped warm100 screen' | tee -a '$WARM_WATCH_LOG'
+          exit 0
+        fi
+      fi
+      sleep 30
+    done
   "
 }
 
@@ -165,7 +205,7 @@ launch_b_job() {
   local profile="$1"
   local gpu="$2"
   local extra_env="$3"
-  local warm_last="${WARM_DIR}/weights/last.pt"
+  local warm_last="$WARM_STOP_CKPT"
   local a1_dir
   a1_dir="$(cat "$A1_ACTUAL_FILE")"
   local a1_best="${a1_dir}/weights/best.pt"
@@ -250,12 +290,13 @@ launch_orchestrator() {
     echo '[orchestrator] waiting for warm100 and A1 cache' | tee -a '$ORCH_LOG'
     while true; do
       warm_last='$WARM_DIR/weights/last.pt'
+      warm_stop='$WARM_STOP_CKPT'
       warm_results='$WARM_DIR/results.csv'
       warm_epoch=0
       if [[ -s \"\$warm_results\" ]]; then
         warm_epoch=\$(tail -n 1 \"\$warm_results\" | cut -d, -f1)
       fi
-      if [[ -f \"\$warm_last\" && \"\$warm_epoch\" =~ ^[0-9]+$ && \"\$warm_epoch\" -ge 100 && -s '$A1_ACTUAL_FILE' ]]; then
+      if [[ -f \"\$warm_stop\" && \"\$warm_epoch\" =~ ^[0-9]+$ && \"\$warm_epoch\" -ge '$WARM_STOP_EPOCH' && -s '$A1_ACTUAL_FILE' ]]; then
         a1_dir=\$(cat '$A1_ACTUAL_FILE')
         if [[ -f \"\$a1_dir/weights/best.pt\" ]]; then
           break
@@ -274,14 +315,18 @@ launch_b_only() {
   if [[ -s "$warm_results" ]]; then
     warm_epoch="$(tail -n 1 "$warm_results" | cut -d, -f1)"
   fi
-  if [[ ! "$warm_epoch" =~ ^[0-9]+$ || "$warm_epoch" -lt 100 ]]; then
-    echo "[$(date '+%F %T')] Refusing to launch B700: warm100 is not complete yet (epoch=${warm_epoch})." | tee -a "$ORCH_LOG"
+  if [[ ! "$warm_epoch" =~ ^[0-9]+$ || "$warm_epoch" -lt "$WARM_STOP_EPOCH" || ! -s "$WARM_STOP_CKPT" ]]; then
+    echo "[$(date '+%F %T')] Refusing to launch B700: warm100 stop checkpoint is not ready yet (epoch=${warm_epoch}, ckpt=${WARM_STOP_CKPT})." | tee -a "$ORCH_LOG"
     exit 2
   fi
   echo "[$(date '+%F %T')] Launching B700 jobs for TS=${TS}" | tee -a "$ORCH_LOG"
   launch_b_job detonly 0 "LADD_B_DET_ONLY=1 LADD_B_A2_CORE=0"
   launch_b_job probeA 0 "LADD_B_A2_CORE=1 LADD_B_FROZEN_REACH_PROBE=1 LADD_B_DETACH_REACH_PROBE=1 LADD_B_KEEP_REACH_PROBE_GRAD=0"
-  launch_b_job dynamic 1 "LADD_B_A2_CORE=1 LADD_B_FROZEN_REACH_PROBE=0 LADD_B_DETACH_REACH_PROBE=0 LADD_B_KEEP_REACH_PROBE_GRAD=0"
+  if [[ "${LAUNCH_DYNAMIC_AFTER_WARM:-1}" == "1" ]]; then
+    launch_b_job dynamic 1 "LADD_B_A2_CORE=1 LADD_B_FROZEN_REACH_PROBE=0 LADD_B_DETACH_REACH_PROBE=0 LADD_B_KEEP_REACH_PROBE_GRAD=0"
+  else
+    echo "[$(date '+%F %T')] Skipping dynamic_after_e100 for now because LAUNCH_DYNAMIC_AFTER_WARM=${LAUNCH_DYNAMIC_AFTER_WARM:-1}." | tee -a "$ORCH_LOG"
+  fi
 }
 
 if [[ "${1:-}" == "--launch-b-only" ]]; then
@@ -290,8 +335,9 @@ if [[ "${1:-}" == "--launch-b-only" ]]; then
   RUN_ROOT="runs_public/paper/ogsod_hbb_mosaic100/no_reload_warm100/yolo11${SIZE}/seed${SEED}"
   LOG_ROOT="logs/paper/ogsod_hbb_mosaic100/no_reload_warm100/yolo11${SIZE}/seed${SEED}/${TS}"
   WARM_PROJECT="${RUN_ROOT}/detector_warm100"
-  WARM_NAME="sar_yolo11${SIZE}_no_reload_warm100_mosaic_on_e100_b${BATCH_SIZE}_s${SEED}_${TS}"
+  WARM_NAME="sar_yolo11${SIZE}_no_reload_warm100_mosaic_on_cos${WARM_TOTAL_EPOCHS}_stop${WARM_STOP_EPOCH}_b${BATCH_SIZE}_s${SEED}_${TS}"
   WARM_DIR="${WARM_PROJECT}/${WARM_NAME}"
+  WARM_STOP_CKPT="${WARM_DIR}/weights/warm_stop_epoch${WARM_STOP_EPOCH}.pt"
   A1_LOG_DIR="${LOG_ROOT}/a1_decomp_gpu1"
   A1_ACTUAL_FILE="${A1_LOG_DIR}/actual_run_dir.txt"
   ORCH_LOG="${LOG_ROOT}/orchestrator.log"
@@ -305,8 +351,9 @@ if [[ "${1:-}" == "--orchestrate-existing" ]]; then
   RUN_ROOT="runs_public/paper/ogsod_hbb_mosaic100/no_reload_warm100/yolo11${SIZE}/seed${SEED}"
   LOG_ROOT="logs/paper/ogsod_hbb_mosaic100/no_reload_warm100/yolo11${SIZE}/seed${SEED}/${TS}"
   WARM_PROJECT="${RUN_ROOT}/detector_warm100"
-  WARM_NAME="sar_yolo11${SIZE}_no_reload_warm100_mosaic_on_e100_b${BATCH_SIZE}_s${SEED}_${TS}"
+  WARM_NAME="sar_yolo11${SIZE}_no_reload_warm100_mosaic_on_cos${WARM_TOTAL_EPOCHS}_stop${WARM_STOP_EPOCH}_b${BATCH_SIZE}_s${SEED}_${TS}"
   WARM_DIR="${WARM_PROJECT}/${WARM_NAME}"
+  WARM_STOP_CKPT="${WARM_DIR}/weights/warm_stop_epoch${WARM_STOP_EPOCH}.pt"
   A1_LOG_DIR="${LOG_ROOT}/a1_decomp_gpu1"
   A1_ACTUAL_FILE="${A1_LOG_DIR}/actual_run_dir.txt"
   ORCH_LOG="${LOG_ROOT}/orchestrator.log"
@@ -316,11 +363,23 @@ fi
 
 write_meta
 launch_warm100
-launch_a1_cache
+launch_warm_stop_watcher
+if [[ -n "${EXISTING_A1_DIR:-}" ]]; then
+  mkdir -p "$A1_LOG_DIR"
+  printf '%s\n' "$EXISTING_A1_DIR" > "$A1_ACTUAL_FILE"
+  echo "existing_a1_dir=${EXISTING_A1_DIR}" >> "${LOG_ROOT}/no_reload_warm100_meta.env"
+else
+  launch_a1_cache
+fi
 launch_orchestrator
 
 echo "launched_ts=${TS}"
 echo "warm_screen=nl_warm100_${SIZE}_s${SEED}_g0_${TS}"
-echo "a1_screen=nl_a1cache_${SIZE}_s${SEED}_g1_${TS}"
+if [[ -n "${EXISTING_A1_DIR:-}" ]]; then
+  echo "a1_screen=reused_existing_a1"
+else
+  echo "a1_screen=nl_a1cache_${SIZE}_s${SEED}_g1_${TS}"
+fi
+echo "warm_watcher_screen=nl_warmwatch_${SIZE}_s${SEED}_${TS}"
 echo "orchestrator_screen=nl_orch_${SIZE}_s${SEED}_${TS}"
 echo "log_root=${LOG_ROOT}"

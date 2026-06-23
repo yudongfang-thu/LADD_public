@@ -15,7 +15,8 @@ method gain. The next useful experiments must reduce or remove that confound.
    - Stopped `yolo11m dynamic` on GPU1.
 
 2. Started the no-reload warm100 line on AutoDL dual 4090.
-   - `warm100`: SAR detector from `yolo11n.pt`, 100 epochs, mosaic enabled.
+   - Initial `warm100`: SAR detector from `yolo11n.pt`, 100 epochs, mosaic
+     enabled. This was later found to be the wrong cosine LR horizon.
    - `A1 cache`: 10 epochs decomposition cache from existing SAR baseline/RGB
      teacher.
    - Intended B-stage: after warm100 reaches epoch 100, launch
@@ -28,7 +29,16 @@ method gain. The next useful experiments must reduce or remove that confound.
      to be at least 100 before launching B-stage.
    - The early B-stage partial runs were stopped and marked invalid.
 
-4. Added direct YOLO-init B-stage control.
+4. Found and fixed the warm100 scheduler bug.
+   - Bug: the first warm100 detector was launched with `epochs=100`.
+   - Problem: for cosine LR, this does not represent epoch 100 of the formal
+     800-epoch schedule.
+   - Fix: stopped the invalid warm100 run at epoch 24 and relaunched a corrected
+     run with `epochs=800`; a watcher stops it at epoch 100 and copies
+     `weights/warm_stop_epoch100.pt`.
+   - Corrected timestamp: `20260623_155023`.
+
+5. Added direct YOLO-init B-stage control.
    - While GPU1 was idle, launched a no-warm Probe-A B-stage job.
    - Detector source: `yolo11n.pt`.
    - Decomposition source: completed A1 cache.
@@ -42,9 +52,9 @@ Primary comparison group:
 | Condition | Detector init for B | Decomp init | Purpose |
 |---|---|---|---|
 | direct YOLO-init Probe-A | `yolo11n.pt` | A1 cache | no detector reload / no warm control |
-| detonly_after_e100 | warm100 `last.pt` | none/effectively det-only | warm100-only control |
-| probeA_after_e100 | warm100 `last.pt` | A1 cache | current mainline without fully trained baseline reload |
-| dynamic_after_e100 | warm100 `last.pt` | A1 cache | dynamic candidate without fully trained baseline reload |
+| detonly_after_e100 | corrected `warm_stop_epoch100.pt` | none/effectively det-only | warm100-only control |
+| probeA_after_e100 | corrected `warm_stop_epoch100.pt` | A1 cache | current mainline without fully trained baseline reload |
+| dynamic_after_e100 | corrected `warm_stop_epoch100.pt` | A1 cache | dynamic candidate without fully trained baseline reload |
 
 Interpretation rule:
 
@@ -53,4 +63,3 @@ Interpretation rule:
   continuation.
 - If direct YOLO-init Probe-A is viable, it is stronger evidence against the
   reload confound, but it may be harder to optimize.
-
