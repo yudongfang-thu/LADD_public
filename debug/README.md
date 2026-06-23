@@ -11,6 +11,7 @@ It intentionally stores raw CSV/log/provenance files, not checkpoint weights.
 |---|---|---|
 | YOLO11s Dynamic instability | `dynamic_s_instability_20260622/` | Why does `clean_a1b_dyn` show late collapse / unstable detector losses on YOLO11s, while dynprobe/main is much more stable? |
 | DroneVehicle no-gain behavior | `dronevehicle_no_gain_20260622/` | Why do LADD main and Dynamic LADD fail to improve over the RGB student baseline on DroneVehicle under the CCLKD-aligned protocol? |
+| OGSOD no-reload warm100 controls | `no_reload_warm100_20260623/` | Does LADD still help when B-stage does not start from a fully trained SAR baseline reload? Includes warm100, A1 cache, after-e100 B jobs, and direct YOLO-init Probe-A control. |
 
 ## File Conventions
 
