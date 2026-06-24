@@ -1074,3 +1074,53 @@ python docs/experiments/monitor_ladd_capr_gatedkd_20260624.py \
   - 3090 继续跑原 capR/gatedKD 组，不新增。
   - 4090 新 `zw1cache` 组作为独立同机负控制证据，只和同组 det-only control 比，不与 3090 formal-yaml 组直接比较。
   - 继续保护所有 dynamic 主线。
+
+### 2026-06-25 05:03 CST
+
+- 3090 GPU0/GPU1: 20244/24576 MiB、20934/24576 MiB，util 99%/99%；继续满载稳定运行。
+- 4090 GPU0/GPU1: 15622/24564 MiB、15670/24564 MiB，util 99%/99%；新 `zw1cache` 三条组已真实进入训练。
+- 4090 磁盘：`/root/shared-nvme` 约 48G/50G，剩余 2.4G，使用率 96%；因 YOLO11n 权重较小且 `save-period=100`，短期继续跑，但后续 heartbeat 需要持续监控磁盘。
+- 3090/4090 当前有效日志扫描仍未发现 Traceback / RuntimeError / CUDA OOM / NaN / batch fallback。
+
+#### 3090 capR/gatedKD 最新状态
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | capR | cap saturation | rank active | kd active | status |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| dynamic_capR2_yoloinit | 23 | 0.18132 | 0.18132 | 0.12161 | -0.00187 | -0.00092 | True | 0.999995 | 0.000011 | n/a | pre100 |
+| dynamic_capR4_yoloinit retry | 22 | 0.16589 | 0.16589 | 0.10819 | -0.00232 | -0.00539 | False | 0.000000 | 0.000008 | n/a | pre100 |
+| dynamic_capR2_gatedKD retry | 22 | 0.16448 | 0.16448 | 0.10261 | -0.00373 | -0.01096 | True | 0.999991 | 0.000000 | 1.000000 | pre100 |
+| dynamic_capR2_gatedKD_wo_srec retry | 20 | 0.15579 | 0.15579 | 0.09291 | -0.01083 | -0.00836 | True | 0.999984 | 0.000000 | 1.000000 | pre100 |
+| dynamic_capR2_gatedKD_shuffledT retry | 20 | 0.16698 | 0.16698 | 0.09931 | +0.00036 | -0.00196 | True | 0.999980 | 0.000000 | 1.000000 | pre100 |
+
+- 3090 机制观察延续 05:00 判断：
+  - `kd_active_ratio` 仍约 1.0，gate 继续近似全开。
+  - paired `gatedKD-z` 与 `gatedKD-wo-srec` 没有优于 shuffledT；目前 shuffledT latest 反而略高于 paired，但 rows 仍太少。
+  - 不降级/停止，继续等 50/100 rows；如果 50 rows 仍 `kd_active_ratio≈1` 且 paired 不优于 shuffled，应考虑下一轮 sharper gate 或调整 margin/tau，而不是继续只看 AP。
+
+#### 3090 旧 dynamic 线
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | status |
+|---|---:|---:|---:|---:|---:|---:|---|
+| dynamic_singleproj | 331 | 0.47483 | 0.47483 | 0.47173 | +0.01515 | +0.01521 | PROMISING_EARLY |
+| dynamic_wo_s_rec | 347 | 0.47781 | 0.47781 | 0.47362 | +0.01338 | +0.01184 | PROMISING_EARLY |
+| dynamic_plain | 219 | 0.41789 | 0.41816 | 0.41375 | +0.00428 | +0.00517 | WATCH |
+| dynamic_reach_rawinput | 192 | 0.40836 | 0.40836 | 0.40365 | +0.01031 | +0.01119 | PROMISING_EARLY |
+
+#### 4090 `zw1cache` fresh 负控制组
+
+| run | rows | latest AP50-95 | best AP50-95 | latest AP50 | best AP50 | latest delta vs detonly | note |
+|---|---:|---:|---:|---:|---:|---:|---|
+| 4090zw1cache_detonly_control | 2 | 0.02917 | 0.05446 | 0.09042 | 0.15147 | n/a | same-group control |
+| 4090zw1cache_capR2_gatedKD_z | 1 | 0.04732 | 0.04732 | 0.13132 | 0.13132 | -0.00714 | first epoch only |
+| 4090zw1cache_capR2_gatedKD_toU | 1 | 0.03320 | 0.03320 | 0.09509 | 0.09509 | -0.02126 | first epoch only; negative control |
+
+- 4090 `zw1cache` 健康状态：
+  - 三条均生成 `args.yaml`、`results.csv`、`ladd_diagnostics.csv`。
+  - 三条均有 Python 主进程，当前 GPU 利用率约 99%/99%。
+  - `capR2_gatedKD_z/toU` 的 `kd_active_ratio` 第一行同样约 1.0；与 3090 机制风险一致。
+  - 现在 only first epoch，不能评价 AP；下一步看 20 rows 时 z 是否优于 toU、且二者是否优于/劣于 same-group det-only。
+
+- 调度决定：
+  - 不新增、不停止。
+  - 3090 保持满载；4090 `zw1cache` 已把显存利用拉到约 15.6G/15.7G，未超过 22G 危险线。
+  - 继续保护 dynamic 主线；继续监控 4090 磁盘。
