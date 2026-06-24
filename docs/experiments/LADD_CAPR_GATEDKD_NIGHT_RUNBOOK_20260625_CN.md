@@ -197,14 +197,14 @@ python docs/experiments/monitor_ladd_capr_gatedkd_20260624.py \
 
 - [x] 本 MD 更新了夜间执行日志。
 - [x] GitHub 上有本分支 commit/push。
-- [ ] 两台服务器状态表：GPU、PID、run、rows、latest/best/late20、预计完成时间。
+- [x] 两台服务器状态表：GPU、PID、run、rows、latest/best/late20、预计完成时间。
 - [x] smoke 结果路径与结论。
 - [x] 已有 run capR audit 表。
 - [x] learnability audit 初步结果。
 - [x] 第一批 capR/gatedKD early-screen 运行状态。
 - [x] 若任何步骤阻塞，写明阻塞原因、已尝试操作、下一步建议。
 
-说明：服务器状态表已持续记录 GPU、run、rows、latest/best/late-window；预计完成时间尚未系统化写入，明早汇总前仍需补一版带 ETA 的总表。
+说明：服务器状态表已持续记录 GPU、run、rows、latest/best/late-window；05:34 CST 已补一版按当前进程 elapsed/rows 粗估的 ETA 总表。ETA 只用于资源节奏判断，不作为严格完成时间承诺。
 
 ## 9. 夜间执行日志
 
@@ -1654,3 +1654,42 @@ python docs/experiments/monitor_ladd_capr_gatedkd_20260624.py \
   - 负控制风险继续增强：3090 shuffledT latest delta 已短暂为 +0.00764，4090 `toU` latest delta 为 +0.01458；但二者 late-window 仍为负，暂不下正式结论。
   - `kd_active_ratio` 仍接近 1，说明 capR-gatedKD gate 目前基本全开，没有体现出选择性 token filtering。
   - dynamic 正向线继续保护；4090 磁盘 96% 仍是最实际风险。
+
+### 2026-06-25 05:34 CST
+
+- 补齐明早交付中的 ETA 总表，并将 checklist 中“两台服务器状态表”标记完成。
+- ETA 估计方法：用当前主进程 elapsed / 当前 `results.csv` rows 粗估单 epoch 时间，再外推到 800 rows。对 resume run 和共享 GPU 并行 run 仅作资源节奏参考，不作为严格完成时间。
+- 当前有效/retry run 日志精确扫描仍无 Traceback / RuntimeError / CUDA OOM / NaN / FileNotFound / batch fallback / No space left。
+
+#### 3090 ETA 总表
+
+| run | GPU | PID | elapsed h | rows | latest AP50-95 | best AP50-95 | late20 | rough ETA e800 | run dir |
+|---|---|---:|---:|---:|---:|---:|---:|---|---|
+| capR2 | GPU0 | 41802 | 1.90 | 32 | 0.22027 | 0.22090 | 0.17577 | 06-27 03:17 | `ogsod_yoloinit_dynamic_capR2_yoloinit_yolo11n_e800_b64_img256_s0_20260625_034019_gpu0` |
+| capR4 | GPU0 | 42826 | 1.83 | 32 | 0.21740 | 0.21816 | 0.17137 | 06-27 01:29 | `ogsod_yoloinit_dynamic_capR4_yoloinit_yolo11n_e800_b64_img256_s0_20260625_034447_gpu0` |
+| gatedKD | GPU0 | 42841 | 1.83 | 31 | 0.21083 | 0.21083 | 0.16141 | 06-27 02:58 | `ogsod_yoloinit_dynamic_capR2_gatedKD_yoloinit_yolo11n_e800_b64_img256_s0_20260625_034447_gpu0` |
+| wo_srec | GPU1 | 42856 | 1.83 | 29 | 0.20033 | 0.20033 | 0.15092 | 06-27 06:13 | `ogsod_yoloinit_dynamic_capR2_gatedKD_wo_srec_yoloinit_yolo11n_e800_b64_img256_s0_20260625_034447_gpu1` |
+| shuffledT | GPU1 | 42868 | 1.83 | 29 | 0.20762 | 0.21173 | 0.16004 | 06-27 06:13 | `ogsod_yoloinit_dynamic_capR2_gatedKD_shuffledT_yoloinit_yolo11n_e800_b64_img256_s0_20260625_034447_gpu1` |
+| detonly_control | GPU0 | 23793 | 13.29 | 429 | 0.48674 | 0.48674 | 0.48346 | 06-25 17:04 | `ogsod_yoloinit_detonly_control_yoloinit_yolo11n_e800_b64_img256_s0_20260624_161654_gpu0` |
+| dynamic_singleproj | GPU0 | 22488 | 13.48 | 342 | 0.47967 | 0.47967 | 0.47576 | 06-25 23:37 | `ogsod_yoloinit_dynamic_singleproj_yoloinit_yolo11n_e800_b64_img256_s0_20260624_1605_gpu0` |
+| dynamic_wo_s_rec | GPU1 | 23183 | 13.45 | 358 | 0.48131 | 0.48131 | 0.47812 | 06-25 22:11 | `ogsod_yoloinit_dynamic_wo_s_rec_yoloinit_yolo11n_e800_b64_img256_s0_20260624_1608_gpu1` |
+| dynamic_plain | GPU1 | 31994 | 9.36 | 231 | 0.42525 | 0.42525 | 0.41999 | 06-26 04:37 | `ogsod_yoloinit_dynamic_plain_yoloinit_yolo11n_e800_b64_img256_s0_20260624_201305_gpu1` |
+| dynamic_reach_rawinput | GPU1 | 33646 | 8.43 | 204 | 0.41491 | 0.41491 | 0.40997 | 06-26 06:12 | `ogsod_yoloinit_dynamic_reach_rawinput_yoloinit_yolo11n_e800_b64_img256_s0_20260624_210845_gpu1` |
+
+#### 4090 ETA 总表
+
+| run | GPU | PID | elapsed h | rows | latest AP50-95 | best AP50-95 | late20 | rough ETA e800 | run dir |
+|---|---|---:|---:|---:|---:|---:|---:|---|---|
+| fresh_detonly | GPU1 | 18819 | 0.62 | 18 | 0.14493 | 0.15218 | 0.09621 | 06-26 08:32 | `ogsod_yoloinit_4090zw1cache_detonly_control_caprgroup_yolo11n_e800_b64_img256_s0_20260625_045721_gpu1` |
+| fresh_z | GPU0 | 18827 | 0.62 | 15 | 0.13059 | 0.13059 | 0.08368 | 06-26 14:04 | `ogsod_yoloinit_4090zw1cache_capR2_gatedKD_z_yolo11n_e800_b64_img256_s0_20260625_045721_gpu0` |
+| fresh_toU | GPU1 | 18835 | 0.62 | 16 | 0.13802 | 0.14251 | 0.08797 | 06-26 11:59 | `ogsod_yoloinit_4090zw1cache_capR2_gatedKD_toU_yolo11n_e800_b64_img256_s0_20260625_045721_gpu1` |
+| resume_detonly | GPU0 | 13310 | 3.39 | 122 | 0.53594 | 0.53594 | 0.53328 | 06-26 00:23 | `ogsod_yoloinit_detonly_resume_fixed_bestep484_e800_b64_img256_s0_20260625_021121_gpu0` |
+| resume_dynamic | GPU1 | 13323 | 3.38 | 96 | 0.49517 | 0.49517 | 0.49244 | 06-26 06:24 | `ogsod_yoloinit_dynamic_resume_fixed_bestep326_e800_b64_img256_s0_20260625_021121_gpu1` |
+| resume_kd0p5 | GPU0 | 13333 | 3.38 | 97 | 0.38502 | 0.38502 | 0.37928 | 06-26 06:06 | `ogsod_yoloinit_dynamic_kd0p5_resume_fixed_bestep60_e800_b64_img256_s0_20260625_021121_gpu0` |
+| resume_reach0p5 | GPU0 | 13342 | 3.38 | 97 | 0.38538 | 0.38538 | 0.37984 | 06-26 06:05 | `ogsod_yoloinit_dynamic_reach0p5_resume_fixed_bestep61_e800_b64_img256_s0_20260625_021121_gpu0` |
+| resume_srec0p05 | GPU1 | 13351 | 3.38 | 98 | 0.38329 | 0.38329 | 0.37736 | 06-26 05:48 | `ogsod_yoloinit_dynamic_srec0p05_resume_fixed_bestep57_e800_b64_img256_s0_20260625_021121_gpu1` |
+
+- 机制/调度判断：
+  - ETA 表显示 capR/gatedKD 新组要到 06-27 左右才跑满 e800，因此短期只看 50/100/120 epoch trigger。
+  - 4090 fresh 组很快会到 20 rows，应在下一轮优先复查 z vs toU 负控制风险。
+  - 旧 3090 dynamic 线预计今天晚上到午夜前后完成，继续保护。
