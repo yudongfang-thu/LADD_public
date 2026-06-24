@@ -2596,3 +2596,47 @@ python docs/experiments/monitor_ladd_capr_gatedkd_20260624.py \
   - 3090 paired gatedKD 仍弱于 shuffledT：paired late20 delta -0.01301，shuffledT +0.00084；但 shuffledT 仅 46 行，仍未满足正式 50-row negative-control warning 条件。
   - 4090 `KD-to-u` 仍强于 `KD-to-z`：toU latest/late20 = +0.00970/+0.00779，z = +0.00204/+0.00274；但 z/toU 仍未到 50 行。
   - gate 仍几乎全开，rank active 仍接近 0。下一轮最可能触发正式机制警报。
+
+### 2026-06-25 06:39 CST
+
+- 资源状态：
+  - 3090 GPU0/GPU1: 20244/24576 MiB、20934/24576 MiB，util 100%/99%；磁盘 40G/50G，剩余 11G，使用率 79%。
+  - 4090 GPU0/GPU1: 15644/24564 MiB、15694/24564 MiB，util 99%/99%；磁盘 48G/50G，剩余 2.3G，使用率 96%。
+- 当前有效日志窄扫描无 Traceback / RuntimeError / CUDA OOM / NaN / FileNotFound / No space left / batch fallback。
+- 关键负控制仍未满足成对 50-row checkpoint：3090 paired/shuffled gatedKD 为 50/47 行，4090 z/toU 为 46/48 行。3090 paired 已到 50，但 shuffledT 未到 50；4090 两条均未到 50。因此仍不写正式 50-row negative-control warning，不新增、不停止、不清理。
+
+#### 3090 简表
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | cap saturation | rank active | kd active | status |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| detonly_control | 458 | 0.49448 | 0.49448@458 | 0.49208 | n/a | n/a | n/a | n/a | n/a | control |
+| dynamic_singleproj | 365 | 0.48568 | 0.48568@365 | 0.48310 | +0.01641 | +0.01651 | n/a | n/a | n/a | PROMISING_EARLY |
+| dynamic_wo_s_rec | 383 | 0.48814 | 0.48814@383 | 0.48556 | +0.01387 | +0.01375 | n/a | n/a | n/a | PROMISING_EARLY |
+| dynamic_plain | 255 | 0.43695 | 0.43695@255 | 0.43321 | +0.00645 | +0.00706 | n/a | n/a | n/a | WATCH |
+| dynamic_reach_rawinput | 229 | 0.42811 | 0.42811@229 | 0.42322 | +0.00954 | +0.00940 | n/a | n/a | n/a | WATCH |
+| dynamic_capR2_yoloinit | 52 | 0.29558 | 0.29558@52 | 0.26524 | +0.00021 | +0.00128 | 0.99999 | 0.00000 | n/a | pre100 |
+| dynamic_capR4_yoloinit | 52 | 0.29197 | 0.29197@52 | 0.26170 | -0.00340 | -0.00226 | 0.00000 | 0.00078 | n/a | pre100 |
+| dynamic_capR2_gatedKD | 50 | 0.27579 | 0.27579@50 | 0.24365 | -0.01227 | -0.01330 | 0.99710 | 0.00249 | 1.00000 | pre100 |
+| dynamic_capR2_gatedKD_wo_srec | 47 | 0.25985 | 0.25985@47 | 0.22731 | -0.01900 | -0.01803 | 0.99940 | 0.00069 | 1.00000 | pre100 |
+| dynamic_capR2_gatedKD_shuffledT | 47 | 0.28384 | 0.28384@47 | 0.24666 | +0.00499 | +0.00132 | 0.99962 | 0.00036 | 1.00000 | pre100 |
+
+#### 4090 简表
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | cap saturation | rank active | kd active | status |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| fresh_detonly | 55 | 0.29814 | 0.29814@55 | 0.27132 | n/a | n/a | n/a | n/a | n/a | control |
+| capR2_gatedKD_z | 46 | 0.27588 | 0.27588@46 | 0.24091 | +0.00099 | +0.00239 | 0.99495 | 0.00001 | 1.00000 | pre100 |
+| capR2_gatedKD_toU | 48 | 0.28959 | 0.28959@48 | 0.25429 | +0.00761 | +0.00739 | 0.99523 | 0.00002 | 1.00000 | pre100 |
+| resume_detonly | 161 | 0.54560 | 0.54560@161 | 0.54316 | n/a | n/a | n/a | n/a | n/a | context |
+| resume_dynamic | 125 | 0.50258 | 0.50258@125 | 0.49970 | n/a | n/a | n/a | n/a | n/a | context |
+| resume_kd0p5 | 127 | 0.40281 | 0.40281@127 | 0.39748 | n/a | n/a | n/a | n/a | n/a | context |
+| resume_reach0p5 | 127 | 0.40351 | 0.40351@127 | 0.39749 | n/a | n/a | n/a | n/a | n/a | context |
+| resume_srec0p05 | 127 | 0.40097 | 0.40097@127 | 0.39537 | n/a | n/a | n/a | n/a | n/a | context |
+| resume_teacher_projectedraw | 40 | 0.35064 | 0.35064@40 | 0.34561 | n/a | n/a | n/a | n/a | n/a | context |
+| resume_probeA | 33 | 0.49752 | 0.49752@33 | 0.49465 | n/a | n/a | n/a | n/a | n/a | context |
+
+- 机制判断：
+  - 3090 旧 dynamic 正线继续稳定：`singleproj` late20 delta +0.01651，`wo_s_rec` late20 delta +0.01375。
+  - 3090 paired gatedKD 已到 50 行且仍明显负：latest/late20 delta = -0.01227/-0.01330；shuffledT 虽未到 50，但当前已经强于 paired：latest/late20 delta = +0.00499/+0.00132。
+  - 4090 `KD-to-u` 仍强于 `KD-to-z`：toU latest/late20 = +0.00761/+0.00739，z = +0.00099/+0.00239；但 z/toU 仍未到 50 行。
+  - gate 仍几乎全开，rank active 仍接近 0。下一轮或下两轮若 shuffledT 和 z/toU 达到 50 且关系不变，应正式写入 `50-row negative-control warning`，并将 capR-gatedKD 降级为诊断线。
