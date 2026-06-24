@@ -1725,3 +1725,55 @@ python docs/experiments/monitor_ladd_capr_gatedkd_20260624.py \
   - 3090 capR2/capR4 latest 略正但 late20 仍负；paired gatedKD/wo_srec 继续为负。
   - `kd_active_ratio` 仍基本等于 1，说明当前 capR-gatedKD gate 实际近似全开，尚未表现出选择性 token filtering。
   - 不新增、不停止；保护旧 dynamic 正向线，等待 4090 fresh 组 20-row 复查和 3090 新组 50/100-row trigger。
+
+### 2026-06-25 05:45 CST
+
+- 3090/4090 资源仍满载：3090 GPU0/GPU1 约 20244/20934 MiB，util 100%/99%；4090 GPU0/GPU1 约 15644/15694 MiB，util 99%/99%。4090 磁盘仍只有约 2.3G 可用，是继续运行的主要工程风险。
+- 日志检查：
+  - 4090 当前 `045721`/`021121` 活跃日志无 Traceback / RuntimeError / CUDA OOM / NaN / FileNotFound / No space left / batch fallback。
+  - 3090 当前有效日志无异常；但 `034019` 首轮 gatedKD/wo_srec/shuffledT/capR4 曾因 `/root/shared-nvme/data/OGSOD-1.0/sar/labels/train.cache` 缺失失败，这些已由 `034447` retry 替代，不能把失败日志误当作当前活跃故障。
+- 3090 same-machine detonly control: rows=432, latest AP50/AP50-95=0.75119/0.48753, late20=0.48432。
+
+#### 3090 旧 dynamic 主线
+
+| run | rows | latest AP50 | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | positive epochs | status |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| dynamic_singleproj | 345 | 0.74582 | 0.48063 | 0.48063 | 0.47697 | +0.01689 | +0.01581 | 306/345 | PROMISING_EARLY |
+| dynamic_wo_s_rec | 361 | 0.74881 | 0.48237 | 0.48279 | 0.47926 | +0.01451 | +0.01374 | 339/361 | PROMISING_EARLY |
+| dynamic_plain | 234 | 0.68326 | 0.42721 | 0.42721 | 0.42168 | +0.00610 | +0.00528 | 212/234 | WATCH |
+| dynamic_reach_rawinput | 207 | 0.66730 | 0.41620 | 0.41620 | 0.41157 | +0.00880 | +0.00978 | 186/207 | WATCH/PROMISING boundary |
+
+#### 3090 capR/gatedKD 新组
+
+| run | rows | latest AP50 | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | positive epochs | cap saturation | rank active | kd active | status |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| dynamic_capR2_yoloinit | 35 | 0.46857 | 0.23472 | 0.23553 | 0.19119 | -0.00109 | -0.00063 | 17/35 | 0.99857 | 0.00156 | n/a | pre100 |
+| dynamic_capR4_yoloinit retry | 34 | 0.46603 | 0.23064 | 0.23064 | 0.18143 | +0.00106 | -0.00571 | 10/34 | 0.00000 | 0.00011 | n/a | pre100 |
+| dynamic_capR2_gatedKD retry | 33 | 0.43696 | 0.21358 | 0.21568 | 0.17151 | -0.01198 | -0.01076 | 4/33 | 0.99989 | 0.00012 | 1.00000 | pre100 |
+| dynamic_capR2_gatedKD_wo_srec retry | 31 | 0.41651 | 0.20033 | 0.20211 | 0.16006 | -0.02003 | -0.01252 | 6/31 | 0.99997 | 0.00000 | 1.00000 | pre100 |
+| dynamic_capR2_gatedKD_shuffledT retry | 31 | 0.43744 | 0.21758 | 0.21856 | 0.17107 | -0.00278 | -0.00152 | 14/31 | 0.99992 | 0.00007 | 1.00000 | pre100 |
+
+#### 4090 `zw1cache` fresh 20-row 负控制复查
+
+| run | rows | latest AP50 | latest AP50-95 | best AP50-95 | late20 | latest delta vs detonly | late20 delta vs detonly | positive epochs | cap saturation | rank active | kd active | note |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| detonly_control | 24 | 0.38460 | 0.17810 | 0.17810 | 0.13080 | n/a | n/a | n/a | n/a | n/a | n/a | same-group control |
+| capR2_gatedKD_z | 20 | 0.35250 | 0.15497 | 0.15570 | 0.10084 | -0.00597 | -0.00172 | 6/20 | 0.99489 | 0.00001 | 0.99998 | paired z target |
+| capR2_gatedKD_toU | 21 | 0.37633 | 0.17528 | 0.17528 | 0.10965 | +0.00823 | +0.00147 | 11/21 | 0.99516 | 0.00003 | 1.00000 | negative control |
+
+#### 4090 resume context
+
+| run | rows | latest AP50 | latest AP50-95 | best AP50-95 | late20 | note |
+|---|---:|---:|---:|---:|---:|---|
+| resume_detonly | 127 | 0.80240 | 0.53708 | 0.53711 | 0.53466 | context/control |
+| resume_dynamic | 100 | 0.76945 | 0.49570 | 0.49570 | 0.49335 | context; not main capR fresh proof |
+| resume_kd0p5 | 101 | 0.63915 | 0.38759 | 0.38759 | 0.38174 | context |
+| resume_reach0p5 | 101 | 0.63795 | 0.38754 | 0.38754 | 0.38207 | context |
+| resume_srec0p05 | 101 | 0.63874 | 0.38526 | 0.38526 | 0.37916 | context |
+
+- 机制/调度判断：
+  - 4090 fresh 20-row 小窗口已经触发明显负控制风险：`KD-to-u` 比 `KD-to-z` 更强，且 `toU` matched latest/late20 均略高于 detonly；`z` matched latest/late20 均为负。
+  - 由于 20 rows 太早，暂不停止或宣判；下一触发点应看 50 rows。如果 50 rows 仍是 `toU >= z` 或 shuffled/toU 与正常 paired 接近，则说明当前 capR-gated KD 没有证明“只蒸馏 z_t”的机制 claim。
+  - 3090 新 capR/gatedKD 组仍未到 50 rows；paired gatedKD/wo_srec 明显负，capR2/capR4 也没有形成 late-window 正增益。
+  - 旧 dynamic_singleproj / wo_s_rec 仍是目前唯一稳定的 YOLO-init 正向线索，继续保护跑满。
+  - 不新增、不停止；等待 4090 fresh 50-row 与 3090 capR 新组 50/100-row trigger。
