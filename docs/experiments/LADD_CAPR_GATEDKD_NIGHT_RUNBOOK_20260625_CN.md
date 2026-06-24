@@ -2076,3 +2076,44 @@ python docs/experiments/monitor_ladd_capr_gatedkd_20260624.py \
   - 4090 `KD-to-u` 继续强于 `KD-to-z`：`toU` latest/late20 为 +0.00975/+0.00742，`z` 为 +0.00565/+0.00106。
   - 两台服务器的 capR-gatedKD `kd_active_ratio` 仍几乎全开，当前 gate 没有形成选择性 token filtering。
   - 在 50 行前继续观察；若 50 行仍是 `toU > z` 或 `shuffledT >= paired`，下一步应降级 capR-gatedKD 主线候选，并优先修 gate 温度/阈值或重新审计 z/u learnability。
+
+### 2026-06-25 06:05 CST
+
+- 资源状态：
+  - 3090 GPU0/GPU1: 20244/24576 MiB、20934/24576 MiB，util 100%/100%；磁盘 40G/50G，剩余 11G，使用率 79%。
+  - 4090 GPU0/GPU1: 15644/24564 MiB、15694/24564 MiB，util 99%/99%；磁盘 48G/50G，剩余 2.3G，使用率 96%。
+- 当前有效日志精确扫描无 Traceback / RuntimeError / CUDA OOM / NaN / FileNotFound / No space left / batch fallback。
+- 仍未到 50/100/120 正式触发点，暂不新增、不停止、不清理。
+
+#### 3090 简表
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | positive epochs | cap saturation | rank active | kd active | status |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| detonly_control | 443 | 0.49095 | 0.49095@443 | 0.48766 | n/a | n/a | n/a | n/a | n/a | n/a | control |
+| dynamic_singleproj | 353 | 0.48218 | 0.48218@353 | 0.47986 | +0.01607 | +0.01638 | 314/353 | n/a | n/a | n/a | PROMISING_EARLY |
+| dynamic_wo_s_rec | 370 | 0.48503 | 0.48503@370 | 0.48205 | +0.01417 | +0.01408 | 348/370 | n/a | n/a | n/a | PROMISING_EARLY |
+| dynamic_plain | 242 | 0.43218 | 0.43218@242 | 0.42640 | +0.00765 | +0.00613 | 220/242 | n/a | n/a | n/a | WATCH |
+| dynamic_reach_rawinput | 216 | 0.42128 | 0.42128@216 | 0.41637 | +0.00924 | +0.00934 | 195/216 | n/a | n/a | n/a | WATCH |
+| dynamic_capR2_yoloinit | 42 | 0.26375 | 0.26375@42 | 0.22426 | -0.00131 | -0.00055 | 21/42 | 0.99886 | 0.00118 | n/a | pre100 |
+| dynamic_capR4_yoloinit retry | 42 | 0.25822 | 0.25822@42 | 0.22101 | -0.00684 | -0.00381 | 10/42 | 0.00000 | 0.00120 | n/a | pre100 |
+| dynamic_capR2_gatedKD retry | 40 | 0.24319 | 0.24319@40 | 0.20414 | -0.01269 | -0.01143 | 4/40 | 0.99895 | 0.00085 | 1.00000 | pre100 |
+| dynamic_capR2_gatedKD_wo_srec retry | 38 | 0.22680 | 0.22680@38 | 0.19169 | -0.02613 | -0.01491 | 6/38 | 0.99969 | 0.00030 | 1.00000 | pre100 |
+| dynamic_capR2_gatedKD_shuffledT retry | 37 | 0.24823 | 0.24823@37 | 0.20261 | +0.00227 | +0.00072 | 20/37 | 0.99983 | 0.00017 | 1.00000 | pre100 |
+
+#### 4090 简表
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | positive epochs | cap saturation | rank active | kd active | status |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| fresh_detonly | 36 | 0.24151 | 0.24151@36 | 0.19286 | n/a | n/a | n/a | n/a | n/a | n/a | control |
+| capR2_gatedKD_z | 30 | 0.21254 | 0.21254@30 | 0.16448 | +0.00271 | +0.00160 | 15/30 | 0.99490 | 0.00001 | 0.99998 | pre100 |
+| capR2_gatedKD_toU | 31 | 0.22864 | 0.22864@31 | 0.17538 | +0.00974 | +0.00776 | 21/31 | 0.99525 | 0.00002 | 1.00000 | pre100 |
+| resume_detonly | 140 | 0.54030 | 0.54030@140 | 0.53797 | n/a | n/a | n/a | n/a | n/a | n/a | context |
+| resume_dynamic | 110 | 0.49794 | 0.49794@110 | 0.49569 | n/a | n/a | n/a | n/a | n/a | n/a | context |
+| resume_kd0p5 | 111 | 0.39370 | 0.39370@111 | 0.38798 | n/a | n/a | n/a | n/a | n/a | n/a | context |
+| resume_reach0p5 | 111 | 0.39342 | 0.39342@111 | 0.38780 | n/a | n/a | n/a | n/a | n/a | n/a | context |
+| resume_srec0p05 | 112 | 0.39173 | 0.39173@112 | 0.38595 | n/a | n/a | n/a | n/a | n/a | n/a | context |
+
+- 机制判断：
+  - 3090 paired gatedKD 仍负，`shuffledT` 仍为正：paired latest/late20 = -0.01269/-0.01143，shuffledT = +0.00227/+0.00072。
+  - 4090 `KD-to-u` 仍强于 `KD-to-z`：toU latest/late20 = +0.00974/+0.00776，z = +0.00271/+0.00160。
+  - gate 仍近似全开。若 50-row 仍保持当前关系，应按规则降级 capR-gatedKD 主线候选，把后续调度转向 gate 温度/阈值修正与 z/u learnability audit。
