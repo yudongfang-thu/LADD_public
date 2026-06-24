@@ -497,3 +497,25 @@ python docs/experiments/monitor_ladd_capr_gatedkd_20260624.py \
 - 调度决定：
   - 不停止、不新增；3090 显存没有足够安全余量，且 gatedKD 组尚未到自身 10/20 rows 动作点。
   - 下一动作点：gatedKD 系列到 >=10 rows 后记录健康检查；>=20 rows 后若 `kd_reach_active_ratio` 仍近似全开，优先考虑更尖锐 gate 变体或释放低优先级空间补 `dynamic_capR2_gatedKD_toU_yoloinit` 负控制。
+
+### 2026-06-25 04:21 CST
+
+- 自动化短 poll：
+  - 3090 GPU0/GPU1: 20244/24576 MiB、20932/24576 MiB，util 100%/99%；继续不追加新任务。
+  - 3090 capR retry-cache 日志仍未发现 Traceback / RuntimeError / CUDA OOM / NaN / FileNotFound / AssertionError / batch fallback。
+- 新 capR/gatedKD retry 组状态：
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | capR | cap saturation | rank active | kd active | status |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| dynamic_capR2_yoloinit | 11 | 0.11319 | 0.11319 | 0.06536 | +0.00111 | +0.00001 | True | 0.999899 | 0.000000 | n/a | pre100 |
+| dynamic_capR4_yoloinit retry | 10 | 0.10973 | 0.10973 | 0.05393 | +0.00562 | -0.00675 | False | 0.000000 | 0.000000 | n/a | pre100 |
+| dynamic_capR2_gatedKD retry | 9 | 0.09225 | 0.09225 | 0.04345 | +0.00213 | -0.01240 | True | 0.999911 | 0.000000 | 1.000000 | pre100 |
+| dynamic_capR2_gatedKD_wo_srec retry | 9 | 0.09812 | 0.09812 | 0.04845 | +0.00800 | -0.00740 | True | 0.999724 | 0.000000 | 1.000000 | pre100 |
+| dynamic_capR2_gatedKD_shuffledT retry | 9 | 0.09594 | 0.09594 | 0.05579 | +0.00582 | -0.00006 | True | 0.999973 | 0.000000 | 1.000000 | pre100 |
+
+- 10-row 对照检查结论：
+  - `dynamic_capR4_yoloinit` 到 10 rows，`capR_enabled=False`、`cap_saturation_ratio=0`，符合 capR disabled 对照预期。
+  - `dynamic_capR2_yoloinit` 到 11 rows，`cap_saturation_ratio` 仍接近 1、`rank_active_ratio=0`，说明 capR 继续大量截断 d_neg 且 rank loss 基本不活跃；late20_delta 目前从轻微负值回到约 0。
+  - 三条 gatedKD 仍是 9 rows；`kd_active_ratio` 仍近似 1，但继续等自身 >=10 rows 后再记录健康检查，>=20 rows 后再判断是否调 gate。
+- 调度决定：
+  - 不停止、不新增；等待 gatedKD 三条到 >=10/20 rows。
