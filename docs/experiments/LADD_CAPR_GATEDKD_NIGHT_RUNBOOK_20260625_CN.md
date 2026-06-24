@@ -1174,3 +1174,51 @@ python docs/experiments/monitor_ladd_capr_gatedkd_20260624.py \
   - 不新增、不停止。
   - 3090 继续等 50/100 rows；4090 fresh 组先等 20 rows 看 z/toU/control 的基本关系。
   - 继续保护所有 dynamic 主线，尤其 `dynamic_singleproj`、`dynamic_wo_s_rec`、`dynamic_reach_rawinput`。
+
+### 2026-06-25 05:09 CST
+
+- 3090 GPU0/GPU1: 20244/24576 MiB、20934/24576 MiB，util 100%/99%。
+- 4090 GPU0/GPU1: 15644/24564 MiB、15694/24564 MiB，util 99%/99%。
+- 4090 磁盘仍为 48G/50G，剩余 2.4G，使用率 96%；继续监控，不主动删结果。
+- 当前有效日志扫描仍无 Traceback / RuntimeError / CUDA OOM / NaN / FileNotFound / batch fallback。
+
+#### 3090 capR/gatedKD
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | capR | cap saturation | rank active | kd active | status |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| dynamic_capR2_yoloinit | 25 | 0.19192 | 0.19192 | 0.13598 | -0.00370 | -0.00158 | True | 0.999999 | 0.000008 | n/a | pre100 |
+| dynamic_capR4_yoloinit retry | 24 | 0.18177 | 0.18177 | 0.12364 | +0.00032 | -0.00665 | False | 0.000000 | 0.000114 | n/a | pre100 |
+| dynamic_capR2_gatedKD retry | 23 | 0.17320 | 0.17320 | 0.11098 | -0.00999 | -0.01156 | True | 0.999988 | 0.000000 | 1.000000 | pre100 |
+| dynamic_capR2_gatedKD_wo_srec retry | 22 | 0.16280 | 0.16280 | 0.10624 | -0.00541 | -0.00733 | True | 0.999977 | 0.000000 | 1.000000 | pre100 |
+| dynamic_capR2_gatedKD_shuffledT retry | 22 | 0.17643 | 0.17643 | 0.11297 | +0.00822 | -0.00060 | True | 0.999975 | 0.000005 | 1.000000 | pre100 |
+
+- 机制风险延续：
+  - capR 截断稳定生效，但 gatedKD 的 `kd_active_ratio` 仍为约 1.0，gate 仍近似全开。
+  - paired gatedKD-z 没有优于 shuffledT；shuffledT latest delta 当前反而为正。rows 仍远低于 50/100，只记录为风险信号。
+
+#### 3090 旧 dynamic 主线
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | status |
+|---|---:|---:|---:|---:|---:|---:|---|
+| dynamic_singleproj | 333 | 0.47602 | 0.47602 | 0.47234 | +0.01546 | +0.01514 | PROMISING_EARLY |
+| dynamic_wo_s_rec | 349 | 0.47869 | 0.47869 | 0.47446 | +0.01406 | +0.01208 | PROMISING_EARLY |
+| dynamic_plain | 221 | 0.41990 | 0.41990 | 0.41481 | +0.00525 | +0.00516 | WATCH |
+| dynamic_reach_rawinput | 194 | 0.40937 | 0.40937 | 0.40465 | +0.00972 | +0.01102 | PROMISING_EARLY |
+
+#### 4090 `zw1cache` fresh 负控制组
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | latest delta vs detonly | late20 delta vs detonly | capR | cap saturation | rank active | kd active | note |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| 4090zw1cache_detonly_control | 4 | 0.03536 | 0.05446 | 0.03048 | n/a | n/a | n/a | n/a | n/a | n/a | same-group control |
+| 4090zw1cache_capR2_gatedKD_z | 4 | 0.04749 | 0.04749 | 0.03033 | +0.01213 | -0.00015 | True | 0.995131 | 0.000015 | 1.000000 | health only |
+| 4090zw1cache_capR2_gatedKD_toU | 4 | 0.04557 | 0.04557 | 0.03121 | +0.01021 | +0.00073 | True | 0.995057 | 0.000034 | 0.999992 | negative control; health only |
+
+- 4090 判断：
+  - fresh 组已稳定进入训练，三条均有结果与诊断。
+  - 第 4 行仍只看健康；z 与 toU 都短暂高于 det-only latest，但 rows 太少，不能作为机制或 AP 结论。
+  - KD-to-u 负控制与 KD-to-z 早期接近，若到 20/50 rows 仍接近，需要作为 decomposition claim 风险重点记录。
+
+- 调度决定：
+  - 不新增、不停止。
+  - 3090 已接近显存安全上限；4090 主要风险变为磁盘 96%。
+  - 等 3090 capR/gatedKD 到 50 rows、4090 fresh 组到 20 rows 后再做下一次决策。
