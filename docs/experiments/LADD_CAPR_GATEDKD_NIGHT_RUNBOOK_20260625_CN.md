@@ -563,3 +563,44 @@ python docs/experiments/monitor_ladd_capr_gatedkd_20260624.py \
 
 - 调度决定：
   - 不停止、不新增；3090 显存仍接近上限，且关键 gate 调整决策等待 >=20 rows。
+
+### 2026-06-25 04:24 CST
+
+- 自动化续跑 `gatedKD_wo_srec` 10-row 健康检查：
+  - 3090 GPU0/GPU1: 20244/24576 MiB、20932/24576 MiB，util 99%/100%；继续无安全余量追加新任务。
+  - 4090 GPU0/GPU1: 12060/24564 MiB、8531/24564 MiB，util 99%/91%；protected `dynamic_resume` 继续运行。
+  - 3090 capR retry-cache 日志仍未发现 Traceback / RuntimeError / CUDA OOM / NaN / FileNotFound / AssertionError / batch fallback。
+  - 4090 当前有效 `021121` 日志仍未发现 Traceback / RuntimeError / CUDA OOM / NaN / FileNotFound / AssertionError / batch fallback。
+- 新 capR/gatedKD retry 组状态：
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | capR | cap saturation | rank active | kd active | status |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| dynamic_capR2_yoloinit | 11 | 0.11319 | 0.11319 | 0.06536 | +0.00111 | +0.00001 | True | 0.999899 | 0.000000 | n/a | pre100 |
+| dynamic_capR4_yoloinit retry | 11 | 0.11554 | 0.11554 | 0.05953 | +0.00346 | -0.00582 | False | 0.000000 | 0.000000 | n/a | pre100 |
+| dynamic_capR2_gatedKD retry | 10 | 0.11051 | 0.11051 | 0.05015 | +0.00640 | -0.01052 | True | 0.999884 | 0.000000 | 1.000000 | pre100 |
+| dynamic_capR2_gatedKD_wo_srec retry | 10 | 0.10490 | 0.10490 | 0.05410 | +0.00079 | -0.00658 | True | 0.999726 | 0.000001 | 1.000000 | pre100 |
+| dynamic_capR2_gatedKD_shuffledT retry | 9 | 0.09594 | 0.09594 | 0.05579 | +0.00582 | -0.00006 | True | 0.999973 | 0.000000 | 1.000000 | pre100 |
+
+- 10-row 健康检查结论：
+  - `dynamic_capR2_gatedKD_wo_srec_yoloinit` 到 10 rows，capR 真实启用，`cap_saturation_ratio=0.999726`，`rank_active_ratio` 约为 0。
+  - `kd_reach_active_ratio` 仍约 1.0，和主 gatedKD 一致，说明去掉 student reconstruction 后，当前 gate 在 10-row 极早期仍基本全开。
+  - `dynamic_capR2_gatedKD_shuffledT_yoloinit` 仍是 9 rows，等待自身 >=10 rows 后记录负控制健康检查。
+  - 继续等 gatedKD 系列 >=20 rows 后再判断是否需要更尖锐 gate；当前不停止、不新增。
+- 3090 旧 dynamic 线最新状态：
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | status |
+|---|---:|---:|---:|---:|---:|---:|---|
+| dynamic_singleproj | 317 | 0.47016 | 0.47073 | 0.46749 | +0.01497 | +0.01544 | PROMISING_EARLY |
+| dynamic_wo_s_rec | 333 | 0.47158 | 0.47158 | 0.46769 | +0.01102 | +0.01050 | PROMISING_EARLY |
+| dynamic_plain | 205 | 0.41148 | 0.41148 | 0.40599 | +0.00519 | +0.00544 | WATCH |
+| dynamic_reach_rawinput | 177 | 0.40106 | 0.40106 | 0.39608 | +0.01177 | +0.01205 | PROMISING_EARLY |
+
+- 4090 resume/context 最新状态：
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | note |
+|---|---:|---:|---:|---:|---|
+| det-only resume | 80 | 0.52530 | 0.52530 | 0.52358 | same-pipeline context |
+| dynamic_resume | 64 | 0.48743 | 0.48743 | 0.48581 | protected dynamic, running |
+| dynamic_kd0p5 | 64 | 0.36512 | 0.36512 | 0.35979 | low context |
+| dynamic_reach0p5 | 64 | 0.36646 | 0.36646 | 0.36166 | low context |
+| dynamic_srec0p05 | 65 | 0.36286 | 0.36286 | 0.35684 | low context |
