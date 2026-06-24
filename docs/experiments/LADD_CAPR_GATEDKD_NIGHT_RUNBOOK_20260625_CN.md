@@ -1828,3 +1828,55 @@ python docs/experiments/monitor_ladd_capr_gatedkd_20260624.py \
   - 4090 `KD-to-u` 负控制风险持续增强：`toU` matched latest/late20 继续正，而 `z` 仍负；如果 50 rows 仍保持该关系，capR-gatedKD 的“只蒸馏 z_t”主张需要暂停。
   - 3090 shuffledT latest 再次短暂为正，paired gatedKD 仍明显为负；gate 仍几乎全开，未形成健康的 token selectivity。
   - 旧 dynamic_singleproj / wo_s_rec 继续稳定领先，仍是需要保护跑满的主线候选。
+
+### 2026-06-25 05:50 CST
+
+- 资源状态：
+  - 3090 GPU0/GPU1: 20244/24576 MiB、20934/24576 MiB，util 99%/100%；磁盘 40G/50G，剩余 11G，使用率 79%。
+  - 4090 GPU0/GPU1: 15644/24564 MiB、15694/24564 MiB，util 99%/99%；磁盘 48G/50G，剩余 2.3G，使用率 96%。
+- 4090 空间拆解：`/root/shared-nvme/LADD_public` 约 11G，其中 `runs_public` 7.8G、旧 `dronevehicle_method_search` 6.0G、`comparison/cmdistill` 1.7G、`debug` 1.3G；当前没有清理历史结果，先只记录为磁盘风险。
+- 当前有效日志精确扫描无 Traceback / RuntimeError / CUDA OOM / NaN / FileNotFound / No space left / batch fallback。
+- 3090 same-machine detonly control: rows=436, latest AP50/AP50-95=0.75198/0.48825, late20=0.48551。
+
+#### 3090 旧 dynamic 主线
+
+| run | rows | latest AP50 | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | positive epochs | status |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| dynamic_singleproj | 347 | 0.74641 | 0.48097 | 0.48097 | 0.47774 | +0.01654 | +0.01597 | 308/347 | PROMISING_EARLY |
+| dynamic_wo_s_rec | 364 | 0.74954 | 0.48301 | 0.48301 | 0.48027 | +0.01394 | +0.01396 | 342/364 | PROMISING_EARLY |
+| dynamic_plain | 237 | 0.68499 | 0.42973 | 0.42973 | 0.42340 | +0.00741 | +0.00554 | 215/237 | WATCH |
+| dynamic_reach_rawinput | 210 | 0.66790 | 0.41788 | 0.41788 | 0.41318 | +0.00898 | +0.00961 | 189/210 | WATCH |
+
+#### 3090 capR/gatedKD 新组
+
+| run | rows | latest AP50 | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | positive epochs | cap saturation | rank active | kd active | status |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| dynamic_capR2_yoloinit | 37 | 0.46961 | 0.24152 | 0.24323 | 0.20163 | -0.00444 | -0.00026 | 18/37 | 0.99867 | 0.00139 | n/a | pre100 |
+| dynamic_capR4_yoloinit retry | 37 | 0.47649 | 0.24104 | 0.24104 | 0.19677 | -0.00492 | -0.00512 | 10/37 | 0.00000 | 0.00044 | n/a | pre100 |
+| dynamic_capR2_gatedKD retry | 35 | 0.44170 | 0.22227 | 0.22227 | 0.18113 | -0.01354 | -0.01070 | 4/35 | 0.99986 | 0.00011 | 1.00000 | pre100 |
+| dynamic_capR2_gatedKD_wo_srec retry | 33 | 0.43173 | 0.21329 | 0.21329 | 0.16971 | -0.01227 | -0.01256 | 6/33 | 0.99995 | 0.00000 | 1.00000 | pre100 |
+| dynamic_capR2_gatedKD_shuffledT retry | 33 | 0.44663 | 0.22588 | 0.23002 | 0.18175 | +0.00032 | -0.00052 | 16/33 | 0.99994 | 0.00004 | 1.00000 | pre100 |
+
+#### 4090 `zw1cache` fresh 负控制组
+
+| run | rows | latest AP50 | latest AP50-95 | best AP50-95 | late20 | latest delta vs detonly | late20 delta vs detonly | positive epochs | cap saturation | rank active | kd active | note |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| detonly_control | 27 | 0.41576 | 0.19739 | 0.19739 | 0.14791 | n/a | n/a | n/a | n/a | n/a | n/a | same-group control |
+| capR2_gatedKD_z | 22 | 0.36475 | 0.16808 | 0.16808 | 0.11434 | +0.00280 | -0.00065 | 7/22 | 0.99503 | 0.00001 | 0.99998 | paired z target |
+| capR2_gatedKD_toU | 24 | 0.39015 | 0.18805 | 0.19006 | 0.13272 | +0.00995 | +0.00192 | 14/24 | 0.99520 | 0.00002 | 0.99999 | negative control |
+
+#### 4090 resume context
+
+| run | rows | latest AP50 | latest AP50-95 | best AP50-95 | late20 | note |
+|---|---:|---:|---:|---:|---:|---|
+| resume_detonly | 131 | 0.80418 | 0.53816 | 0.53816 | 0.53577 | context/control |
+| resume_dynamic | 103 | 0.77147 | 0.49648 | 0.49656 | 0.49410 | context; not main capR fresh proof |
+| resume_kd0p5 | 104 | 0.64137 | 0.38971 | 0.38971 | 0.38363 | context |
+| resume_reach0p5 | 104 | 0.64041 | 0.38946 | 0.38946 | 0.38376 | context |
+| resume_srec0p05 | 105 | 0.64186 | 0.38770 | 0.38770 | 0.38163 | context |
+
+- 机制/调度判断：
+  - 仍未到 50/100/120 正式触发点，暂不新增、不停止、不清理历史结果。
+  - 4090 `KD-to-u` 负控制继续比 `KD-to-z` 更强：`toU` matched latest/late20 为 +0.00995/+0.00192，`z` 为 +0.00280/-0.00065。虽然仍是早期，但方向对 capR-gatedKD 主张不利。
+  - 3090 shuffledT latest 仍接近/略高于 detonly，而 paired gatedKD 仍负；gate 继续几乎全开。
+  - 4090 磁盘风险需要继续盯紧。若出现 No space left 或可用空间继续下降到约 1G，应优先停止/清理低优先级旧 DroneVehicle 或低优先级 resume context，而不是影响 dynamic 主线和 fresh 50-row 负控制。
