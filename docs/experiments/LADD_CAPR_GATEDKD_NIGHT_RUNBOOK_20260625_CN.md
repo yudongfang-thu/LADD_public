@@ -256,3 +256,47 @@ python docs/experiments/monitor_ladd_capr_gatedkd_20260624.py \
 - 发现并修复一个 audit 工具问题：
   - 旧 run 的 `args.yaml` 不保存 LADD 自定义 CLI 参数，导致 `inspect_ladd_run_args.py` 对 `rank_d_neg_cap` 等字段输出 null。
   - 已增强工具从 `logs/**/<run_name>.cmd.sh` 解析 CLI 参数；待补充 commit/push/sync。
+
+### 2026-06-25 03:42 CST
+
+- 已补充 commit/push：
+  - `c5cecd4 Improve capR run inspection logging`
+  - `d12fbef Fix capR inspector default normalize flag`
+  - 远端 3090/4090 已同步更新后的 `inspect_ladd_run_args.py` 与本 runbook。
+- 既有 run 的 capR 配置审计已生成并拉回本地：
+  - `docs/review_packages/mainline_method_search_20260624/tables/capr_existing_run_audit_3090_20260625.csv`
+  - `docs/review_packages/mainline_method_search_20260624/tables/capr_existing_run_audit_4090_20260625.csv`
+  - 3090 主线/扫参 run 的 `rank_d_neg_cap=2.0`、`normalize_reach=True`、`capR_effectively_enabled_computed=True` 已能从 `.cmd.sh` 恢复；4090 resume-fixed 线多为恢复命令，不能可靠反推原始 LADD 自定义参数。
+- 3090 四个 smoke 已全部完成，均生成 `results.csv` 与 `ladd_diagnostics.csv`：
+  - `smoke_detonly_20260625_0328_gpu0`
+  - `smoke_capR_gatedKD_20260625_0328_gpu0`
+  - `smoke_capR_gatedKD_shuffledT_20260625_0328_gpu0`
+  - `smoke_capR_gatedKD_toU_20260625_0328_gpu0`
+  - smoke 日志：`logs/capr_gatedkd_smoke_20260625/run_smokes_gpu0_20260625.log`
+- 3090 当前保留的旧实验：
+  - GPU0: `detonly_control_yoloinit`、`dynamic_singleproj_yoloinit`
+  - GPU1: `dynamic_wo_s_rec_yoloinit`、`dynamic_plain_yoloinit`、`dynamic_reach_rawinput_yoloinit`
+  - `dynamic_plain` 与 4090 `dynamic` 均按用户要求保留继续跑完。
+- 3090 第一批 capR/gatedKD early-screen 已启动，均为 YOLO-init e800，使用 3090 same-pipeline `detonly_control_yoloinit` 作对照：
+  - GPU0 PID 41799：`dynamic_capR2_yoloinit`
+    - run: `runs_public/ogsod/hbb/capr_gatedkd_early_20260625/dynamic_capR2_yoloinit/yolo11n/seed0/ogsod_yoloinit_dynamic_capR2_yoloinit_yolo11n_e800_b64_img256_s0_20260625_034019_gpu0`
+    - args: `--rank-d-neg-cap 2.0 --kd-weight-mode none`
+  - GPU0 PID 41805：`dynamic_capR4_yoloinit`
+    - run: `runs_public/ogsod/hbb/capr_gatedkd_early_20260625/dynamic_capR4_yoloinit/yolo11n/seed0/ogsod_yoloinit_dynamic_capR4_yoloinit_yolo11n_e800_b64_img256_s0_20260625_034019_gpu0`
+    - args: `--rank-d-neg-cap 4.0 --kd-weight-mode none`
+  - GPU0 PID 41811：`dynamic_capR2_gatedKD_yoloinit`
+    - run: `runs_public/ogsod/hbb/capr_gatedkd_early_20260625/dynamic_capR2_gatedKD_yoloinit/yolo11n/seed0/ogsod_yoloinit_dynamic_capR2_gatedKD_yoloinit_yolo11n_e800_b64_img256_s0_20260625_034019_gpu0`
+    - args: `--rank-d-neg-cap 2.0 --kd-weight-mode cap_reachability_gap --kd-reach-tau 0.2`
+  - GPU1 PID 41817：`dynamic_capR2_gatedKD_wo_srec_yoloinit`
+    - run: `runs_public/ogsod/hbb/capr_gatedkd_early_20260625/dynamic_capR2_gatedKD_wo_srec_yoloinit/yolo11n/seed0/ogsod_yoloinit_dynamic_capR2_gatedKD_wo_srec_yoloinit_yolo11n_e800_b64_img256_s0_20260625_034019_gpu1`
+    - args: gatedKD + `--alpha-s-rec 0.0`
+  - GPU1 PID 41823：`dynamic_capR2_gatedKD_shuffledT_yoloinit`
+    - run: `runs_public/ogsod/hbb/capr_gatedkd_early_20260625/dynamic_capR2_gatedKD_shuffledT_yoloinit/yolo11n/seed0/ogsod_yoloinit_dynamic_capR2_gatedKD_shuffledT_yoloinit_yolo11n_e800_b64_img256_s0_20260625_034019_gpu1`
+    - args: gatedKD + `--shuffle-teacher-pairs`
+- 启动健康检查：
+  - `.cmd.sh` 已确认包含对应新增参数。
+  - 03:41 CST 进程均在运行；3090 GPU0 有 5 个训练主进程、GPU1 有 5 个训练主进程。
+  - 03:41 CST 显存：GPU0 7623/24576 MiB，GPU1 13310/24576 MiB；新 run 仍处于初始化/AMP 检查阶段，后续需继续检查 `results.csv` 与 `ladd_diagnostics.csv`。
+- 注意：
+  - 03:39 CST 曾有一轮 malformed launch，额外参数被换行写到命令外；该轮未留下训练进程，已记录并弃用，正式有效 run 为 03:40:19 CST 启动的 5 条。
+  - `dynamic_capR2_gatedKD_toU_yoloinit` 暂未启动，等待安全余量或第一批达到早筛点后再作为负控制补上。
