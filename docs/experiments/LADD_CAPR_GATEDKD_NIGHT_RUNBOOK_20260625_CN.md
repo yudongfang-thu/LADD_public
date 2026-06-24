@@ -229,3 +229,30 @@ python docs/experiments/monitor_ladd_capr_gatedkd_20260624.py \
 - 下一步：
   - 只 stage 本轮 capR/gatedKD 相关文件，commit/push 到 GitHub。
   - 同步到两台服务器后运行远端 py_compile/help/smoke。
+
+### 2026-06-25 03:24 CST
+
+- 已 commit/push 到 GitHub：
+  - commit: `5128923 Add capR audit and gated KD controls`
+  - branch: `codex/ladd-capr-audit-and-gated-kd-v1`
+  - 未包含 checkpoint/大文件。
+- 已将 11 个本轮相关文件精确同步到两台服务器 `/root/shared-nvme/LADD_public`。
+  - 第一次 tar 同步受到 macOS `._*` 元数据和远端权限恢复影响返回失败；第二次使用 `COPYFILE_DISABLE=1` 与 `tar --no-same-owner --no-same-permissions` 成功。
+- 远端验证：
+  - 4090 与 3090 均通过 `py_compile`。
+  - 两台服务器 `train_ladd_hbb.py --help` 均可见 `cap_reachability_gap`、`--kd-target-branch`、`--shuffle-teacher-pairs`。
+- 已停止 4090 两条低优先级任务并记录到远端 `docs/experiments/capr_gatedkd_stopped_tasks_20260625.log`：
+  - `ogsod_yoloinit_probeA_resume_fixed_bestep383_e800_b64_img256_s0_20260625_021121_gpu0`，PGID 13312，原因：resume 后 latest AP 为 0，LOW_PRIORITY，非 protected dynamic。
+  - `ogsod_yoloinit_dynamic_teacher_projectedraw_resume_fixed_bestep64_e800_b64_img256_s0_20260625_021121_gpu1`，PGID 13375，原因：projected-raw 侧线明显负向，用于释放 GPU1，非 protected dynamic。
+- 停止后 4090 显存：
+  - GPU0: 12058/24564 MiB；GPU1: 8527/24564 MiB。
+  - `dynamic` 本体仍在 GPU1 running，未停止。
+- 已在 3090 GPU0 启动四个顺序 smoke wrapper：
+  - PID: 39656
+  - script: `logs/capr_gatedkd_smoke_20260625/run_smokes_gpu0_20260625.sh`
+  - log: `logs/capr_gatedkd_smoke_20260625/run_smokes_gpu0_20260625.log`
+  - run dir: `runs_public/ogsod/hbb/capr_gatedkd_smoke_20260625/`
+  - 使用 batch=16、fraction=0.02、epochs=1；训练入口没有 `--max-train-batches`，因此采用 1 epoch 小 fraction smoke。
+- 发现并修复一个 audit 工具问题：
+  - 旧 run 的 `args.yaml` 不保存 LADD 自定义 CLI 参数，导致 `inspect_ladd_run_args.py` 对 `rank_d_neg_cap` 等字段输出 null。
+  - 已增强工具从 `logs/**/<run_name>.cmd.sh` 解析 CLI 参数；待补充 commit/push/sync。
