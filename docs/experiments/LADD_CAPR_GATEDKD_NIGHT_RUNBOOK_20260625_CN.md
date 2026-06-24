@@ -1693,3 +1693,35 @@ python docs/experiments/monitor_ladd_capr_gatedkd_20260624.py \
   - ETA 表显示 capR/gatedKD 新组要到 06-27 左右才跑满 e800，因此短期只看 50/100/120 epoch trigger。
   - 4090 fresh 组很快会到 20 rows，应在下一轮优先复查 z vs toU 负控制风险。
   - 旧 3090 dynamic 线预计今天晚上到午夜前后完成，继续保护。
+
+### 2026-06-25 05:38 CST
+
+- 两台服务器 active/retry 日志精确扫描均无 Traceback / RuntimeError / CUDA OOM / NaN / FileNotFound / batch fallback / No space left。
+- 3090 GPU0/GPU1: 20244/24576 MiB、20934/24576 MiB，util 99%/100%；磁盘 40G/50G，剩余 11G，使用率 79%。
+- 4090 GPU0/GPU1: 15644/24564 MiB、15694/24564 MiB，util 99%/99%；磁盘 48G/50G，剩余 2.3G，使用率 96%。
+- 3090 same-machine detonly control: rows=430, latest AP50-95=0.48680, late20=0.48374。
+
+#### 3090 capR/gatedKD
+
+| run | rows | latest AP50 | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | cap saturation | rank active | kd active | status |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| dynamic_capR2_yoloinit | 33 | 0.45451 | 0.22696 | 0.22696 | 0.18099 | +0.00140 | -0.00128 | 0.99916 | 0.00103 | n/a | pre100 |
+| dynamic_capR4_yoloinit retry | 33 | 0.46137 | 0.22974 | 0.22974 | 0.17642 | +0.00418 | -0.00586 | 0.00000 | 0.00019 | n/a | pre100 |
+| dynamic_capR2_gatedKD retry | 32 | 0.43641 | 0.21568 | 0.21568 | 0.16678 | -0.01175 | -0.01094 | 0.99998 | 0.00000 | 1.00000 | pre100 |
+| dynamic_capR2_gatedKD_wo_srec retry | 30 | 0.41806 | 0.20211 | 0.20211 | 0.15578 | -0.01264 | -0.01139 | 0.99997 | 0.00000 | 1.00000 | pre100 |
+| dynamic_capR2_gatedKD_shuffledT retry | 30 | 0.44229 | 0.21856 | 0.21856 | 0.16557 | +0.00381 | -0.00160 | 0.99987 | 0.00012 | 1.00000 | pre100 |
+
+#### 4090 `zw1cache` fresh 负控制组
+
+| run | rows | latest AP50 | latest AP50-95 | best AP50-95 | late20 | latest delta vs detonly | late20 delta vs detonly | cap saturation | rank active | kd active | note |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| 4090zw1cache_detonly_control | 20 | 0.35994 | 0.16094 | 0.16094 | 0.10255 | n/a | n/a | n/a | n/a | n/a | same-group control reached 20 |
+| 4090zw1cache_capR2_gatedKD_z | 17 | 0.33457 | 0.15461 | 0.15461 | 0.09131 | +0.00243 | -0.00204 | 0.99551 | 0.00001 | 1.00000 | candidate not yet 20 |
+| 4090zw1cache_capR2_gatedKD_toU | 18 | 0.33929 | 0.15737 | 0.15737 | 0.09549 | +0.01244 | -0.00072 | 0.99520 | 0.00002 | 0.99998 | negative control; candidate not yet 20 |
+
+- 机制/调度判断：
+  - 4090 fresh detonly 已到 20 rows，但 z/toU 仍分别只有 17/18 rows，因此还不能正式做 20-row matched 判定；下一轮优先复查这两条到 20 后的 z-vs-toU。
+  - 4090 `toU` latest delta 已大于 `z`，且 3090 shuffledT latest 也短暂为正；负控制风险继续升高，但 late-window 仍为负，暂不下正式结论。
+  - 3090 capR2/capR4 latest 略正但 late20 仍负；paired gatedKD/wo_srec 继续为负。
+  - `kd_active_ratio` 仍基本等于 1，说明当前 capR-gatedKD gate 实际近似全开，尚未表现出选择性 token filtering。
+  - 不新增、不停止；保护旧 dynamic 正向线，等待 4090 fresh 组 20-row 复查和 3090 新组 50/100-row trigger。
