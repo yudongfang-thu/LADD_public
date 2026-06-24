@@ -342,3 +342,49 @@ python docs/experiments/monitor_ladd_capr_gatedkd_20260624.py \
   - 继续监控 retry-cache 4 条到 >=10/20 rows，确认 diagnostics 字段存在且无错误。
   - 若 GPU 仍维持 20-21G，不新增 KD-to-u；等某条低优先级结束/停止后再补负控制。
   - 将本次 runbook、audit 工具修复和 mini audit CSV commit/push。
+
+### 2026-06-25 03:59 CST
+
+- 目标与自动化状态：
+  - Codex goal 已处于 active 状态，目标为执行本 runbook 的 capR/gatedKD 夜间清单。
+  - app 侧 heartbeat automation `ladd-capr-gatedkd-overnight-runner` 可查看，继续负责周期性唤醒巡检。
+- 3090 服务器状态：
+  - GPU0: 20244/24576 MiB, util 99%；GPU1: 20932/24576 MiB, util 100%。
+  - 当前已经达到每卡约 5 条训练的高并行度，且仍低于 22G 危险线。
+  - 当前不新增 `KD-to-u`，原因是再加一条可能把显存推近或超过危险区；等待某条低优先级任务结束/停止后再补负控制。
+  - retry-cache 有效日志 `034447/034019` 未发现 Traceback / RuntimeError / CUDA OOM / NaN / FileNotFound / AssertionError / batch fallback。
+- 3090 最新 early-screen 表（same-machine det-only 对照）：
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | capR | kd active | status |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| dynamic_singleproj | 308 | 0.46810 | 0.46810 | 0.46348 | +0.01659 | +0.01446 | - | - | PROMISING_EARLY |
+| dynamic_wo_s_rec | 323 | 0.46765 | 0.46765 | 0.46350 | +0.01054 | +0.00961 | - | - | WATCH |
+| dynamic_plain | 196 | 0.40607 | 0.40607 | 0.40089 | +0.00493 | +0.00608 | - | - | WATCH |
+| dynamic_reach_rawinput | 168 | 0.39685 | 0.39685 | 0.39079 | +0.01243 | +0.01167 | - | - | PROMISING_EARLY |
+| dynamic_capR2_yoloinit | 4 | 0.04365 | 0.05137 | 0.03199 | +0.01718 | +0.00063 | True | n/a | pre100 |
+| dynamic_capR4_yoloinit retry | 3 | 0.00436 | 0.03219 | 0.01724 | +0.00041 | -0.01575 | False | n/a | pre100 |
+| dynamic_capR2_gatedKD retry | 3 | 0.00592 | 0.05082 | 0.02138 | +0.00197 | -0.01161 | True | 1.00000 | pre100 |
+| dynamic_capR2_gatedKD_wo_srec retry | 3 | 0.00564 | 0.03251 | 0.02064 | +0.00169 | -0.01235 | True | 0.99992 | pre100 |
+| dynamic_capR2_gatedKD_shuffledT retry | 2 | 0.04208 | 0.04208 | 0.03738 | -0.00395 | -0.01014 | True | 1.00000 | pre100 |
+
+- 3090 诊断观察：
+  - capR2/gatedKD run 已写出 `ladd_diagnostics.csv`，`capR_effectively_enabled=True`；capR4 retry 为 `False`，符合 capR4 近似 disabled 对照预期。
+  - capR2/gatedKD 的 `cap_saturation_ratio` 当前接近 1，说明 capR 在极早期已经大量截断 d_neg。
+  - gatedKD 的 `kd_reach_active_ratio` 极早期接近 1，若到 10/20 epoch 仍然全开，需要优先调 `kd_reach_tau/margin/min_weight/conf_power`，否则 gate 不够选择性。
+- 4090 服务器状态：
+  - GPU0: 12060/24564 MiB, util 98%；GPU1: 8531/24564 MiB, util 90%。
+  - 4090 已停止低优先级 ProbeA/projectedraw，保留 dynamic 本体继续跑；当前 4090 更像 resume/context 线，不作为 capR 新候选 formal same-pipeline 证据。
+  - 当前有效 `021121` 日志未发现 Traceback / RuntimeError / CUDA OOM / NaN / FileNotFound / AssertionError / batch fallback。
+- 4090 最新表（仅作 resume context）：
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | status |
+|---|---:|---:|---:|---:|---:|---:|---|
+| dynamic_resume | 51 | 0.48511 | 0.48511 | 0.48248 | -0.03395 | -0.03443 | pre100 |
+| dynamic_kd0p5 | 50 | 0.35787 | 0.35787 | 0.35246 | -0.16100 | -0.16420 | pre100 |
+| dynamic_reach0p5 | 50 | 0.35975 | 0.35975 | 0.35463 | -0.15912 | -0.16203 | pre100 |
+| dynamic_srec0p05 | 51 | 0.35401 | 0.35401 | 0.34925 | -0.16505 | -0.16767 | pre100 |
+
+- 下一步：
+  - 周期性巡检新 capR/gatedKD retry runs 到 >=10/20 rows，重点看 `kd_reach_active_ratio` 是否仍然全开、是否有 batch fallback/OOM。
+  - 若 gatedKD 到 20 epoch 仍全开，优先准备更尖锐 gate 的后续小变体；若某条旧 WATCH/LOW_PRIORITY 线持续无希望，再释放空间补 `dynamic_capR2_gatedKD_toU_yoloinit` 负控制。
+  - 本节同步到两台服务器并 commit/push，保持明早审阅材料完整。
