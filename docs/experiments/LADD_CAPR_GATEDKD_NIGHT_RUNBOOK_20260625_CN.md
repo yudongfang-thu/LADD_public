@@ -604,3 +604,47 @@ python docs/experiments/monitor_ladd_capr_gatedkd_20260624.py \
 | dynamic_kd0p5 | 64 | 0.36512 | 0.36512 | 0.35979 | low context |
 | dynamic_reach0p5 | 64 | 0.36646 | 0.36646 | 0.36166 | low context |
 | dynamic_srec0p05 | 65 | 0.36286 | 0.36286 | 0.35684 | low context |
+
+### 2026-06-25 04:26 CST
+
+- 自动化续跑 `shuffledT` 10-row 负控制健康检查：
+  - 3090 GPU0/GPU1: 20244/24576 MiB、20932/24576 MiB，util 99%/99%；继续无安全余量追加新任务。
+  - 4090 GPU0/GPU1: 12060/24564 MiB、8531/24564 MiB，util 98%/27%；protected `dynamic_resume` 继续运行。
+  - 3090 capR retry-cache 日志仍未发现 Traceback / RuntimeError / CUDA OOM / NaN / FileNotFound / AssertionError / batch fallback。
+  - 4090 当前有效 `021121` 日志仍未发现 Traceback / RuntimeError / CUDA OOM / NaN / FileNotFound / AssertionError / batch fallback。
+- 新 capR/gatedKD retry 组状态：
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | capR | cap saturation | rank active | kd active | status |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| dynamic_capR2_yoloinit | 12 | 0.11910 | 0.11910 | 0.06983 | -0.00571 | -0.00047 | True | 0.999910 | 0.000001 | n/a | pre100 |
+| dynamic_capR4_yoloinit retry | 11 | 0.11554 | 0.11554 | 0.05953 | +0.00346 | -0.00582 | False | 0.000000 | 0.000000 | n/a | pre100 |
+| dynamic_capR2_gatedKD retry | 11 | 0.08926 | 0.11051 | 0.05371 | -0.02282 | -0.01164 | True | 0.999914 | 0.000000 | 1.000000 | pre100 |
+| dynamic_capR2_gatedKD_wo_srec retry | 10 | 0.10490 | 0.10490 | 0.05410 | +0.00079 | -0.00658 | True | 0.999726 | 0.000001 | 1.000000 | pre100 |
+| dynamic_capR2_gatedKD_shuffledT retry | 10 | 0.10785 | 0.10785 | 0.06100 | +0.00374 | +0.00032 | True | 0.999978 | 0.000000 | 1.000000 | pre100 |
+
+- `shuffledT` 10-row 负控制观察：
+  - `dynamic_capR2_gatedKD_shuffledT_yoloinit` 到 10 rows，capR 真实启用，`cap_saturation_ratio=0.999978`，`rank_active_ratio=0`。
+  - `kd_reach_active_ratio` 仍约 1.0，说明 shuffled teacher 负控制中 gate 也基本全开。
+  - 早期 `latest_delta=+0.00374`、`late20_delta=+0.00032`，略高于 det-only 的同阶段窗口；这只是 10-row 极早期，不作结论，但需要在 20/100 row 继续观察。若 shuffledT 到 20/100 仍接近 paired gatedKD，说明当前增益可能来自 auxiliary regularization 而非 paired RGB-SAR 信息。
+  - paired gatedKD 当前 rows=11，latest_delta 转负但 late20_delta 仍负；三条 gatedKD 仍需等 >=20 rows 做正式 gate/selectivity 判断。
+- 3090 旧 dynamic 线最新状态：
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | status |
+|---|---:|---:|---:|---:|---:|---:|---|
+| dynamic_singleproj | 317 | 0.47016 | 0.47073 | 0.46749 | +0.01497 | +0.01544 | PROMISING_EARLY |
+| dynamic_wo_s_rec | 333 | 0.47158 | 0.47158 | 0.46769 | +0.01102 | +0.01050 | PROMISING_EARLY |
+| dynamic_plain | 206 | 0.41192 | 0.41192 | 0.40654 | +0.00508 | +0.00536 | WATCH |
+| dynamic_reach_rawinput | 178 | 0.40144 | 0.40144 | 0.39664 | +0.01165 | +0.01204 | PROMISING_EARLY |
+
+- 4090 resume/context 最新状态：
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | note |
+|---|---:|---:|---:|---:|---|
+| det-only resume | 81 | 0.52592 | 0.52592 | 0.52379 | same-pipeline context |
+| dynamic_resume | 65 | 0.48748 | 0.48748 | 0.48600 | protected dynamic, running |
+| dynamic_kd0p5 | 64 | 0.36512 | 0.36512 | 0.35979 | low context |
+| dynamic_reach0p5 | 64 | 0.36646 | 0.36646 | 0.36166 | low context |
+| dynamic_srec0p05 | 65 | 0.36286 | 0.36286 | 0.35684 | low context |
+
+- 调度决定：
+  - 不停止、不新增；等待 gatedKD 系列 >=20 rows 后再判断 gate 全开问题和 shuffledT 负控制风险。
