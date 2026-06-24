@@ -1545,3 +1545,55 @@ python docs/experiments/monitor_ladd_capr_gatedkd_20260624.py \
   - 3090 paired gatedKD 仍未优于 shuffledT；gate 基本全开 (`kd_active_ratio` 约 1)，cap saturation 接近 1，机制风险延续。
   - dynamic 线仍是目前最有希望的方向：`dynamic_singleproj`、`dynamic_wo_s_rec`、`dynamic_reach_rawinput` 保持正增益并继续保护。
   - 不新增、不停止；4090 磁盘剩余约 2.3G，继续密切观察。
+
+### 2026-06-25 05:28 CST
+
+- 3090 GPU0/GPU1: 20244/24576 MiB、20934/24576 MiB，util 99%/100%；磁盘 40G/50G，剩余 11G，使用率 79%。
+- 4090 GPU0/GPU1: 15644/24564 MiB、15694/24564 MiB，util 99%/99%；磁盘 48G/50G，剩余 2.3G，使用率 96%。
+- 广义日志扫描仍能看到已知旧失败日志：3090 `034019` cache 首发失败、4090 `045553` yaml 首发失败、4090 `0202xx` resume 首发失败、以及 mini learnability audit 维度错误。精确扫描当前有效/retry run 日志无 Traceback / RuntimeError / CUDA OOM / NaN / FileNotFound / batch fallback / No space left。
+
+#### 3090 capR/gatedKD
+
+| run | rows | latest AP50 | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | capR | cap saturation | rank active | kd active | status |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| dynamic_capR2_yoloinit | 30 | 0.43578 | 0.21307 | 0.21307 | 0.16533 | -0.00168 | -0.00184 | True | 0.99967 | 0.00046 | n/a | pre100 |
+| dynamic_capR4_yoloinit retry | 30 | 0.43786 | 0.21431 | 0.21431 | 0.16095 | -0.00044 | -0.00622 | False | 0.00000 | 0.00012 | n/a | pre100 |
+| dynamic_capR2_gatedKD retry | 29 | 0.41312 | 0.19942 | 0.19942 | 0.15045 | -0.00793 | -0.01120 | True | 0.99998 | 0.00000 | 1.00000 | pre100 |
+| dynamic_capR2_gatedKD_wo_srec retry | 27 | 0.39745 | 0.19005 | 0.19005 | 0.14000 | -0.01727 | -0.01018 | True | 0.99997 | 0.00000 | 1.00000 | pre100 |
+| dynamic_capR2_gatedKD_shuffledT retry | 27 | 0.42357 | 0.20277 | 0.20277 | 0.14797 | -0.00455 | -0.00220 | True | 0.99996 | 0.00000 | 1.00000 | pre100 |
+
+#### 3090 旧 dynamic 主线
+
+| run | rows | latest AP50 | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | status |
+|---|---:|---:|---:|---:|---:|---:|---:|---|
+| dynamic_singleproj | 339 | 0.74415 | 0.47895 | 0.47895 | 0.47452 | +0.01658 | +0.01529 | PROMISING_EARLY |
+| dynamic_wo_s_rec | 356 | 0.74711 | 0.48076 | 0.48076 | 0.47736 | +0.01433 | +0.01310 | PROMISING_EARLY |
+| dynamic_plain | 228 | 0.67882 | 0.42352 | 0.42352 | 0.41841 | +0.00550 | +0.00512 | WATCH |
+| dynamic_reach_rawinput | 201 | 0.66388 | 0.41358 | 0.41358 | 0.40840 | +0.00980 | +0.01038 | PROMISING_EARLY |
+
+#### 4090 `zw1cache` fresh 负控制组
+
+| run | rows | latest AP50 | latest AP50-95 | best AP50-95 | late20 | latest delta vs detonly | late20 delta vs detonly | capR | cap saturation | rank active | kd active | note |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| 4090zw1cache_detonly_control | 15 | 0.30261 | 0.13069 | 0.13069 | n/a | n/a | n/a | n/a | n/a | n/a | n/a | same-group control |
+| 4090zw1cache_capR2_gatedKD_z | 12 | 0.28436 | 0.11990 | 0.12060 | 0.07275 | -0.00142 | -0.00235 | True | 0.99507 | 0.00001 | 0.99999 | health only |
+| 4090zw1cache_capR2_gatedKD_toU | 13 | 0.29343 | 0.12777 | 0.12777 | 0.07576 | +0.00000 | -0.00339 | True | 0.99494 | 0.00026 | 1.00000 | negative control; health only |
+
+#### 4090 恢复中的旧实验上下文
+
+| run | rows | latest AP50 | latest AP50-95 | best AP50-95 | late20 | note |
+|---|---:|---:|---:|---:|---:|---|
+| detonly | 118 | 0.80024 | 0.53473 | 0.53473 | 0.53222 | same-pipeline context |
+| dynamic | 93 | 0.76767 | 0.49405 | 0.49405 | 0.49178 | resume context |
+| dynamic_kd0p5 | 94 | 0.63384 | 0.38326 | 0.38326 | 0.37747 | resume context |
+| dynamic_reach0p5 | 94 | 0.63398 | 0.38319 | 0.38319 | 0.37813 | resume context |
+| dynamic_srec0p05 | 94 | 0.63327 | 0.38054 | 0.38054 | 0.37491 | resume context |
+| dynamic_teacher_projectedraw | 40 | 0.59502 | 0.35064 | 0.35064 | 0.34561 | resume context |
+| probeA | 33 | 0.76271 | 0.49752 | 0.49752 | 0.49465 | resume context |
+
+- 机制/调度判断：
+  - 3090 capR/gatedKD 仍未到 50 rows，4090 fresh 组仍未到 20 rows；不做正式早筛、不新增、不停止。
+  - 3090 paired gatedKD 继续弱于 shuffledT，且 `kd_active_ratio` 基本全开；当前 capR-gatedKD 机制风险没有缓解。
+  - 4090 `toU` latest 与 matched det-only 持平，late20 仍为负；负控制仍需要到 20 rows 后复查。
+  - 旧 dynamic 线继续是最可信的正向线索，保持保护。
+  - 4090 磁盘仍只有约 2.3G 可用，是当前最实际的运行风险。
