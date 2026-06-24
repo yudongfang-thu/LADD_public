@@ -2551,3 +2551,48 @@ python docs/experiments/monitor_ladd_capr_gatedkd_20260624.py \
   - 3090 paired gatedKD 仍明显弱于 shuffledT：paired late20 delta -0.01271，shuffledT +0.00084；但两者仍未到 50 行。
   - 4090 `KD-to-u` 仍强于 `KD-to-z`：toU latest/late20 = +0.00460/+0.00792，z = -0.00230/+0.00288；但 z/toU 也仍未到 50 行。
   - gate 仍几乎全开，rank active 仍接近 0。若下一轮关键负控制达到 50 行且关系不变，应正式记录 `50-row negative-control warning`，并考虑把 capR-gatedKD 方向降级到诊断线。
+
+### 2026-06-25 06:37 CST
+
+- 资源状态：
+  - 3090 GPU0/GPU1: 20244/24576 MiB、20934/24576 MiB，util 100%/100%；磁盘 40G/50G，剩余 11G，使用率 79%。
+  - 4090 GPU0/GPU1: 15644/24564 MiB、15694/24564 MiB，util 99%/99%；磁盘 48G/50G，剩余 2.3G，使用率 96%。
+- 当前有效日志窄扫描无 Traceback / RuntimeError / CUDA OOM / NaN / FileNotFound / No space left / batch fallback。
+- 关键负控制仍未到正式 50-row checkpoint：3090 paired/shuffled gatedKD 为 49/46 行，4090 z/toU 为 45/47 行。因此继续不写正式 50-row negative-control warning，不新增、不停止、不清理。
+
+#### 3090 简表
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | cap saturation | rank active | kd active | status |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| detonly_control | 457 | 0.49388 | 0.49388@457 | 0.49182 | n/a | n/a | n/a | n/a | n/a | control |
+| dynamic_singleproj | 364 | 0.48544 | 0.48544@364 | 0.48285 | +0.01637 | +0.01654 | n/a | n/a | n/a | PROMISING_EARLY |
+| dynamic_wo_s_rec | 382 | 0.48776 | 0.48776@382 | 0.48528 | +0.01324 | +0.01375 | n/a | n/a | n/a | PROMISING_EARLY |
+| dynamic_plain | 254 | 0.43627 | 0.43628@253 | 0.43277 | +0.00594 | +0.00706 | n/a | n/a | n/a | WATCH |
+| dynamic_reach_rawinput | 228 | 0.42752 | 0.42752@228 | 0.42268 | +0.00950 | +0.00939 | n/a | n/a | n/a | WATCH |
+| dynamic_capR2_yoloinit | 51 | 0.29339 | 0.29339@51 | 0.26147 | +0.00068 | +0.00091 | 0.99961 | 0.00042 | n/a | pre100 |
+| dynamic_capR4_yoloinit | 51 | 0.28894 | 0.28894@51 | 0.25797 | -0.00377 | -0.00259 | 0.00000 | 0.00091 | n/a | pre100 |
+| dynamic_capR2_gatedKD | 49 | 0.27325 | 0.27325@49 | 0.24027 | -0.01387 | -0.01301 | 0.99702 | 0.00263 | 1.00000 | pre100 |
+| dynamic_capR2_gatedKD_wo_srec | 46 | 0.25700 | 0.25700@46 | 0.22382 | -0.01998 | -0.01794 | 0.99976 | 0.00030 | 1.00000 | pre100 |
+| dynamic_capR2_gatedKD_shuffledT | 46 | 0.27553 | 0.27553@46 | 0.24260 | -0.00145 | +0.00084 | 0.99975 | 0.00023 | 1.00000 | pre100 |
+
+#### 4090 简表
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | cap saturation | rank active | kd active | status |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| fresh_detonly | 53 | 0.29280 | 0.29280@53 | 0.26494 | n/a | n/a | n/a | n/a | n/a | control |
+| capR2_gatedKD_z | 45 | 0.27176 | 0.27176@45 | 0.23664 | +0.00204 | +0.00274 | 0.99492 | 0.00001 | 0.99999 | pre100 |
+| capR2_gatedKD_toU | 47 | 0.28924 | 0.28924@47 | 0.25043 | +0.00970 | +0.00779 | 0.99526 | 0.00001 | 0.99999 | pre100 |
+| resume_detonly | 159 | 0.54467 | 0.54473@158 | 0.54265 | n/a | n/a | n/a | n/a | n/a | context |
+| resume_dynamic | 124 | 0.50227 | 0.50241@123 | 0.49938 | n/a | n/a | n/a | n/a | n/a | context |
+| resume_kd0p5 | 126 | 0.40254 | 0.40254@126 | 0.39692 | n/a | n/a | n/a | n/a | n/a | context |
+| resume_reach0p5 | 126 | 0.40285 | 0.40285@126 | 0.39686 | n/a | n/a | n/a | n/a | n/a | context |
+| resume_srec0p05 | 126 | 0.40059 | 0.40059@126 | 0.39479 | n/a | n/a | n/a | n/a | n/a | context |
+| resume_teacher_projectedraw | 40 | 0.35064 | 0.35064@40 | 0.34561 | n/a | n/a | n/a | n/a | n/a | context |
+| resume_probeA | 33 | 0.49752 | 0.49752@33 | 0.49465 | n/a | n/a | n/a | n/a | n/a | context |
+
+- 机制判断：
+  - 3090 旧 dynamic 正线持续稳定：`singleproj` late20 delta +0.01654，`wo_s_rec` late20 delta +0.01375。
+  - 3090 capR2/capR4 已过 50 行，但仍只是 cap 对照，不是负控制；capR2 late20 delta 仅 +0.00091，capR4 -0.00259。
+  - 3090 paired gatedKD 仍弱于 shuffledT：paired late20 delta -0.01301，shuffledT +0.00084；但 shuffledT 仅 46 行，仍未满足正式 50-row negative-control warning 条件。
+  - 4090 `KD-to-u` 仍强于 `KD-to-z`：toU latest/late20 = +0.00970/+0.00779，z = +0.00204/+0.00274；但 z/toU 仍未到 50 行。
+  - gate 仍几乎全开，rank active 仍接近 0。下一轮最可能触发正式机制警报。
