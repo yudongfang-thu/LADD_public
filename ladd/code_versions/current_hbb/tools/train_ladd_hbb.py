@@ -49,6 +49,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--phase-stop-metric", choices=("default", "map", "a1_loss", "a1_task_reach"), default="default")
     parser.add_argument("--reach-target-mode", choices=("detach", "coupled"), default="detach")
     parser.add_argument("--kd-target-mode", choices=("detach", "coupled"), default="detach")
+    parser.add_argument(
+        "--kd-target-branch",
+        choices=("z", "u", "shuffled_z"),
+        default="z",
+        help="Diagnostic KD target branch. Default z is the only mainline setting; u/shuffled_z are negative controls.",
+    )
     parser.add_argument("--strict-batch-size", action="store_true")
     parser.add_argument(
         "--freeze-bn-stats",
@@ -126,9 +132,20 @@ def parse_args() -> argparse.Namespace:
         "--ladd-b-frozen-reach-probe",
         action="store_true",
         help=(
-            "In B phase with --ladd-b-a2-core, keep student_reachability frozen and detach q_s "
-            "inside reach loss so reach updates teacher-side decomposition only."
+            "In B phase with --ladd-b-a2-core, keep student_reachability frozen. For backward "
+            "compatibility this also detaches q_s inside reach loss unless "
+            "--ladd-b-keep-reach-probe-grad is set."
         ),
+    )
+    parser.add_argument(
+        "--ladd-b-detach-reach-probe",
+        action="store_true",
+        help="In B phase with --ladd-b-a2-core, detach q_s inside reach loss without necessarily freezing the probe.",
+    )
+    parser.add_argument(
+        "--ladd-b-keep-reach-probe-grad",
+        action="store_true",
+        help="Diagnostic override: if the reach probe is frozen in B, keep q_s attached in reach loss.",
     )
     parser.add_argument(
         "--ladd-b-det-only",
@@ -159,16 +176,32 @@ def parse_args() -> argparse.Namespace:
 
     parser.add_argument("--student-detect-mode", choices=("fused", "mimic", "raw", "recon"), default="raw")
     parser.add_argument("--student-branch-mode", choices=("split", "raw", "single_proj"), default="split")
-    parser.add_argument("--teacher-feature-mode", choices=("decomposed", "raw", "projected_raw"), default="decomposed")
+    parser.add_argument(
+        "--teacher-feature-mode",
+        choices=("decomposed", "raw", "projected_raw", "raw_weak_reach"),
+        default="decomposed",
+    )
     parser.add_argument("--kd-mechanism", choices=("mse", "contrastive", "hybrid"), default="mse")
     parser.add_argument("--contrastive-temperature", type=float, default=0.20)
 
-    parser.add_argument("--kd-weight-mode", choices=("none", "teacher_task_conf", "reachability_gap"), default="none")
+    parser.add_argument(
+        "--kd-weight-mode",
+        choices=("none", "teacher_task_conf", "reachability_gap", "cap_reachability_gap"),
+        default="none",
+    )
     parser.add_argument("--kd-weight-power", type=float, default=1.0)
     parser.add_argument("--kd-aggregation-mode", choices=("token", "score_weighted", "topk"), default="token")
     parser.add_argument("--kd-topk-ratio", type=float, default=0.5)
+    parser.add_argument("--kd-reach-margin", type=float, default=0.0)
+    parser.add_argument("--kd-reach-tau", type=float, default=0.2)
+    parser.add_argument("--kd-reach-use-capped-gap", dest="kd_reach_use_capped_gap", action="store_true", default=True)
+    parser.add_argument("--no-kd-reach-use-capped-gap", dest="kd_reach_use_capped_gap", action="store_false")
+    parser.add_argument("--kd-reach-detach-weight", dest="kd_reach_detach_weight", action="store_true", default=True)
+    parser.add_argument("--no-kd-reach-detach-weight", dest="kd_reach_detach_weight", action="store_false")
+    parser.add_argument("--kd-reach-min-weight", type=float, default=0.0)
+    parser.add_argument("--kd-reach-conf-power", type=float, default=1.0)
+    parser.add_argument("--kd-reach-active-threshold", type=float, default=0.5)
     parser.add_argument("--kd-calibration-mode", choices=("none", "affine", "norm_affine"), default="none")
-
     parser.add_argument("--unlearnable-hidden-ratio", type=float, default=1.0)
 
     parser.add_argument("--teacher-target-mode", choices=("static", "ema"), default="static")
@@ -208,6 +241,34 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--cclkd-temperature-min", type=float, default=0.5)
     parser.add_argument("--cclkd-temperature-max", type=float, default=5.0)
     parser.add_argument("--cclkd-entropy-scale", type=float, default=5.0)
+    parser.add_argument(
+        "--dsn-projector-weights",
+        type=Path,
+        default=None,
+        help="Optional S1 DSN shared/private projector checkpoint for global shared-latent KD.",
+    )
+    parser.add_argument("--dsn-kd-weight", type=float, default=0.0)
+    parser.add_argument("--dsn-student-projector", choices=("rgb", "peer"), default="rgb")
+    parser.add_argument("--dsn-teacher-projector", choices=("rgb", "peer"), default="peer")
+    parser.add_argument(
+        "--teacher-batch-roll",
+        type=int,
+        default=0,
+        help=(
+            "Cyclically roll teacher images within each training batch before KD. "
+            "Use nonzero values only for shuffled-pair controls."
+        ),
+    )
+    parser.add_argument(
+        "--shuffle-teacher-pairs",
+        action="store_true",
+        help="Diagnostic negative control: randomly permute teacher images within each batch before teacher forward.",
+    )
+    parser.add_argument("--fused-shared-mode", choices=("none", "sum", "concat"), default="none")
+    parser.add_argument("--fused-shared-align-weight", type=float, default=0.0)
+    parser.add_argument("--fused-shared-reach-weight", type=float, default=0.0)
+    parser.add_argument("--fused-shared-kd-weight", type=float, default=0.0)
+    parser.add_argument("--fused-shared-task-weight", type=float, default=0.0)
 
     parser.add_argument("--c-weak-nrrl-scale", type=float, default=0.0)
     parser.add_argument("--c-weak-nrrl-detach-student", action="store_true")
@@ -281,6 +342,11 @@ def main() -> None:
         ladd_b_loss_warmup_scope=args.ladd_b_loss_warmup_scope,
         ladd_b_a2_core=int(bool(args.ladd_b_a2_core)),
         ladd_b_frozen_reach_probe=int(bool(args.ladd_b_frozen_reach_probe)),
+        ladd_b_detach_reach_probe=int(
+            bool(args.ladd_b_detach_reach_probe)
+            or (bool(args.ladd_b_frozen_reach_probe) and not bool(args.ladd_b_keep_reach_probe_grad))
+        ),
+        ladd_b_keep_reach_probe_grad=int(bool(args.ladd_b_keep_reach_probe_grad)),
         ladd_b_det_only=int(bool(args.ladd_b_det_only)),
         ladd_a2_det_only=int(bool(args.ladd_a2_det_only)),
         data=str(args.data.resolve()),
@@ -315,6 +381,7 @@ def main() -> None:
         use_fg_mask_for_rec=args.use_fg_mask_for_rec,
         reach_target_mode=args.reach_target_mode,
         kd_target_mode=args.kd_target_mode,
+        kd_target_branch=args.kd_target_branch,
         use_mask=args.use_mask,
         student_detect_mode=args.student_detect_mode,
         student_branch_mode=args.student_branch_mode,
@@ -325,6 +392,13 @@ def main() -> None:
         kd_weight_power=args.kd_weight_power,
         kd_aggregation_mode=args.kd_aggregation_mode,
         kd_topk_ratio=args.kd_topk_ratio,
+        kd_reach_margin=args.kd_reach_margin,
+        kd_reach_tau=args.kd_reach_tau,
+        kd_reach_use_capped_gap=int(bool(args.kd_reach_use_capped_gap)),
+        kd_reach_detach_weight=int(bool(args.kd_reach_detach_weight)),
+        kd_reach_min_weight=args.kd_reach_min_weight,
+        kd_reach_conf_power=args.kd_reach_conf_power,
+        kd_reach_active_threshold=args.kd_reach_active_threshold,
         kd_calibration_mode=args.kd_calibration_mode,
         unlearnable_hidden_ratio=args.unlearnable_hidden_ratio,
         teacher_target_mode=args.teacher_target_mode,
@@ -349,6 +423,21 @@ def main() -> None:
         cclkd_temperature_min=args.cclkd_temperature_min,
         cclkd_temperature_max=args.cclkd_temperature_max,
         cclkd_entropy_scale=args.cclkd_entropy_scale,
+        dsn_projector_weights=(
+            str(require_existing_file(args.dsn_projector_weights, "--dsn-projector-weights"))
+            if args.dsn_projector_weights is not None
+            else ""
+        ),
+        dsn_kd_weight=args.dsn_kd_weight,
+        dsn_student_projector=args.dsn_student_projector,
+        dsn_teacher_projector=args.dsn_teacher_projector,
+        teacher_batch_roll=args.teacher_batch_roll,
+        shuffle_teacher_pairs=int(bool(args.shuffle_teacher_pairs)),
+        fused_shared_mode=args.fused_shared_mode,
+        fused_shared_align_weight=args.fused_shared_align_weight,
+        fused_shared_reach_weight=args.fused_shared_reach_weight,
+        fused_shared_kd_weight=args.fused_shared_kd_weight,
+        fused_shared_task_weight=args.fused_shared_task_weight,
         c_weak_nrrl_scale=args.c_weak_nrrl_scale,
         c_weak_nrrl_detach_student=args.c_weak_nrrl_detach_student,
         reach_c_mode=args.reach_c_mode,

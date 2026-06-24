@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import math
+from pathlib import Path
 from typing import Any
 
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 
 from ultralytics.utils import LOGGER
@@ -12,6 +15,11 @@ from ultralytics.utils.tal import make_anchors
 
 def _flatten_feat(x: torch.Tensor) -> torch.Tensor:
     return x.permute(0, 2, 3, 1).reshape(x.shape[0], -1, x.shape[1])
+
+
+def _pool_concat_feats(feats: list[torch.Tensor]) -> torch.Tensor:
+    pooled = [F.adaptive_avg_pool2d(feat, (1, 1)).flatten(1) for feat in feats]
+    return torch.cat(pooled, dim=1)
 
 
 def _standardize_map(x: torch.Tensor, eps: float = 1e-6) -> torch.Tensor:
@@ -111,6 +119,171 @@ def _masked_l1_loss(x: torch.Tensor, y: torch.Tensor, mask: torch.Tensor | None 
     return (diff * mask).sum() / den
 
 
+CAPR_DIAGNOSTIC_KEYS = (
+    "d_pos_mean",
+    "d_pos_median",
+    "d_pos_q10",
+    "d_pos_q25",
+    "d_pos_q75",
+    "d_neg_mean",
+    "d_neg_median",
+    "d_neg_q10",
+    "d_neg_q25",
+    "d_neg_q75",
+    "d_neg_eff_mean",
+    "d_neg_eff_median",
+    "d_neg_eff_q10",
+    "d_neg_eff_q25",
+    "d_neg_eff_q75",
+    "gap_raw_mean",
+    "gap_raw_median",
+    "gap_raw_q25",
+    "gap_raw_q75",
+    "gap_capped_mean",
+    "gap_capped_median",
+    "gap_capped_q25",
+    "gap_capped_q75",
+    "reachable_margin_mean",
+    "reachable_margin_median",
+    "reachable_margin_q25",
+    "reachable_margin_q75",
+    "cap_saturation_ratio",
+    "rank_active_ratio",
+    "cap_blocked_active_ratio",
+    "zero_loss_feasible_ratio",
+    "fg_gap_capped_mean",
+    "fg_gap_capped_median",
+    "fg_cap_saturation_ratio",
+    "fg_rank_active_ratio",
+    "fg_zero_loss_feasible_ratio",
+    "bg_gap_capped_mean",
+    "bg_gap_capped_median",
+    "bg_cap_saturation_ratio",
+    "bg_rank_active_ratio",
+    "bg_zero_loss_feasible_ratio",
+    "P3_gap_capped_mean",
+    "P4_gap_capped_mean",
+    "P5_gap_capped_mean",
+    "P3_cap_saturation_ratio",
+    "P4_cap_saturation_ratio",
+    "P5_cap_saturation_ratio",
+    "P3_rank_active_ratio",
+    "P4_rank_active_ratio",
+    "P5_rank_active_ratio",
+)
+
+KD_REACH_DIAGNOSTIC_KEYS = (
+    "kd_reach_weight_mean",
+    "kd_reach_weight_std",
+    "kd_reach_weight_min",
+    "kd_reach_weight_max",
+    "kd_reach_weight_q25",
+    "kd_reach_weight_q50",
+    "kd_reach_weight_q75",
+    "kd_reach_active_ratio",
+    "kd_reach_conf_mean",
+    "kd_reach_reachable_margin_mean",
+    "kd_reach_reachable_margin_q25",
+    "kd_reach_reachable_margin_q75",
+    "P3_kd_active_ratio",
+    "P4_kd_active_ratio",
+    "P5_kd_active_ratio",
+)
+
+
+def _finite_or_nan(value: torch.Tensor | float | int) -> float:
+    try:
+        scalar = float(value.item() if isinstance(value, torch.Tensor) else value)
+    except Exception:
+        return float("nan")
+    return scalar if math.isfinite(scalar) else float("nan")
+
+
+def _flat_detached(x: torch.Tensor) -> torch.Tensor:
+    return x.detach().float().reshape(-1)
+
+
+def _masked_flat_detached(x: torch.Tensor, mask: torch.Tensor | None = None) -> torch.Tensor:
+    values = _flat_detached(x)
+    if mask is None:
+        return values
+    mask_flat = mask.detach().bool().reshape(-1)
+    if mask_flat.numel() != values.numel():
+        mask_flat = mask_flat.expand_as(values)
+    return values[mask_flat]
+
+
+def _safe_mean(x: torch.Tensor) -> float:
+    return _finite_or_nan(x.mean()) if x.numel() > 0 else float("nan")
+
+
+def _safe_std(x: torch.Tensor) -> float:
+    return _finite_or_nan(x.std(unbiased=False)) if x.numel() > 0 else float("nan")
+
+
+def _safe_min(x: torch.Tensor) -> float:
+    return _finite_or_nan(x.min()) if x.numel() > 0 else float("nan")
+
+
+def _safe_max(x: torch.Tensor) -> float:
+    return _finite_or_nan(x.max()) if x.numel() > 0 else float("nan")
+
+
+def _safe_quantile(x: torch.Tensor, q: float) -> float:
+    if x.numel() == 0:
+        return float("nan")
+    return _finite_or_nan(torch.quantile(x, float(q)))
+
+
+def _summarize_vector(
+    prefix: str,
+    values: torch.Tensor,
+    quantiles: tuple[float, ...] = (0.10, 0.25, 0.50, 0.75),
+) -> dict[str, float]:
+    flat = _flat_detached(values)
+    out = {f"{prefix}_mean": _safe_mean(flat)}
+    for q in quantiles:
+        name = "median" if abs(q - 0.50) < 1e-9 else f"q{int(round(q * 100))}"
+        out[f"{prefix}_{name}"] = _safe_quantile(flat, q)
+    return out
+
+
+def _ratio(mask: torch.Tensor, base: torch.Tensor | None = None) -> float:
+    values = mask.detach().float()
+    if base is not None:
+        values = values[base.detach().bool()]
+    return _safe_mean(values.reshape(-1))
+
+
+class _DsnSharedPrivateProjector(nn.Module):
+    """Projector architecture saved by tools/train_dsn_shared_private_projector.py."""
+
+    def __init__(self, in_dim: int, hidden_dim: int, latent_dim: int):
+        super().__init__()
+        self.trunk = nn.Sequential(
+            nn.Linear(in_dim, hidden_dim),
+            nn.LayerNorm(hidden_dim),
+            nn.SiLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.LayerNorm(hidden_dim),
+            nn.SiLU(),
+        )
+        self.shared = nn.Linear(hidden_dim, latent_dim)
+        self.private = nn.Linear(hidden_dim, latent_dim)
+        self.reconstruct = nn.Sequential(
+            nn.Linear(latent_dim * 2, hidden_dim),
+            nn.SiLU(),
+            nn.Linear(hidden_dim, in_dim),
+        )
+
+    def forward(self, features: torch.Tensor) -> dict[str, torch.Tensor]:
+        base = self.trunk(features)
+        z = self.shared(base)
+        p = self.private(base)
+        rec = self.reconstruct(torch.cat([z, p], dim=1))
+        return {"z": z, "p": p, "rec": rec}
+
+
 class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
     """LADD HBB loss surface: detector, reconstruction, reachability, taskL, and KD."""
 
@@ -147,6 +320,14 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         kd_weight_power: float = 1.0,
         kd_aggregation_mode: str = "token",
         kd_topk_ratio: float = 0.5,
+        kd_reach_margin: float = 0.0,
+        kd_reach_tau: float = 0.2,
+        kd_reach_use_capped_gap: bool = True,
+        kd_reach_detach_weight: bool = True,
+        kd_reach_min_weight: float = 0.0,
+        kd_reach_conf_power: float = 1.0,
+        kd_reach_active_threshold: float = 0.5,
+        kd_target_branch: str = "z",
         kd_calibration_mode: str = "none",
         reach_student_detach: bool = False,
         student_branch_mode: str = "split",
@@ -173,6 +354,15 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         cclkd_temperature_min: float = 0.5,
         cclkd_temperature_max: float = 5.0,
         cclkd_entropy_scale: float = 5.0,
+        dsn_projector_weights: str | None = None,
+        dsn_kd_weight: float = 0.0,
+        dsn_student_projector: str = "rgb",
+        dsn_teacher_projector: str = "peer",
+        fused_shared_mode: str = "none",
+        fused_shared_align_weight: float = 0.0,
+        fused_shared_reach_weight: float = 0.0,
+        fused_shared_kd_weight: float = 0.0,
+        fused_shared_task_weight: float = 0.0,
     ):
         super().__init__(model)
         self.comparison_kd_profile = self._validate_comparison_kd_profile(comparison_kd_profile)
@@ -220,6 +410,14 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         self.kd_weight_power = float(kd_weight_power)
         self.kd_aggregation_mode = self._validate_kd_aggregation_mode(kd_aggregation_mode)
         self.kd_topk_ratio = float(kd_topk_ratio)
+        self.kd_reach_margin = float(kd_reach_margin)
+        self.kd_reach_tau = max(float(kd_reach_tau), 1e-6)
+        self.kd_reach_use_capped_gap = bool(kd_reach_use_capped_gap)
+        self.kd_reach_detach_weight = bool(kd_reach_detach_weight)
+        self.kd_reach_min_weight = max(float(kd_reach_min_weight), 0.0)
+        self.kd_reach_conf_power = max(float(kd_reach_conf_power), 0.0)
+        self.kd_reach_active_threshold = float(kd_reach_active_threshold)
+        self.kd_target_branch = self._validate_kd_target_branch(kd_target_branch)
         self.kd_calibration_mode = self._validate_kd_calibration_mode(kd_calibration_mode)
         if self.comparison_kd_profile == "cmdistill" and self.kd_calibration_mode != "affine":
             LOGGER.warning(
@@ -233,6 +431,22 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         self.contrastive_temperature = float(contrastive_temperature)
         self.teacher_target_modules = None
         self._cmdistill_last_stats: dict[str, float | int] = {}
+        self._diag_sums: dict[str, float] = {}
+        self._diag_counts: dict[str, int] = {}
+        self.dsn_projector_weights = str(dsn_projector_weights or "")
+        self.dsn_kd_weight = max(float(dsn_kd_weight), 0.0)
+        self.dsn_student_projector = self._validate_dsn_projector_name(dsn_student_projector, "dsn_student_projector")
+        self.dsn_teacher_projector = self._validate_dsn_projector_name(dsn_teacher_projector, "dsn_teacher_projector")
+        self.dsn_rgb_projector: _DsnSharedPrivateProjector | None = None
+        self.dsn_peer_projector: _DsnSharedPrivateProjector | None = None
+        self._dsn_shape_warned = False
+        if self.dsn_projector_weights and self.dsn_kd_weight > 0:
+            self._load_dsn_projectors(self.dsn_projector_weights)
+        self.fused_shared_mode = self._validate_fused_shared_mode(fused_shared_mode)
+        self.fused_shared_align_weight = max(float(fused_shared_align_weight), 0.0)
+        self.fused_shared_reach_weight = max(float(fused_shared_reach_weight), 0.0)
+        self.fused_shared_kd_weight = max(float(fused_shared_kd_weight), 0.0)
+        self.fused_shared_task_weight = max(float(fused_shared_task_weight), 0.0)
         self.phase_loss_scales = {
             "det": 1.0,
             "rec": 1.0,
@@ -250,6 +464,138 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         return mode
 
     @staticmethod
+    def _validate_dsn_projector_name(name: str, field: str) -> str:
+        if name not in {"rgb", "peer"}:
+            raise ValueError(f"{field} must be 'rgb' or 'peer', got {name!r}.")
+        return name
+
+    @staticmethod
+    def _validate_fused_shared_mode(name: str) -> str:
+        if name not in {"none", "sum", "concat"}:
+            raise ValueError(f"fused_shared_mode must be 'none', 'sum', or 'concat', got {name!r}.")
+        return name
+
+    @staticmethod
+    def _load_torch_checkpoint(path: Path, device: torch.device) -> dict[str, Any]:
+        try:
+            return torch.load(path, map_location=device, weights_only=False)
+        except TypeError:
+            return torch.load(path, map_location=device)
+
+    def _load_dsn_projectors(self, path_text: str) -> None:
+        path = Path(path_text).expanduser()
+        if not path.is_file():
+            raise FileNotFoundError(f"Missing DSN projector checkpoint: {path}")
+        checkpoint = self._load_torch_checkpoint(path, self.device)
+        cfg = checkpoint.get("config", {})
+        hidden_dim = int(cfg.get("hidden_dim", 512))
+        latent_dim = int(cfg.get("latent_dim", 256))
+        rgb_input_dim = int(checkpoint["rgb_input_dim"])
+        peer_input_dim = int(checkpoint["peer_input_dim"])
+        self.dsn_rgb_projector = _DsnSharedPrivateProjector(rgb_input_dim, hidden_dim, latent_dim).to(self.device)
+        self.dsn_peer_projector = _DsnSharedPrivateProjector(peer_input_dim, hidden_dim, latent_dim).to(self.device)
+        self.dsn_rgb_projector.load_state_dict(checkpoint["rgb_projector"])
+        self.dsn_peer_projector.load_state_dict(checkpoint["peer_projector"])
+        for module in (self.dsn_rgb_projector, self.dsn_peer_projector):
+            module.eval()
+            for parameter in module.parameters():
+                parameter.requires_grad_(False)
+        LOGGER.info(
+            "DSN shared-latent KD enabled: "
+            f"weights={path}, weight={self.dsn_kd_weight}, "
+            f"student_projector={self.dsn_student_projector}, teacher_projector={self.dsn_teacher_projector}"
+        )
+
+    def _select_dsn_projector(self, name: str) -> _DsnSharedPrivateProjector | None:
+        return self.dsn_rgb_projector if name == "rgb" else self.dsn_peer_projector
+
+    def _compute_dsn_shared_kd_loss(
+        self,
+        student_feats: list[torch.Tensor],
+        teacher_feats: list[torch.Tensor],
+    ) -> torch.Tensor:
+        student_projector = self._select_dsn_projector(self.dsn_student_projector)
+        teacher_projector = self._select_dsn_projector(self.dsn_teacher_projector)
+        if self.dsn_kd_weight <= 0 or student_projector is None or teacher_projector is None:
+            return student_feats[0].new_zeros(())
+        student_vec = _pool_concat_feats(student_feats)
+        student_vec = F.layer_norm(student_vec, (student_vec.shape[1],))
+        teacher_vec = _pool_concat_feats(teacher_feats)
+        teacher_vec = F.layer_norm(teacher_vec, (teacher_vec.shape[1],))
+        expected_student_dim = student_projector.trunk[0].in_features
+        expected_teacher_dim = teacher_projector.trunk[0].in_features
+        if student_vec.shape[1] != expected_student_dim or teacher_vec.shape[1] != expected_teacher_dim:
+            if not self._dsn_shape_warned:
+                LOGGER.warning(
+                    "Skipping DSN shared-latent KD due to feature dimension mismatch: "
+                    f"student={student_vec.shape[1]} expected={expected_student_dim}, "
+                    f"teacher={teacher_vec.shape[1]} expected={expected_teacher_dim}."
+                )
+                self._dsn_shape_warned = True
+            return student_vec.new_zeros(())
+        z_student = student_projector(student_vec)["z"]
+        with torch.no_grad():
+            z_teacher = teacher_projector(teacher_vec)["z"]
+        z_student_n = F.normalize(z_student, dim=1, eps=1e-6)
+        z_teacher_n = F.normalize(z_teacher, dim=1, eps=1e-6)
+        mse = F.mse_loss(z_student_n, z_teacher_n)
+        cosine = 1.0 - F.cosine_similarity(z_student, z_teacher.detach(), dim=1).mean()
+        return self.dsn_kd_weight * (0.5 * mse + 0.5 * cosine)
+
+    def _fused_shared_enabled(self) -> bool:
+        return (
+            self.fused_shared_mode != "none"
+            and (
+                self.fused_shared_align_weight > 0.0
+                or self.fused_shared_reach_weight > 0.0
+                or self.fused_shared_kd_weight > 0.0
+                or self.fused_shared_task_weight > 0.0
+            )
+        )
+
+    def _fused_shared_cap_loss(
+        self,
+        fused_map: torch.Tensor,
+        z_t_map: torch.Tensor,
+        z_s_map: torch.Tensor,
+        u_t_map: torch.Tensor,
+        r_s_map: torch.Tensor,
+        mask: torch.Tensor | None = None,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        if self.normalize_reach:
+            fused_cmp = spatial_normalize(fused_map)
+            z_t_cmp = spatial_normalize(z_t_map.detach())
+            z_s_cmp = spatial_normalize(z_s_map.detach())
+            u_t_cmp = spatial_normalize(u_t_map.detach())
+            r_s_cmp = spatial_normalize(r_s_map.detach())
+        else:
+            fused_cmp = fused_map
+            z_t_cmp = z_t_map.detach()
+            z_s_cmp = z_s_map.detach()
+            u_t_cmp = u_t_map.detach()
+            r_s_cmp = r_s_map.detach()
+
+        d_t = squared_l2_map(fused_cmp, z_t_cmp)
+        d_s = squared_l2_map(fused_cmp, z_s_cmp)
+        d_u = squared_l2_map(fused_cmp, u_t_cmp)
+        d_r = squared_l2_map(fused_cmp, r_s_cmp)
+
+        match = 0.5 * (masked_mean(d_t, mask) + masked_mean(d_s, mask))
+        if self.normalize_reach and self.rank_d_neg_cap < 4.0:
+            d_u_eff = d_u.clamp(max=self.rank_d_neg_cap)
+            d_r_eff = d_r.clamp(max=self.rank_d_neg_cap)
+        else:
+            d_u_eff = d_u
+            d_r_eff = d_r
+        rank_t = self.delta + d_t - d_u_eff
+        rank_s = self.delta + d_s - d_r_eff
+        rank_t = F.softplus(rank_t) if self.use_soft_rank else F.relu(rank_t)
+        rank_s = F.softplus(rank_s) if self.use_soft_rank else F.relu(rank_s)
+        rank = 0.5 * (masked_mean(rank_t, mask) + masked_mean(rank_s, mask))
+        gap = 0.5 * (masked_mean(d_u - d_t, mask) + masked_mean(d_r - d_s, mask))
+        return match, rank, gap
+
+    @staticmethod
     def _validate_reach_input_mode(mode: str) -> str:
         if mode not in {"adapter", "raw"}:
             raise ValueError(f"reach_input_mode must be 'adapter' or 'raw', got {mode!r}.")
@@ -257,10 +603,17 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
 
     @staticmethod
     def _validate_kd_weight_mode(mode: str) -> str:
-        if mode not in {"none", "teacher_task_conf", "reachability_gap"}:
+        if mode not in {"none", "teacher_task_conf", "reachability_gap", "cap_reachability_gap"}:
             raise ValueError(
-                f"kd_weight_mode must be 'none', 'teacher_task_conf', or 'reachability_gap', got {mode!r}."
+                "kd_weight_mode must be 'none', 'teacher_task_conf', 'reachability_gap', "
+                f"or 'cap_reachability_gap', got {mode!r}."
             )
+        return mode
+
+    @staticmethod
+    def _validate_kd_target_branch(mode: str) -> str:
+        if mode not in {"z", "u", "shuffled_z"}:
+            raise ValueError(f"kd_target_branch must be 'z', 'u', or 'shuffled_z', got {mode!r}.")
         return mode
 
     @staticmethod
@@ -285,9 +638,10 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
 
     @staticmethod
     def _validate_teacher_feature_mode(mode: str) -> str:
-        if mode not in {"decomposed", "raw", "projected_raw"}:
+        if mode not in {"decomposed", "raw", "projected_raw", "raw_weak_reach"}:
             raise ValueError(
-                f"teacher_feature_mode must be 'decomposed', 'raw', or 'projected_raw', got {mode!r}."
+                "teacher_feature_mode must be 'decomposed', 'raw', 'projected_raw', "
+                f"or 'raw_weak_reach', got {mode!r}."
             )
         return mode
 
@@ -327,6 +681,95 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
 
     def set_teacher_target_modules(self, modules: dict[str, Any] | None) -> None:
         self.teacher_target_modules = modules
+
+    def _capr_enabled(self) -> bool:
+        return bool(self.normalize_reach and self.rank_d_neg_cap < 4.0)
+
+    def _accumulate_diagnostic_stats(self, stats: dict[str, float]) -> None:
+        for key, value in stats.items():
+            scalar = _finite_or_nan(value)
+            if not math.isfinite(scalar):
+                continue
+            self._diag_sums[key] = self._diag_sums.get(key, 0.0) + scalar
+            self._diag_counts[key] = self._diag_counts.get(key, 0) + 1
+
+    def consume_ladd_diagnostic_stats(self) -> dict[str, float]:
+        keys = CAPR_DIAGNOSTIC_KEYS + KD_REACH_DIAGNOSTIC_KEYS
+        out = {key: float("nan") for key in keys}
+        for key in keys:
+            count = self._diag_counts.get(key, 0)
+            if count > 0:
+                out[key] = self._diag_sums.get(key, 0.0) / count
+        self._diag_sums.clear()
+        self._diag_counts.clear()
+        return out
+
+    def _reach_distance_maps(
+        self,
+        q_s_map: torch.Tensor,
+        z_t_map: torch.Tensor,
+        u_t_map: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        q_ref = q_s_map.detach()
+        z_ref = z_t_map.detach()
+        u_ref = u_t_map.detach()
+        if self.normalize_reach:
+            q_ref = spatial_normalize(q_ref)
+            z_ref = spatial_normalize(z_ref)
+            u_ref = spatial_normalize(u_ref)
+        return squared_l2_map(q_ref, z_ref), squared_l2_map(q_ref, u_ref)
+
+    def _compute_capr_stats(
+        self,
+        d_pos: torch.Tensor,
+        d_neg: torch.Tensor,
+        fg_mask_map: torch.Tensor,
+        level_name: str,
+    ) -> dict[str, float]:
+        cap_enabled = self._capr_enabled()
+        cap = float(self.rank_d_neg_cap)
+        delta = float(self.delta)
+        d_neg_eff = d_neg.clamp(max=cap) if cap_enabled else d_neg
+        gap_raw = d_neg - d_pos
+        gap_capped = d_neg_eff - d_pos
+        reachable_margin = gap_capped - delta
+        rank_active = (delta + d_pos - d_neg_eff) > 0
+        cap_saturated = d_neg > cap
+        cap_blocked_active = cap_saturated & ((delta + d_pos - cap) > 0)
+        zero_loss_feasible = (d_pos + delta) < cap
+
+        fg = fg_mask_map.detach().bool()
+        bg = ~fg
+        stats = {}
+        stats.update(_summarize_vector("d_pos", d_pos))
+        stats.update(_summarize_vector("d_neg", d_neg))
+        stats.update(_summarize_vector("d_neg_eff", d_neg_eff))
+        stats.update(_summarize_vector("gap_raw", gap_raw, quantiles=(0.25, 0.50, 0.75)))
+        stats.update(_summarize_vector("gap_capped", gap_capped, quantiles=(0.25, 0.50, 0.75)))
+        stats.update(_summarize_vector("reachable_margin", reachable_margin, quantiles=(0.25, 0.50, 0.75)))
+        stats["cap_saturation_ratio"] = _ratio(cap_saturated)
+        stats["rank_active_ratio"] = _ratio(rank_active)
+        stats["cap_blocked_active_ratio"] = _ratio(cap_blocked_active)
+        stats["zero_loss_feasible_ratio"] = _ratio(zero_loss_feasible)
+
+        fg_gap = _masked_flat_detached(gap_capped, fg)
+        bg_gap = _masked_flat_detached(gap_capped, bg)
+        stats["fg_gap_capped_mean"] = _safe_mean(fg_gap)
+        stats["fg_gap_capped_median"] = _safe_quantile(fg_gap, 0.50)
+        stats["fg_cap_saturation_ratio"] = _ratio(cap_saturated, fg)
+        stats["fg_rank_active_ratio"] = _ratio(rank_active, fg)
+        stats["fg_zero_loss_feasible_ratio"] = _ratio(zero_loss_feasible, fg)
+        stats["bg_gap_capped_mean"] = _safe_mean(bg_gap)
+        stats["bg_gap_capped_median"] = _safe_quantile(bg_gap, 0.50)
+        stats["bg_cap_saturation_ratio"] = _ratio(cap_saturated, bg)
+        stats["bg_rank_active_ratio"] = _ratio(rank_active, bg)
+        stats["bg_zero_loss_feasible_ratio"] = _ratio(zero_loss_feasible, bg)
+
+        if level_name:
+            stats[f"{level_name}_gap_capped_mean"] = _safe_mean(_flat_detached(gap_capped))
+            stats[f"{level_name}_cap_saturation_ratio"] = _ratio(cap_saturated)
+            stats[f"{level_name}_rank_active_ratio"] = _ratio(rank_active)
+        return stats
 
     def loss(self, preds: dict[str, torch.Tensor], batch: dict[str, torch.Tensor]) -> tuple[torch.Tensor, torch.Tensor]:
         loss = torch.zeros(10, device=self.device)
@@ -445,6 +888,29 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         d_neg_mean = masked_mean(d_neg, fg_mask_map)
         return match_loss, rank_loss, d_pos_mean, d_neg_mean, rank_gap_mean
 
+    def projected_reach_match_loss(
+        self,
+        z_t_map: torch.Tensor,
+        q_s_map: torch.Tensor,
+        fg_mask_map: torch.Tensor | None = None,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Weak reach for single-projection teacher ablations: pull only, no private negative branch."""
+        z_ref = z_t_map.detach() if self.reach_target_mode == "detach" else z_t_map
+        q_ref = q_s_map.detach() if self.reach_student_detach else q_s_map
+
+        if self.normalize_reach:
+            z_cmp = spatial_normalize(z_ref)
+            q_cmp = spatial_normalize(q_ref)
+        else:
+            z_cmp = z_ref
+            q_cmp = q_ref
+
+        d_pos = squared_l2_map(q_cmp, z_cmp)
+        match_loss = masked_mean(d_pos, fg_mask_map)
+        d_pos_mean = masked_mean(d_pos, fg_mask_map)
+        zero = match_loss.new_zeros(())
+        return match_loss, zero, d_pos_mean, zero, zero
+
     def _compute_kd_pos_weights(
         self,
         task_pred_pos: torch.Tensor | None,
@@ -452,6 +918,7 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         q_s_pos: torch.Tensor | None = None,
         z_t_pos: torch.Tensor | None = None,
         u_t_pos: torch.Tensor | None = None,
+        level_name: str = "",
     ) -> torch.Tensor | None:
         if self.kd_weight_mode == "none":
             return None
@@ -464,6 +931,66 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
             assigned_conf = (teacher_probs * target_scores_pos).sum(dim=-1)
             fallback_conf = teacher_probs.amax(dim=-1)
             conf = torch.where(target_mass > 0, assigned_conf / target_mass.clamp_min(1e-6), fallback_conf)
+        elif self.kd_weight_mode == "cap_reachability_gap":
+            if q_s_pos is None or z_t_pos is None or u_t_pos is None:
+                return None
+            q_ref = q_s_pos if not self.kd_reach_detach_weight else q_s_pos.detach()
+            z_ref = z_t_pos.detach()
+            u_ref = u_t_pos.detach()
+            if self.normalize_reach:
+                q_cmp = F.normalize(q_ref, dim=-1, eps=1e-6)
+                z_cmp = F.normalize(z_ref, dim=-1, eps=1e-6)
+                u_cmp = F.normalize(u_ref, dim=-1, eps=1e-6)
+            else:
+                q_cmp = q_ref
+                z_cmp = z_ref
+                u_cmp = u_ref
+            d_pos = (q_cmp - z_cmp).pow(2).sum(dim=-1)
+            d_neg = (q_cmp - u_cmp).pow(2).sum(dim=-1)
+            if self.kd_reach_use_capped_gap and self._capr_enabled():
+                d_neg_gate = d_neg.clamp(max=self.rank_d_neg_cap)
+            else:
+                d_neg_gate = d_neg
+            reachable_margin = d_neg_gate - d_pos - self.delta
+            reach_weight = torch.sigmoid((reachable_margin - self.kd_reach_margin) / self.kd_reach_tau)
+            if self.kd_reach_min_weight > 0:
+                reach_weight = reach_weight.clamp_min(self.kd_reach_min_weight)
+
+            if task_pred_pos is not None:
+                teacher_probs = task_pred_pos.sigmoid()
+                target_mass = target_scores_pos.sum(dim=-1)
+                assigned_conf = (teacher_probs * target_scores_pos).sum(dim=-1)
+                fallback_conf = teacher_probs.amax(dim=-1)
+                conf_weight = torch.where(target_mass > 0, assigned_conf / target_mass.clamp_min(1e-6), fallback_conf)
+            else:
+                conf_weight = target_scores_pos.sum(dim=-1).clamp_min(0.0)
+            if self.kd_reach_conf_power != 1.0:
+                conf_weight = conf_weight.clamp_min(1e-6).pow(self.kd_reach_conf_power)
+            conf = reach_weight * conf_weight
+            if self.kd_reach_detach_weight:
+                conf = conf.detach()
+
+            normalized = conf.clamp_min(1e-6)
+            normalized = normalized / normalized.mean().clamp_min(1e-6)
+            kd_stats = {
+                "kd_reach_weight_mean": _safe_mean(_flat_detached(normalized)),
+                "kd_reach_weight_std": _safe_std(_flat_detached(normalized)),
+                "kd_reach_weight_min": _safe_min(_flat_detached(normalized)),
+                "kd_reach_weight_max": _safe_max(_flat_detached(normalized)),
+                "kd_reach_weight_q25": _safe_quantile(_flat_detached(normalized), 0.25),
+                "kd_reach_weight_q50": _safe_quantile(_flat_detached(normalized), 0.50),
+                "kd_reach_weight_q75": _safe_quantile(_flat_detached(normalized), 0.75),
+                "kd_reach_active_ratio": _ratio(reach_weight > self.kd_reach_active_threshold),
+                "kd_reach_conf_mean": _safe_mean(_flat_detached(conf_weight)),
+                "kd_reach_reachable_margin_mean": _safe_mean(_flat_detached(reachable_margin)),
+                "kd_reach_reachable_margin_q25": _safe_quantile(_flat_detached(reachable_margin), 0.25),
+                "kd_reach_reachable_margin_q75": _safe_quantile(_flat_detached(reachable_margin), 0.75),
+            }
+            if level_name:
+                kd_stats[f"{level_name}_kd_active_ratio"] = kd_stats["kd_reach_active_ratio"]
+            if self.student_model.training:
+                self._accumulate_diagnostic_stats(kd_stats)
+            return normalized.detach() if self.kd_reach_detach_weight else normalized
         else:
             if q_s_pos is None or z_t_pos is None or u_t_pos is None:
                 return None
@@ -1205,7 +1732,11 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         student_branch_use_zs = self.student_branch_mode in {"split", "single_proj"}
         teacher_decomposed = self.teacher_feature_mode == "decomposed"
         teacher_projected_raw = self.teacher_feature_mode == "projected_raw"
+        teacher_raw_weak_reach = self.teacher_feature_mode == "raw_weak_reach"
+        teacher_weak_reach = teacher_projected_raw or teacher_raw_weak_reach
 
+        dsn_shared_loss = self._compute_dsn_shared_kd_loss(student_raw_feats, teacher_feats)
+        fused_shared_enabled = self._fused_shared_enabled()
         rec_loss = zero
         reach_match_loss = zero
         reach_rank_loss = zero
@@ -1232,11 +1763,16 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
         cmd_pcc_levels = 0
         cmd_relation_loss = zero
         cmd_relation_levels = 0
+        fused_shared_align_loss = zero
+        fused_shared_reach_loss = zero
+        fused_shared_task_loss = zero
+        fused_shared_levels = 0
         offset = 0
 
         for i, (teacher_feat, student_raw, z_s_map, r_s_map, student_recon) in enumerate(
             zip(teacher_feats, student_raw_feats, student_z_feats, student_r_feats, student_recon_feats)
         ):
+            level_name = f"P{i + 3}"
             if teacher_decomposed:
                 z_t_map, u_t_map, mask_map, recon_map = self.student_model.teacher_decomposition[i](teacher_feat)
                 decoded_z_t = self.student_model.teacher_decoder[i](z_t_map)
@@ -1246,12 +1782,16 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
                 u_t_map = torch.zeros_like(z_t_map)
                 mask_map = None
                 recon_map = None
-                task_logits = None
+                task_logits = self.student_model.teacher_task_heads[i](z_t_map) if teacher_projected_raw else None
 
-            need_q_s = teacher_decomposed and (
-                self.reachability_enabled
-                or self.kd_weight_mode == "reachability_gap"
-            )
+            need_q_s = (
+                teacher_decomposed
+                and (
+                    self.reachability_enabled
+                    or self.kd_weight_mode == "reachability_gap"
+                    or self.kd_weight_mode == "cap_reachability_gap"
+                )
+            ) or (teacher_weak_reach and self.reachability_enabled)
             if need_q_s:
                 if self.reach_input_mode == "adapter":
                     q_s_map = self.student_model.student_reachability[i](student_raw)
@@ -1287,6 +1827,7 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
             batch_size, _, height, width = z_t_map.shape
             n_tokens = z_t.shape[1]
             level_fg_mask = fg_mask[:, offset : offset + n_tokens].bool()
+            level_fg_mask_map = level_fg_mask.reshape(batch_size, height, width).unsqueeze(1)
             level_target_scores = target_scores[:, offset : offset + n_tokens].to(z_t.dtype)
             level_student_distri = student_pred_distri[:, offset : offset + n_tokens].to(z_t.dtype)
             level_teacher_distri = (
@@ -1309,9 +1850,61 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
                 if isinstance(teacher_scores_all, torch.Tensor)
                 else None
             )
+            fused_shared_map = None
+            fused_mask_map = None
+            if fused_shared_enabled and teacher_decomposed and student_branch_use_zs:
+                fusion_modules = getattr(self.student_model, "fused_shared_fusion", None)
+                if fusion_modules is not None and i < len(fusion_modules):
+                    fused_shared_map = fusion_modules[i](target_z_t_map.detach(), z_s_kd_map.detach())
+                    if self.use_fg_mask_for_reach:
+                        if level_fg_mask.any():
+                            fused_mask_map = level_fg_mask_map.to(z_t.dtype)
+                        else:
+                            fused_shared_map = None
+
+            if fused_shared_map is not None:
+                level_fused_match, level_fused_rank, _ = self._fused_shared_cap_loss(
+                    fused_map=fused_shared_map,
+                    z_t_map=target_z_t_map,
+                    z_s_map=z_s_kd_map,
+                    u_t_map=target_u_t_map,
+                    r_s_map=r_s_map,
+                    mask=fused_mask_map,
+                )
+                fused_shared_align_loss = fused_shared_align_loss + level_fused_match
+                fused_shared_reach_loss = fused_shared_reach_loss + level_fused_rank
+                if self.fused_shared_task_weight > 0 and target_task_logits is not None:
+                    fused_task_logits = self.student_model.teacher_task_heads[i](
+                        self.student_model.teacher_decoder[i](fused_shared_map)
+                    )
+                    fused_task_pred = _flatten_feat(fused_task_logits)
+                    if self.task_loss_fg_only:
+                        fused_bce = F.binary_cross_entropy_with_logits(
+                            fused_task_pred, level_target_scores, reduction="none"
+                        )
+                        fg_w = level_fg_mask.to(fused_bce.dtype).unsqueeze(-1)
+                        denom = fg_w.sum() * level_target_scores.shape[-1]
+                        if denom > 0:
+                            fused_shared_task_loss = fused_shared_task_loss + (fused_bce * fg_w).sum() / denom
+                    else:
+                        fused_shared_task_loss = (
+                            fused_shared_task_loss
+                            + self.bce(fused_task_pred, level_target_scores).sum() / target_scores_sum
+                        )
+                fused_shared_levels += 1
             offset += n_tokens
+            if teacher_decomposed and q_s_map is not None and self.student_model.training:
+                capr_d_pos, capr_d_neg = self._reach_distance_maps(q_s_map, z_t_map, u_t_map)
+                self._accumulate_diagnostic_stats(
+                    self._compute_capr_stats(
+                        capr_d_pos,
+                        capr_d_neg,
+                        level_fg_mask_map.to(capr_d_pos.device),
+                        level_name,
+                    )
+                )
             if self.use_fg_mask_for_rec and level_fg_mask.any():
-                rec_mask_map = level_fg_mask.reshape(batch_size, height, width).unsqueeze(1).to(teacher_feat.dtype)
+                rec_mask_map = level_fg_mask_map.to(teacher_feat.dtype)
             elif self.use_fg_mask_for_rec:
                 rec_mask_map = None
             else:
@@ -1344,22 +1937,29 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
                 mask_std = mask_std + mask_map.std(unbiased=False)
                 mask_levels += 1
 
-            if teacher_decomposed and self.reachability_enabled:
+            if (teacher_decomposed or teacher_weak_reach) and self.reachability_enabled:
                 if self.use_fg_mask_for_reach:
                     if level_fg_mask.any():
-                        reach_mask_map = level_fg_mask.reshape(batch_size, height, width).unsqueeze(1).to(z_t_map.dtype)
+                        reach_mask_map = level_fg_mask_map.to(z_t_map.dtype)
                     else:
                         reach_mask_map = None
                 else:
                     reach_mask_map = None
 
                 if not self.use_fg_mask_for_reach or level_fg_mask.any():
-                    level_match_loss, level_rank_loss, level_d_pos, level_d_neg, level_gap = self.normalized_reachability_loss(
-                        z_t_map=z_t_map,
-                        u_t_map=u_t_map,
-                        q_s_map=q_s_map,
-                        fg_mask_map=reach_mask_map,
-                    )
+                    if teacher_decomposed:
+                        level_match_loss, level_rank_loss, level_d_pos, level_d_neg, level_gap = self.normalized_reachability_loss(
+                            z_t_map=z_t_map,
+                            u_t_map=u_t_map,
+                            q_s_map=q_s_map,
+                            fg_mask_map=reach_mask_map,
+                        )
+                    else:
+                        level_match_loss, level_rank_loss, level_d_pos, level_d_neg, level_gap = self.projected_reach_match_loss(
+                            z_t_map=z_t_map,
+                            q_s_map=q_s_map,
+                            fg_mask_map=reach_mask_map,
+                        )
                     reach_match_loss = reach_match_loss + level_match_loss
                     reach_rank_loss = reach_rank_loss + level_rank_loss
                     d_pos_mean = d_pos_mean + level_d_pos
@@ -1405,7 +2005,7 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
                 all_levels += 1
                 continue
 
-            fg_mask_map = level_fg_mask.reshape(batch_size, height, width).unsqueeze(1).to(r_s_map.dtype)
+            fg_mask_map = level_fg_mask_map.to(r_s_map.dtype)
             if mask_map is not None:
                 fg_mask_bool = fg_mask_map > 0
                 bg_mask_bool = ~fg_mask_bool
@@ -1418,18 +2018,33 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
             level_target_scores_pos = level_target_scores[level_fg_mask]
             q_s_pos = q_s[level_fg_mask] if q_s is not None else None
 
-            kd_target_pos = target_z_t[level_fg_mask].detach() if self.kd_target_mode == "detach" else target_z_t[level_fg_mask]
+            if self.kd_target_branch == "u":
+                kd_target_tokens = target_u_t
+            elif self.kd_target_branch == "shuffled_z":
+                kd_target_tokens = torch.roll(target_z_t, shifts=1, dims=0) if target_z_t.shape[0] > 1 else target_z_t
+            else:
+                kd_target_tokens = target_z_t
+            kd_target_pos = kd_target_tokens[level_fg_mask].detach() if self.kd_target_mode == "detach" else kd_target_tokens[level_fg_mask]
             kd_pos_weights = self._compute_kd_pos_weights(
                 task_pred_pos,
                 level_target_scores_pos,
                 q_s_pos=q_s_pos,
                 z_t_pos=(target_z_t[level_fg_mask] if teacher_decomposed else None),
                 u_t_pos=(target_u_t[level_fg_mask] if teacher_decomposed else None),
+                level_name=level_name,
             )
             if not self.profile_kd_replace_base:
                 kd_loss = kd_loss + self._compute_kd_loss(
                     z_s_kd_pos,
                     kd_target_pos,
+                    level_target_scores_pos,
+                    kd_pos_weights,
+                )
+            if fused_shared_map is not None and self.fused_shared_kd_weight > 0:
+                fused_target_pos = _flatten_feat(fused_shared_map)[level_fg_mask].detach()
+                kd_loss = kd_loss + self.fused_shared_kd_weight * self._compute_kd_loss(
+                    z_s_kd_pos,
+                    fused_target_pos,
                     level_target_scores_pos,
                     kd_pos_weights,
                 )
@@ -1504,6 +2119,19 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxLossHBB(v8DetectionLoss):
                 cmdistill_relation_loss=float(cmd_relation_term.detach().cpu()),
                 cmdistill_ibcld_loss=float(cmd_output_term.detach().cpu()),
                 cmdistill_total_loss=float(cmd_total.detach().cpu()),
+            )
+
+        if self.dsn_kd_weight > 0:
+            kd_loss = kd_loss + dsn_shared_loss
+
+        if fused_shared_levels > 0:
+            fused_shared_align_loss = fused_shared_align_loss / fused_shared_levels
+            fused_shared_reach_loss = fused_shared_reach_loss / fused_shared_levels
+            fused_shared_task_loss = fused_shared_task_loss / fused_shared_levels
+            kd_loss = kd_loss + (
+                self.fused_shared_align_weight * fused_shared_align_loss
+                + self.fused_shared_reach_weight * fused_shared_reach_loss
+                + self.fused_shared_task_weight * fused_shared_task_loss
             )
 
         reach_match_loss = (

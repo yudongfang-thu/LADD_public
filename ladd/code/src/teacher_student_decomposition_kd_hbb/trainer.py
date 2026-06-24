@@ -30,6 +30,140 @@ from .schedule import (
     compute_effective_ladd_weights,
 )
 
+_HBB_RESUME_CUSTOM_KEYS = {
+    "phase",
+    "phase_detect_mode",
+    "det_loss_scale",
+    "phase_min_epochs",
+    "phase_stop_metric",
+    "c_weak_nrrl_scale",
+    "c_weak_nrrl_detach_student",
+    "reach_c_mode",
+    "lambda_reach_c",
+    "b_reset_student_from_scratch",
+    "b_detector_source",
+    "b_decomp_source",
+    "b_split_load_strict",
+    "b_load_student_split",
+    "b_load_student_reachability",
+    "lambda_reach",
+    "lambda_match_inner",
+    "lambda_rank_inner",
+    "delta",
+    "use_soft_rank",
+    "use_fg_mask_for_reach",
+    "use_fg_mask_for_rec",
+    "normalize_reach",
+    "rank_d_neg_cap",
+    "reach_target_mode",
+    "reach_input_mode",
+    "kd_weight_mode",
+    "kd_weight_power",
+    "kd_aggregation_mode",
+    "kd_topk_ratio",
+    "kd_reach_margin",
+    "kd_reach_tau",
+    "kd_reach_use_capped_gap",
+    "kd_reach_detach_weight",
+    "kd_reach_min_weight",
+    "kd_reach_conf_power",
+    "kd_reach_active_threshold",
+    "unlearnable_hidden_ratio",
+    "kd_calibration_mode",
+    "teacher_target_mode",
+    "teacher_ema_momentum",
+    "student_branch_mode",
+    "teacher_feature_mode",
+    "kd_mechanism",
+    "contrastive_temperature",
+    "force_student_rec",
+    "comparison_kd_profile",
+    "profile_kd_weight",
+    "profile_kd_replace_base",
+    "cmdistill_feature_weight",
+    "cmdistill_relation_weight",
+    "cmdistill_logit_weight",
+    "cmdistill_temperature",
+    "cmdistill_max_tokens",
+    "cmdistill_min_confidence",
+    "cclkd_base_temperature",
+    "cclkd_contrastive_temperature",
+    "cclkd_feat_weight",
+    "cclkd_logit_weight",
+    "cclkd_contrast_weight",
+    "cclkd_bg_weight",
+    "cclkd_min_confidence",
+    "cclkd_max_tokens",
+    "cclkd_temperature_min",
+    "cclkd_temperature_max",
+    "cclkd_entropy_scale",
+    "teacher_data",
+    "teacher_weights",
+    "use_mask",
+    "fusion_mode",
+    "student_detect_mode",
+    "kd_target_mode",
+    "kd_target_branch",
+    "lambda_rec",
+    "lambda_taskL",
+    "task_loss_fg_only",
+    "alpha_kd",
+    "alpha_s_rec",
+    "validate_before_train",
+    "freeze_bn_stats",
+    "freeze_bn_after_epoch",
+    "ladd_diag_log_bn",
+    "ladd_diag_log_grad",
+    "ladd_grad_clip_norm",
+    "ladd_assert_phase_freeze",
+    "ladd_diag_log_every",
+    "ladd_kd_decay_mode",
+    "ladd_kd_decay_start_epoch",
+    "ladd_kd_decay_end_epoch",
+    "ladd_kd_final_mult",
+    "ladd_kd_stop_after_epoch",
+    "ladd_b_loss_warmup_mode",
+    "ladd_b_loss_warmup_start_epoch",
+    "ladd_b_loss_warmup_end_epoch",
+    "ladd_b_loss_warmup_final_mult",
+    "ladd_b_loss_warmup_scope",
+    "ladd_b_a2_core",
+    "ladd_b_det_only",
+    "ladd_a2_det_only",
+    "ladd_b_frozen_reach_probe",
+    "ladd_b_detach_reach_probe",
+    "ladd_b_keep_reach_probe_grad",
+    "shuffle_teacher_pairs",
+}
+
+
+def _merge_hbb_resume_custom_overrides(overrides: dict) -> dict:
+    """Restore HBB custom trainer keys from a resume checkpoint before they are popped."""
+    if overrides.pop("_hbb_resume_custom_merged", False):
+        return overrides
+    resume = overrides.get("resume")
+    if not resume:
+        return overrides
+    try:
+        exists = isinstance(resume, (str, Path)) and Path(resume).exists()
+        last = Path(check_file(resume) if exists else get_latest_run())
+        ckpt_args = dict(load_checkpoint(last)[0].args)
+    except Exception as e:
+        LOGGER.warning(f"HBB resume: could not pre-merge custom checkpoint args from {resume}: {e}")
+        return overrides
+
+    restored = []
+    for key in sorted(_HBB_RESUME_CUSTOM_KEYS):
+        if key in ckpt_args:
+            overrides[key] = ckpt_args[key]
+            restored.append(key)
+    if restored:
+        LOGGER.info(
+            "HBB resume: restored custom trainer args before initialization: " + ", ".join(restored)
+        )
+    overrides["_hbb_resume_custom_merged"] = True
+    return overrides
+
 
 class PhaseMinEarlyStopping:
     """Early stopping with a hard minimum epoch budget."""
@@ -113,6 +247,8 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(DetectionTrainer):
 
     def __init__(self, cfg=DEFAULT_CFG, overrides: dict | None = None, _callbacks: dict | None = None):
         overrides = {} if overrides is None else dict(overrides)
+        overrides = _merge_hbb_resume_custom_overrides(overrides)
+        overrides.pop("_hbb_resume_custom_merged", None)
         self.nrrl_cfg = {
             "lambda_reach": float(overrides.pop("lambda_reach", 1.0)),
             "lambda_match_inner": float(overrides.pop("lambda_match_inner", 1.0)),
@@ -129,6 +265,13 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(DetectionTrainer):
             "kd_weight_power": float(overrides.pop("kd_weight_power", 1.0)),
             "kd_aggregation_mode": overrides.pop("kd_aggregation_mode", "token"),
             "kd_topk_ratio": float(overrides.pop("kd_topk_ratio", 0.5)),
+            "kd_reach_margin": float(overrides.pop("kd_reach_margin", 0.0)),
+            "kd_reach_tau": float(overrides.pop("kd_reach_tau", 0.2)),
+            "kd_reach_use_capped_gap": int(overrides.pop("kd_reach_use_capped_gap", 1)) > 0,
+            "kd_reach_detach_weight": int(overrides.pop("kd_reach_detach_weight", 1)) > 0,
+            "kd_reach_min_weight": float(overrides.pop("kd_reach_min_weight", 0.0)),
+            "kd_reach_conf_power": float(overrides.pop("kd_reach_conf_power", 1.0)),
+            "kd_reach_active_threshold": float(overrides.pop("kd_reach_active_threshold", 0.5)),
         }
         self.teacher_u_cfg = {
             "unlearnable_hidden_ratio": float(overrides.pop("unlearnable_hidden_ratio", 1.0)),
@@ -172,6 +315,7 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(DetectionTrainer):
             "fusion_mode": overrides.pop("fusion_mode", "sum"),
             "student_detect_mode": overrides.pop("student_detect_mode", "raw"),
             "kd_target_mode": overrides.pop("kd_target_mode", "detach"),
+            "kd_target_branch": overrides.pop("kd_target_branch", "z"),
             "lambda_rec": float(overrides.pop("lambda_rec", 0.1)),
             "lambda_taskL": float(overrides.pop("lambda_taskL", 1.0)),
             "task_loss_fg_only": bool(overrides.pop("task_loss_fg_only", False)),
@@ -198,10 +342,22 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(DetectionTrainer):
             "ladd_b_loss_warmup_final_mult": float(overrides.pop("ladd_b_loss_warmup_final_mult", 1.0)),
             "ladd_b_loss_warmup_scope": str(overrides.pop("ladd_b_loss_warmup_scope", "core")),
             "ladd_b_a2_core": int(overrides.pop("ladd_b_a2_core", 0)) > 0,
-            "ladd_b_frozen_reach_probe": int(overrides.pop("ladd_b_frozen_reach_probe", 0)) > 0,
             "ladd_b_det_only": int(overrides.pop("ladd_b_det_only", 0)) > 0,
             "ladd_a2_det_only": int(overrides.pop("ladd_a2_det_only", 0)) > 0,
+            "shuffle_teacher_pairs": int(overrides.pop("shuffle_teacher_pairs", 0)) > 0,
         }
+        b_frozen_reach_probe = int(overrides.pop("ladd_b_frozen_reach_probe", 0)) > 0
+        b_keep_reach_probe_grad = int(overrides.pop("ladd_b_keep_reach_probe_grad", 0)) > 0
+        b_detach_reach_probe = int(
+            overrides.pop("ladd_b_detach_reach_probe", int(b_frozen_reach_probe and not b_keep_reach_probe_grad))
+        ) > 0
+        self.diagnostic_cfg.update(
+            {
+                "ladd_b_frozen_reach_probe": b_frozen_reach_probe,
+                "ladd_b_detach_reach_probe": b_detach_reach_probe,
+                "ladd_b_keep_reach_probe_grad": b_keep_reach_probe_grad,
+            }
+        )
         self._last_grad_norms = None
         self._effective_ladd_weights = {}
         self._phase_freeze_assert_logged_contexts = set()
@@ -247,6 +403,9 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(DetectionTrainer):
         teacher_img = batch.get("teacher_img")
         if teacher_img is not None:
             batch["teacher_img"] = teacher_img.to(self.device, non_blocking=self.device.type == "cuda").float() / 255
+            if self.diagnostic_cfg.get("shuffle_teacher_pairs", False) and batch["teacher_img"].shape[0] > 1:
+                perm = torch.randperm(batch["teacher_img"].shape[0], device=self.device)
+                batch["teacher_img"] = batch["teacher_img"][perm]
         return batch
 
     def _load_teacher_model(self):
@@ -380,9 +539,17 @@ class TeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(DetectionTrainer):
             kd_weight_power=self.nrrl_cfg["kd_weight_power"],
             kd_aggregation_mode=self.nrrl_cfg["kd_aggregation_mode"],
             kd_topk_ratio=self.nrrl_cfg["kd_topk_ratio"],
+            kd_reach_margin=self.nrrl_cfg["kd_reach_margin"],
+            kd_reach_tau=self.nrrl_cfg["kd_reach_tau"],
+            kd_reach_use_capped_gap=self.nrrl_cfg["kd_reach_use_capped_gap"],
+            kd_reach_detach_weight=self.nrrl_cfg["kd_reach_detach_weight"],
+            kd_reach_min_weight=self.nrrl_cfg["kd_reach_min_weight"],
+            kd_reach_conf_power=self.nrrl_cfg["kd_reach_conf_power"],
+            kd_reach_active_threshold=self.nrrl_cfg["kd_reach_active_threshold"],
             kd_calibration_mode=self.explore_cfg["kd_calibration_mode"],
             student_branch_mode=self.explore_cfg["student_branch_mode"],
             teacher_feature_mode=self.explore_cfg["teacher_feature_mode"],
+            kd_target_branch=self.tskd_cfg["kd_target_branch"],
             kd_mechanism=self.explore_cfg["kd_mechanism"],
             contrastive_temperature=self.explore_cfg["contrastive_temperature"],
             comparison_kd_profile=self.comparison_cfg["comparison_kd_profile"],
@@ -488,6 +655,7 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
 
     def __init__(self, cfg=DEFAULT_CFG, overrides: dict | None = None, _callbacks: dict | None = None):
         overrides = {} if overrides is None else dict(overrides)
+        overrides = _merge_hbb_resume_custom_overrides(overrides)
         phase = str(overrides.pop("phase", "")).lower()
         if phase not in {"a1", "a2", "b", "c", "b1", "b2"}:
             raise ValueError(
@@ -844,11 +1012,14 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
         enable_student_rec = self.explore_cfg["student_branch_mode"] == "split" or force_student_rec
         teacher_decomposed = self.explore_cfg["teacher_feature_mode"] == "decomposed"
         teacher_projected_raw = self.explore_cfg["teacher_feature_mode"] == "projected_raw"
-        if phase in {"a1", "a2"} and (not student_branch_use_zs or not teacher_decomposed):
+        teacher_raw_weak_reach = self.explore_cfg["teacher_feature_mode"] == "raw_weak_reach"
+        teacher_weak_reach = teacher_projected_raw or teacher_raw_weak_reach
+        teacher_task_enabled = teacher_decomposed or teacher_projected_raw
+        if phase in {"a1", "a2"} and not (teacher_decomposed or teacher_weak_reach):
             if self.explore_cfg["student_branch_mode"] != "raw":
                 raise ValueError(
-                    "A1/A2 only support student_branch_mode in {'split', 'single_proj', 'raw'} and "
-                    "teacher_feature_mode='decomposed'."
+                    "A1/A2 only support teacher_feature_mode in {'decomposed', 'projected_raw', "
+                    "'raw_weak_reach'} unless student_branch_mode='raw'."
                 )
         use_reach_adapter = self.nrrl_cfg["reach_input_mode"] == "adapter"
         c_weak_nrrl_scale = max(float(self.manual_phase_cfg["c_weak_nrrl_scale"]), 0.0)
@@ -863,39 +1034,40 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
 
         b_a2_core = bool(self.diagnostic_cfg.get("ladd_b_a2_core", False))
         b_frozen_reach_probe = bool(self.diagnostic_cfg.get("ladd_b_frozen_reach_probe", False))
+        b_detach_reach_probe = bool(self.diagnostic_cfg.get("ladd_b_detach_reach_probe", b_frozen_reach_probe))
         if phase == "a1":
             self._set_module_requires_grad(model.model, False)
             self._set_module_requires_grad(model.student_split, False)
-            self._set_module_requires_grad(model.teacher_decomposition, True)
-            self._set_module_requires_grad(model.teacher_decoder, True)
-            self._set_module_requires_grad(model.student_reachability, use_reach_adapter)
-            self._set_module_requires_grad(model.teacher_task_heads, True)
-            self._set_reachability_enabled(True)
+            self._set_module_requires_grad(model.teacher_decomposition, teacher_decomposed)
+            self._set_module_requires_grad(model.teacher_decoder, teacher_decomposed or teacher_projected_raw)
+            self._set_module_requires_grad(model.student_reachability, (teacher_decomposed or teacher_weak_reach) and use_reach_adapter)
+            self._set_module_requires_grad(model.teacher_task_heads, teacher_task_enabled)
+            self._set_reachability_enabled(teacher_decomposed or teacher_weak_reach)
             self._set_phase_target_modes(reach_target_mode="coupled", kd_target_mode="detach")
             self._set_phase_loss_scales(
                 det=det_scale,
-                rec=1.0,
-                match=1.0,
-                unmatch=1.0,
-                task=1.0,
+                rec=(1.0 if teacher_decomposed else 0.0),
+                match=(1.0 if (teacher_decomposed or teacher_weak_reach) else 0.0),
+                unmatch=(1.0 if teacher_decomposed else 0.0),
+                task=(1.0 if teacher_task_enabled else 0.0),
                 kd=0.0,
                 student_rec=0.0,
             )
         elif phase == "a2":
             self._set_module_requires_grad(model.model, True)
             self._set_module_requires_grad(model.student_split, False)
-            self._set_module_requires_grad(model.teacher_decomposition, True)
-            self._set_module_requires_grad(model.teacher_decoder, True)
-            self._set_module_requires_grad(model.student_reachability, use_reach_adapter)
-            self._set_module_requires_grad(model.teacher_task_heads, True)
-            self._set_reachability_enabled(True)
+            self._set_module_requires_grad(model.teacher_decomposition, teacher_decomposed)
+            self._set_module_requires_grad(model.teacher_decoder, teacher_decomposed or teacher_projected_raw)
+            self._set_module_requires_grad(model.student_reachability, (teacher_decomposed or teacher_weak_reach) and use_reach_adapter)
+            self._set_module_requires_grad(model.teacher_task_heads, teacher_task_enabled)
+            self._set_reachability_enabled(teacher_decomposed or teacher_weak_reach)
             self._set_phase_target_modes(reach_target_mode="coupled", kd_target_mode="detach")
             self._set_phase_loss_scales(
                 det=det_scale,
-                rec=1.0,
-                match=1.0,
-                unmatch=1.0,
-                task=1.0,
+                rec=(1.0 if teacher_decomposed else 0.0),
+                match=(1.0 if (teacher_decomposed or teacher_weak_reach) else 0.0),
+                unmatch=(1.0 if teacher_decomposed else 0.0),
+                task=(1.0 if teacher_task_enabled else 0.0),
                 kd=0.0,
                 student_rec=0.0,
             )
@@ -906,21 +1078,21 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             self._set_module_requires_grad(model.teacher_decoder, b_a2_core or teacher_projected_raw)
             self._set_module_requires_grad(
                 model.student_reachability,
-                b_a2_core and use_reach_adapter and not b_frozen_reach_probe,
+                b_a2_core and (teacher_decomposed or teacher_weak_reach) and use_reach_adapter and not b_frozen_reach_probe,
             )
-            self._set_module_requires_grad(model.teacher_task_heads, b_a2_core)
-            self._set_reachability_enabled(b_a2_core)
-            self._set_reach_student_detach(b_a2_core and b_frozen_reach_probe)
+            self._set_module_requires_grad(model.teacher_task_heads, b_a2_core and teacher_task_enabled)
+            self._set_reachability_enabled(b_a2_core and (teacher_decomposed or teacher_weak_reach))
+            self._set_reach_student_detach(b_a2_core and b_detach_reach_probe)
             self._set_phase_target_modes(
                 reach_target_mode=("coupled" if b_a2_core else "detach"),
                 kd_target_mode="detach",
             )
             self._set_phase_loss_scales(
                 det=det_scale,
-                rec=(1.0 if b_a2_core else 0.0),
-                match=(1.0 if b_a2_core else 0.0),
-                unmatch=(1.0 if b_a2_core else 0.0),
-                task=(1.0 if b_a2_core else 0.0),
+                rec=(1.0 if b_a2_core and teacher_decomposed else 0.0),
+                match=(1.0 if b_a2_core and (teacher_decomposed or teacher_weak_reach) else 0.0),
+                unmatch=(1.0 if b_a2_core and teacher_decomposed else 0.0),
+                task=(1.0 if b_a2_core and teacher_task_enabled else 0.0),
                 kd=1.0,
                 student_rec=(1.0 if enable_student_rec else 0.0),
             )
@@ -930,8 +1102,8 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             self._set_module_requires_grad(model.teacher_decomposition, teacher_decomposed)
             self._set_module_requires_grad(model.teacher_decoder, teacher_decomposed or teacher_projected_raw)
             self._set_module_requires_grad(model.student_reachability, False)
-            self._set_module_requires_grad(model.teacher_task_heads, teacher_decomposed)
-            self._set_reachability_enabled(c_enable_weak_nrrl or c_enable_frozen_reach_rank)
+            self._set_module_requires_grad(model.teacher_task_heads, teacher_task_enabled)
+            self._set_reachability_enabled((c_enable_weak_nrrl or c_enable_frozen_reach_rank) and (teacher_decomposed or teacher_weak_reach))
             self._set_reach_student_detach(
                 (c_enable_weak_nrrl and bool(self.manual_phase_cfg["c_weak_nrrl_detach_student"]))
                 or reach_c_mode in {"rank", "weight"}
@@ -943,9 +1115,9 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             self._set_phase_loss_scales(
                 det=det_scale,
                 rec=(1.0 if teacher_decomposed else 0.0),
-                match=c_weak_nrrl_scale,
-                unmatch=(c_weak_nrrl_scale if c_enable_weak_nrrl else lambda_reach_c if c_enable_frozen_reach_rank else 0.0),
-                task=(1.0 if teacher_decomposed else 0.0),
+                match=(c_weak_nrrl_scale if (teacher_decomposed or teacher_weak_reach) else 0.0),
+                unmatch=(c_weak_nrrl_scale if c_enable_weak_nrrl and teacher_decomposed else lambda_reach_c if c_enable_frozen_reach_rank and teacher_decomposed else 0.0),
+                task=(1.0 if teacher_task_enabled else 0.0),
                 kd=1.0,
                 student_rec=(1.0 if enable_student_rec else 0.0),
             )
@@ -976,8 +1148,8 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             self._set_module_requires_grad(model.teacher_decomposition, teacher_decomposed)
             self._set_module_requires_grad(model.teacher_decoder, teacher_decomposed or teacher_projected_raw)
             self._set_module_requires_grad(model.student_reachability, False)
-            self._set_module_requires_grad(model.teacher_task_heads, teacher_decomposed)
-            self._set_reachability_enabled(c_enable_weak_nrrl or c_enable_frozen_reach_rank)
+            self._set_module_requires_grad(model.teacher_task_heads, teacher_task_enabled)
+            self._set_reachability_enabled((c_enable_weak_nrrl or c_enable_frozen_reach_rank) and (teacher_decomposed or teacher_weak_reach))
             self._set_reach_student_detach(
                 (c_enable_weak_nrrl and bool(self.manual_phase_cfg["c_weak_nrrl_detach_student"]))
                 or reach_c_mode in {"rank", "weight"}
@@ -989,9 +1161,9 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             self._set_phase_loss_scales(
                 det=det_scale,
                 rec=(1.0 if teacher_decomposed else 0.0),
-                match=c_weak_nrrl_scale,
-                unmatch=(c_weak_nrrl_scale if c_enable_weak_nrrl else lambda_reach_c if c_enable_frozen_reach_rank else 0.0),
-                task=(1.0 if teacher_decomposed else 0.0),
+                match=(c_weak_nrrl_scale if (teacher_decomposed or teacher_weak_reach) else 0.0),
+                unmatch=(c_weak_nrrl_scale if c_enable_weak_nrrl and teacher_decomposed else lambda_reach_c if c_enable_frozen_reach_rank and teacher_decomposed else 0.0),
+                task=(1.0 if teacher_task_enabled else 0.0),
                 kd=1.0,
                 student_rec=(1.0 if enable_student_rec else 0.0),
             )
@@ -1028,8 +1200,14 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             patience=int(self.args.patience),
             min_epochs=self._resolve_phase_min_epochs(),
         )
-        self._maybe_reset_student_from_scratch_for_phase_b()
-        self._maybe_apply_b_split_load()
+        if self.resume and self.start_epoch > 0:
+            LOGGER.info(
+                "Manual phase resume: skip phase-B initialization hooks "
+                f"(start_epoch={self.start_epoch}, resume={self.args.resume})."
+            )
+        else:
+            self._maybe_reset_student_from_scratch_for_phase_b()
+            self._maybe_apply_b_split_load()
         self._apply_manual_phase(announce=True)
         self._refresh_effective_ladd_weights()
         self._warn_conflicting_warmup_modes()
@@ -1156,6 +1334,12 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             f"alpha_kd={float(self.tskd_cfg['alpha_kd'])} "
             f"base_alpha_kd={float(weights.get('base_alpha_kd', self.tskd_cfg['alpha_kd']))} "
             f"effective_alpha_kd={float(weights.get('alpha_kd', 0.0))} "
+            f"rank_d_neg_cap={float(self.nrrl_cfg.get('rank_d_neg_cap', 4.0))} "
+            f"normalize_reach={bool(self.nrrl_cfg.get('normalize_reach', True))} "
+            f"kd_weight_mode={self.nrrl_cfg.get('kd_weight_mode', 'none')} "
+            f"kd_target_branch={self.tskd_cfg.get('kd_target_branch', 'z')} "
+            f"kd_reach_use_capped_gap={bool(self.nrrl_cfg.get('kd_reach_use_capped_gap', True))} "
+            f"kd_reach_tau={float(self.nrrl_cfg.get('kd_reach_tau', 0.2))} "
             f"kd_multiplier={float(weights.get('kd_multiplier', 1.0))} "
             f"kd_warmup_active={bool(weights.get('kd_warmup_active', 0.0))} "
             f"ladd_kd_decay_mode={self.diagnostic_cfg.get('ladd_kd_decay_mode', 'none')} "
@@ -1172,8 +1356,11 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             f"b_loss_warmup_active={bool(weights.get('b_loss_warmup_active', 0.0))} "
             f"ladd_b_a2_core={bool(self.diagnostic_cfg.get('ladd_b_a2_core', False))} "
             f"ladd_b_frozen_reach_probe={bool(self.diagnostic_cfg.get('ladd_b_frozen_reach_probe', False))} "
+            f"ladd_b_detach_reach_probe={bool(self.diagnostic_cfg.get('ladd_b_detach_reach_probe', False))} "
+            f"ladd_b_keep_reach_probe_grad={bool(self.diagnostic_cfg.get('ladd_b_keep_reach_probe_grad', False))} "
             f"ladd_b_det_only={bool(self.diagnostic_cfg.get('ladd_b_det_only', False))} "
             f"ladd_a2_det_only={bool(self.diagnostic_cfg.get('ladd_a2_det_only', False))} "
+            f"shuffle_teacher_pairs={bool(self.diagnostic_cfg.get('shuffle_teacher_pairs', False))} "
             f"ladd_diag_log_grad={bool(self.diagnostic_cfg.get('ladd_diag_log_grad', False))} "
             f"ladd_grad_clip={grad_clip_label} "
             f"ladd_grad_clip_norm={grad_clip_norm} "
@@ -1362,6 +1549,12 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
         )
         return {key: raw_stats.get(key, 0.0) for key in keys}
 
+    def _collect_capr_diagnostic_stats(self) -> dict:
+        criterion = getattr(unwrap_model(self.model), "criterion", None)
+        if criterion is None or not hasattr(criterion, "consume_ladd_diagnostic_stats"):
+            return {}
+        return criterion.consume_ladd_diagnostic_stats()
+
     def _append_ladd_diagnostics(self, metrics: dict) -> None:
         if RANK not in {-1, 0}:
             return
@@ -1372,6 +1565,9 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
         weights = self._refresh_effective_ladd_weights()
         bn_stats = self._collect_bn_stats()
         cmdistill_stats = self._collect_cmdistill_stats()
+        capr_stats = self._collect_capr_diagnostic_stats()
+        # Diagnostic-only capR fields may be NaN when a mask is empty (e.g. no FG tokens in a logged batch).
+        # Do not treat those expected missing statistics as a training NaN/Inf.
         nonfinite_metrics_or_cmdistill = int(
             self._has_nonfinite(list(metrics.values()) + list(cmdistill_stats.values()))
         )
@@ -1397,6 +1593,26 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             "kd_loss": self._metric_value(metrics, "train/kd_loss"),
             "reach_match_loss": self._metric_value(metrics, "train/reach_match_loss"),
             "reach_rank_loss": self._metric_value(metrics, "train/reach_rank_loss"),
+            "rank_d_neg_cap": float(self.nrrl_cfg.get("rank_d_neg_cap", 4.0)),
+            "normalize_reach": int(bool(self.nrrl_cfg.get("normalize_reach", True))),
+            "capR_effectively_enabled": int(
+                bool(self.nrrl_cfg.get("normalize_reach", True))
+                and float(self.nrrl_cfg.get("rank_d_neg_cap", 4.0)) < 4.0
+            ),
+            "reach_delta": float(self.nrrl_cfg.get("delta", 0.2)),
+            "reach_input_mode": self.nrrl_cfg.get("reach_input_mode", "adapter"),
+            "use_fg_mask_for_reach": int(bool(self.nrrl_cfg.get("use_fg_mask_for_reach", False))),
+            "kd_weight_mode": self.nrrl_cfg.get("kd_weight_mode", "none"),
+            "kd_target_branch": self.tskd_cfg.get("kd_target_branch", "z"),
+            "kd_reach_margin": float(self.nrrl_cfg.get("kd_reach_margin", 0.0)),
+            "kd_reach_tau": float(self.nrrl_cfg.get("kd_reach_tau", 0.2)),
+            "kd_reach_use_capped_gap": int(bool(self.nrrl_cfg.get("kd_reach_use_capped_gap", True))),
+            "kd_reach_detach_weight": int(bool(self.nrrl_cfg.get("kd_reach_detach_weight", True))),
+            "kd_reach_min_weight": float(self.nrrl_cfg.get("kd_reach_min_weight", 0.0)),
+            "kd_reach_conf_power": float(self.nrrl_cfg.get("kd_reach_conf_power", 1.0)),
+            "kd_reach_active_threshold": float(self.nrrl_cfg.get("kd_reach_active_threshold", 0.5)),
+            "shuffle_teacher_pairs": int(bool(self.diagnostic_cfg.get("shuffle_teacher_pairs", False))),
+            **capr_stats,
             **cmdistill_stats,
             **bn_stats,
             "bn_stats_mode": self._bn_stats_mode_label(),
@@ -1423,6 +1639,8 @@ class ManualPhaseTeacherStudentDecompositionKDNRRLTeacherUAuxTrainer(
             "b_loss_warmup_active": int(bool(weights.get("b_loss_warmup_active", 0.0))),
             "ladd_b_a2_core": int(self.diagnostic_cfg.get("ladd_b_a2_core", False)),
             "ladd_b_frozen_reach_probe": int(self.diagnostic_cfg.get("ladd_b_frozen_reach_probe", False)),
+            "ladd_b_detach_reach_probe": int(self.diagnostic_cfg.get("ladd_b_detach_reach_probe", False)),
+            "ladd_b_keep_reach_probe_grad": int(self.diagnostic_cfg.get("ladd_b_keep_reach_probe_grad", False)),
             "ladd_b_det_only": int(self.diagnostic_cfg.get("ladd_b_det_only", False)),
             "ladd_a2_det_only": int(self.diagnostic_cfg.get("ladd_a2_det_only", False)),
             "effective_alpha_s_rec": float(weights.get("alpha_s_rec", 0.0)),
