@@ -693,3 +693,43 @@ python docs/experiments/monitor_ladd_capr_gatedkd_20260624.py \
   - 3090 已经接近满载且无错误，不额外塞任务。
   - 4090 虽有显存余量，但当前 capR/gatedKD 关键组还未到 20-row 机制判断点；先不杀低优先级 resume 线，避免在判断 gate 是否全开前引入新的混杂。
   - 下一触发点：paired/wo_srec/shuffled gatedKD 均达到 >=20 rows。若 `kd_active_ratio` 仍接近 1.0，再记录 gate 全开问题，并考虑在 4090 停低优先级 resume 线后补 `dynamic_capR2_gatedKD_toU_yoloinit` 或更尖锐 gate 变体。
+
+### 2026-06-25 04:30 CST
+
+- 轻量续跑检查：
+  - 3090 GPU0/GPU1: 20244/24576 MiB、20932/24576 MiB，util 99%/99%；仍是接近满载的安全高占用。
+  - 4090 GPU0/GPU1: 12060/24564 MiB、8531/24564 MiB，util 98%/84%；`dynamic_resume` 继续保护运行。
+  - 3090 capR retry-cache 日志仍未发现 Traceback / RuntimeError / CUDA OOM / NaN / FileNotFound / AssertionError / batch fallback。
+  - 4090 当前有效 `021121` 日志仍未发现 Traceback / RuntimeError / CUDA OOM / NaN / FileNotFound / AssertionError / batch fallback。
+- 新 capR/gatedKD retry 组状态：
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | capR | cap saturation | rank active | kd active | status |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| dynamic_capR2_yoloinit | 13 | 0.12257 | 0.12257 | 0.07389 | -0.01185 | -0.00135 | True | 0.999948 | 0.000000 | n/a | pre100 |
+| dynamic_capR4_yoloinit retry | 13 | 0.12881 | 0.12881 | 0.06887 | -0.00561 | -0.00637 | False | 0.000000 | 0.000001 | n/a | pre100 |
+| dynamic_capR2_gatedKD retry | 12 | 0.10831 | 0.11051 | 0.05826 | -0.01650 | -0.01205 | True | 0.999952 | 0.000000 | 1.000000 | pre100 |
+| dynamic_capR2_gatedKD_wo_srec retry | 11 | 0.11465 | 0.11465 | 0.05960 | +0.00257 | -0.00575 | True | 0.999750 | 0.000000 | 1.000000 | pre100 |
+| dynamic_capR2_gatedKD_shuffledT retry | 11 | 0.10759 | 0.10785 | 0.06523 | -0.00449 | -0.00012 | True | 0.999971 | 0.000000 | 1.000000 | pre100 |
+
+- 3090 旧 dynamic 线最新状态：
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | status |
+|---|---:|---:|---:|---:|---:|---:|---|
+| dynamic_singleproj | 319 | 0.47081 | 0.47081 | 0.46820 | +0.01547 | +0.01557 | PROMISING_EARLY |
+| dynamic_wo_s_rec | 335 | 0.47274 | 0.47274 | 0.46852 | +0.01164 | +0.01067 | PROMISING_EARLY |
+| dynamic_plain | 207 | 0.41238 | 0.41238 | 0.40712 | +0.00498 | +0.00533 | WATCH |
+| dynamic_reach_rawinput | 179 | 0.40197 | 0.40197 | 0.39722 | +0.01179 | +0.01208 | PROMISING_EARLY |
+
+- 4090 resume/context 最新状态：
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | note |
+|---|---:|---:|---:|---:|---|
+| det-only resume | 84 | 0.52668 | 0.52668 | 0.52441 | same-pipeline context |
+| dynamic_resume | 67 | 0.48802 | 0.48802 | 0.48635 | protected dynamic, running |
+| dynamic_kd0p5 | 67 | 0.36675 | 0.36675 | 0.36146 | low context |
+| dynamic_reach0p5 | 67 | 0.36845 | 0.36845 | 0.36318 | low context |
+| dynamic_srec0p05 | 68 | 0.36502 | 0.36502 | 0.35866 | low context |
+
+- 调度决定：
+  - gatedKD 三条线仍只有 11-12 rows，尚未到 >=20 rows 的 gate/selectivity 判断点。
+  - `kd_active_ratio` 仍约 1.0，但按清单先等 20-row 触发点；当前不停止、不新增。
