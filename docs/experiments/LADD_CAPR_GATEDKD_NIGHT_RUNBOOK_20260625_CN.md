@@ -1453,3 +1453,42 @@ python docs/experiments/monitor_ladd_capr_gatedkd_20260624.py \
   - 3090 capR/gatedKD 仍未到 50 rows；`capR2_gatedKD` latest/late20 仍明显负于 same-machine baseline，shuffledT 不弱于 paired。
   - gate 继续近似全开，`kd_active_ratio` 接近 1。
   - 不新增、不停止；继续保护 dynamic 主线并等待触发点。
+
+### 2026-06-25 05:22 CST
+
+- 3090 GPU0/GPU1: 20244/24576 MiB、20934/24576 MiB，util 99%/100%；磁盘 40G/50G，剩余 11G，使用率 79%。
+- 4090 GPU0/GPU1: 15644/24564 MiB、15694/24564 MiB，util 99%/99%；磁盘 48G/50G，剩余 2.4G，使用率 96%。
+- 当前有效日志扫描仍无 Traceback / RuntimeError / CUDA OOM / NaN / FileNotFound / batch fallback / No space left。
+
+#### 3090 capR/gatedKD
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | capR | cap saturation | rank active | kd active | status |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| dynamic_capR2_yoloinit | 29 | 0.21179 | 0.21179 | 0.16024 | +0.00444 | -0.00140 | True | 0.999955 | 0.000126 | n/a | pre100 |
+| dynamic_capR4_yoloinit retry | 28 | 0.20241 | 0.20241 | 0.14968 | -0.00168 | -0.00610 | False | 0.000000 | 0.000114 | n/a | pre100 |
+| dynamic_capR2_gatedKD retry | 27 | 0.18657 | 0.18657 | 0.13935 | -0.02075 | -0.01082 | True | 0.999983 | 0.000003 | 1.000000 | pre100 |
+| dynamic_capR2_gatedKD_wo_srec retry | 26 | 0.17699 | 0.17921 | 0.13427 | -0.01294 | -0.00989 | True | 0.999978 | 0.000000 | 1.000000 | pre100 |
+| dynamic_capR2_gatedKD_shuffledT retry | 25 | 0.18914 | 0.18914 | 0.13565 | -0.00648 | -0.00192 | True | 0.999986 | 0.000000 | 1.000000 | pre100 |
+
+#### 3090 旧 dynamic 主线
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | status |
+|---|---:|---:|---:|---:|---:|---:|---|
+| dynamic_singleproj | 337 | 0.47754 | 0.47763 | 0.47370 | +0.01577 | +0.01518 | PROMISING_EARLY |
+| dynamic_wo_s_rec | 354 | 0.48049 | 0.48049 | 0.47658 | +0.01438 | +0.01283 | PROMISING_EARLY |
+| dynamic_plain | 226 | 0.42238 | 0.42238 | 0.41738 | +0.00544 | +0.00511 | WATCH |
+| dynamic_reach_rawinput | 199 | 0.41302 | 0.41302 | 0.40735 | +0.00994 | +0.01061 | PROMISING_EARLY |
+
+#### 4090 `zw1cache` fresh 负控制组
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | latest delta vs detonly | late20 delta vs detonly | capR | cap saturation | rank active | kd active | note |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| 4090zw1cache_detonly_control | 11 | 0.12418 | 0.12418 | 0.07089 | n/a | n/a | n/a | n/a | n/a | n/a | same-group control |
+| 4090zw1cache_capR2_gatedKD_z | 9 | 0.10207 | 0.10207 | 0.05807 | +0.00144 | -0.00169 | True | 0.995095 | 0.000018 | 1.000000 | health only |
+| 4090zw1cache_capR2_gatedKD_toU | 10 | 0.10595 | 0.10595 | 0.06168 | -0.01185 | -0.00389 | True | 0.994944 | 0.000186 | 1.000000 | negative control; health only |
+
+- 机制/调度判断：
+  - 4090 fresh 组仍未到 20 rows；det-only raw late-window 继续领先 z/toU。
+  - 3090 capR/gatedKD 仍未到 50 rows；paired gatedKD 仍未体现优于 shuffledT 的趋势。
+  - gate 仍几乎全开，`kd_active_ratio` 接近 1。
+  - 不新增、不停止；继续保护 dynamic 主线并等待早筛触发点。
