@@ -648,3 +648,48 @@ python docs/experiments/monitor_ladd_capr_gatedkd_20260624.py \
 
 - 调度决定：
   - 不停止、不新增；等待 gatedKD 系列 >=20 rows 后再判断 gate 全开问题和 shuffledT 负控制风险。
+
+### 2026-06-25 04:28 CST
+
+- 压缩后接管检查：
+  - 本地 goal 仍为 active，目标为执行本 runbook 的 LADD capR/gatedKD 夜间清单。
+  - heartbeat 自动化 `ladd-capr-gatedkd-overnight-runner` 可 view，继续作为 30 分钟续跑入口。
+  - 上一轮提交 `301ef4d Record shuffled teacher ten-row check` 已确认推送到远端分支 `codex/ladd-capr-audit-and-gated-kd-v1`。
+- 服务器负载：
+  - 3090 GPU0/GPU1: 20244/24576 MiB、20932/24576 MiB，util 99%/100%；两张卡已经在安全高占用区间，不再追加任务。
+  - 4090 GPU0/GPU1: 12060/24564 MiB、8531/24564 MiB，util 99%/89%；`dynamic_resume` 继续保护运行，其他低优先级 resume 线可在后续需要 capR 负控制时让路。
+  - 3090 capR retry-cache 日志未发现 Traceback / RuntimeError / CUDA OOM / NaN / FileNotFound / AssertionError / batch fallback。
+  - 4090 当前有效 `021121` 日志未发现 Traceback / RuntimeError / CUDA OOM / NaN / FileNotFound / AssertionError / batch fallback。
+- 新 capR/gatedKD retry 组状态：
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | capR | cap saturation | rank active | kd active | status |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| dynamic_capR2_yoloinit | 13 | 0.12257 | 0.12257 | 0.07389 | -0.01185 | -0.00135 | True | 0.999948 | 0.000000 | n/a | pre100 |
+| dynamic_capR4_yoloinit retry | 12 | 0.11166 | 0.11554 | 0.06388 | -0.01315 | -0.00643 | False | 0.000000 | 0.000000 | n/a | pre100 |
+| dynamic_capR2_gatedKD retry | 12 | 0.10831 | 0.11051 | 0.05826 | -0.01650 | -0.01205 | True | 0.999952 | 0.000000 | 1.000000 | pre100 |
+| dynamic_capR2_gatedKD_wo_srec retry | 11 | 0.11465 | 0.11465 | 0.05960 | +0.00257 | -0.00575 | True | 0.999750 | 0.000000 | 1.000000 | pre100 |
+| dynamic_capR2_gatedKD_shuffledT retry | 11 | 0.10759 | 0.10785 | 0.06523 | -0.00449 | -0.00012 | True | 0.999971 | 0.000000 | 1.000000 | pre100 |
+
+- 3090 旧 dynamic 线最新状态：
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | status |
+|---|---:|---:|---:|---:|---:|---:|---|
+| dynamic_singleproj | 318 | 0.46973 | 0.47073 | 0.46783 | +0.01456 | +0.01549 | PROMISING_EARLY |
+| dynamic_wo_s_rec | 334 | 0.47225 | 0.47225 | 0.46810 | +0.01150 | +0.01059 | PROMISING_EARLY |
+| dynamic_plain | 207 | 0.41238 | 0.41238 | 0.40712 | +0.00498 | +0.00533 | WATCH |
+| dynamic_reach_rawinput | 179 | 0.40197 | 0.40197 | 0.39722 | +0.01179 | +0.01208 | PROMISING_EARLY |
+
+- 4090 resume/context 最新状态：
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | note |
+|---|---:|---:|---:|---:|---|
+| det-only resume | 83 | 0.52637 | 0.52637 | 0.52419 | same-pipeline context |
+| dynamic_resume | 66 | 0.48764 | 0.48764 | 0.48617 | protected dynamic, running |
+| dynamic_kd0p5 | 66 | 0.36631 | 0.36631 | 0.36091 | low context |
+| dynamic_reach0p5 | 66 | 0.36751 | 0.36751 | 0.36266 | low context |
+| dynamic_srec0p05 | 67 | 0.36443 | 0.36443 | 0.35804 | low context |
+
+- 调度决定：
+  - 3090 已经接近满载且无错误，不额外塞任务。
+  - 4090 虽有显存余量，但当前 capR/gatedKD 关键组还未到 20-row 机制判断点；先不杀低优先级 resume 线，避免在判断 gate 是否全开前引入新的混杂。
+  - 下一触发点：paired/wo_srec/shuffled gatedKD 均达到 >=20 rows。若 `kd_active_ratio` 仍接近 1.0，再记录 gate 全开问题，并考虑在 4090 停低优先级 resume 线后补 `dynamic_capR2_gatedKD_toU_yoloinit` 或更尖锐 gate 变体。
