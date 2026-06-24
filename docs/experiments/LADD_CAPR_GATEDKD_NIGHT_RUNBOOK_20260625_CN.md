@@ -34,11 +34,11 @@ Goal 简述：执行本清单，完成 capR/gatedKD 代码同步、smoke、已�
 
 待办：
 
-- [ ] 确认本地分支 `codex/ladd-capr-audit-and-gated-kd-v1` 上代码完整。
-- [ ] 将本分支 commit/push 到 GitHub，commit body 说明无 checkpoint/大文件。
-- [ ] 同步代码到 `ladd4090-zw1:/root/shared-nvme/LADD_public`。
-- [ ] 同步代码到 `ladd3090-zw1:/root/shared-nvme/LADD_public`。
-- [ ] 在两台服务器分别运行 `python -m py_compile` 检查关键文件。
+- [x] 确认本地分支 `codex/ladd-capr-audit-and-gated-kd-v1` 上代码完整。
+- [x] 将本分支 commit/push 到 GitHub，commit body 说明无 checkpoint/大文件。
+- [x] 同步代码到 `ladd4090-zw1:/root/shared-nvme/LADD_public`。
+- [x] 同步代码到 `ladd3090-zw1:/root/shared-nvme/LADD_public`。
+- [x] 在两台服务器分别运行 `python -m py_compile` 检查关键文件。
 
 完成条件：
 
@@ -49,11 +49,11 @@ Goal 简述：执行本清单，完成 capR/gatedKD 代码同步、smoke、已�
 
 待办：
 
-- [ ] 检查两台服务器 GPU 显存/利用率。
-- [ ] 列出当前训练进程、PID、run name、GPU、rows、latest/best/late20。
-- [ ] 确认 `dynamic` 相关任务是否还在跑；若因关机中断，定位最后 checkpoint/last.pt，按原协议恢复。
-- [ ] 标记可停止任务：LOW_PRIORITY、错误落卡、fallback、重复旧探索。
-- [ ] 停止低优先级任务前记录 PID、run_dir、原因到本文末尾日志。
+- [x] 检查两台服务器 GPU 显存/利用率。
+- [x] 列出当前训练进程、PID、run name、GPU、rows、latest/best/late20。
+- [x] 确认 `dynamic` 相关任务是否还在跑；若因关机中断，定位最后 checkpoint/last.pt，按原协议恢复。
+- [x] 标记可停止任务：LOW_PRIORITY、错误落卡、fallback、重复旧探索。
+- [x] 停止低优先级任务前记录 PID、run_dir、原因到本文末尾日志。
 
 完成条件：
 
@@ -66,10 +66,10 @@ Goal 简述：执行本清单，完成 capR/gatedKD 代码同步、smoke、已�
 
 必跑：
 
-- [ ] det-only smoke：`--ladd-b-det-only --epochs 1 --max-train-batches 2`
-- [ ] capR-gated KD smoke：`--rank-d-neg-cap 2.0 --kd-weight-mode cap_reachability_gap --kd-reach-tau 0.2`
-- [ ] shuffled teacher smoke：同上 + `--shuffle-teacher-pairs`
-- [ ] KD-to-u smoke：同上 + `--kd-target-branch u`
+- [x] det-only smoke：`--ladd-b-det-only --epochs 1 --max-train-batches 2`
+- [x] capR-gated KD smoke：`--rank-d-neg-cap 2.0 --kd-weight-mode cap_reachability_gap --kd-reach-tau 0.2`
+- [x] shuffled teacher smoke：同上 + `--shuffle-teacher-pairs`
+- [x] KD-to-u smoke：同上 + `--kd-target-branch u`
 
 完成条件：
 
@@ -84,14 +84,14 @@ Goal 简述：执行本清单，完成 capR/gatedKD 代码同步、smoke、已�
 
 待审计：
 
-- [ ] `dynamic_plain_yoloinit`
-- [ ] `dynamic_wo_s_rec_yoloinit`
-- [ ] `dynamic_singleproj_yoloinit`
-- [ ] `dynamic_wo_reach_yoloinit`
-- [ ] 4090 `dynamic`
-- [ ] 4090 `ProbeA`
-- [ ] 4090 `oldcommit_ProbeA`
-- [ ] same-machine det-only controls
+- [x] `dynamic_plain_yoloinit`
+- [x] `dynamic_wo_s_rec_yoloinit`
+- [x] `dynamic_singleproj_yoloinit`
+- [x] `dynamic_wo_reach_yoloinit`
+- [x] 4090 `dynamic`
+- [x] 4090 `ProbeA`
+- [x] 4090 `oldcommit_ProbeA`
+- [x] same-machine det-only controls
 
 工具：
 
@@ -119,8 +119,11 @@ python ladd/code/tools/inspect_ladd_run_args.py --run-dir <run_dir>
 - [ ] dynamic_plain shuffled
 - [ ] dynamic_wo_s_rec paired
 - [ ] dynamic_wo_s_rec shuffled
-- [ ] dynamic_singleproj paired
+- [x] dynamic_singleproj paired（已完成 CPU mini audit）
+- [x] dynamic_singleproj shuffled（已完成 CPU mini audit）
 - [ ] dynamic_wo_reach paired
+
+说明：本轮已完成 `dynamic_singleproj` paired/shuffled mini audit，并修复 audit 工具；其余 learnability audit 尚未全量执行，不能视为完整机制闭环。
 
 工具：
 
@@ -158,12 +161,14 @@ python ladd/code/tools/audit_ladd_learnability_hbb.py \
 
 优先启动：
 
-- [ ] `dynamic_capR2_yoloinit`
-- [ ] `dynamic_capR4_yoloinit`
-- [ ] `dynamic_capR2_gatedKD_yoloinit`
-- [ ] `dynamic_capR2_gatedKD_wo_srec_yoloinit`
-- [ ] `dynamic_capR2_gatedKD_shuffledT_yoloinit`
-- [ ] `dynamic_capR2_gatedKD_toU_yoloinit`
+- [x] `dynamic_capR2_yoloinit`
+- [x] `dynamic_capR4_yoloinit`
+- [x] `dynamic_capR2_gatedKD_yoloinit`
+- [x] `dynamic_capR2_gatedKD_wo_srec_yoloinit`
+- [x] `dynamic_capR2_gatedKD_shuffledT_yoloinit`
+- [x] `dynamic_capR2_gatedKD_toU_yoloinit`
+
+说明：上述 early-screen run 已启动或在 4090 fresh group 中补齐负控制；截至 05:28 CST 仍未达到正式 100-epoch 早筛点。
 
 早筛标准：
 
@@ -190,14 +195,16 @@ python docs/experiments/monitor_ladd_capr_gatedkd_20260624.py \
 
 ## 8. 明早应交付
 
-- [ ] 本 MD 更新了夜间执行日志。
-- [ ] GitHub 上有本分支 commit/push。
+- [x] 本 MD 更新了夜间执行日志。
+- [x] GitHub 上有本分支 commit/push。
 - [ ] 两台服务器状态表：GPU、PID、run、rows、latest/best/late20、预计完成时间。
-- [ ] smoke 结果路径与结论。
-- [ ] 已有 run capR audit 表。
-- [ ] learnability audit 初步结果。
-- [ ] 第一批 capR/gatedKD early-screen 运行状态。
-- [ ] 若任何步骤阻塞，写明阻塞原因、已尝试操作、下一步建议。
+- [x] smoke 结果路径与结论。
+- [x] 已有 run capR audit 表。
+- [x] learnability audit 初步结果。
+- [x] 第一批 capR/gatedKD early-screen 运行状态。
+- [x] 若任何步骤阻塞，写明阻塞原因、已尝试操作、下一步建议。
+
+说明：服务器状态表已持续记录 GPU、run、rows、latest/best/late-window；预计完成时间尚未系统化写入，明早汇总前仍需补一版带 ETA 的总表。
 
 ## 9. 夜间执行日志
 
@@ -1597,3 +1604,53 @@ python docs/experiments/monitor_ladd_capr_gatedkd_20260624.py \
   - 4090 `toU` latest 与 matched det-only 持平，late20 仍为负；负控制仍需要到 20 rows 后复查。
   - 旧 dynamic 线继续是最可信的正向线索，保持保护。
   - 4090 磁盘仍只有约 2.3G 可用，是当前最实际的运行风险。
+
+### 2026-06-25 05:31 CST
+
+- 更新顶部 checklist：阶段 A/B/C/D 已按日志证据标记完成；阶段 E 只标记 `dynamic_singleproj` paired/shuffled mini audit 完成，其余 learnability audit 保持未完成；明早交付中的 ETA 总表仍待补。
+- 3090 GPU0/GPU1: 20244/24576 MiB、20934/24576 MiB，util 100%/99%；磁盘 40G/50G，剩余 11G，使用率 79%。
+- 4090 GPU0/GPU1: 15644/24564 MiB、15694/24564 MiB，util 99%/99%；磁盘 48G/50G，剩余 2.3G，使用率 96%。
+- 精确扫描当前有效/retry run 日志无 Traceback / RuntimeError / CUDA OOM / NaN / FileNotFound / batch fallback / No space left。
+
+#### 3090 capR/gatedKD
+
+| run | rows | latest AP50 | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | cap saturation | rank active | kd active | status |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| dynamic_capR2_yoloinit | 31 | 0.44792 | 0.22090 | 0.22090 | 0.17071 | +0.00054 | -0.00187 | 0.99918 | 0.00093 | n/a | pre100 |
+| dynamic_capR4_yoloinit retry | 31 | 0.44368 | 0.21816 | 0.21816 | 0.16608 | -0.00220 | -0.00650 | 0.00000 | 0.00016 | n/a | pre100 |
+| dynamic_capR2_gatedKD retry | 30 | 0.42123 | 0.20826 | 0.20826 | 0.15533 | -0.00649 | -0.01184 | 0.99997 | 0.00000 | 1.00000 | pre100 |
+| dynamic_capR2_gatedKD_wo_srec retry | 28 | 0.39493 | 0.18946 | 0.19005 | 0.14581 | -0.01463 | -0.00997 | 0.99995 | 0.00000 | 1.00000 | pre100 |
+| dynamic_capR2_gatedKD_shuffledT retry | 28 | 0.42279 | 0.21173 | 0.21173 | 0.15445 | +0.00764 | -0.00133 | 0.99997 | 0.00000 | 1.00000 | pre100 |
+
+#### 3090 旧 dynamic 主线
+
+| run | rows | latest AP50 | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | status |
+|---|---:|---:|---:|---:|---:|---:|---:|---|
+| dynamic_singleproj | 341 | 0.74463 | 0.47936 | 0.47958 | 0.47536 | +0.01639 | +0.01548 | PROMISING_EARLY |
+| dynamic_wo_s_rec | 357 | 0.74737 | 0.48110 | 0.48110 | 0.47776 | +0.01431 | +0.01325 | PROMISING_EARLY |
+| dynamic_plain | 229 | 0.67924 | 0.42396 | 0.42396 | 0.41892 | +0.00539 | +0.00510 | WATCH |
+| dynamic_reach_rawinput | 202 | 0.66454 | 0.41376 | 0.41376 | 0.40891 | +0.00929 | +0.01027 | PROMISING_EARLY |
+
+#### 4090 `zw1cache` fresh 负控制组
+
+| run | rows | latest AP50 | latest AP50-95 | best AP50-95 | late20 | latest delta vs detonly | late20 delta vs detonly | cap saturation | rank active | kd active | note |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| 4090zw1cache_detonly_control | 16 | 0.33891 | 0.14711 | 0.14711 | 0.08967 | n/a | n/a | n/a | n/a | n/a | same-group control |
+| 4090zw1cache_capR2_gatedKD_z | 14 | 0.27130 | 0.12163 | 0.12992 | 0.08033 | -0.00630 | -0.00231 | 0.99504 | 0.00001 | 0.99999 | health only |
+| 4090zw1cache_capR2_gatedKD_toU | 14 | 0.31935 | 0.14251 | 0.14251 | 0.08053 | +0.01458 | -0.00210 | 0.99500 | 0.00018 | 0.99999 | negative control; health only |
+
+#### 4090 恢复中的旧实验上下文
+
+| run | rows | latest AP50 | latest AP50-95 | best AP50-95 | late20 | note |
+|---|---:|---:|---:|---:|---:|---|
+| detonly | 120 | 0.80126 | 0.53529 | 0.53529 | 0.53276 | same-pipeline context |
+| dynamic | 95 | 0.76790 | 0.49459 | 0.49459 | 0.49219 | resume context |
+| dynamic_kd0p5 | 95 | 0.63426 | 0.38371 | 0.38371 | 0.37807 | resume context |
+| dynamic_reach0p5 | 95 | 0.63489 | 0.38397 | 0.38397 | 0.37870 | resume context |
+| dynamic_srec0p05 | 96 | 0.63428 | 0.38216 | 0.38216 | 0.37616 | resume context |
+
+- 机制/调度判断：
+  - 3090 capR/gatedKD 仍未到 50 rows，4090 fresh 组仍未到 20 rows；不做正式早筛、不新增、不停止。
+  - 负控制风险继续增强：3090 shuffledT latest delta 已短暂为 +0.00764，4090 `toU` latest delta 为 +0.01458；但二者 late-window 仍为负，暂不下正式结论。
+  - `kd_active_ratio` 仍接近 1，说明 capR-gatedKD gate 目前基本全开，没有体现出选择性 token filtering。
+  - dynamic 正向线继续保护；4090 磁盘 96% 仍是最实际风险。
