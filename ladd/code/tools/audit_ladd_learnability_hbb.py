@@ -338,13 +338,14 @@ def main() -> None:
     write_csv(args.output_dir / "learnability_audit_per_batch.csv", direct_rows)
 
     per_level_rows: list[dict[str, Any]] = []
-    global_bucket: dict[str, list[torch.Tensor]] = {"q": [], "raw": [], "zs": [], "z": [], "u": [], "fg": [], "score": []}
+    global_gap_parts: list[torch.Tensor] = []
+    global_fg_parts: list[torch.Tensor] = []
     for level_name, bucket in samples.items():
         merged = {key: torch.cat(values, dim=0) for key, values in bucket.items() if values}
-        for key, value in merged.items():
-            global_bucket[key].append(value)
         q, z, u, fg = merged["q"], merged["z"], merged["u"], merged["fg"]
         gap = squared_l2(q, u) - squared_l2(q, z)
+        global_gap_parts.append(gap.detach().cpu())
+        global_fg_parts.append(fg.detach().cpu())
         probe_z = fit_ridge_probe(q, z, args.seed)
         probe_u = fit_ridge_probe(q, u, args.seed)
         auc_z, ce_z = optional_task_auc(z, fg, args.seed)
@@ -370,13 +371,28 @@ def main() -> None:
         per_level_rows.append(row)
     write_csv(args.output_dir / "learnability_audit_per_level.csv", per_level_rows)
 
-    merged_global = {key: torch.cat(values, dim=0) for key, values in global_bucket.items() if values}
-    q, z, u, fg = merged_global["q"], merged_global["z"], merged_global["u"], merged_global["fg"]
-    gap = squared_l2(q, u) - squared_l2(q, z)
-    probe_z = fit_ridge_probe(q, z, args.seed)
-    probe_u = fit_ridge_probe(q, u, args.seed)
-    auc_z, ce_z = optional_task_auc(z, fg, args.seed)
-    auc_u, ce_u = optional_task_auc(u, fg, args.seed)
+    gap = torch.cat(global_gap_parts, dim=0)
+    fg = torch.cat(global_fg_parts, dim=0)
+    total_tokens = int(sum(row["tokens"] for row in per_level_rows))
+
+    def weighted_level_metric(name: str) -> float:
+        numerator = 0.0
+        denominator = 0.0
+        for row in per_level_rows:
+            value = row.get(name)
+            if value is None:
+                continue
+            try:
+                value = float(value)
+            except (TypeError, ValueError):
+                continue
+            if math.isnan(value):
+                continue
+            weight = float(row.get("tokens", 0))
+            numerator += value * weight
+            denominator += weight
+        return numerator / denominator if denominator > 0 else float("nan")
+
     summary = {
         "weights": str(args.weights),
         "model": args.model,
@@ -391,20 +407,21 @@ def main() -> None:
         "fg_only": int(args.fg_only),
         "include_bg_sample": int(args.include_bg_sample),
         "shuffle_teacher_pairs": int(args.shuffle_teacher_pairs),
-        "tokens": int(q.shape[0]),
+        "summary_probe_scope": "per_level_token_weighted",
+        "tokens": total_tokens,
         "fg_ratio": float(fg.float().mean().item()),
         "learnability_positive_ratio": float((gap > 0).float().mean().item()),
-        "mse_probe_z": probe_z["mse"],
-        "mse_probe_u": probe_u["mse"],
-        "r2_probe_z": probe_z["r2"],
-        "r2_probe_u": probe_u["r2"],
-        "cos_probe_z": probe_z["cos"],
-        "cos_probe_u": probe_u["cos"],
-        "learnability_gap_probe": probe_z["r2"] - probe_u["r2"],
-        "task_auc_z": auc_z,
-        "task_auc_u": auc_u,
-        "task_ce_z": ce_z,
-        "task_ce_u": ce_u,
+        "mse_probe_z": weighted_level_metric("mse_probe_z"),
+        "mse_probe_u": weighted_level_metric("mse_probe_u"),
+        "r2_probe_z": weighted_level_metric("r2_probe_z"),
+        "r2_probe_u": weighted_level_metric("r2_probe_u"),
+        "cos_probe_z": weighted_level_metric("cos_probe_z"),
+        "cos_probe_u": weighted_level_metric("cos_probe_u"),
+        "learnability_gap_probe": weighted_level_metric("learnability_gap_probe"),
+        "task_auc_z": weighted_level_metric("task_auc_z"),
+        "task_auc_u": weighted_level_metric("task_auc_u"),
+        "task_ce_z": weighted_level_metric("task_ce_z"),
+        "task_ce_u": weighted_level_metric("task_ce_u"),
         "gradient_audit_status": "not_implemented_reserved" if args.gradient_audit else "not_requested",
     }
     summary.update(summarize(gap, "learnability_gap_direct"))
@@ -419,9 +436,7 @@ def main() -> None:
     if args.save_features:
         np.savez_compressed(
             args.output_dir / "features_sample.npz",
-            q=q.numpy(),
-            z=z.numpy(),
-            u=u.numpy(),
+            gap=gap.numpy(),
             fg=fg.numpy(),
         )
     notes = [

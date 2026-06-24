@@ -300,3 +300,45 @@ python docs/experiments/monitor_ladd_capr_gatedkd_20260624.py \
 - 注意：
   - 03:39 CST 曾有一轮 malformed launch，额外参数被换行写到命令外；该轮未留下训练进程，已记录并弃用，正式有效 run 为 03:40:19 CST 启动的 5 条。
   - `dynamic_capR2_gatedKD_toU_yoloinit` 暂未启动，等待安全余量或第一批达到早筛点后再作为负控制补上。
+
+### 2026-06-25 03:52 CST
+
+- 发现并处理 3090 第一批 early-screen 的 cache race：
+  - 03:40:19 CST 启动的 5 条中，`dynamic_capR2_yoloinit` 正常进入训练。
+  - 其余 4 条在 dataloader 阶段同时刷新 `/root/shared-nvme/data/OGSOD-1.0/sar/labels/train.cache`，出现 `AssertionError` 后并发 `unlink`，最终 `FileNotFoundError: train.cache`。这不是方法 loss/OOM 问题，但这些 4 条 03:40:19 run 视为 INVALID，不用于结果。
+  - 确认 SAR/RGB cache 文件存在后，基于原 `.cmd.sh` 复制参数并替换唯一 timestamp，于 03:44:47 CST 重新启动 4 条 retry-cache run：
+    - GPU0 PID 42821/42826：`dynamic_capR4_yoloinit`，run name timestamp `20260625_034447`
+    - GPU0 PID 42836/42841：`dynamic_capR2_gatedKD_yoloinit`，run name timestamp `20260625_034447`
+    - GPU1 PID 42851/42856：`dynamic_capR2_gatedKD_wo_srec_yoloinit`，run name timestamp `20260625_034447`
+    - GPU1 PID 42866/42868：`dynamic_capR2_gatedKD_shuffledT_yoloinit`，run name timestamp `20260625_034447`
+  - retry-cache 4 条均确认包含正确参数，且截至 03:51 CST 无 Traceback / OOM / NaN / batch fallback。
+- 3090 当前 GPU 负载：
+  - 03:51 CST：GPU0 20188/24576 MiB、util 99%；GPU1 20876/24576 MiB、util 100%。
+  - 已达到较充分利用且低于 22G 危险线，因此暂不启动 `dynamic_capR2_gatedKD_toU_yoloinit`，避免把显存推到危险区。
+- 3090 当前早筛表，均与同机 `detonly_control_yoloinit` 做 epoch-matched 对比：
+  - `detonly_control`: rows=384, latest/best/late20 AP50-95 = 0.47530 / 0.47530@384 / 0.47212
+  - `dynamic_singleproj`: rows=306, latest=0.46718, late20=0.46252, latest_delta=+0.01569, late20_delta=+0.01424
+  - `dynamic_wo_s_rec`: rows=321, latest=0.46668, late20=0.46265, latest_delta=+0.01029, late20_delta=+0.00941
+  - `dynamic_plain`: rows=193, latest=0.40494, late20=0.39920, latest_delta=+0.00594, late20_delta=+0.00615
+  - `dynamic_reach_rawinput`: rows=165, latest=0.39522, late20=0.38901, latest_delta=+0.01269, late20_delta=+0.01147
+  - `dynamic_capR2_yoloinit`: rows=2, latest=0.02820, late20_delta=-0.00773，仅为极早期，不能判断。
+  - `dynamic_capR4_yoloinit` retry: rows=1, latest=0.03219，仅为极早期。
+  - `dynamic_capR2_gatedKD_yoloinit` retry: rows=1, latest=0.05082，仅为极早期。
+  - `dynamic_capR2_gatedKD_wo_srec_yoloinit` retry: rows=1, latest=0.02377，仅为极早期。
+  - `dynamic_capR2_gatedKD_shuffledT_yoloinit` retry: rows=1, latest=0.03268，仅为极早期。
+- 修复 learnability audit 工具并完成 mini audit：
+  - 原 bug：全局 summary 直接拼接 P3/P4/P5 的 `q/z/u` 特征，通道数 64/128/256 不一致导致 `RuntimeError: Sizes of tensors must match`。
+  - 修复：probe 只在 per-level 内计算，summary 的 probe 指标改为 token-weighted per-level 汇总；全局只拼 scalar gap/fg，不改变训练或推理路径。
+  - 已同步修复后的 `ladd/code/tools/audit_ladd_learnability_hbb.py` 到 3090/4090。
+  - 已在 3090 CPU 上对 `dynamic_singleproj` 做 paired/shuffled mini audit（batch=2, max_batches=2, max_tokens_per_level=512），结果拉回：
+    - `docs/review_packages/mainline_method_search_20260624/tables/learnability_dynamic_singleproj_paired_cpu_mini_v2_summary_20260625.csv`
+    - `docs/review_packages/mainline_method_search_20260624/tables/learnability_dynamic_singleproj_paired_cpu_mini_v2_per_level_20260625.csv`
+    - `docs/review_packages/mainline_method_search_20260624/tables/learnability_dynamic_singleproj_shuffled_cpu_mini_v2_summary_20260625.csv`
+    - `docs/review_packages/mainline_method_search_20260624/tables/learnability_dynamic_singleproj_shuffled_cpu_mini_v2_per_level_20260625.csv`
+  - paired mini summary：tokens=1280, `learnability_gap_direct_mean=2.29088`, `learnability_positive_ratio=1.0`, `r2_probe_z=0.96599`, `r2_probe_u=0.73459`, `learnability_gap_probe=+0.23140`, `cos_probe_z=0.99523`, `cos_probe_u=0.86681`。
+  - shuffled mini summary：tokens=1280, `learnability_gap_direct_mean=2.29184`, `learnability_positive_ratio=1.0`, `r2_probe_z=0.96777`, `r2_probe_u=0.73125`, `learnability_gap_probe=+0.23652`, `cos_probe_z=0.99519`, `cos_probe_u=0.86395`。
+  - 初步解释：mini audit 支持 z 比 u 更容易被当前 SAR-side feature 线性预测；但 paired 与 shuffled 几乎一致，说明这个 mini 设置主要反映 z/u 几何与分支性质，还不能证明 paired RGB-SAR 信息被利用。后续需要更完整 max-batches、更多 run，并把 paired-vs-shuffled 设计得更敏感。
+- 下一步：
+  - 继续监控 retry-cache 4 条到 >=10/20 rows，确认 diagnostics 字段存在且无错误。
+  - 若 GPU 仍维持 20-21G，不新增 KD-to-u；等某条低优先级结束/停止后再补负控制。
+  - 将本次 runbook、audit 工具修复和 mini audit CSV commit/push。
