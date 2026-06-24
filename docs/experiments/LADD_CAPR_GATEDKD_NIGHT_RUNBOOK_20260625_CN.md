@@ -2779,3 +2779,53 @@ python docs/experiments/monitor_ladd_capr_gatedkd_20260624.py \
   - 3090 dynamic 正线仍稳定：`singleproj` late20 delta +0.01654，`wo_s_rec` +0.01361，继续跑满 e800。
   - 3090 capR-gatedKD paired 仍明显负，shuffledT 仍更好，但 shuffledT 49 行，因此 paired-vs-shuffled 的正式 warning 等下一轮。
   - 下一步优先级：保持 dynamic 正线和 same-pipeline controls；将当前 capR-gatedKD 标为诊断线；后续探索应先修 gate 选择性或跑 learnability audit，而不是直接扩大这版 gatedKD。
+
+### 2026-06-25 06:52 CST
+
+- 资源状态：
+  - 3090 GPU0/GPU1: 20244/24576 MiB、20934/24576 MiB，util 99%/99%；磁盘 40G/50G，剩余 11G，使用率 79%。
+  - 4090 GPU0/GPU1: 15644/24564 MiB、15696/24564 MiB，util 99%/99%；磁盘 48G/50G，剩余 2.3G，使用率 96%。
+- 当前有效日志窄扫描无 Traceback / RuntimeError / CUDA OOM / NaN / FileNotFound / No space left / batch fallback。
+- **第二个正式 50-row negative-control warning 触发：3090 shuffled teacher 强于 paired teacher。**
+  - 3090 `dynamic_capR2_gatedKD` paired 已到 53 行，latest/late20 delta = -0.01649/-0.01409。
+  - 3090 `dynamic_capR2_gatedKD_shuffledT` 已到 50 行，latest/late20 delta = +0.00174/+0.00114。
+  - 同机同 det-only control 下，batch 内打乱 RGB teacher pair 的负控制反而优于正常 paired run。这不是最终 e800 结论，但已经是机制警报：当前 paired RGB-SAR teacher 信息没有被 capR-gatedKD 有效利用，方法更像全开辅助正则或不稳定 KD，而不是可靠的 paired learnability-aware 蒸馏。
+- 4090 50-row warning 延续：`KD-to-u` 54 行仍强于 `KD-to-z` 51 行，toU latest/late20 delta = +0.00842/+0.00810，z = -0.00321/+0.00118。
+- 本轮没有新的 100/120 early-screen trigger；新 capR/gatedKD 组仍是 pre100。因 4090 磁盘仍只有 2.3G 空闲且无错误，本轮不新增、不停止、不清理；继续保护 dynamic 正线与 same-pipeline controls。
+
+#### 3090 简表
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | cap saturation | rank active | kd active | status |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| detonly_control | 463 | 0.49500 | 0.49509@462 | 0.49335 | n/a | n/a | n/a | n/a | n/a | control |
+| dynamic_singleproj | 369 | 0.48737 | 0.48737@369 | 0.48422 | +0.01696 | +0.01655 | n/a | n/a | n/a | PROMISING_EARLY |
+| dynamic_wo_s_rec | 387 | 0.48928 | 0.48928@387 | 0.48662 | +0.01391 | +0.01362 | n/a | n/a | n/a | PROMISING_EARLY |
+| dynamic_plain | 259 | 0.43901 | 0.43901@259 | 0.43486 | +0.00696 | +0.00698 | n/a | n/a | n/a | WATCH |
+| dynamic_reach_rawinput | 233 | 0.43018 | 0.43018@233 | 0.42535 | +0.00943 | +0.00945 | n/a | n/a | n/a | WATCH |
+| dynamic_capR2_yoloinit | 55 | 0.30538 | 0.30538@55 | 0.27563 | +0.00434 | +0.00131 | 0.99999 | 0.00000 | n/a | pre100 |
+| dynamic_capR4_yoloinit | 56 | 0.30323 | 0.30323@56 | 0.27475 | +0.00087 | -0.00255 | 0.00000 | 0.00059 | n/a | pre100 |
+| dynamic_capR2_gatedKD | 53 | 0.28097 | 0.28097@53 | 0.25347 | -0.01649 | -0.01409 | 0.99798 | 0.00165 | 1.00000 | 50-row NEG-WARN |
+| dynamic_capR2_gatedKD_wo_srec | 50 | 0.26556 | 0.26556@50 | 0.23735 | -0.02250 | -0.01959 | 0.99939 | 0.00062 | 1.00000 | pre100/weak |
+| dynamic_capR2_gatedKD_shuffledT | 50 | 0.28980 | 0.28980@50 | 0.25808 | +0.00174 | +0.00114 | 0.99995 | 0.00001 | 1.00000 | negative-control stronger |
+
+#### 4090 简表
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | cap saturation | rank active | kd active | status |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| fresh_detonly | 61 | 0.30780 | 0.30780@61 | 0.28761 | n/a | n/a | n/a | n/a | n/a | control |
+| capR2_gatedKD_z | 51 | 0.28657 | 0.28657@51 | 0.25953 | -0.00321 | +0.00118 | 0.99500 | 0.00001 | 0.99999 | 50-row NEG-WARN |
+| capR2_gatedKD_toU | 54 | 0.30450 | 0.30450@54 | 0.27608 | +0.00842 | +0.00810 | 0.99527 | 0.00001 | 0.99998 | negative-control stronger |
+| resume_detonly | 168 | 0.54699 | 0.54699@168 | 0.54470 | n/a | n/a | n/a | n/a | n/a | context |
+| resume_dynamic | 131 | 0.50416 | 0.50416@131 | 0.50156 | n/a | n/a | n/a | n/a | n/a | context |
+| resume_kd0p5 | 133 | 0.40739 | 0.40739@133 | 0.40109 | n/a | n/a | n/a | n/a | n/a | context |
+| resume_reach0p5 | 133 | 0.40688 | 0.40688@133 | 0.40119 | n/a | n/a | n/a | n/a | n/a | context |
+| resume_srec0p05 | 133 | 0.40342 | 0.40343@132 | 0.39886 | n/a | n/a | n/a | n/a | n/a | context |
+| resume_teacher_projectedraw | 40 | 0.35064 | 0.35064@40 | 0.34561 | n/a | n/a | n/a | n/a | n/a | context |
+| resume_probeA | 33 | 0.49752 | 0.49752@33 | 0.49465 | n/a | n/a | n/a | n/a | n/a | context |
+
+- 机制判断：
+  - 两类负控制均已正式触发：`KD-to-u > KD-to-z`，且 `shuffledT > paired`。这版 capR-gatedKD 不应继续作为主线候选扩大；应保留为诊断证据，后续优先处理 gate 全开、z/u learnability audit、以及 paired teacher 对齐是否真的进入 KD 决策。
+  - `kd_reach_active_ratio≈1`、`rank_active_ratio≈0` 在 3090/4090 均持续存在，说明 capR saturation 虽高，但 gate 选择性失败。
+  - 旧 dynamic 正线仍是当前唯一稳定正向证据：3090 `singleproj` late20 delta +0.01655，`wo_s_rec` +0.01362；继续跑满 e800，不能因为 capR-gatedKD 失败而停止。
+  - 新 capR/capR4 基线本身仍只有微小或负增益；没有出现大于 +1 点的 early 主线信号。
+  - 下一步若要新增实验，应先做更尖锐/更稀疏的 gate 或离线 learnability audit，而不是继续扫这版全开 gate 的强度。
