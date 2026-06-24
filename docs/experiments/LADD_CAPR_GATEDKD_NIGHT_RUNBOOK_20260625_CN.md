@@ -1018,3 +1018,59 @@ python docs/experiments/monitor_ladd_capr_gatedkd_20260624.py \
   - 3090 已接近 20-21G，暂不补 `dynamic_capR2_gatedKD_toU_yoloinit`，避免把两张卡推向 OOM/fallback 风险。
   - 4090 虽有显存余量，但本机缺少 3090 capR 命令使用的等价 A-stage source：`runs_public/paper/ogsod_hbb_nomosaic/diagnostics/ladd_dynamic/yolo11n/seed0/ladd_clean_a1b_dyn_ogsod11n_diagnostic_nomosaic_dynamic_yolo11n_s0_a1_e10_b64_s0_gpu0/weights/best.pt`。直接在 4090 补 fresh capR/toU 会使 same-pipeline 对照关系变脏；本轮不启动。
   - 保留 4090 当前 `dynamic_resume`；不停止 dynamic。
+
+### 2026-06-25 05:00 CST
+
+- 04:47 到 05:00 期间做了一次更长窗口检查，避免在 16-18 rows 噪声上过度调度。
+- 3090 GPU0/GPU1: 20244/24576 MiB、20934/24576 MiB，util 100%/100%；仍接近安全上限，不再加任务。
+- 4090 GPU0/GPU1:
+  - 04:53: 12060/24564 MiB、8531/24564 MiB，util 98%/24%。
+  - 05:00: 新 4090 fresh 组启动后升至 14960/24564 MiB、14384/24564 MiB，util 99%/99%。
+- 3090/4090 常规日志扫描未发现当前有效训练的 Traceback / RuntimeError / CUDA OOM / NaN / batch fallback。
+
+#### 3090 capR/gatedKD 20-row 机制窗口
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | capR | cap saturation | rank active | kd active | status |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| dynamic_capR2_yoloinit | 22 | 0.17512 | 0.17930 | 0.11278 | +0.00691 | -0.00079 | True | 0.999994 | 0.000002 | n/a | pre100 |
+| dynamic_capR4_yoloinit retry | 22 | 0.16589 | 0.16589 | 0.10819 | -0.00232 | -0.00539 | False | 0.000000 | 0.000008 | n/a | pre100 |
+| dynamic_capR2_gatedKD retry | 21 | 0.16420 | 0.16420 | 0.09476 | -0.00882 | -0.01271 | True | 0.999994 | 0.000002 | 1.000000 | pre100 |
+| dynamic_capR2_gatedKD_wo_srec retry | 20 | 0.15579 | 0.15579 | 0.09291 | -0.01083 | -0.00836 | True | 0.999984 | 0.000000 | 1.000000 | pre100 |
+| dynamic_capR2_gatedKD_shuffledT retry | 19 | 0.15660 | 0.15660 | 0.09574 | -0.00359 | -0.00208 | True | 0.999980 | 0.000000 | 1.000000 | pre100 |
+
+- 20-row 初步机制判断：
+  - `cap_saturation_ratio` 基本为 1，说明 capR=2 在几何上确实大量生效。
+  - `rank_active_ratio` 接近 0，说明 rank loss 当前几乎没有 active violation；这个阶段不是“u_t 还不够远”的问题。
+  - `kd_active_ratio` 持续约 1.0，说明当前 `cap_reachability_gap` gate 基本全开，尚未形成预期的 token selectivity。
+  - paired gatedKD 与 shuffledT 尚未拉开，且 paired 的 late20 delta 更负；20 rows 不能下最终结论，但这是需要重点记录的机制风险。
+
+#### 4090 fresh 负控制组
+
+- 为补齐 `KD-to-u` 负控制，同时避免混用 3090 对照，决定在 4090 启动同机 fresh 小组：det-only control、capR2 gatedKD-to-z、capR2 gatedKD-to-u。
+- 先将 3090 上 11MB A-stage source 同步到 4090：
+  - `runs_public/paper/ogsod_hbb_nomosaic/diagnostics/ladd_dynamic/yolo11n/seed0/ladd_clean_a1b_dyn_ogsod11n_diagnostic_nomosaic_dynamic_yolo11n_s0_a1_e10_b64_s0_gpu0/weights/best.pt`
+  - 4090 校验：`sha256sum` 前 16 位 `d240b1a62a3d4677`。
+- 04:55 首次 4090 fresh 启动作废：
+  - run timestamp: `20260625_045553`
+  - 原因：错误使用 `configs/paper/datasets/ogsod_hbb_sar.yaml`，该 yaml 在 4090 仍指向占位路径 `/path/to/OGSOD-1.0/sar/images/test`。
+  - 三条均立刻 `FileNotFoundError/RuntimeError` 退出，无 GPU 训练结果；标记 INVALID，不进入结果比较。
+- 04:57 使用 4090 已验证的 clean-cache yaml 重启同机 fresh 小组：
+  - SAR yaml: `/root/shared-nvme/LADD_public/debug/zw1_nomosaic_clean_cache_20260623/20260623_214553/yamls/ogsod_hbb_sar_nomosaic_zw1.yaml`
+  - RGB yaml: `/root/shared-nvme/LADD_public/debug/zw1_nomosaic_clean_cache_20260623/20260623_214553/yamls/ogsod_hbb_rgb_nomosaic_zw1.yaml`
+  - RGB teacher: `runs_public/ogsod/hbb/baseline_controls/mosaic_baselines_20260615/rgb_yolo11n_hbb_mosaicE800_closeAt100_s0_imported_cos_closeAt100_20260524/weights/best.pt`
+
+| run | device | PID wrapper/main | run dir | status |
+|---|---:|---|---|---|
+| 4090zw1cache_detonly_control | GPU1 | 18814/18819 | `runs_public/ogsod/hbb/capr_gatedkd_early_4090_20260625/detonly_control_zw1cache/yolo11n/seed0/ogsod_yoloinit_4090zw1cache_detonly_control_caprgroup_yolo11n_e800_b64_img256_s0_20260625_045721_gpu1` | running, args.yaml generated |
+| 4090zw1cache_capR2_gatedKD_z | GPU0 | 18822/18827 | `runs_public/ogsod/hbb/capr_gatedkd_early_4090_20260625/dynamic_capR2_gatedKD_z_zw1cache_yoloinit/yolo11n/seed0/ogsod_yoloinit_4090zw1cache_capR2_gatedKD_z_yolo11n_e800_b64_img256_s0_20260625_045721_gpu0` | running, args.yaml generated |
+| 4090zw1cache_capR2_gatedKD_toU | GPU1 | 18830/18835 | `runs_public/ogsod/hbb/capr_gatedkd_early_4090_20260625/dynamic_capR2_gatedKD_toU_zw1cache_yoloinit/yolo11n/seed0/ogsod_yoloinit_4090zw1cache_capR2_gatedKD_toU_yolo11n_e800_b64_img256_s0_20260625_045721_gpu1` | running, args.yaml generated |
+
+- 05:00 健康检查：
+  - 三条均有 Python 子进程，GPU 显存上升到 14960/14384 MiB。
+  - 日志未见 Traceback / RuntimeError / CUDA OOM / NaN / batch fallback。
+  - 目前仅生成 `args.yaml`，尚未完成第 1 个 epoch；下一轮必须确认 `results.csv` 与 `ladd_diagnostics.csv` 出现。
+
+- 调度决定：
+  - 3090 继续跑原 capR/gatedKD 组，不新增。
+  - 4090 新 `zw1cache` 组作为独立同机负控制证据，只和同组 det-only control 比，不与 3090 formal-yaml 组直接比较。
+  - 继续保护所有 dynamic 主线。
