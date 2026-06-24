@@ -1,0 +1,1 @@
+4090 remote raw sync attempt at 2026-06-24 23:xx CST failed: SSH service closed connection / password auth denied. Included local synced 4090 plot_data and figures instead; remote raw results should be incrementally added when SSH becomes stable.

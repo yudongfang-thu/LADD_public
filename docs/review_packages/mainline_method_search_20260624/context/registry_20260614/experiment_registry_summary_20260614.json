@@ -1,0 +1,26 @@
+{
+  "total_results": 675,
+  "by_source_server": {
+    "ladd4090": 484,
+    "unknown": 45,
+    "dual4090_old": 20,
+    "ladd90": 67,
+    "server117": 4,
+    "autodl": 55
+  },
+  "by_family": {
+    "cclkd_yolo11_or_diag": 100,
+    "comparison": 56,
+    "ladd": 477,
+    "cclkd_yolov5x": 28,
+    "baseline": 14
+  },
+  "by_validity": {
+    "unknown": 43,
+    "diagnostic": 525,
+    "candidate_or_unknown": 87,
+    "invalid_or_diagnostic": 20
+  },
+  "duplicate_hash_groups": 181,
+  "files_in_duplicate_hash_groups": 547
+}

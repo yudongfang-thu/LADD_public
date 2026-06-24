@@ -1,0 +1,5 @@
+run,rows,best_epoch,best_map50,best_map5095,last_epoch,last_map50,last_map5095,late20_map5095
+RGB baseline from scratch,200,141,0.56886,0.36087,200,0.55255,0.35385,0.35410
+IR teacher baseline from scratch,200,142,0.63800,0.43299,200,0.62123,0.42480,0.42436
+det-only reload lowLR,179,2,0.56818,0.36279,179,0.54067,0.34646,0.34459
+DSN S2 reload lowLR,200,2,0.56957,0.36435,200,0.53861,0.34521,0.34536

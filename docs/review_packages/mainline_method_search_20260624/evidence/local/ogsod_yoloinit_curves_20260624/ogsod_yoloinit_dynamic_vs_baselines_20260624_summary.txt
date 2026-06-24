@@ -1,0 +1,11 @@
+SAR baseline: rows=800, latest=0.55127, best=0.55654@734
+RGB baseline: rows=800, latest=0.62737, best=0.63018@723
+4090 det-only: rows=398, latest=0.48332, best=0.48367@397
+4090 ProbeA: rows=314, latest=0.46085, best=0.46085@314
+4090 Dynamic e800: rows=256, latest=0.44119, best=0.44119@256
+4090 oldcommit ProbeA: rows=152, latest=0.38510, best=0.38510@152
+3090 det-only ctrl: rows=178, latest=0.38979, best=0.38979@178
+3090 singleproj: rows=142, latest=0.37444, best=0.37444@142
+3090 wo_s_rec: rows=149, latest=0.37826, best=0.37826@149
+3090 wo_reach stopped: rows=122, latest=0.35555, best=0.35555@122
+3090 dynamic_plain: rows=20, latest=0.16624, best=0.16624@20

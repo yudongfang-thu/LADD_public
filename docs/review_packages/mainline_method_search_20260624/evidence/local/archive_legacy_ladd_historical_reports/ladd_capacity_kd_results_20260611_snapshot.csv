@@ -1,0 +1,8 @@
+snapshot_time,priority,experiment,model,phase,epoch,total_epochs,rows,unique_epochs,best_map50_95,best_epoch,last_map50_95,sar_baseline,pass_or_safe_threshold,last_minus_baseline,last_minus_threshold,status,notes
+2026-06-11 20:20:25 CST,P1,s alpha_kd=0.5 B400,s,B,400,400,402,400,0.63074,218,0.61802,0.62897,0.62697,-0.01095,-0.00895,complete,"Strict resume from epoch 290; duplicate epoch 290 rows retained in raw results.csv; last occurrence per epoch used for summary."
+2026-06-11 20:20:25 CST,P2,s alpha_kd=0.25 B400,s,B,400,400,402,400,0.63027,199,0.61719,0.62897,0.62697,-0.01178,-0.00978,complete,"Strict resume from epoch 272; duplicate epoch 272 rows retained in raw results.csv; A2 had earlier auto batch reduction after OOM."
+2026-06-11 20:20:25 CST,P2,s B det-only r2,s,A1,10,10,10,10,0.62878,1,0.62878,0.62897,0.62697,-0.00019,0.00181,complete,"A1 starts from converged SAR baseline and remains near baseline."
+2026-06-11 20:20:25 CST,P2,s B det-only r2,s,A2,50,50,50,50,0.62400,50,0.62400,0.62897,0.62697,-0.00497,-0.00297,complete,"A2 is not det-only; LADD_A2_DET_ONLY=0, so B inherits an already degraded A2 checkpoint."
+2026-06-11 20:20:25 CST,P2,s B det-only r2,s,B,74,400,74,74,0.62244,68,0.62191,0.62897,0.62697,-0.00706,-0.00506,running_snapshot,"Snapshot only; B has LADD_B_DET_ONLY=1 and kd_loss=0, but starts from degraded A2."
+2026-06-11 20:20:25 CST,P1,m A2 probe,m,A2,50,50,50,50,0.65026,10,0.63725,0.65580,0.65380,-0.01855,-0.01655,complete,"A2 best already below m safe threshold, so m full B should not be launched under this config."
+2026-06-11 20:20:25 CST,P1,m A2 probe,m,B1,1,1,1,1,0.62528,1,0.62528,0.65580,,-0.03052,,complete,"Diagnostic B=1 continuation after degraded A2; not a formal m B result."

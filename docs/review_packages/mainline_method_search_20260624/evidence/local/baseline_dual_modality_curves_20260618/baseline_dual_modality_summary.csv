@@ -1,0 +1,17 @@
+protocol,model,modality,seed,batch,epochs_recorded,last_epoch,complete_800,best_map50_95,best_map50_95_epoch,last_map50_95,best_map50,best_map50_epoch,last_map50,last_det_loss,source,note
+nomosaic,n,sar,0,64,800,800,True,0.55654,734,0.55127,0.82568,751,0.8234,2.25602,ladd/results/ladd90_formal_baselines_20260612/results/sar_yolo11n_s0_b64.csv,
+nomosaic,n,rgb,0,64,800,800,True,0.63018,723,0.62737,0.93028,729,0.92787,2.09853,ladd/results/ladd90_formal_baselines_20260612/results/rgb_yolo11n_s0_b64.csv,
+nomosaic,s,sar,0,64,800,800,True,0.62897,729,0.62233,0.91091,732,0.90602,1.8618100000000002,ladd/results/ladd90_formal_baselines_20260612/results/sar_yolo11s_s0_b64.csv,
+nomosaic,s,rgb,0,64,800,800,True,0.65768,647,0.64958,0.94435,622,0.93707,1.7813,ladd/results/ladd90_formal_baselines_20260612/results/rgb_yolo11s_s0_b64.csv,
+nomosaic,m,sar,0,32,800,800,True,0.6558,704,0.64903,0.93699,735,0.93321,1.69782,ladd/results/ladd90_formal_baselines_20260612/results/sar_yolo11m_s0_b32.csv,
+nomosaic,m,rgb,0,32,800,800,True,0.67909,663,0.67159,0.9527,605,0.94224,1.64851,ladd/results/ladd90_formal_baselines_20260612/results/rgb_yolo11m_s0_b32.csv,
+nomosaic,l,sar,0,32,800,800,True,0.65427,735,0.64892,0.93384,740,0.9298,1.66229,ladd/results/ladd90_formal_baselines_20260612/results/sar_yolo11l_s0_b32.csv,
+nomosaic,l,rgb,0,32,800,800,True,0.68356,618,0.66892,0.95312,586,0.94634,1.60408,ladd/results/ladd90_formal_baselines_20260612/results/rgb_yolo11l_s0_b32.csv,
+nomosaic,x,sar,0,16,800,800,True,0.65867,685,0.64801,0.94342,679,0.939,1.5775299999999999,ladd/results/ladd90_formal_baselines_20260612/results/sar_yolo11x_s0_b16.csv,
+nomosaic,x,rgb,0,16,800,800,True,0.68284,539,0.6582,0.95359,529,0.93995,1.52638,ladd/results/ladd90_formal_baselines_20260612/results/rgb_yolo11x_s0_b16.csv,
+mosaic100,n,sar,0,64,800,800,True,0.54091,746,0.53836,0.81941,760,0.81755,2.28287,docs/experiments/ladd_mosaic100_mainline_curves_20260618/data/n_sar_baseline_results.csv,
+mosaic100,n,rgb,0,64,800,800,True,0.6161,758,0.61345,0.92049,736,0.91841,2.1103300000000003,docs/experiments/ladd_mosaic100_mainline_curves_20260618/data/n_rgb_baseline_results.csv,
+mosaic100,s,sar,0,64,800,800,True,0.61972,770,0.6157,0.90837,760,0.90576,1.87836,docs/experiments/ladd_mosaic100_mainline_curves_20260618/data/s_sar_baseline_results.csv,
+mosaic100,s,rgb,0,64,759,759,False,0.66029,679,0.65818,0.94702,672,0.94509,1.8037100000000001,docs/experiments/ladd_mosaic100_mainline_curves_20260618/data/s_rgb_baseline_results.csv,90 remote confirmed 759 epochs
+mosaic100,m,sar,0,64,793,793,False,0.65092,713,0.64251,0.93432,741,0.92971,1.6768399999999999,docs/experiments/current_progress_curves_20260617_0831/raw/90/m_sar_mosaic_baseline_running.csv,90 remote confirmed latest snapshot; 793 epochs
+mosaic100,m,rgb,0,64,680,680,False,0.6734,600,0.66845,0.95208,573,0.94893,1.74672,docs/experiments/current_progress_curves_20260617_0831/raw/90/m_rgb_mosaic_baseline_stopped.csv,90 remote confirmed stopped snapshot; 680 epochs

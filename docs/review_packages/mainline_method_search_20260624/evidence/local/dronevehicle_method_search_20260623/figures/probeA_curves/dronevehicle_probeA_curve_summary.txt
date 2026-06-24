@@ -1,0 +1,2 @@
+img512: ProbeA best/final 0.36449/0.36404; control best/final 0.36940/0.36524; RGB baseline best/final 0.36087/0.35385; Probe-control final/best/late20 delta -0.00120/-0.00491/-0.00143; Probe-RGB baseline best/final delta +0.00362/+0.01019; matched positive epochs 44/200.
+img256: ProbeA best/final 0.25660/0.25568; control best/final 0.25755/0.25568; RGB baseline best/final 0.24956/0.24939; Probe-control final/best/late20 delta +0.00000/-0.00095/-0.00027; Probe-RGB baseline best/final delta +0.00704/+0.00629; matched positive epochs 105/200.

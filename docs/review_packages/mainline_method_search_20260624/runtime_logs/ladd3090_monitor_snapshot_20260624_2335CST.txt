@@ -1,0 +1,32 @@
+p-ec37114eb269-ackcs-00gjh7hj
+2026-06-24 23:53:41 CST
+0, NVIDIA GeForce RTX 3090, 16037, 24576, 99
+1, NVIDIA GeForce RTX 3090, 16729, 24576, 100
+SERVER ladd3090-zw1
+TIME 2026-06-24 23:53:41 CST
+GPU
+0, NVIDIA GeForce RTX 3090, 16037, 24576, 100
+1, NVIDIA GeForce RTX 3090, 16729, 24576, 100
+PROCS
+other: 763 S etime=1-22:28:25 cpu=0.0 mem=0.0 python ; 797 Sl etime=1-22:28:24 cpu=0.1 mem=0.0 python3.10 ; 38610 Ss etime=00:00 cpu=13.9 mem=0.0 monitor_ogsod_yoloinit_status_20260624.py
+ogsod_yoloinit_detonly_control_yoloinit_yolo11n_e800_b64_img256_s0_20260624_161654_gpu0 | script=train_ladd_hbb.py | device=0 | procs=25 | pids=23793,24059,24061,24063 | etime~07:36:47 | cpu_total=203.2 | mem_total=6.7 | states=Rl:2,Sl:23
+ogsod_yoloinit_dynamic_corewarm60_yoloinit_yolo11n_e800_b64_img256_s0_20260624_210845_gpu0 | script=train_ladd_hbb.py | device=0 | procs=25 | pids=33638,34257,34258,34259 | etime~02:44:56 | cpu_total=176.9 | mem_total=6.8 | states=Rl:2,Sl:23
+ogsod_yoloinit_dynamic_kd0p25_yoloinit_yolo11n_e800_b64_img256_s0_20260624_210845_gpu1 | script=train_ladd_hbb.py | device=1 | procs=25 | pids=33642,34724,34725,34726 | etime~02:44:56 | cpu_total=179.6 | mem_total=6.8 | states=Rl:2,Sl:23
+ogsod_yoloinit_dynamic_kd2p0_yoloinit_yolo11n_e800_b64_img256_s0_20260624_210845_gpu0 | script=train_ladd_hbb.py | device=0 | procs=25 | pids=33634,34192,34195,34197 | etime~02:44:56 | cpu_total=174.4 | mem_total=6.7 | states=Rl:1,Sl:24
+ogsod_yoloinit_dynamic_plain_yoloinit_yolo11n_e800_b64_img256_s0_20260624_201305_gpu1 | script=train_ladd_hbb.py | device=1 | procs=25 | pids=31994,32115,32116,32117 | etime~03:40:36 | cpu_total=179.1 | mem_total=6.7 | states=Dl:1,Rl:2,Sl:22
+ogsod_yoloinit_dynamic_reach_rawinput_yoloinit_yolo11n_e800_b64_img256_s0_20260624_210845_gpu1 | script=train_ladd_hbb.py | device=1 | procs=25 | pids=33646,34191,34193,34194 | etime~02:44:56 | cpu_total=179.6 | mem_total=6.7 | states=Rl:2,Sl:23
+ogsod_yoloinit_dynamic_singleproj_yoloinit_yolo11n_e800_b64_img256_s0_20260624_1605_gpu0 | script=train_ladd_hbb.py | device=0 | procs=25 | pids=22488,22749,22750,22751 | etime~07:48:01 | cpu_total=179.5 | mem_total=6.7 | states=Rl:2,Sl:23
+ogsod_yoloinit_dynamic_wo_s_rec_yoloinit_yolo11n_e800_b64_img256_s0_20260624_1608_gpu1 | script=train_ladd_hbb.py | device=1 | procs=25 | pids=23183,23325,23326,23327 | etime~07:46:12 | cpu_total=182.7 | mem_total=6.8 | states=Dl:1,Rl:1,Sl:23
+RESULTS
+detonly_control | rows=269 | latest=0.43721/0.69440 | best=0.43721@269 | late=0.43612/0.43485/0.43255/0.42568
+singleproj | rows=215 | latest=0.41949/0.67400 | best=0.41949@215 | late=0.41826/0.41683/0.41382/0.40479 | matched=215 | d_latest=+0.00774 | d_late20=+0.00734 | d_epoch100=+0.00041 | pos=176/215 | status=WATCH
+wo_s_rec | rows=225 | latest=0.42223/0.68096 | best=0.42223@225 | late=0.42119/0.42007/0.41743/0.40884 | matched=225 | d_latest=+0.00572 | d_late20=+0.00566 | d_epoch100=+0.00389 | pos=203/225 | status=WATCH
+wo_reach | rows=122 | latest=0.35555/0.60837 | best=0.35555@122 | late=0.35446/0.35300/0.35024/0.34156 | matched=122 | d_latest=-0.00347 | d_late20=-0.00360 | d_epoch100=-0.00355 | pos=9/122 | status=LOW_PRIORITY
+dynamic_plain | rows=97 | latest=0.35243/0.59626 | best=0.35243@97 | late=0.35108/0.34945/0.34556/0.32820 | matched=97 | d_latest=+0.00684 | d_late20=+0.00726 | d_epoch100=NA | pos=75/97 | status=pre100
+dynamic_kd2p0 | rows=65 | latest=0.32054/0.56271 | best=0.32054@65 | late=0.31674/0.31120/0.30062/0.24789 | matched=65 | d_latest=+0.00134 | d_late20=-0.00005 | d_epoch100=NA | pos=30/65 | status=pre100
+dynamic_corewarm60 | rows=66 | latest=0.32476/0.56974 | best=0.32476@66 | late=0.32187/0.31714/0.30617/0.25449 | matched=66 | d_latest=+0.00558 | d_late20=+0.00338 | d_epoch100=NA | pos=51/66 | status=pre100
+dynamic_kd0p25 | rows=67 | latest=0.32653/0.56702 | best=0.32653@67 | late=0.32337/0.31927/0.30852/0.25731 | matched=67 | d_latest=+0.00628 | d_late20=+0.00367 | d_epoch100=NA | pos=43/67 | status=pre100
+dynamic_reach_rawinput | rows=68 | latest=0.33246/0.57565 | best=0.33246@68 | late=0.33030/0.32632/0.31558/0.26437 | matched=68 | d_latest=+0.01112 | d_late20=+0.00882 | d_epoch100=NA | pos=47/68 | status=pre100
+LOGSCAN
+log_count=10
+bad=[]

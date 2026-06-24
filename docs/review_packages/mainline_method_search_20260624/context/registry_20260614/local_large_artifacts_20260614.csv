@@ -1,0 +1,4 @@
+artifact_root,tracked_by_git,ignored_by,checkpoint_count,approx_size_gib,purpose,action
+remote_backups/,false,.git/info/exclude,20,1.78,Local AutoDL shutdown checkpoint backup; not for GitHub,Keep outside experiment conclusions; move outside repo later if disk pressure matters
+weights/,false,.gitignore,6,0.11,Small actively retained baseline checkpoints for local reuse,Keep ignored; never git add
+/Users/yudongfang/Desktop/光sar/LADD_public_local_archives/ladd4090_shutdown_sync_20260614/,outside_repo,not_applicable,0,0.29,Compressed ladd4090 shutdown lightweight evidence archive,Pointer retained in ladd/results/ladd4090_shutdown_sync_20260614/ARCHIVE_POINTER_20260614.txt
