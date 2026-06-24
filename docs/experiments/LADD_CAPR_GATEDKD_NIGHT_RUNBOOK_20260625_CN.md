@@ -2856,3 +2856,84 @@ python docs/experiments/monitor_ladd_capr_gatedkd_20260624.py \
   - 不扩大当前全开 gate 的 capR-gatedKD 版本；
   - 继续保护旧 dynamic 正线跑满 e800；
   - 后续新变体应优先修复 gate 选择性，让 `kd_reach_active_ratio` 不再长期接近 1，并用 paired/shuffled、KD-to-z/u 负控制约束。
+
+### 2026-06-25 07:03-07:08 CST
+
+- 继续巡检两台服务器：
+  - 3090 GPU0/GPU1 初始约 20244/20934 MiB，util 99%/99%；磁盘 40G/50G，剩余 11G。
+  - 4090 GPU0/GPU1 初始约 15644/15696 MiB，util 99%/99%；磁盘 48G/50G，剩余 2.3G。
+- 当前有效日志扫描：
+  - 4090 未发现新的 Traceback / OOM / NaN / fallback。
+  - 3090 仅发现已记录的失败 CPU mini-audit 日志 `learnability_remaining_cpu_mini_20260625_065515.log`，不是训练新异常。
+- 结构化监控结果：
+
+#### 3090 07:03 简表
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | capR | cap sat | rank active | kd active | status |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| dynamic_singleproj | 373 | 0.48754 | 0.48777 | 0.48535 | +0.01593 | +0.01652 | n/a | n/a | n/a | n/a | PROMISING_EARLY |
+| dynamic_wo_s_rec | 391 | 0.48980 | 0.48980 | 0.48759 | +0.01387 | +0.01355 | n/a | n/a | n/a | n/a | PROMISING_EARLY |
+| dynamic_plain | 263 | 0.44104 | 0.44104 | 0.43661 | +0.00727 | +0.00691 | n/a | n/a | n/a | n/a | WATCH |
+| dynamic_reach_rawinput | 237 | 0.43189 | 0.43189 | 0.42734 | +0.00957 | +0.00948 | n/a | n/a | n/a | n/a | WATCH |
+| capR2 | 58 | 0.31029 | 0.31029 | 0.28538 | +0.00483 | +0.00257 | 1 | 0.99998 | 0.00000 | n/a | pre100 |
+| capR4 | 59 | 0.31132 | 0.31132 | 0.28447 | +0.00244 | -0.00128 | 0 | 0.00000 | 0.00095 | n/a | pre100 |
+| capR2_gatedKD | 56 | 0.28628 | 0.28628 | 0.26270 | -0.01608 | -0.01460 | 1 | 0.99794 | 0.00165 | 1.00000 | stop-low-priority |
+| capR2_gatedKD_wo_srec | 53 | 0.27580 | 0.27580 | 0.24724 | -0.02166 | -0.02032 | 1 | 0.99934 | 0.00076 | 1.00000 | stop-low-priority |
+| capR2_gatedKD_shuffledT | 53 | 0.29493 | 0.29493 | 0.26819 | -0.00253 | +0.00063 | 1 | 0.99965 | 0.00040 | 1.00000 | stop-low-priority |
+
+#### 4090 07:03 简表
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | capR | cap sat | rank active | kd active | status |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| capR2_gatedKD_z | 56 | 0.29591 | 0.29591 | 0.27425 | -0.00269 | +0.00008 | 1 | 0.99488 | 0.00001 | 0.99999 | stop-low-priority |
+| capR2_gatedKD_toU | 59 | 0.31258 | 0.31258 | 0.29057 | +0.00935 | +0.00819 | 1 | 0.99529 | 0.00001 | 1.00000 | stop-low-priority |
+| resume_dynamic | 135 | 0.50505 | 0.50505 | 0.50265 | -0.03392 | -0.03411 | n/a | n/a | n/a | n/a | keep-dynamic |
+| resume_kd0p5 | 138 | 0.41004 | 0.41004 | 0.40423 | -0.12959 | -0.13326 | n/a | n/a | n/a | n/a | stop-low-priority |
+| resume_reach0p5 | 138 | 0.41043 | 0.41043 | 0.40439 | -0.12920 | -0.13310 | n/a | n/a | n/a | n/a | stop-low-priority |
+| resume_srec0p05 | 138 | 0.40728 | 0.40728 | 0.40164 | -0.13235 | -0.13585 | n/a | n/a | n/a | n/a | stop-low-priority |
+| resume_teacher_projectedraw | 40 | 0.35064 | 0.35064 | 0.34561 | -0.16600 | -0.16859 | n/a | n/a | n/a | n/a | already-stalled/pre100 |
+| resume_probeA | 33 | 0.49752 | 0.49752 | 0.49465 | -0.01768 | -0.01788 | n/a | n/a | n/a | n/a | already-stalled/pre100 |
+
+- 已停止低优先级任务：
+  - 3090：`capR2_gatedKD` PID 42841、`capR2_gatedKD_wo_srec` PID 42856、`capR2_gatedKD_shuffledT` PID 42868。停止后 GPU 显存约 16043/12526 MiB。
+  - 4090：`resume_kd0p5` PID 13333、`resume_reach0p5` PID 13342、`resume_srec0p05` PID 13351、`capR2_gatedKD_z` PID 18827、`capR2_gatedKD_toU` PID 18835。停止后 GPU 显存约 3543/7861 MiB。
+  - 保留：所有 det-only control、4090 `resume_dynamic`、3090 `dynamic_singleproj`、`dynamic_wo_s_rec`、`dynamic_plain`、`dynamic_reach_rawinput`、`capR2`、`capR4`。
+- gate 分布诊断：
+  - 4090 stopped z/toU 的 `kd_reach_reachable_margin` 集中在约 1.78-1.80，3090 stopped gatedKD 也集中在约 1.797-1.800；因此 `kd_reach_margin=0` 必然让 gate 几乎全开。
+  - 下一批改为稀疏 gate：`kd_reach_margin=1.79`，`kd_reach_tau=0.02`。
+- 新增脚本：
+  - `docs/experiments/capr_sparse_gate_20260625/launch_3090_sparse_gate_after_smoke_20260625.sh`
+- 队列：
+  - 3090 PID 52160，log `logs/capr_gatedkd_sparse_20260625/queue_sparse_gate_after_smoke_20260625_retry.log`。
+  - 先跑 smoke：`smoke_sparse_gate_m1p79_tau0p02_frac002_20260625_gpu0`，`epochs=1, fraction=0.02`。
+  - smoke 通过后启动三条 e800：
+    - `dynamic_capR2_gatedKD_sparseM1p79_tau0p02_yoloinit`
+    - `dynamic_capR2_gatedKD_sparseM1p79_tau0p02_wo_srec_yoloinit`
+    - `dynamic_capR2_gatedKD_sparseM1p79_tau0p02_shuffledT_yoloinit`
+  - 首次脚本尝试因远端 `train_ladd_hbb.py` 不支持 `--max-train-batches` 失败；已改为 `--fraction 0.02` 并重新启动。当前 smoke 已进入训练，非参数错误。
+
+### 2026-06-25 07:10-07:14 CST
+
+- 3090 sparse gate 队列已完成 smoke 并启动正式 e800 训练。
+  - smoke：`smoke_sparse_gate_m1p79_tau0p02_frac002_20260625_gpu0`，`epochs=1, fraction=0.02`，生成 `results.csv` 与 `ladd_diagnostics.csv`，并包含 `kd_reach_active_ratio` 字段。
+  - 队列日志：`logs/capr_gatedkd_sparse_20260625/queue_sparse_gate_after_smoke_20260625_retry.log`。
+- 新启动三条 3090 sparse gate 训练：
+
+| run | pid | gpu | key args | status |
+|---|---:|---:|---|---|
+| `dynamic_capR2_gatedKD_sparseM1p79_tau0p02_yoloinit` | 52531 | 0 | `rank_d_neg_cap=2.0`, `kd_weight_mode=cap_reachability_gap`, `kd_reach_margin=1.79`, `kd_reach_tau=0.02`, `alpha_s_rec=0.1` | running |
+| `dynamic_capR2_gatedKD_sparseM1p79_tau0p02_wo_srec_yoloinit` | 52647 | 1 | 同上，`alpha_s_rec=0.0` | running |
+| `dynamic_capR2_gatedKD_sparseM1p79_tau0p02_shuffledT_yoloinit` | 52720 | 1 | 同上，`alpha_s_rec=0.1`, `shuffle_teacher_pairs=True` | running negative control |
+
+- 3090 当前资源：
+  - 07:12 复查：GPU0: 19510/24576 MiB，util 99%；GPU1: 19466/24576 MiB，util 99%。三条 sparse gate 完成初始化后，两张卡显存均进入约 19.5G 的高利用区间。
+  - 新 sparse gate 正式 run 刚启动，当前尚未产生 `results.csv`；下一轮检查行数与 `ladd_diagnostics.csv`。
+  - 最近 30 分钟内 `logs/capr_gatedkd_sparse_20260625/` 未发现 Traceback / CUDA OOM / RuntimeError / No space left / batch fallback / NaN。
+- 4090 当前资源：
+  - GPU0: 3543/24564 MiB，util 约 7%；GPU1: 7861/24564 MiB，util 约 93%。
+  - 磁盘仍为 48G/50G，剩余约 2.3G，使用率 96%。因此暂不在 4090 新增实验，避免训练中途写 checkpoint/results 时触发空间不足。
+  - 4090 保留 `resume_detonly` 与 `resume_dynamic`；低优先级 sweep/capR 任务已经停止。
+- 当前策略：
+  - `dynamic` 正线继续跑满，不能停止。
+  - 旧全开 gate 版本不再扩大；新 sparse gate 用于验证 `kd_reach_margin=1.79, tau=0.02` 是否能让 `kd_reach_active_ratio` 从约 1 降到更有选择性的范围。
+  - 下一轮必须检查三条 sparse gate 的 early diagnostics，尤其是 `kd_reach_active_ratio`、paired vs shuffled、以及是否仍出现 KD-to-negative-control 更强的现象。
