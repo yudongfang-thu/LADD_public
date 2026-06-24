@@ -773,3 +773,43 @@ python docs/experiments/monitor_ladd_capr_gatedkd_20260624.py \
   - capR/gatedKD retry 组仍未到 20-row gate/selectivity 判断点。
   - 当前 paired gatedKD 和 wo_srec 均明显落后 det-only；shuffledT 的 late20 也转为轻微负值，但样本太早，不作降级。
   - 不停止、不新增；继续等待 >=20 rows。
+
+### 2026-06-25 04:34 CST
+
+- 轻量续跑检查：
+  - 3090 GPU0/GPU1: 20244/24576 MiB、20932/24576 MiB，util 99%/100%；继续满载安全运行。
+  - 4090 GPU0/GPU1: 12060/24564 MiB、8531/24564 MiB，util 99%/89%；`dynamic_resume` 继续保护运行。
+  - 3090/4090 日志扫描未发现 Traceback / RuntimeError / CUDA OOM / NaN / FileNotFound / AssertionError / batch fallback。
+- 新 capR/gatedKD retry 组状态：
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | capR | cap saturation | rank active | kd active | status |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| dynamic_capR2_yoloinit | 15 | 0.13842 | 0.13842 | 0.08179 | -0.00363 | -0.00171 | True | 0.999993 | 0.000000 | n/a | pre100 |
+| dynamic_capR4_yoloinit retry | 14 | 0.13041 | 0.13041 | 0.07327 | -0.00194 | -0.00605 | False | 0.000000 | 0.000000 | n/a | pre100 |
+| dynamic_capR2_gatedKD retry | 13 | 0.11896 | 0.11896 | 0.06293 | -0.01546 | -0.01231 | True | 0.999971 | 0.000000 | 1.000000 | pre100 |
+| dynamic_capR2_gatedKD_wo_srec retry | 12 | 0.10316 | 0.11465 | 0.06323 | -0.02165 | -0.00707 | True | 0.999881 | 0.000000 | 1.000000 | pre100 |
+| dynamic_capR2_gatedKD_shuffledT retry | 12 | 0.11427 | 0.11427 | 0.06932 | -0.01054 | -0.00098 | True | 0.999939 | 0.000000 | 1.000000 | pre100 |
+
+- 3090 旧 dynamic 线最新状态：
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | status |
+|---|---:|---:|---:|---:|---:|---:|---|
+| dynamic_singleproj | 321 | 0.47126 | 0.47126 | 0.46884 | +0.01487 | +0.01560 | PROMISING_EARLY |
+| dynamic_wo_s_rec | 336 | 0.47293 | 0.47293 | 0.46895 | +0.01130 | +0.01076 | PROMISING_EARLY |
+| dynamic_plain | 209 | 0.41383 | 0.41383 | 0.40829 | +0.00592 | +0.00532 | WATCH |
+| dynamic_reach_rawinput | 181 | 0.40343 | 0.40343 | 0.39837 | +0.01228 | +0.01213 | PROMISING_EARLY |
+
+- 4090 resume/context 最新状态：
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | note |
+|---|---:|---:|---:|---:|---|
+| det-only resume | 87 | 0.52737 | 0.52737 | 0.52507 | same-pipeline context |
+| dynamic_resume | 69 | 0.48876 | 0.48876 | 0.48677 | protected dynamic, running |
+| dynamic_kd0p5 | 69 | 0.36780 | 0.36780 | 0.36254 | low context |
+| dynamic_reach0p5 | 69 | 0.36994 | 0.36994 | 0.36426 | low context |
+| dynamic_srec0p05 | 70 | 0.36559 | 0.36559 | 0.35985 | low context |
+
+- 调度决定：
+  - gatedKD 三条线仍是 13/12/12 rows，未到 >=20 rows；继续等待。
+  - capR2/capR4 正常推进；capR2 的 cap saturation 仍接近 1，rank active 接近 0。
+  - 不停止、不新增。
