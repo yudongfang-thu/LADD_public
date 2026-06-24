@@ -388,3 +388,24 @@ python docs/experiments/monitor_ladd_capr_gatedkd_20260624.py \
   - 周期性巡检新 capR/gatedKD retry runs 到 >=10/20 rows，重点看 `kd_reach_active_ratio` 是否仍然全开、是否有 batch fallback/OOM。
   - 若 gatedKD 到 20 epoch 仍全开，优先准备更尖锐 gate 的后续小变体；若某条旧 WATCH/LOW_PRIORITY 线持续无希望，再释放空间补 `dynamic_capR2_gatedKD_toU_yoloinit` 负控制。
   - 本节同步到两台服务器并 commit/push，保持明早审阅材料完整。
+
+### 2026-06-25 04:02 CST
+
+- 自动化续跑 quick poll：
+  - 3090 GPU0/GPU1: 20244/24576 MiB、20932/24576 MiB，util 99%/99%；继续处于高并行、低于 22G 危险线。
+  - 4090 GPU0/GPU1: 12060/24564 MiB、8531/24564 MiB，util 99%/89%；protected `dynamic_resume` 仍在跑。
+  - 3090/4090 当前有效日志均未发现 Traceback / RuntimeError / CUDA OOM / NaN / FileNotFound / AssertionError / batch fallback。
+- 3090 最新 rows/status：
+  - `dynamic_singleproj`: rows=309, latest_delta=+0.01656, late20_delta=+0.01459, PROMISING_EARLY。
+  - `dynamic_wo_s_rec`: rows=324, latest_delta=+0.01075, late20_delta=+0.00973, WATCH，接近 PROMISING 阈值。
+  - `dynamic_plain`: rows=196, latest_delta=+0.00493, late20_delta=+0.00608, WATCH。
+  - `dynamic_reach_rawinput`: rows=168, latest_delta=+0.01243, late20_delta=+0.01167, PROMISING_EARLY。
+  - 新 capR/gatedKD 仍在 pre100 且未到 10/20 epoch 动作点：capR2 rows=5，capR4_retry rows=4，gatedKD rows=4，gatedKD_wo_srec rows=3，shuffledT rows=3。
+  - gatedKD 的 `kd_reach_active_ratio` 仍接近 1，但 rows 只有 3-4，继续观察到 >=10/20 后再决定是否调 gate。
+- 4090 最新 rows/status：
+  - `dynamic_resume`: rows=52, latest_delta=-0.03449, late20_delta=-0.03443。
+  - `dynamic_kd0p5`: rows=52, late20_delta=-0.16367；`dynamic_reach0p5`: rows=52, late20_delta=-0.16146；`dynamic_srec0p05`: rows=53, late20_delta=-0.16717。
+  - 这些 4090 resume 小变体仍只作 context，不作为 capR formal 证据；暂不停止 protected `dynamic_resume`。
+- 调度决定：
+  - 不新增 KD-to-u，也不启动更尖锐 gate 变体；原因是 capR/gatedKD 尚未到 10/20 rows，且 3090 显存已接近 20-21G。
+  - 下一次有意义动作点：capR/gatedKD retry runs 到 >=10 rows 做健康检查；到 >=20 rows 判断 `kd_reach_active_ratio` 是否全开并决定是否启更尖锐 gate 变体。
