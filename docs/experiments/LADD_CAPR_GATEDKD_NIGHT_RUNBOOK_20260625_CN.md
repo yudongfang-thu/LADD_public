@@ -115,15 +115,15 @@ python ladd/code/tools/inspect_ladd_run_args.py --run-dir <run_dir>
 
 若已有 checkpoint 可用，对关键 run 跑 paired/shuffled audit：
 
-- [ ] dynamic_plain paired
-- [ ] dynamic_plain shuffled
-- [ ] dynamic_wo_s_rec paired
-- [ ] dynamic_wo_s_rec shuffled
+- [x] dynamic_plain paired（CPU mini audit，venv）
+- [x] dynamic_plain shuffled（CPU mini audit，venv）
+- [x] dynamic_wo_s_rec paired（CPU mini audit，venv）
+- [x] dynamic_wo_s_rec shuffled（CPU mini audit，venv）
 - [x] dynamic_singleproj paired（已完成 CPU mini audit）
 - [x] dynamic_singleproj shuffled（已完成 CPU mini audit）
-- [ ] dynamic_wo_reach paired
+- [x] dynamic_wo_reach paired（CPU mini audit，venv）
 
-说明：本轮已完成 `dynamic_singleproj` paired/shuffled mini audit，并修复 audit 工具；其余 learnability audit 尚未全量执行，不能视为完整机制闭环。
+说明：本轮已完成 `dynamic_singleproj` paired/shuffled mini audit，并补充完成 `dynamic_plain`、`dynamic_wo_s_rec`、`dynamic_wo_reach` 的 CPU mini audit。当前审计是 `max_batches=2, batch=2, max_tokens_per_level=512` 的轻量机制筛查，不等价于完整 val audit；但已经足够暴露 paired/shuffled 接近、`wo_reach` 中 u 比 z 更可学习等关键机制信号。
 
 工具：
 
@@ -2829,3 +2829,30 @@ python docs/experiments/monitor_ladd_capr_gatedkd_20260624.py \
   - 旧 dynamic 正线仍是当前唯一稳定正向证据：3090 `singleproj` late20 delta +0.01655，`wo_s_rec` +0.01362；继续跑满 e800，不能因为 capR-gatedKD 失败而停止。
   - 新 capR/capR4 基线本身仍只有微小或负增益；没有出现大于 +1 点的 early 主线信号。
   - 下一步若要新增实验，应先做更尖锐/更稀疏的 gate 或离线 learnability audit，而不是继续扫这版全开 gate 的强度。
+
+### 2026-06-25 06:57-07:08 CST
+
+- 继续推进 Phase E learnability audit 收尾。3090 默认 `/usr/bin/python` 的 numpy 环境异常，首个 CPU mini-audit 队列失败，错误为 `ModuleNotFoundError: No module named 'numpy._globals'`；随后改用训练环境 `/root/shared-nvme/venvs/ladd312/bin/python` 重新运行并完成。
+- 远端输出目录：
+  - `runs_public/ogsod/hbb/audits/learnability_cpu_mini_venv_20260625/`
+- 本地审阅包目录：
+  - `docs/review_packages/mainline_method_search_20260624/tables/learnability_cpu_mini_venv_20260625/`
+- 已拉取每个 run 的 `learnability_audit_summary.csv`、`learnability_audit_per_level.csv`、`learnability_audit_per_batch.csv`。
+
+| run | tokens | fg | gap_direct | pos_ratio | r2_z | r2_u | r2_gap | cos_z | cos_u | auc_z | auc_u |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| dynamic_plain_paired | 1280 | 0.0055 | 2.2344 | 1.0000 | 0.9659 | 0.7099 | 0.2560 | 0.9958 | 0.8511 | 0.9988 | 1.0000 |
+| dynamic_plain_shuffled | 1280 | 0.0039 | 2.2333 | 1.0000 | 0.9669 | 0.7073 | 0.2595 | 0.9957 | 0.8491 | 0.9988 | 1.0000 |
+| dynamic_wo_reach_paired | 1280 | 0.0055 | 0.4981 | 0.8836 | 0.5851 | 0.7477 | -0.1626 | 0.8058 | 0.8826 | 1.0000 | 1.0000 |
+| dynamic_wo_s_rec_paired | 1280 | 0.0055 | 2.1304 | 0.9984 | 0.9685 | 0.7131 | 0.2554 | 0.9958 | 0.8521 | 0.9992 | 1.0000 |
+| dynamic_wo_s_rec_shuffled | 1280 | 0.0039 | 2.1348 | 0.9984 | 0.9710 | 0.7202 | 0.2508 | 0.9958 | 0.8552 | 0.9992 | 1.0000 |
+
+- 机制解释：
+  - `dynamic_plain` 与 `dynamic_wo_s_rec` 均显示 `z` 比 `u` 更 SAR-learnable：`r2_z` 约 0.966-0.971，`r2_u` 约 0.707-0.720，`r2_gap` 约 +0.25。
+  - `task_auc_u≈1.0` 不自动代表失败；它说明 `u` 仍含 task-useful RGB 信息，符合“u 可能 task-useful 但不应被默认蒸馏”的定义。
+  - paired 与 shuffled mini-audit 几乎相同，不能证明当前机制真正利用 paired RGB-SAR 信息；这与 06:52 训练负控制 `shuffledT > paired` 的 warning 一致。
+  - `dynamic_wo_reach` 出现反例：`r2_z=0.5851`、`r2_u=0.7477`、`r2_gap=-0.1626`，说明去掉 reach 后 z/u learnability 角色会明显变差，reach 约束对当前分解成立是关键条件。
+- 下一步：
+  - 不扩大当前全开 gate 的 capR-gatedKD 版本；
+  - 继续保护旧 dynamic 正线跑满 e800；
+  - 后续新变体应优先修复 gate 选择性，让 `kd_reach_active_ratio` 不再长期接近 1，并用 paired/shuffled、KD-to-z/u 负控制约束。
