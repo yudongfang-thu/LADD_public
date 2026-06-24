@@ -2729,3 +2729,53 @@ python docs/experiments/monitor_ladd_capr_gatedkd_20260624.py \
   - 4090 `KD-to-u` 51 行继续强于 `KD-to-z` 49 行：toU latest/late20 = +0.00774/+0.00698，z = -0.00040/+0.00182。仍差 1 行到正式 z-vs-u 50-row warning。
   - capR2/capR4 本身没有放大增益：capR2 late20 +0.00104，capR4 -0.00285。
   - gate 继续几乎全开：`kd_reach_active_ratio≈1`，`rank_active_ratio≈0`。这仍指向当前 capR-gatedKD 没有形成有效 token 选择性；下一轮若成对 50 行满足且关系不变，应正式写入机制警报并把 capR-gatedKD 主候选降级为诊断线。
+
+### 2026-06-25 06:49 CST
+
+- 资源状态：
+  - 3090 GPU0/GPU1: 20244/24576 MiB、20934/24576 MiB，util 100%/99%；磁盘 40G/50G，剩余 11G，使用率 79%。
+  - 4090 GPU0/GPU1: 15644/24564 MiB、15694/24564 MiB，util 99%/99%；磁盘 48G/50G，剩余 2.3G，使用率 96%。
+- 当前有效日志窄扫描无 Traceback / RuntimeError / CUDA OOM / NaN / FileNotFound / No space left / batch fallback。
+- **正式 50-row negative-control warning 触发：4090 KD-to-u 强于 KD-to-z。**
+  - 4090 `capR2_gatedKD_z` 已到 50 行，latest/late20 delta = -0.00350/+0.00151。
+  - 4090 `capR2_gatedKD_toU` 已到 53 行，latest/late20 delta = +0.00901/+0.00756。
+  - 同机同 fresh det-only control 下，`KD-to-u` 在 latest 和 late20 都显著强于 `KD-to-z`。这不是最终 e800 结论，但已经是机制警报：当前 capR-gatedKD 没有证明“只蒸馏 z_t 才有效”，应把当前 capR-gatedKD 主候选降级为诊断线，并优先检查 z/u learnability 分解、gate 温度/阈值、以及 `kd_active≈1` 的全开问题。
+- 3090 paired/shuffled 仍未满足成对 50-row checkpoint：paired/shuffledT 为 52/49 行。虽然 shuffledT 仍强于 paired，但按规则继续不写正式 paired-vs-shuffled warning。
+- 本轮不新增、不停止、不清理：protected dynamic 正线继续跑满；4090 磁盘仍紧张但稳定在 2.3G，继续密切观察。
+
+#### 3090 简表
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | cap saturation | rank active | kd active | status |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| detonly_control | 462 | 0.49509 | 0.49509@462 | 0.49314 | n/a | n/a | n/a | n/a | n/a | control |
+| dynamic_singleproj | 368 | 0.48679 | 0.48679@368 | 0.48392 | +0.01708 | +0.01654 | n/a | n/a | n/a | PROMISING_EARLY |
+| dynamic_wo_s_rec | 386 | 0.48898 | 0.48898@386 | 0.48633 | +0.01361 | +0.01361 | n/a | n/a | n/a | PROMISING_EARLY |
+| dynamic_plain | 258 | 0.43818 | 0.43818@258 | 0.43445 | +0.00670 | +0.00697 | n/a | n/a | n/a | WATCH |
+| dynamic_reach_rawinput | 232 | 0.42980 | 0.42980@232 | 0.42482 | +0.00952 | +0.00943 | n/a | n/a | n/a | WATCH |
+| dynamic_capR2_yoloinit | 55 | 0.30538 | 0.30538@55 | 0.27563 | +0.00434 | +0.00131 | 0.99999 | 0.00000 | n/a | pre100 |
+| dynamic_capR4_yoloinit | 55 | 0.30073 | 0.30073@55 | 0.27147 | -0.00031 | -0.00286 | 0.00000 | 0.00039 | n/a | pre100 |
+| dynamic_capR2_gatedKD | 52 | 0.27936 | 0.27936@52 | 0.25010 | -0.01601 | -0.01386 | 0.99828 | 0.00140 | 1.00000 | pre100 |
+| dynamic_capR2_gatedKD_wo_srec | 50 | 0.26556 | 0.26556@50 | 0.23735 | -0.02250 | -0.01959 | 0.99939 | 0.00062 | 1.00000 | pre100 |
+| dynamic_capR2_gatedKD_shuffledT | 49 | 0.28937 | 0.28937@49 | 0.25452 | +0.00225 | +0.00124 | 0.99973 | 0.00024 | 1.00000 | pre100 |
+
+#### 4090 简表
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | cap saturation | rank active | kd active | status |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| fresh_detonly | 60 | 0.30522 | 0.30522@60 | 0.28502 | n/a | n/a | n/a | n/a | n/a | control |
+| capR2_gatedKD_z | 50 | 0.28283 | 0.28489@49 | 0.25632 | -0.00350 | +0.00151 | 0.99498 | 0.00001 | 0.99998 | 50-row NEG-WARN |
+| capR2_gatedKD_toU | 53 | 0.30181 | 0.30181@53 | 0.27251 | +0.00901 | +0.00756 | 0.99524 | 0.00002 | 1.00000 | negative-control stronger |
+| resume_detonly | 166 | 0.54639 | 0.54639@166 | 0.54424 | n/a | n/a | n/a | n/a | n/a | context |
+| resume_dynamic | 129 | 0.50392 | 0.50392@129 | 0.50095 | n/a | n/a | n/a | n/a | n/a | context |
+| resume_kd0p5 | 132 | 0.40688 | 0.40688@132 | 0.40046 | n/a | n/a | n/a | n/a | n/a | context |
+| resume_reach0p5 | 132 | 0.40647 | 0.40647@132 | 0.40060 | n/a | n/a | n/a | n/a | n/a | context |
+| resume_srec0p05 | 132 | 0.40343 | 0.40343@132 | 0.39833 | n/a | n/a | n/a | n/a | n/a | context |
+| resume_teacher_projectedraw | 40 | 0.35064 | 0.35064@40 | 0.34561 | n/a | n/a | n/a | n/a | n/a | context |
+| resume_probeA | 33 | 0.49752 | 0.49752@33 | 0.49465 | n/a | n/a | n/a | n/a | n/a | context |
+
+- 机制判断：
+  - 4090 负控制已经正式触发：`KD-to-u` > `KD-to-z`。这直接削弱当前 `z_t` 是唯一正确蒸馏目标的机制 claim，至少说明当前 z/u 分解或 gate 实现没有把 SAR-learnable knowledge 稳定隔离到 z。
+  - `kd_reach_active_ratio≈1` 且 `rank_active_ratio≈0` 仍是核心症状：capR saturation 高，但 gate 没有选择性，基本退化成近乎全 token KD 权重。
+  - 3090 dynamic 正线仍稳定：`singleproj` late20 delta +0.01654，`wo_s_rec` +0.01361，继续跑满 e800。
+  - 3090 capR-gatedKD paired 仍明显负，shuffledT 仍更好，但 shuffledT 49 行，因此 paired-vs-shuffled 的正式 warning 等下一轮。
+  - 下一步优先级：保持 dynamic 正线和 same-pipeline controls；将当前 capR-gatedKD 标为诊断线；后续探索应先修 gate 选择性或跑 learnability audit，而不是直接扩大这版 gatedKD。
