@@ -161,7 +161,8 @@ def main() -> None:
         summary[key] = first_present(last_diag, command_args, run_args, first_diag, key=key)
 
     rank_cap = as_float(summary.get("rank_d_neg_cap"), 4.0)
-    normalize = as_bool(summary.get("normalize_reach", True))
+    normalize_value = summary.get("normalize_reach")
+    normalize = True if normalize_value in ("", None) else as_bool(normalize_value)
     summary["capR_effectively_enabled_computed"] = bool(normalize and rank_cap < 4.0)
     summary["capR_effectively_disabled_reason"] = (
         ""
