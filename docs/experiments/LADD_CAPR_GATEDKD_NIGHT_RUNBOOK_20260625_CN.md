@@ -975,3 +975,46 @@ python docs/experiments/monitor_ladd_capr_gatedkd_20260624.py \
   - 新 gatedKD 三条线仍未到 >=20 rows；先不依据 14-16 epoch 的噪声做调度。
   - 目前 `kd_active_ratio` 继续接近 1.0，说明 capR-gated KD 可能实际接近“全开 gate”；到 20/50/100 rows 时需要重点判断 gate selectivity。
   - `dynamic_singleproj`、`dynamic_wo_s_rec`、`dynamic_reach_rawinput` 仍是目前最值得保护的 dynamic 证据线；不停止 dynamic。
+
+### 2026-06-25 04:44 CST
+
+- 轻量续跑检查：
+  - 3090 GPU0/GPU1: 20244/24576 MiB、20934/24576 MiB，util 99%/99%；10 条主训练进程均在运行。
+  - 4090 GPU0/GPU1: 12060/24564 MiB、8531/24564 MiB，util 98%/91%；真正仍在运行的是 det-only resume、dynamic resume、dynamic_kd0p5、dynamic_reach0p5、dynamic_srec0p05，`ProbeA` 与 `dynamic_teacher_projectedraw` 当前只是保留结果目录，进程不在。
+  - 3090/4090 日志扫描未发现 Traceback / RuntimeError / CUDA OOM / NaN / FileNotFound / AssertionError / batch fallback。
+- 新 capR/gatedKD retry 组状态：
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | capR | cap saturation | rank active | kd active | status |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| dynamic_capR2_yoloinit | 17 | 0.15336 | 0.15336 | 0.08840 | +0.00193 | -0.00218 | True | 0.999997 | 0.000000 | n/a | pre100 |
+| dynamic_capR4_yoloinit retry | 17 | 0.14664 | 0.14664 | 0.08430 | -0.00479 | -0.00629 | False | 0.000000 | 0.000001 | n/a | pre100 |
+| dynamic_capR2_gatedKD retry | 16 | 0.13054 | 0.13054 | 0.07476 | -0.00546 | -0.01202 | True | 0.999952 | 0.000000 | 1.000000 | pre100 |
+| dynamic_capR2_gatedKD_wo_srec retry | 15 | 0.11667 | 0.12563 | 0.07494 | -0.02538 | -0.00856 | True | 0.999953 | 0.000000 | 1.000000 | pre100 |
+| dynamic_capR2_gatedKD_shuffledT retry | 15 | 0.12727 | 0.13392 | 0.08140 | -0.01478 | -0.00210 | True | 0.999862 | 0.000000 | 1.000000 | pre100 |
+
+- 3090 旧 dynamic 线最新状态：
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | status |
+|---|---:|---:|---:|---:|---:|---:|---|
+| dynamic_singleproj | 324 | 0.47202 | 0.47202 | 0.46974 | +0.01472 | +0.01555 | PROMISING_EARLY |
+| dynamic_wo_s_rec | 340 | 0.47477 | 0.47477 | 0.47071 | +0.01195 | +0.01116 | PROMISING_EARLY |
+| dynamic_plain | 213 | 0.41547 | 0.41547 | 0.41049 | +0.00485 | +0.00517 | WATCH |
+| dynamic_reach_rawinput | 185 | 0.40455 | 0.40455 | 0.40037 | +0.01074 | +0.01193 | PROMISING_EARLY |
+
+- 4090 resume/context 最新状态：
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | note |
+|---|---:|---:|---:|---:|---|
+| det-only resume | 93 | 0.52826 | 0.52826 | 0.52641 | same-pipeline context, running |
+| dynamic_resume | 74 | 0.49015 | 0.49015 | 0.48784 | protected dynamic, running |
+| dynamic_kd0p5 | 74 | 0.37077 | 0.37077 | 0.36526 | low context, running |
+| dynamic_reach0p5 | 74 | 0.37205 | 0.37205 | 0.36694 | low context, running |
+| dynamic_srec0p05 | 75 | 0.36875 | 0.36875 | 0.36290 | low context, running |
+| dynamic_teacher_projectedraw | 40 | 0.35064 | 0.35064 | 0.34561 | result dir only; no active process |
+| ProbeA resume | 33 | 0.49752 | 0.49752 | 0.49465 | result dir only; no active process |
+
+- 调度判断：
+  - 新 gatedKD 三条线仍未到 >=20 rows；继续等待机制判断窗口。
+  - 3090 已接近 20-21G，暂不补 `dynamic_capR2_gatedKD_toU_yoloinit`，避免把两张卡推向 OOM/fallback 风险。
+  - 4090 虽有显存余量，但本机缺少 3090 capR 命令使用的等价 A-stage source：`runs_public/paper/ogsod_hbb_nomosaic/diagnostics/ladd_dynamic/yolo11n/seed0/ladd_clean_a1b_dyn_ogsod11n_diagnostic_nomosaic_dynamic_yolo11n_s0_a1_e10_b64_s0_gpu0/weights/best.pt`。直接在 4090 补 fresh capR/toU 会使 same-pipeline 对照关系变脏；本轮不启动。
+  - 保留 4090 当前 `dynamic_resume`；不停止 dynamic。
