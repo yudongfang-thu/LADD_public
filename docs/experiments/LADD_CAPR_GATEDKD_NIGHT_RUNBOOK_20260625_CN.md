@@ -453,3 +453,47 @@ python docs/experiments/monitor_ladd_capr_gatedkd_20260624.py \
   - 本轮不停止、不新增；3090 已接近安全显存上限，新 capR/gatedKD 组尚未到 10/20 rows 动作点。
   - `dynamic_wo_s_rec` 已从 WATCH 升为 `PROMISING_EARLY`；`dynamic_singleproj` 与 `dynamic_reach_rawinput` 继续保持 `PROMISING_EARLY`。
   - gatedKD 的 `kd_reach_active_ratio` 目前仍近似全开，但只有 6 rows；继续观察到 >=10 rows 做健康检查，>=20 rows 再决定是否开更尖锐 gate 或释放空间补 `KD-to-u` 负控制。
+
+### 2026-06-25 04:18 CST
+
+- 自动化续跑 10-row 健康检查：
+  - 3090 GPU0/GPU1: 20244/24576 MiB、20932/24576 MiB，util 99%/100%；仍处于安全高并行上限附近，不追加新任务。
+  - 4090 GPU0/GPU1: 12060/24564 MiB、8531/24564 MiB，util 98%/84%；protected `dynamic_resume` 仍在跑。
+  - 3090 capR retry-cache 有效日志 `034019/034447` 仍未发现 Traceback / RuntimeError / CUDA OOM / NaN / FileNotFound / AssertionError / batch fallback。
+  - 4090 当前有效 `021121` 日志仍未发现 Traceback / RuntimeError / CUDA OOM / NaN / FileNotFound / AssertionError / batch fallback。
+- 3090 旧 dynamic 线最新状态：
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | status |
+|---|---:|---:|---:|---:|---:|---:|---|
+| dynamic_singleproj | 315 | 0.47073 | 0.47073 | 0.46669 | +0.01623 | +0.01531 | PROMISING_EARLY |
+| dynamic_wo_s_rec | 330 | 0.47081 | 0.47081 | 0.46648 | +0.01158 | +0.01032 | PROMISING_EARLY |
+| dynamic_plain | 203 | 0.41020 | 0.41020 | 0.40483 | +0.00482 | +0.00554 | WATCH |
+| dynamic_reach_rawinput | 175 | 0.40002 | 0.40002 | 0.39495 | +0.01124 | +0.01201 | PROMISING_EARLY |
+
+- 3090 新 capR/gatedKD retry 组最新状态：
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | latest delta | late20 delta | capR | cap saturation | rank active | kd active | status |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| dynamic_capR2_yoloinit | 10 | 0.11132 | 0.11132 | 0.06057 | +0.00721 | -0.00010 | True | 0.999889 | 0.000000 | n/a | pre100 |
+| dynamic_capR4_yoloinit retry | 9 | 0.08965 | 0.10012 | 0.04773 | -0.00047 | -0.00812 | False | 0.000000 | 0.000000 | n/a | pre100 |
+| dynamic_capR2_gatedKD retry | 8 | 0.08097 | 0.08097 | 0.03735 | -0.01096 | -0.01422 | True | 0.999938 | 0.000000 | 1.000000 | pre100 |
+| dynamic_capR2_gatedKD_wo_srec retry | 8 | 0.07321 | 0.07551 | 0.04224 | -0.01872 | -0.00932 | True | 0.999641 | 0.000000 | 1.000000 | pre100 |
+| dynamic_capR2_gatedKD_shuffledT retry | 8 | 0.08210 | 0.09311 | 0.05078 | -0.00983 | -0.00079 | True | 0.999982 | 0.000000 | 1.000000 | pre100 |
+
+- 10-row 健康检查结论：
+  - `dynamic_capR2_yoloinit` 已到 10 rows，capR 真实启用，且 `cap_saturation_ratio` 接近 1，说明 capR 在极早期确实大量截断 d_neg；`rank_active_ratio=0`，说明当前 rank loss 基本不活跃。
+  - `dynamic_capR4_yoloinit` 仍为 capR disabled 对照，符合 `rank_d_neg_cap=4.0` 近似禁用 capR 的预期。
+  - 三条 gatedKD retry 仍未到 10 rows；当前 `kd_active_ratio≈1.0`，但暂不据此调参，继续等 gatedKD 自身 >=10 做健康检查，>=20 做 gate 选择性判断。
+- 4090 resume/context 最新状态：
+
+| run | rows | latest AP50-95 | best AP50-95 | late20 | note |
+|---|---:|---:|---:|---:|---|
+| det-only resume | 76 | 0.52489 | 0.52489 | 0.52279 | same-pipeline context |
+| dynamic_resume | 61 | 0.48706 | 0.48706 | 0.48519 | protected dynamic, running |
+| dynamic_kd0p5 | 60 | 0.36251 | 0.36251 | 0.35763 | low context |
+| dynamic_reach0p5 | 60 | 0.36449 | 0.36449 | 0.35966 | low context |
+| dynamic_srec0p05 | 61 | 0.35974 | 0.35974 | 0.35454 | low context |
+
+- 调度决定：
+  - 不停止、不新增；3090 显存没有足够安全余量，且 gatedKD 组尚未到自身 10/20 rows 动作点。
+  - 下一动作点：gatedKD 系列到 >=10 rows 后记录健康检查；>=20 rows 后若 `kd_reach_active_ratio` 仍近似全开，优先考虑更尖锐 gate 变体或释放低优先级空间补 `dynamic_capR2_gatedKD_toU_yoloinit` 负控制。
