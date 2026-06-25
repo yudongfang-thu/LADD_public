@@ -1,0 +1,46 @@
+[
+  {
+    "id": "dynamic_kd2p0_yoloinit",
+    "gpu": 0,
+    "run_name": "ogsod_yoloinit_dynamic_kd2p0_yoloinit_yolo11n_e800_b64_img256_s0_20260624_210845_gpu0",
+    "project": "runs_public/ogsod/hbb/yoloinit_dynamic_sweep_20260624/dynamic_kd2p0_yoloinit/yolo11n/seed0",
+    "log_dir": "logs/ogsod_yoloinit_dynamic_sweep_20260624/dynamic_kd2p0_yoloinit_gpu0_20260624_210845",
+    "pid": 33631,
+    "changes": {
+      "--alpha-kd": "2.0"
+    }
+  },
+  {
+    "id": "dynamic_corewarm60_yoloinit",
+    "gpu": 0,
+    "run_name": "ogsod_yoloinit_dynamic_corewarm60_yoloinit_yolo11n_e800_b64_img256_s0_20260624_210845_gpu0",
+    "project": "runs_public/ogsod/hbb/yoloinit_dynamic_sweep_20260624/dynamic_corewarm60_yoloinit/yolo11n/seed0",
+    "log_dir": "logs/ogsod_yoloinit_dynamic_sweep_20260624/dynamic_corewarm60_yoloinit_gpu0_20260624_210845",
+    "pid": 33635,
+    "changes": {
+      "--ladd-b-loss-warmup-end-epoch": "60"
+    }
+  },
+  {
+    "id": "dynamic_kd0p25_yoloinit",
+    "gpu": 1,
+    "run_name": "ogsod_yoloinit_dynamic_kd0p25_yoloinit_yolo11n_e800_b64_img256_s0_20260624_210845_gpu1",
+    "project": "runs_public/ogsod/hbb/yoloinit_dynamic_sweep_20260624/dynamic_kd0p25_yoloinit/yolo11n/seed0",
+    "log_dir": "logs/ogsod_yoloinit_dynamic_sweep_20260624/dynamic_kd0p25_yoloinit_gpu1_20260624_210845",
+    "pid": 33639,
+    "changes": {
+      "--alpha-kd": "0.25"
+    }
+  },
+  {
+    "id": "dynamic_reach_rawinput_yoloinit",
+    "gpu": 1,
+    "run_name": "ogsod_yoloinit_dynamic_reach_rawinput_yoloinit_yolo11n_e800_b64_img256_s0_20260624_210845_gpu1",
+    "project": "runs_public/ogsod/hbb/yoloinit_dynamic_sweep_20260624/dynamic_reach_rawinput_yoloinit/yolo11n/seed0",
+    "log_dir": "logs/ogsod_yoloinit_dynamic_sweep_20260624/dynamic_reach_rawinput_yoloinit_gpu1_20260624_210845",
+    "pid": 33643,
+    "changes": {
+      "--reach-input-mode": "raw"
+    }
+  }
+]

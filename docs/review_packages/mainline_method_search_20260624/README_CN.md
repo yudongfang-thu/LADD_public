@@ -30,6 +30,31 @@
 - `tables/ogsod_3090_candidate_deltas.csv`：3090 当前候选相对同机 same-pipeline det-only control 的同 epoch delta。
 - `tables/manifest_files.csv`：包内文件清单和大小。
 
+## 2026-06-25 当前证据快照
+
+新增快照目录：
+
+- `evidence/current_evidence_20260625_1115/`：从 `ladd3090-zw1` 和 `ladd4090-zw1` 拉回的当前轻量原始证据，包含每条 run 的 `results.csv`、`ladd_diagnostics.csv`、`args.yaml`。不包含 checkpoint 权重。
+- `runtime_logs/current_evidence_20260625_1115/`：对应启动命令、外层日志、smoke 日志、停止记录和采集时 GPU/进程快照。
+- `docs_snapshot/current_evidence_20260625_1115/`：本轮夜间 runbook 和相关启动脚本快照。
+- `code_refs/current_20260625_1115/`：采集时本地 LADD HBB 关键代码快照。
+- `tables/current_evidence_20260625_1115/`：当前证据对比表、copy manifest 和后续生成的文件 manifest。
+
+当前最重要的审阅入口：
+
+- `tables/current_evidence_20260625_1115/current_evidence_focus_table.csv`
+- `tables/current_evidence_20260625_1115/current_evidence_3090_vs_det_and_plain.csv`
+- `tables/current_evidence_20260625_1115/current_evidence_4090_vs_det_and_plain.csv`
+- `REVIEW_PROMPT_CURRENT_20260625_CN.md`
+
+本轮当前结论应谨慎表述为：
+
+- 在 3090 同机证据中，`dynamic_plain_yoloinit` 相比 det-only 的 late20 delta 约为 `+0.0172` AP50-95。
+- `dynamic_singleproj_yoloinit` 和 `dynamic_wo_s_rec_yoloinit` 相比 det-only 仍为正，但相对 `dynamic_plain_yoloinit` 的 matched late20 delta 分别约为 `-0.00066` 和 `-0.00324`，因此“正于 det-only”不等于“优于 plain”。
+- `dynamic_reach_rawinput_yoloinit` 与 plain 基本持平，matched late20 delta 约为 `+0.00004`。
+- 4090 上的 combo/frankenstein run 已停止，只能作为诊断证据；`dynamic_plain_anchor_4090_yoloinit` 仍太早，不宜强结论。
+- `dynamic_resume_fixed` 属于 resume/reload-like context，不作为 YOLO-init 主线正结果。
+
 当前 3090 delta 表中较值得优先看的早期现象：
 
 - `dynamic_reach_rawinput_yoloinit`：pre100，但 latest delta 和 late20 delta 当前最高。
@@ -47,8 +72,8 @@
 
 ## 已知缺口
 
-- `ladd4090-zw1` 在本次打包时 SSH 连接不稳定，未能拉回最新远端原始目录；包中现有 4090 证据来自本地已同步 plot data、图和主记录文档。
-- 当前 3090 新 sweep 仍有多条未到 100 epoch，属于 early screening，不应过度解释。
+- 旧版说明中曾记录 `ladd4090-zw1` 原始目录未完全同步；`current_evidence_20260625_1115` 已补充 4090 当前轻量原始证据与日志，但 4090 plain anchor 仍只有十余个 epoch，不能作为稳定 anchor。
+- 当前 3090 与 4090 部分新 run 仍属于 early screening，不应过度解释。
 - 当前包主要服务方法诊断，不是论文最终证据包。
 
 ## 建议审阅入口

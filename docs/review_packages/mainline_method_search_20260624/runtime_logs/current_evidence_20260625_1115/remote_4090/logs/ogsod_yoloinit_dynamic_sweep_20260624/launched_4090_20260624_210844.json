@@ -1,0 +1,48 @@
+[
+  {
+    "id": "dynamic_kd0p5_yoloinit",
+    "gpu": 0,
+    "run_name": "ogsod_yoloinit_dynamic_kd0p5_yoloinit_yolo11n_e800_b64_img256_s0_20260624_210844_gpu0",
+    "project": "runs_public/ogsod/hbb/yoloinit_dynamic_sweep_20260624/dynamic_kd0p5_yoloinit/yolo11n/seed0",
+    "log_dir": "logs/ogsod_yoloinit_dynamic_sweep_20260624/dynamic_kd0p5_yoloinit_gpu0_20260624_210844",
+    "pid": 221545,
+    "changes": {
+      "--alpha-kd": "0.5"
+    }
+  },
+  {
+    "id": "dynamic_reach0p5_yoloinit",
+    "gpu": 0,
+    "run_name": "ogsod_yoloinit_dynamic_reach0p5_yoloinit_yolo11n_e800_b64_img256_s0_20260624_210844_gpu0",
+    "project": "runs_public/ogsod/hbb/yoloinit_dynamic_sweep_20260624/dynamic_reach0p5_yoloinit/yolo11n/seed0",
+    "log_dir": "logs/ogsod_yoloinit_dynamic_sweep_20260624/dynamic_reach0p5_yoloinit_gpu0_20260624_210844",
+    "pid": 221549,
+    "changes": {
+      "--lambda-reach": "0.5",
+      "--lambda-match-inner": "0.5",
+      "--lambda-rank-inner": "0.5"
+    }
+  },
+  {
+    "id": "dynamic_srec0p05_yoloinit",
+    "gpu": 1,
+    "run_name": "ogsod_yoloinit_dynamic_srec0p05_yoloinit_yolo11n_e800_b64_img256_s0_20260624_210844_gpu1",
+    "project": "runs_public/ogsod/hbb/yoloinit_dynamic_sweep_20260624/dynamic_srec0p05_yoloinit/yolo11n/seed0",
+    "log_dir": "logs/ogsod_yoloinit_dynamic_sweep_20260624/dynamic_srec0p05_yoloinit_gpu1_20260624_210844",
+    "pid": 221553,
+    "changes": {
+      "--alpha-s-rec": "0.05"
+    }
+  },
+  {
+    "id": "dynamic_teacher_projectedraw_yoloinit",
+    "gpu": 1,
+    "run_name": "ogsod_yoloinit_dynamic_teacher_projectedraw_yoloinit_yolo11n_e800_b64_img256_s0_20260624_210844_gpu1",
+    "project": "runs_public/ogsod/hbb/yoloinit_dynamic_sweep_20260624/dynamic_teacher_projectedraw_yoloinit/yolo11n/seed0",
+    "log_dir": "logs/ogsod_yoloinit_dynamic_sweep_20260624/dynamic_teacher_projectedraw_yoloinit_gpu1_20260624_210844",
+    "pid": 221557,
+    "changes": {
+      "--teacher-feature-mode": "projected_raw"
+    }
+  }
+]

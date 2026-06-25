@@ -1,0 +1,107 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd /root/shared-nvme/LADD_public
+export PYTHONUNBUFFERED=1
+
+"/root/shared-nvme/venvs/ladd312/bin/python" ladd/code/train_ladd_hbb.py \
+  --phase b \
+  --model yolo11n.pt \
+  --data "debug/zw1_nomosaic_clean_cache_20260623/20260623_214553/yamls/ogsod_hbb_sar_nomosaic_zw1.yaml" \
+  --teacher-data "debug/zw1_nomosaic_clean_cache_20260623/20260623_214553/yamls/ogsod_hbb_rgb_nomosaic_zw1.yaml" \
+  --teacher-weights "runs_public/ogsod/hbb/baseline_controls/mosaic_baselines_20260615/rgb_yolo11n_hbb_mosaicE800_closeAt100_s0_imported_cos_closeAt100_20260524/weights/best.pt" \
+  --imgsz 256 \
+  --epochs 800 \
+  --batch 64 \
+  --strict-batch-size \
+  --workers 8 \
+  --device 0 \
+  --patience 800 \
+  --fraction 1.0 \
+  --project runs_public/ogsod/hbb/yoloinit_dynamic_sweep_20260624/dynamic_reach0p5_yoloinit/yolo11n/seed0 \
+  --name ogsod_yoloinit_dynamic_reach0p5_yoloinit_yolo11n_e800_b64_img256_s0_20260624_210844_gpu0 \
+  --phase-detect-mode raw \
+  --det-loss-scale 1.0 \
+  --phase-stop-metric default \
+  --phase-min-epochs 800 \
+  --freeze-bn-after-epoch -1 \
+  --ladd-diag-log-bn 1 \
+  --ladd-diag-log-grad 0 \
+  --ladd-grad-clip-norm 0.0 \
+  --ladd-diag-log-every 1 \
+  --ladd-kd-decay-mode none \
+  --ladd-kd-decay-start-epoch -1 \
+  --ladd-kd-decay-end-epoch -1 \
+  --ladd-kd-final-mult 1.0 \
+  --ladd-kd-stop-after-epoch -1 \
+  --ladd-b-loss-warmup-mode linear \
+  --ladd-b-loss-warmup-start-epoch 0 \
+  --ladd-b-loss-warmup-end-epoch 30 \
+  --ladd-b-loss-warmup-final-mult 1.0 \
+  --ladd-b-loss-warmup-scope core \
+  --reach-target-mode detach \
+  --kd-target-mode detach \
+  --kd-calibration-mode none \
+  --lambda-rec 0.1 \
+  --lambda-taskL 1.0 \
+  --alpha-kd 1.0 \
+  --alpha-s-rec 0.1 \
+  --lambda-reach 0.5 \
+  --lambda-match-inner 0.5 \
+  --lambda-rank-inner 0.5 \
+  --delta 0.2 \
+  --rank-d-neg-cap 2.0 \
+  --reach-input-mode adapter \
+  --student-detect-mode raw \
+  --student-branch-mode split \
+  --teacher-feature-mode decomposed \
+  --unlearnable-hidden-ratio 1.0 \
+  --kd-weight-mode none \
+  --kd-aggregation-mode token \
+  --mosaic 0.0 \
+  --mixup 0.0 \
+  --cutmix 0.0 \
+  --degrees 0.0 \
+  --perspective 0.0 \
+  --translate 0.1 \
+  --scale 0.5 \
+  --fliplr 0.5 \
+  --flipud 0.0 \
+  --hsv-h 0.0 \
+  --hsv-s 0.0 \
+  --hsv-v 0.0 \
+  --erasing 0.0 \
+  --close-mosaic 0 \
+  --seed 0 \
+  --deterministic \
+  --comparison-kd-profile none \
+  --profile-kd-weight 1.0 \
+  --cmdistill-feature-weight 1.0 \
+  --cmdistill-relation-weight 1.0 \
+  --cmdistill-logit-weight 1.0 \
+  --cmdistill-temperature 4.0 \
+  --cmdistill-max-tokens 512 \
+  --cmdistill-min-confidence 0.05 \
+  --cclkd-base-temperature 2.0 \
+  --cclkd-contrastive-temperature 0.1 \
+  --cclkd-feat-weight 1.0 \
+  --cclkd-logit-weight 1.0 \
+  --cclkd-contrast-weight 0.5 \
+  --cclkd-bg-weight 0.1 \
+  --cclkd-min-confidence 0.1 \
+  --cclkd-max-tokens 512 \
+  --cclkd-temperature-min 0.5 \
+  --cclkd-temperature-max 5.0 \
+  --cclkd-entropy-scale 5.0 \
+  --lr0 0.01 \
+  --lrf 0.01 \
+  --cos-lr \
+  --optimizer auto \
+  --warmup-epochs 3.0 \
+  --warmup-bias-lr 0.1 \
+  --save-period 100 \
+  --use-mask \
+  --use-fg-mask-for-reach \
+  --ladd-b-a2-core \
+  --b-detector-source yolo11n.pt \
+  --b-decomp-source "runs_public/paper/ogsod_hbb_mosaic100/no_reload_warm100/yolo11n/seed0/a1_decomp_cache/ogsod_hbb_ladd_a1_decomp_from_sar_baseline_yolo11n_s0_20260623_192641_img256_a1_e10_b64_s0_gpu0/weights/best.pt" \
+  --b-load-student-reachability
