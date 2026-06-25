@@ -1,0 +1,50 @@
+{
+  "plain_anchor": {
+    "rows": 70,
+    "timestamp": 1782364685.799894,
+    "total": 800,
+    "latest_epoch": 70
+  },
+  "no_reach": {
+    "rows": 25,
+    "timestamp": 1782364685.799894,
+    "total": 800,
+    "latest_epoch": 25
+  },
+  "freeze_probeB": {
+    "rows": 22,
+    "timestamp": 1782364685.799894,
+    "total": 800,
+    "latest_epoch": 22
+  },
+  "detach_reach_backbone": {
+    "rows": 24,
+    "timestamp": 1782364685.799894,
+    "total": 800,
+    "latest_epoch": 24
+  },
+  "wo_srec": {
+    "rows": 10,
+    "timestamp": 1782364685.799894,
+    "total": 800,
+    "latest_epoch": 10
+  },
+  "detach_reach_wo_srec": {
+    "rows": 10,
+    "timestamp": 1782364685.799894,
+    "total": 800,
+    "latest_epoch": 10
+  },
+  "studentz_split": {
+    "rows": 4,
+    "timestamp": 1782364685.799894,
+    "total": 800,
+    "latest_epoch": 4
+  },
+  "studentz_singleproj": {
+    "rows": 2,
+    "timestamp": 1782364685.799894,
+    "total": 800,
+    "latest_epoch": 2
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "detonly_control": {
+    "rows": 640,
+    "timestamp": 1782364686.727767,
+    "total": 800,
+    "latest_epoch": 640
+  },
+  "dynamic_plain": {
+    "rows": 412,
+    "timestamp": 1782364686.727767,
+    "total": 800,
+    "latest_epoch": 412
+  },
+  "dynamic_wo_s_rec": {
+    "rows": 541,
+    "timestamp": 1782364686.727767,
+    "total": 800,
+    "latest_epoch": 541
+  },
+  "dynamic_singleproj": {
+    "rows": 509,
+    "timestamp": 1782364686.727767,
+    "total": 800,
+    "latest_epoch": 509
+  },
+  "dynamic_rawinput": {
+    "rows": 390,
+    "timestamp": 1782364686.727767,
+    "total": 800,
+    "latest_epoch": 390
+  },
+  "dynamic_capR2": {
+    "rows": 176,
+    "timestamp": 1782364686.727767,
+    "total": 800,
+    "latest_epoch": 176
+  },
+  "dynamic_capR4": {
+    "rows": 180,
+    "timestamp": 1782364686.727767,
+    "total": 800,
+    "latest_epoch": 180
+  },
+  "plain_detach_reach_probe": {
+    "rows": 51,
+    "timestamp": 1782364686.727767,
+    "total": 800,
+    "latest_epoch": 51
+  },
+  "studentz_split_detach": {
+    "rows": 3,
+    "timestamp": 1782364686.727767,
+    "total": 800,
+    "latest_epoch": 3
+  },
+  "studentz_singleproj_detach": {
+    "rows": 3,
+    "timestamp": 1782364686.727767,
+    "total": 800,
+    "latest_epoch": 3
+  }
+}

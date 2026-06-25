@@ -1,0 +1,21 @@
+server,gpu,run_name,rows,epochs,latest_map5095,best_map5095,eta_finish_cst,avg_epoch_time,pid_count,note
+ladd4090-zw1,0,ogsod_yoloinit_dynamic_plain_anchor_4090_yoloinit_yolo11n_e800_b64_img256_s0_20260625_103949_gpu0,92,800,0.34782,0.34782,2026-06-26 17:44,2m,25,current active YOLO-init plain anchor
+ladd4090-zw1,0,ogsod_yoloinit_dynamic_plain_detach_reach_backbone_4090_yoloinit_yolo11n_e800_b64_img256_s0_20260625_121741_gpu0,47,800,0.28945,0.28945,2026-06-26 21:21,2m,25,current active reach-gradient ablation
+ladd4090-zw1,0,ogsod_yoloinit_dynamic_plain_detach_reach_wo_srec_4090_yoloinit_yolo11n_e800_b64_img256_s0_20260625_124714_gpu0,33,800,0.22852,0.22899,2026-06-26 23:55,3m,25,current active reach-gradient plus no student rec ablation
+ladd4090-zw1,0,ogsod_yoloinit_dynamic_plain_no_reach_4090_yoloinit_yolo11n_e800_b64_img256_s0_20260625_121503_gpu0,47,800,0.28543,0.28543,2026-06-26 22:03,3m,25,current active no reach ablation
+ladd4090-zw1,0,ogsod_yoloinit_dynamic_studentz_singleproj_4090_yoloinit_yolo11n_e800_b64_img256_s0_20260625_130643_gpu0,26,800,0.19072,0.19920,2026-06-26 23:43,3m,25,current active student-z single projection ablation
+ladd4090-zw1,1,ogsod_yoloinit_4090zw1cache_detonly_control_caprgroup_yolo11n_e800_b64_img256_s0_20260625_045721_gpu1,326,800,0.46078,0.46078,2026-06-26 03:43,2m,25,current active 4090 same-pipeline det-only control
+ladd4090-zw1,1,ogsod_yoloinit_dynamic_plain_freeze_probeB_4090_yoloinit_yolo11n_e800_b64_img256_s0_20260625_121503_gpu1,44,800,0.27657,0.27657,2026-06-27 00:21,3m,25,current active frozen reach probe in B-stage ablation
+ladd4090-zw1,1,ogsod_yoloinit_dynamic_plain_wo_srec_4090_yoloinit_yolo11n_e800_b64_img256_s0_20260625_124714_gpu1,32,800,0.22995,0.22995,2026-06-27 01:01,3m,25,current active no student reconstruction ablation
+ladd4090-zw1,1,ogsod_yoloinit_dynamic_resume_fixed_bestep326_e800_b64_img256_s0_20260625_021121_gpu1,341,800,0.55466,0.55474,2026-06-26 06:27,2m,25,resume/reload-like context only; not YOLO-init mainline evidence
+ladd4090-zw1,1,ogsod_yoloinit_dynamic_studentz_split_4090_yoloinit_yolo11n_e800_b64_img256_s0_20260625_130136_gpu1,26,800,0.19818,0.19818,2026-06-27 02:16,3m,25,current active student-z split ablation
+ladd3090-zw1,0,ogsod_yoloinit_detonly_control_yoloinit_yolo11n_e800_b64_img256_s0_20260624_161654_gpu0,664,800,0.54340,0.54340,2026-06-25 18:44,2m,25,current active 3090 same-pipeline det-only control
+ladd3090-zw1,0,ogsod_yoloinit_dynamic_capR2_yoloinit_yolo11n_e800_b64_img256_s0_20260625_034019_gpu0,193,800,0.40494,0.40494,2026-06-26 23:27,3m,25,current active capR=2 diagnostic
+ladd3090-zw1,0,ogsod_yoloinit_dynamic_capR4_yoloinit_yolo11n_e800_b64_img256_s0_20260625_034447_gpu0,197,800,0.40622,0.40622,2026-06-26 22:20,3m,25,current active capR=4 no-cap-ish diagnostic
+ladd3090-zw1,0,ogsod_yoloinit_dynamic_singleproj_yoloinit_yolo11n_e800_b64_img256_s0_20260624_1605_gpu0,529,800,0.52863,0.52863,2026-06-26 01:35,3m,25,current active single projection candidate
+ladd3090-zw1,0,ogsod_yoloinit_dynamic_studentz_split_detach_3090_yoloinit_yolo11n_e800_b64_img256_s0_20260625_130156_gpu0,20,800,0.17495,0.17495,2026-06-27 13:13,4m,25,current active student-z split detach ablation
+ladd3090-zw1,1,ogsod_yoloinit_dynamic_plain_detach_reach_probe_yoloinit_yolo11n_e800_b64_img256_s0_20260625_103950_gpu1,68,800,0.32244,0.32244,2026-06-27 04:42,3m,25,current active detach reach probe diagnostic
+ladd3090-zw1,1,ogsod_yoloinit_dynamic_plain_yoloinit_yolo11n_e800_b64_img256_s0_20260624_201305_gpu1,433,800,0.50395,0.50395,2026-06-26 05:30,2m,25,current active dynamic plain candidate
+ladd3090-zw1,1,ogsod_yoloinit_dynamic_reach_rawinput_yoloinit_yolo11n_e800_b64_img256_s0_20260624_210845_gpu1,412,800,0.49504,0.49525,2026-06-26 06:19,2m,25,current active reach raw input diagnostic
+ladd3090-zw1,1,ogsod_yoloinit_dynamic_studentz_singleproj_detach_3090_yoloinit_yolo11n_e800_b64_img256_s0_20260625_130156_gpu1,20,800,0.16276,0.16276,2026-06-27 13:13,4m,25,current active student-z singleproj detach ablation
+ladd3090-zw1,1,ogsod_yoloinit_dynamic_wo_s_rec_yoloinit_yolo11n_e800_b64_img256_s0_20260624_1608_gpu1,562,800,0.53528,0.53528,2026-06-25 23:35,2m,25,current active no student reconstruction candidate

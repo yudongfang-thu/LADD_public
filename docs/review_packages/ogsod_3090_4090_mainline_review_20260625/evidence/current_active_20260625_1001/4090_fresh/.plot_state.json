@@ -1,0 +1,20 @@
+{
+  "det-only-4090-fresh": {
+    "rows": 183,
+    "timestamp": 1782353167.076938,
+    "total": 800,
+    "latest_epoch": 183
+  },
+  "combo_singleproj_raw_4090": {
+    "rows": 17,
+    "timestamp": 1782353167.076938,
+    "total": 800,
+    "latest_epoch": 17
+  },
+  "combo_raw_wo_srec_4090": {
+    "rows": 12,
+    "timestamp": 1782353167.076938,
+    "total": 800,
+    "latest_epoch": 12
+  }
+}

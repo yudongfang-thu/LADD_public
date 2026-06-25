@@ -1,0 +1,14 @@
+{
+  "det-only-4090-resume": {
+    "rows": 303,
+    "timestamp": 1782353167.982265,
+    "total": 800,
+    "latest_epoch": 788
+  },
+  "dynamic-resume": {
+    "rows": 228,
+    "timestamp": 1782353167.982265,
+    "total": 800,
+    "latest_epoch": 555
+  }
+}

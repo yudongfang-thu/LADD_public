@@ -1,0 +1,50 @@
+{
+  "det-only": {
+    "rows": 503,
+    "timestamp": 1782321414.601123,
+    "total": 800,
+    "latest_epoch": 485
+  },
+  "ProbeA": {
+    "rows": 403,
+    "timestamp": 1782321414.601123,
+    "total": 800,
+    "latest_epoch": 388
+  },
+  "dynamic": {
+    "rows": 345,
+    "timestamp": 1782321414.601123,
+    "total": 800,
+    "latest_epoch": 327
+  },
+  "dynamic_kd0p5": {
+    "rows": 78,
+    "timestamp": 1782321414.601123,
+    "total": 800,
+    "latest_epoch": 78
+  },
+  "dynamic_reach0p5": {
+    "rows": 79,
+    "timestamp": 1782321414.601123,
+    "total": 800,
+    "latest_epoch": 62
+  },
+  "dynamic_srec0p05": {
+    "rows": 74,
+    "timestamp": 1782321414.601123,
+    "total": 800,
+    "latest_epoch": 74
+  },
+  "dynamic_teacher_projectedraw": {
+    "rows": 86,
+    "timestamp": 1782321414.601123,
+    "total": 800,
+    "latest_epoch": 65
+  },
+  "oldcommit_ProbeA": {
+    "rows": 215,
+    "timestamp": 1782321414.601123,
+    "total": 700,
+    "latest_epoch": 215
+  }
+}

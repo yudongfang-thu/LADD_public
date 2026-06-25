@@ -1,0 +1,53 @@
+[
+  {
+    "name": "detonly_control",
+    "path": "/Users/yudongfang/Desktop/\u5149sar/LADD_public/figures/monitor/ladd_current_matrix_20260625_131506/data/3090/detonly_control.csv",
+    "role": "baseline",
+    "total": 800
+  },
+  {
+    "name": "dynamic_plain",
+    "path": "/Users/yudongfang/Desktop/\u5149sar/LADD_public/figures/monitor/ladd_current_matrix_20260625_131506/data/3090/dynamic_plain.csv",
+    "total": 800
+  },
+  {
+    "name": "dynamic_wo_s_rec",
+    "path": "/Users/yudongfang/Desktop/\u5149sar/LADD_public/figures/monitor/ladd_current_matrix_20260625_131506/data/3090/dynamic_wo_s_rec.csv",
+    "total": 800
+  },
+  {
+    "name": "dynamic_singleproj",
+    "path": "/Users/yudongfang/Desktop/\u5149sar/LADD_public/figures/monitor/ladd_current_matrix_20260625_131506/data/3090/dynamic_singleproj.csv",
+    "total": 800
+  },
+  {
+    "name": "dynamic_rawinput",
+    "path": "/Users/yudongfang/Desktop/\u5149sar/LADD_public/figures/monitor/ladd_current_matrix_20260625_131506/data/3090/dynamic_rawinput.csv",
+    "total": 800
+  },
+  {
+    "name": "dynamic_capR2",
+    "path": "/Users/yudongfang/Desktop/\u5149sar/LADD_public/figures/monitor/ladd_current_matrix_20260625_131506/data/3090/dynamic_capR2.csv",
+    "total": 800
+  },
+  {
+    "name": "dynamic_capR4",
+    "path": "/Users/yudongfang/Desktop/\u5149sar/LADD_public/figures/monitor/ladd_current_matrix_20260625_131506/data/3090/dynamic_capR4.csv",
+    "total": 800
+  },
+  {
+    "name": "plain_detach_reach_probe",
+    "path": "/Users/yudongfang/Desktop/\u5149sar/LADD_public/figures/monitor/ladd_current_matrix_20260625_131506/data/3090/plain_detach_reach_probe.csv",
+    "total": 800
+  },
+  {
+    "name": "studentz_split_detach",
+    "path": "/Users/yudongfang/Desktop/\u5149sar/LADD_public/figures/monitor/ladd_current_matrix_20260625_131506/data/3090/studentz_split_detach.csv",
+    "total": 800
+  },
+  {
+    "name": "studentz_singleproj_detach",
+    "path": "/Users/yudongfang/Desktop/\u5149sar/LADD_public/figures/monitor/ladd_current_matrix_20260625_131506/data/3090/studentz_singleproj_detach.csv",
+    "total": 800
+  }
+]

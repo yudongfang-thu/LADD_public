@@ -1,0 +1,12 @@
+| method | status | active | progress | csv_rows | latest_AP50-95 | latest_AP50 | best_AP50-95 | best_epoch | latest_delta | late20_delta | positive_epochs | eta |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| detonly_control | baseline | yes | 640/800 | 640/800 | 0.53883 | 0.80464 | 0.53924 | 639 | NA | NA | NA | NA |
+| dynamic_plain | PROMISING_EARLY | yes | 412/800 | 412/800 | 0.49778 | 0.76446 | 0.49778 | 412 | +0.01642 | +0.01695 | 390/412 | NA |
+| dynamic_wo_s_rec | PROMISING_EARLY | yes | 541/800 | 541/800 | 0.52954 | 0.79809 | 0.52954 | 541 | +0.01198 | +0.01245 | 519/541 | NA |
+| dynamic_singleproj | PROMISING_EARLY | yes | 509/800 | 509/800 | 0.52469 | 0.79668 | 0.52469 | 509 | +0.01670 | +0.01580 | 470/509 | NA |
+| dynamic_rawinput | PROMISING_EARLY | yes | 390/800 | 390/800 | 0.49071 | 0.75379 | 0.49071 | 390 | +0.01494 | +0.01448 | 369/390 | NA |
+| dynamic_capR2 | WATCH | yes | 176/800 | 176/800 | 0.39516 | 0.64060 | 0.39516 | 176 | +0.00617 | +0.00669 | 154/176 | NA |
+| dynamic_capR4 | WATCH | yes | 180/800 | 180/800 | 0.39668 | 0.64837 | 0.39668 | 180 | +0.00612 | +0.00527 | 137/180 | NA |
+| plain_detach_reach_probe | pre100 | yes | 51/800 | 51/800 | 0.29106 | 0.53123 | 0.29106 | 51 | -0.00165 | -0.00050 | 23/51 | NA |
+| studentz_split_detach | pre100 | yes | 3/800 | 3/800 | 0.01803 | 0.05632 | 0.03914 | 1 | +0.01408 | -0.00251 | 1/3 | NA |
+| studentz_singleproj_detach | pre100 | yes | 3/800 | 3/800 | 0.01609 | 0.05739 | 0.04520 | 1 | +0.01214 | -0.00148 | 1/3 | NA |

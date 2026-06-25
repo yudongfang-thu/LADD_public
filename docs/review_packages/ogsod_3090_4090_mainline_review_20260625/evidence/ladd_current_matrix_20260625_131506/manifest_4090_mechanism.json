@@ -1,0 +1,43 @@
+[
+  {
+    "name": "plain_anchor",
+    "path": "/Users/yudongfang/Desktop/\u5149sar/LADD_public/figures/monitor/ladd_current_matrix_20260625_131506/data/4090/plain_anchor.csv",
+    "role": "baseline",
+    "total": 800
+  },
+  {
+    "name": "no_reach",
+    "path": "/Users/yudongfang/Desktop/\u5149sar/LADD_public/figures/monitor/ladd_current_matrix_20260625_131506/data/4090/no_reach.csv",
+    "total": 800
+  },
+  {
+    "name": "freeze_probeB",
+    "path": "/Users/yudongfang/Desktop/\u5149sar/LADD_public/figures/monitor/ladd_current_matrix_20260625_131506/data/4090/freeze_probeB.csv",
+    "total": 800
+  },
+  {
+    "name": "detach_reach_backbone",
+    "path": "/Users/yudongfang/Desktop/\u5149sar/LADD_public/figures/monitor/ladd_current_matrix_20260625_131506/data/4090/detach_reach_backbone.csv",
+    "total": 800
+  },
+  {
+    "name": "wo_srec",
+    "path": "/Users/yudongfang/Desktop/\u5149sar/LADD_public/figures/monitor/ladd_current_matrix_20260625_131506/data/4090/wo_srec.csv",
+    "total": 800
+  },
+  {
+    "name": "detach_reach_wo_srec",
+    "path": "/Users/yudongfang/Desktop/\u5149sar/LADD_public/figures/monitor/ladd_current_matrix_20260625_131506/data/4090/detach_reach_wo_srec.csv",
+    "total": 800
+  },
+  {
+    "name": "studentz_split",
+    "path": "/Users/yudongfang/Desktop/\u5149sar/LADD_public/figures/monitor/ladd_current_matrix_20260625_131506/data/4090/studentz_split.csv",
+    "total": 800
+  },
+  {
+    "name": "studentz_singleproj",
+    "path": "/Users/yudongfang/Desktop/\u5149sar/LADD_public/figures/monitor/ladd_current_matrix_20260625_131506/data/4090/studentz_singleproj.csv",
+    "total": 800
+  }
+]

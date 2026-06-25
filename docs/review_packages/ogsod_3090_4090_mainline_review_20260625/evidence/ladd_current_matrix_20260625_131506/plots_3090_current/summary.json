@@ -1,0 +1,11 @@
+{
+  "generated_at": "2026-06-25T05:18:06.727767+00:00",
+  "baseline": "detonly_control",
+  "metric": "map5095",
+  "table_csv": "/Users/yudongfang/Desktop/光sar/LADD_public/figures/monitor/ladd_current_matrix_20260625_131506/plots_3090_current/comparison_table.csv",
+  "table_md": "/Users/yudongfang/Desktop/光sar/LADD_public/figures/monitor/ladd_current_matrix_20260625_131506/plots_3090_current/comparison_table.md",
+  "curves_png": "/Users/yudongfang/Desktop/光sar/LADD_public/figures/monitor/ladd_current_matrix_20260625_131506/plots_3090_current/curves_map5095.png",
+  "curves_svg": "/Users/yudongfang/Desktop/光sar/LADD_public/figures/monitor/ladd_current_matrix_20260625_131506/plots_3090_current/curves_map5095.svg",
+  "delta_png": "/Users/yudongfang/Desktop/光sar/LADD_public/figures/monitor/ladd_current_matrix_20260625_131506/plots_3090_current/delta_vs_baseline_map5095.png",
+  "delta_svg": "/Users/yudongfang/Desktop/光sar/LADD_public/figures/monitor/ladd_current_matrix_20260625_131506/plots_3090_current/delta_vs_baseline_map5095.svg"
+}

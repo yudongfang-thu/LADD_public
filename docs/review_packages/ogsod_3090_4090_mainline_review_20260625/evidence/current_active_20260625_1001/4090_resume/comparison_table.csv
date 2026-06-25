@@ -1,0 +1,3 @@
+method,role,status,active,progress,csv_rows,latest_epoch,latest_AP50-95,latest_AP50,best_AP50-95,best_epoch,late5,late10,late20,late50,latest_delta,late20_delta,epoch100_delta,positive_epochs,eta
+det-only-4090-resume,baseline,baseline,yes,303/800,303/800,788,0.55809,0.83348,0.56142,745,0.558064,0.5583469999999999,0.5590209999999999,0.5597802000000001,,,,NA,2026-06-26 06:07
+dynamic-resume,candidate,WATCH,yes,228/800,228/800,555,0.52667,0.80606,0.52667,555,0.5264659999999999,0.526133,0.52525,0.5224038,0.003049999999999997,0.003707999999999989,,70/70,2026-06-26 09:08

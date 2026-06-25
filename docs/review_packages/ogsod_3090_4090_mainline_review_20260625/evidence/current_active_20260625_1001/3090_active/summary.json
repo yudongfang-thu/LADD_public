@@ -1,0 +1,11 @@
+{
+  "generated_at": "2026-06-25T02:06:06.166871+00:00",
+  "baseline": "det-only-3090",
+  "metric": "map5095",
+  "table_csv": "/Users/yudongfang/Desktop/光sar/LADD_public/docs/experiments/plots/current_active_20260625_1001/3090_active/comparison_table.csv",
+  "table_md": "/Users/yudongfang/Desktop/光sar/LADD_public/docs/experiments/plots/current_active_20260625_1001/3090_active/comparison_table.md",
+  "curves_png": "/Users/yudongfang/Desktop/光sar/LADD_public/docs/experiments/plots/current_active_20260625_1001/3090_active/curves_map5095.png",
+  "curves_svg": "/Users/yudongfang/Desktop/光sar/LADD_public/docs/experiments/plots/current_active_20260625_1001/3090_active/curves_map5095.svg",
+  "delta_png": "/Users/yudongfang/Desktop/光sar/LADD_public/docs/experiments/plots/current_active_20260625_1001/3090_active/delta_vs_baseline_map5095.png",
+  "delta_svg": "/Users/yudongfang/Desktop/光sar/LADD_public/docs/experiments/plots/current_active_20260625_1001/3090_active/delta_vs_baseline_map5095.svg"
+}

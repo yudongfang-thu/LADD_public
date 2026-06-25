@@ -1,0 +1,56 @@
+{
+  "det-only-3090": {
+    "rows": 548,
+    "timestamp": 1782353166.166871,
+    "total": 800,
+    "latest_epoch": 548
+  },
+  "singleproj": {
+    "rows": 437,
+    "timestamp": 1782353166.166871,
+    "total": 800,
+    "latest_epoch": 437
+  },
+  "wo_s_rec": {
+    "rows": 464,
+    "timestamp": 1782353166.166871,
+    "total": 800,
+    "latest_epoch": 464
+  },
+  "plain": {
+    "rows": 335,
+    "timestamp": 1782353166.166871,
+    "total": 800,
+    "latest_epoch": 335
+  },
+  "reach_rawinput": {
+    "rows": 311,
+    "timestamp": 1782353166.166871,
+    "total": 800,
+    "latest_epoch": 311
+  },
+  "capR2": {
+    "rows": 113,
+    "timestamp": 1782353166.166871,
+    "total": 800,
+    "latest_epoch": 113
+  },
+  "capR4": {
+    "rows": 115,
+    "timestamp": 1782353166.166871,
+    "total": 800,
+    "latest_epoch": 115
+  },
+  "combo_singleproj_raw": {
+    "rows": 20,
+    "timestamp": 1782353166.166871,
+    "total": 800,
+    "latest_epoch": 20
+  },
+  "combo_raw_wo_srec": {
+    "rows": 22,
+    "timestamp": 1782353166.166871,
+    "total": 800,
+    "latest_epoch": 22
+  }
+}

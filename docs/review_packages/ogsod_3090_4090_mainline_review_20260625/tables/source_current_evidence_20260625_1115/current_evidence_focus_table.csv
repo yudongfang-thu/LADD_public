@@ -1,0 +1,21 @@
+server,method,rows,latest_map5095,late20_delta_vs_detonly,late20_delta_vs_plain,mainline_evidence_allowed,note
+remote_3090,detonly_control_yoloinit,580,0.524430,0.000000,-0.017197,yes,running control
+remote_3090,dynamic_plain_yoloinit,364,0.486110,0.017197,0.000000,yes,running plain anchor; current strongest conceptual baseline
+remote_3090,dynamic_singleproj_yoloinit,463,0.510170,0.014497,-0.000660,yes,running; positive vs det-only but below plain at matched overlap
+remote_3090,dynamic_wo_s_rec_yoloinit,492,0.519450,0.015645,-0.003238,yes,running; positive vs det-only but below plain at matched overlap
+remote_3090,dynamic_reach_rawinput_yoloinit,340,0.477950,0.015467,0.000039,yes,"running; close to plain, tests raw input for reach"
+remote_3090,dynamic_capR2_yoloinit,135,0.371220,0.005270,0.000000,yes,"running; early, weak positive vs det-only"
+remote_3090,dynamic_capR4_yoloinit,138,0.371350,0.003344,-0.001761,yes,"running; early, cap-disabled-ish control"
+remote_3090,dynamic_plain_detach_reach_probe_yoloinit,10,0.115050,-0.004475,-0.004370,yes,running but very early; probe gradient diagnostic
+remote_3090,combo_singleproj_raw_STOPPED,40,0.261360,0.001606,0.001446,no,stopped diagnostic combo; do not use as main evidence
+remote_3090,combo_raw_wo_srec_STOPPED,43,0.269740,0.001469,0.001842,no,stopped diagnostic combo; do not use as main evidence
+remote_4090,detonly_control_zw1cache,222,0.413800,0.000000,-0.002406,yes,running/available 4090 same-pipeline control
+remote_4090,dynamic_plain_anchor_4090_yoloinit,14,0.138770,0.002406,0.000000,yes,running plain anchor but too early for strong conclusion
+remote_4090,dynamic_resume_fixed,259,0.534830,0.116080,0.388194,no,"resume/reload-like; context only, not YOLO-init main evidence"
+remote_4090,combo_singleproj_raw_STOPPED,43,0.268940,0.005519,-0.012564,no,stopped diagnostic combo/frankenstein; do not use as main evidence
+remote_4090,combo_raw_wo_srec_STOPPED,34,0.237550,0.003828,-0.007701,no,stopped diagnostic combo/frankenstein; do not use as main evidence
+remote_4090,frank_singleproj_adapter_wo_srec_capR2_STOPPED,18,0.153980,-0.002802,-0.006583,no,stopped diagnostic frankenstein; do not use as main evidence
+remote_4090,frank_singleproj_adapter_lowsrec_capR2_STOPPED,17,0.155610,-0.003499,-0.006583,no,stopped diagnostic frankenstein; do not use as main evidence
+remote_4090,frank_singleproj_raw_lowsrec_capR2_STOPPED,18,0.139740,-0.008079,-0.012564,no,stopped diagnostic frankenstein; do not use as main evidence
+remote_4090,frank_singleproj_adapter_wo_srec_capR4_STOPPED,16,0.138010,-0.000888,-0.003443,no,stopped diagnostic frankenstein; do not use as main evidence
+remote_4090,frank_singleproj_raw_wo_srec_capR4_STOPPED,17,0.130230,-0.006971,-0.008919,no,stopped diagnostic frankenstein; do not use as main evidence
