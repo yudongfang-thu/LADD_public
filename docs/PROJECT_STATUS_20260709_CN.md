@@ -30,35 +30,44 @@
 |---|---|
 | active goal | `NOT_COMPLETE` |
 | claim ready | `no` |
-| 当前 top route | `DISPATCH_FINAL_FACT_AUDIT_FOR_MISSING_ROWS` |
+| 当前 top route | `DISPATCH_FAILURE_LOCALIZATION_AND_SCOPED_90_ARTIFACT_AUDIT` |
 | best LADD AP50-95 | `0.50350` |
 | best LADD row | `3090_ladd_fusionv1_singleproj_plus_ld_replace_base_s0` |
 | best LADD variant | `singleproj_plus_ld_replace_base` |
 | FGD seed0 floor AP50-95 | `0.55147` |
 | best LADD gap to FGD floor | `-0.04797` |
-| comparison final-pending AP50-95 range | `0.56183` - `0.56550` |
+| 90 comparison monitor AP50-95 range | `0.56183` - `0.56550`, not final-audited |
 
 解释:
 
-- 已完成 / final-pending 的 LADD seed0 rescue rows 仍明显低于 FGD floor。
-- CMDistill / LD 的 seed42 / seed123 comparison rows 看起来稳定且强, 但仍需 final fact audit 后才能进入 comparison stability 表。
+- 已完成并通过 final fact audit 的 3090 LADD seed0 rescue rows 仍明显低于 FGD floor。
+- CMDistill / LD 的 seed42 / seed123 comparison rows 看起来稳定且强, 但最新审计被 90 SSH/TUN 访问阻断, 仍不能进入 accepted final facts。
 - 当前证据不支持扩展 LADD seed42 / seed123, 也不支持 claim LADD 超过 comparison methods。
 
-## 当前 9-row final fact audit payload
+## 当前 direct-400 审计状态
 
-当前待审计的 final-pending payload 有 9 条:
+最新可公开审计状态分成两类: 5 条 3090 LADD seed0 rows 已成为 `FINAL_FACT_READY`, 4 条 90 comparison monitor rows 因远端访问阻断仍是 `BLOCKED`。
 
-| group | server | method / variant | seed | monitor AP50 / AP50-95 | route hint |
+### 3090 LADD rows: final facts for failure localization
+
+| group | server | method / variant | seed | final AP50 / AP50-95 | route hint |
 |---|---|---:|---:|---:|---|
 | LADD reset-v2 | 3090 | `singleproj_kd_only_no_decomp_aux` | 0 | 0.75473 / 0.49190 | below-floor -> failure localization |
 | LADD reset-v2 | 3090 | `singleproj_plus_ld_profile` | 0 | 0.75973 / 0.49831 | below-floor -> failure localization |
 | LADD reset-v2 | 3090 | `singleproj_plus_cmdistill_profile` | 0 | 0.76372 / 0.49159 | below-floor -> failure localization |
 | LADD reset-v2 | 3090 | `plain_plus_cmdistill_profile` | 0 | 0.75749 / 0.49056 | below-floor -> failure localization |
 | LADD fusion-v1 | 3090 | `singleproj_plus_ld_replace_base` | 0 | 0.77631 / 0.50350 | below-floor -> failure localization |
-| comparison | 90 | CMDistill | 42 | 0.83796 / 0.56520 | comparison stability |
-| comparison | 90 | CMDistill | 123 | 0.83720 / 0.56550 | comparison stability |
-| comparison | 90 | LD | 42 | 0.83501 / 0.56463 | comparison stability |
-| comparison | 90 | LD | 123 | 0.82935 / 0.56183 | comparison stability |
+
+### 90 comparison rows: strong monitor values, not final facts yet
+
+| group | server | method / variant | seed | monitor AP50 / AP50-95 | latest audit status |
+|---|---|---:|---:|---:|---|
+| comparison | 90 | CMDistill | 42 | 0.83796 / 0.56520 | `BLOCKED_BY_90_SSH_ACCESS` |
+| comparison | 90 | CMDistill | 123 | 0.83720 / 0.56550 | `BLOCKED_BY_90_SSH_ACCESS` |
+| comparison | 90 | LD | 42 | 0.83501 / 0.56463 | `BLOCKED_BY_90_SSH_ACCESS` |
+| comparison | 90 | LD | 123 | 0.82935 / 0.56183 | `BLOCKED_BY_90_SSH_ACCESS` |
+
+The four 90 rows above are currently `BLOCKED_BY_90_SSH_ACCESS`: monitor values are useful signals, but not accepted final facts until artifact paths, args, logs, row count, weights listing, protocol and health scan are verified.
 
 Explicitly excluded from this final fact audit payload:
 
@@ -89,6 +98,12 @@ final fact audit -> comparison stability table
 
 ## Useful project entry points
 
+Public handoff docs:
+
+- `docs/PROJECT_ONBOARDING_20260709_CN.md`
+- `docs/experiments/DIRECT400_EXPERIMENT_LEDGER_20260709_CN.md`
+- `docs/CODE_AND_DOC_CHANGE_MAP_20260709_CN.md`
+
 Current code and method:
 
 - `ladd/code/train_ladd_hbb.py`
@@ -98,24 +113,14 @@ Current code and method:
 - `docs/method/METHOD_DEFINITIONS_AND_IMPLEMENTATION_CN.md`
 - `docs/method/METHOD_OVERVIEW_CN.md`
 
-Experiment and PM records:
+Experiment records:
 
 - `docs/experiments/EXPERIMENT_INDEX_CN.md`
-- `docs/experiments/LADD_PROJECT_HANDOFF_20260630_CN.md`
-- `docs/experiments/DIRECT400_PM_STATUS_SNAPSHOT_20260708_CN.md`
-- `docs/experiments/DIRECT400_FINAL_FACT_AUDIT_STAGE_GOAL_20260707_CN.md`
-- `docs/experiments/DIRECT400_FINAL_FACT_AUDIT_PAYLOAD_20260708_CN.md`
-- `docs/experiments/DIRECT400_LADD_OVER_COMPARISON_EVIDENCE_GATE_20260707_CN.md`
-- `docs/experiments/DIRECT400_LADD_FAILURE_HYPOTHESIS_BACKLOG_20260707_CN.md`
-- `docs/experiments/DIRECT400_LADD_RESCUE_IMPLEMENTATION_DECISION_TREE_20260707_CN.md`
-- `docs/experiments/DIRECT400_LADD_LAUNCHER_CLI_PARITY_AUDIT_20260707_CN.md`
+- `docs/experiments/DIRECT400_EXPERIMENT_LEDGER_20260709_CN.md`
 
-Team / project-management records:
-
-- `docs/goals/LADD_CURRENT_STAGE_TARGET_CN.md`
-- `docs/goals/LADD_PM_ACTIVE_GOAL_CN.md`
-- `docs/goals/LADD_PROJECT_TEAM_ROSTER_CN.md`
-- `docs/goals/LADD_TEAM_TASK_BOARD_CN.md`
+Deep PM / Coordinator records remain useful locally, but many contain remote
+paths or operational details. They should be sanitized before public GitHub
+publication.
 
 ## Publication / repository hygiene
 

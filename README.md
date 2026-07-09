@@ -16,10 +16,13 @@ For the latest compact handoff, current metrics, audit boundaries, and next
 routes, read:
 
 - [docs/PROJECT_STATUS_20260709_CN.md](docs/PROJECT_STATUS_20260709_CN.md)
+- [docs/PROJECT_ONBOARDING_20260709_CN.md](docs/PROJECT_ONBOARDING_20260709_CN.md)
+- [docs/experiments/DIRECT400_EXPERIMENT_LEDGER_20260709_CN.md](docs/experiments/DIRECT400_EXPERIMENT_LEDGER_20260709_CN.md)
+- [docs/CODE_AND_DOC_CHANGE_MAP_20260709_CN.md](docs/CODE_AND_DOC_CHANGE_MAP_20260709_CN.md)
 
-This status page intentionally records only compact public-facing evidence and
-links. It excludes checkpoint weights, private server details, raw logs, and
-large run directories.
+These public handoff pages intentionally record only compact public-facing
+evidence and links. They exclude checkpoint weights, private server details,
+raw logs, and large run directories.
 
 ## What To Read First
 
@@ -95,4 +98,4 @@ Raw historical run directories and legacy result summaries are not paper-table s
 
 ## Privacy / Security
 
-This package intentionally excludes SSH passwords, private keys, full connection commands, datasets, checkpoint weights, raw run directories, and server logs.
+This package intentionally excludes authentication credentials, private keys, full connection commands, datasets, checkpoint weights, raw run directories, and server logs.
