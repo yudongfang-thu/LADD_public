@@ -2,7 +2,24 @@
 
 This repository is the paper-facing implementation for cross-modal object detection distillation with learnability-aware feature decomposition. The main OGSOD track studies RGB-guided SAR detection, while the VEDAI and DroneVehicle extensions evaluate the same LADD idea under CCLKD-aligned visible/infrared transfer protocols. The repository keeps the current runnable implementation, experiment protocol, and compact result summaries. Historical raw logs, large diagnostic bundles, and deprecated-method archives have been removed from the public branch.
 
-Last updated: 2026-06-19 CST.
+Last updated: 2026-07-09 CST.
+
+## Current Debug Status (2026-07-09)
+
+The active investigation has shifted from the earlier paper-facing `mosaic100`
+mainline to a stricter `pure direct-400` rescue/evidence audit. The current
+direct-400 evidence is not claim-ready: the best audited/pending LADD rescue
+row is still below the FGD comparison floor, and running/progress rows are not
+treated as final results.
+
+For the latest compact handoff, current metrics, audit boundaries, and next
+routes, read:
+
+- [docs/PROJECT_STATUS_20260709_CN.md](docs/PROJECT_STATUS_20260709_CN.md)
+
+This status page intentionally records only compact public-facing evidence and
+links. It excludes checkpoint weights, private server details, raw logs, and
+large run directories.
 
 ## What To Read First
 
